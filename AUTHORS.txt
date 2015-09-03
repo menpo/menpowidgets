@@ -1,4 +1,4 @@
-Menpo-widgets has received contributions from the following:
+Menpowidgets has received contributions from the following:
 
 Institutions
 ------------
