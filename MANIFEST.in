@@ -1,0 +1,2 @@
+include versioneer.py
+include menpowidgets/_version.py
