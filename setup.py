@@ -10,6 +10,11 @@ setup(name='menpowidgets',
       author_email='james.booth08@imperial.ac.uk',
       packages=find_packages(),
       install_requires=['menpo>=0.5.1,<0.6',
-                        'menpofit>=0.2.1,<0.3'],
+                        'menpofit>=0.2.1,<0.3',
+                        'ipywidgets>=4.*,<5.*',
+                        'traitlets>=4.*,<5.*',
+                        'ipython>=4.*,<5.*',
+                        'jupyter>=4.*,<5.*',
+                        'notebook>=4.*,<5.*'],
       package_data={'menpo': 'logos/*'}
       )
