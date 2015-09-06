@@ -2226,6 +2226,7 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
     # Reset value to trigger initial visualization
     axes_mode_wid.value = 1
 
+
 def visualize_appearance_model(appearance_model, n_parameters=5,
                                mode='multiple', parameters_bounds=(-3.0, 3.0),
                                figure_size=(10, 8), style='coloured'):
@@ -2559,6 +2560,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
 
     # Reset value to trigger initial visualization
     renderer_options_wid.options_widgets[3].render_axes_checkbox.value = False
+
 
 def visualize_patch_appearance_model(appearance_model, centers,
                                      n_parameters=5, mode='multiple',
@@ -2913,6 +2915,7 @@ def visualize_patch_appearance_model(appearance_model, centers,
 
     # Reset value to trigger initial visualization
     patch_options_wid.bboxes_line_options_wid.render_lines_checkbox.value = True
+
 
 def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                   mode='multiple', parameters_bounds=(-3.0, 3.0),
@@ -3324,6 +3327,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
     # Reset value to trigger initial visualization
     renderer_options_wid.options_widgets[3].render_axes_checkbox.value = False
+
 
 def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                         mode='multiple', parameters_bounds=(-3.0, 3.0),
@@ -3748,6 +3752,7 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     # Reset value to trigger initial visualization
     patch_options_wid.bboxes_line_options_wid.render_lines_checkbox.value = True
 
+
 def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
                   parameters_bounds=(-3.0, 3.0), figure_size=(10, 8),
                   style='coloured'):
@@ -4095,6 +4100,7 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
 
     # Reset value to trigger initial visualization
     renderer_options_wid.options_widgets[3].render_axes_checkbox.value = False
+
 
 def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
                         parameters_bounds=(-3.0, 3.0), figure_size=(10, 8),
@@ -4454,6 +4460,7 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
     # Reset value to trigger initial visualization
     patch_options_wid.bboxes_line_options_wid.render_lines_checkbox.value = True
 
+
 def plot_ced(errors, legend_entries=None, error_range=None,
              error_type='me_norm', figure_size=(10, 6), style='coloured',
              return_widget=False):
@@ -4667,6 +4674,7 @@ def plot_ced(errors, legend_entries=None, error_range=None,
     # return widget object if asked
     if return_widget:
         return wid
+
 
 def visualize_fitting_result(fitting_results, figure_size=(10, 8),
                              style='coloured', browser_style='buttons'):
@@ -5288,6 +5296,7 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
     # Reset value to trigger initial visualization
     renderer_options_wid.options_widgets[3].render_legend_checkbox.value = True
 
+
 def _visualize(image, renderer, render_landmarks, image_is_masked,
                masked_enabled, channels, glyph_enabled, glyph_block_size,
                glyph_use_negative, sum_enabled, group, with_labels,
@@ -5508,7 +5517,7 @@ def _visualize_patches(patches, patch_centers, patches_indices, offset_index,
     global sum_channels
     if sum_channels is None:
         from menpo.feature.visualize import sum_channels
-    from menpo.visualize import view_patches_nowidget
+    from menpo.visualize import view_patches
     from menpo.transform import UniformScale
 
     if glyph_enabled and render_patches:
@@ -5529,7 +5538,7 @@ def _visualize_patches(patches, patch_centers, patches_indices, offset_index,
         glyph_patch_centers = UniformScale(glyph_block_size, 2).apply(
             patch_centers)
         # visualize glyph patches
-        renderer = view_patches_nowidget(
+        renderer = view_patches(
             glyph_patches, glyph_patch_centers, patches_indices=patches_indices,
             offset_index=0, figure_id=renderer.figure_id, new_figure=False,
             background=background, render_patches=render_patches, channels=0,
@@ -5567,7 +5576,7 @@ def _visualize_patches(patches, patch_centers, patches_indices, offset_index,
             sum_patches[i, 0, ...] = sum_channels(
                 patches[i, offset_index, ...], channels=channels)
         # visualize sum patches
-        renderer = view_patches_nowidget(
+        renderer = view_patches(
             sum_patches, patch_centers, patches_indices=patches_indices,
             offset_index=0, figure_id=renderer.figure_id, new_figure=False,
             background=background, render_patches=render_patches, channels=0,
@@ -5598,7 +5607,7 @@ def _visualize_patches(patches, patch_centers, patches_indices, offset_index,
             axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
             figure_size=figure_size)
     else:
-        renderer = view_patches_nowidget(
+        renderer = view_patches(
             patches, patch_centers, patches_indices=patches_indices,
             offset_index=offset_index, figure_id=renderer.figure_id,
             new_figure=False, background=background,
