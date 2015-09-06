@@ -21,6 +21,7 @@ from .options import (RendererOptionsWidget, TextPrintWidget,
                       LinearModelParametersWidget)
 from .tools import (format_box, LogoWidget, map_styles_to_hex_colours)
 from .checks import check_n_parameters
+from .render import render
 
 
 # This glyph import is called frequently during visualisation, so we ensure
@@ -1080,39 +1081,50 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
         marker_edge_colour = [tmp2['marker_edge_colour'][lbl_idx]
                               for lbl_idx in with_labels_idx]
 
-        renderer = _visualize(
-            images[im], save_figure_wid.renderer,
-            landmark_options_wid.selected_values['render_landmarks'],
-            image_is_masked,
-            channel_options_wid.selected_values['masked_enabled'],
-            channel_options_wid.selected_values['channels'],
-            channel_options_wid.selected_values['glyph_enabled'],
-            channel_options_wid.selected_values['glyph_block_size'],
-            channel_options_wid.selected_values['glyph_use_negative'],
-            channel_options_wid.selected_values['sum_enabled'],
-            landmark_options_wid.selected_values['group'],
-            landmark_options_wid.selected_values['with_labels'],
-            tmp1['render_lines'], tmp1['line_style'], tmp1['line_width'],
-            line_colour, tmp2['render_markers'], tmp2['marker_style'],
-            tmp2['marker_size'], tmp2['marker_edge_width'], marker_edge_colour,
-            marker_face_colour, tmp3['render_numbering'],
-            tmp3['numbers_font_name'], tmp3['numbers_font_size'],
-            tmp3['numbers_font_style'], tmp3['numbers_font_weight'],
-            tmp3['numbers_font_colour'][0], tmp3['numbers_horizontal_align'],
-            tmp3['numbers_vertical_align'], tmp4['legend_n_columns'],
-            tmp4['legend_border_axes_pad'], tmp4['legend_rounded_corners'],
-            tmp4['legend_title'], tmp4['legend_horizontal_spacing'],
-            tmp4['legend_shadow'], tmp4['legend_location'],
-            tmp4['legend_font_name'], tmp4['legend_bbox_to_anchor'],
-            tmp4['legend_border'], tmp4['legend_marker_scale'],
-            tmp4['legend_vertical_spacing'], tmp4['legend_font_weight'],
-            tmp4['legend_font_size'], tmp4['render_legend'],
-            tmp4['legend_font_style'], tmp4['legend_border_padding'],
-            new_figure_size, tmp5['render_axes'], tmp5['axes_font_name'],
-            tmp5['axes_font_size'], tmp5['axes_font_style'],
-            tmp5['axes_x_limits'], tmp5['axes_y_limits'],
-            tmp5['axes_font_weight'], tmp6['interpolation'], tmp6['alpha'],
-            tmp6['cmap_name'])
+        renderer = render(renderer=save_figure_wid.renderer,
+                          subplots_enabled=False,
+                          subplots_titles=[], image=images[im],
+                          render_image=True, image_axes_mode=True,
+                          channel_options=channel_options_wid.selected_values,
+                          landmark_options=landmark_options_wid.selected_values,
+                          line_options=tmp1, marker_options=tmp2,
+                          numbers_options=tmp3, legend_options=tmp4,
+                          axes_options=tmp5, image_options=tmp6,
+                          figure_size=new_figure_size)
+
+        # renderer = _visualize(
+        #     images[im], save_figure_wid.renderer,
+        #     landmark_options_wid.selected_values['render_landmarks'],
+        #     image_is_masked,
+        #     channel_options_wid.selected_values['masked_enabled'],
+        #     channel_options_wid.selected_values['channels'],
+        #     channel_options_wid.selected_values['glyph_enabled'],
+        #     channel_options_wid.selected_values['glyph_block_size'],
+        #     channel_options_wid.selected_values['glyph_use_negative'],
+        #     channel_options_wid.selected_values['sum_enabled'],
+        #     landmark_options_wid.selected_values['group'],
+        #     landmark_options_wid.selected_values['with_labels'],
+        #     tmp1['render_lines'], tmp1['line_style'], tmp1['line_width'],
+        #     line_colour, tmp2['render_markers'], tmp2['marker_style'],
+        #     tmp2['marker_size'], tmp2['marker_edge_width'], marker_edge_colour,
+        #     marker_face_colour, tmp3['render_numbering'],
+        #     tmp3['numbers_font_name'], tmp3['numbers_font_size'],
+        #     tmp3['numbers_font_style'], tmp3['numbers_font_weight'],
+        #     tmp3['numbers_font_colour'][0], tmp3['numbers_horizontal_align'],
+        #     tmp3['numbers_vertical_align'], tmp4['legend_n_columns'],
+        #     tmp4['legend_border_axes_pad'], tmp4['legend_rounded_corners'],
+        #     tmp4['legend_title'], tmp4['legend_horizontal_spacing'],
+        #     tmp4['legend_shadow'], tmp4['legend_location'],
+        #     tmp4['legend_font_name'], tmp4['legend_bbox_to_anchor'],
+        #     tmp4['legend_border'], tmp4['legend_marker_scale'],
+        #     tmp4['legend_vertical_spacing'], tmp4['legend_font_weight'],
+        #     tmp4['legend_font_size'], tmp4['render_legend'],
+        #     tmp4['legend_font_style'], tmp4['legend_border_padding'],
+        #     new_figure_size, tmp5['render_axes'], tmp5['axes_font_name'],
+        #     tmp5['axes_font_size'], tmp5['axes_font_style'],
+        #     tmp5['axes_x_limits'], tmp5['axes_y_limits'],
+        #     tmp5['axes_font_weight'], tmp6['interpolation'], tmp6['alpha'],
+        #     tmp6['cmap_name'])
 
         # Save the current figure id
         save_figure_wid.renderer = renderer
@@ -5674,8 +5686,7 @@ def _visualize_fitting_result(
 
     # This makes the code shorter for dealing with masked images vs non-masked
     # images
-    mask_arguments = ({'masked': masked_enabled}
-                      if image_is_masked else {})
+    mask_arguments = ({'masked': masked_enabled} if image_is_masked else {})
 
     # plot
     if render_image:
