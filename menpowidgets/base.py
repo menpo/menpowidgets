@@ -1,6 +1,5 @@
 import numpy as np
 from collections import Sized, OrderedDict
-from matplotlib.pyplot import show as pltshow
 import matplotlib.pyplot as plt
 from matplotlib import collections as mc
 import os.path
@@ -11,6 +10,13 @@ import IPython.display as ipydisplay
 from menpo.visualize.viewmatplotlib import (MatplotlibImageViewer2d,
                                             sample_colours_from_colourmap,
                                             MatplotlibSubplots)
+from menpo.image import Image, MaskedImage
+from menpo.image.base import _convert_patches_list_to_single_array
+from menpo.feature.visualize import glyph, sum_channels
+from menpo.visualize import view_patches
+from menpo.transform import UniformScale
+
+from menpofit.base import name_of_callable
 
 from .options import (RendererOptionsWidget, TextPrintWidget,
                       SaveFigureOptionsWidget, AnimationOptionsWidget,
@@ -21,13 +27,6 @@ from .options import (RendererOptionsWidget, TextPrintWidget,
                       LinearModelParametersWidget)
 from .tools import (format_box, LogoWidget, map_styles_to_hex_colours)
 from .checks import check_n_parameters
-from .render import render
-
-
-# This glyph import is called frequently during visualisation, so we ensure
-# that we only import it once. The same for the sum_channels method.
-glyph = None
-sum_channels = None
 
 
 def menpowidgets_src_dir_path():
@@ -162,7 +161,7 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
             axes_x_limits=tmp3['axes_x_limits'],
             axes_y_limits=tmp3['axes_y_limits'], figure_size=new_figure_size,
             label=None)
-        pltshow()
+        plt.show()
 
         # Save the current figure id
         save_figure_wid.renderer = renderer
@@ -452,7 +451,7 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
                 axes_x_limits=tmp5['axes_x_limits'],
                 axes_y_limits=tmp5['axes_y_limits'],
                 figure_size=new_figure_size)
-            pltshow()
+            plt.show()
 
             # Save the current figure id
             save_figure_wid.renderer = renderer
@@ -779,7 +778,7 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
                 axes_x_limits=tmp5['axes_x_limits'],
                 axes_y_limits=tmp5['axes_y_limits'],
                 figure_size=new_figure_size)
-            pltshow()
+            plt.show()
 
             # Save the current figure id
             save_figure_wid.renderer = renderer
@@ -925,7 +924,6 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
     """
-    from menpo.image import MaskedImage
     print('Initializing...')
 
     # Make sure that images is a list even with one image member
@@ -1081,50 +1079,39 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
         marker_edge_colour = [tmp2['marker_edge_colour'][lbl_idx]
                               for lbl_idx in with_labels_idx]
 
-        renderer = render(renderer=save_figure_wid.renderer,
-                          subplots_enabled=False,
-                          subplots_titles=[], image=images[im],
-                          render_image=True, image_axes_mode=True,
-                          channel_options=channel_options_wid.selected_values,
-                          landmark_options=landmark_options_wid.selected_values,
-                          line_options=tmp1, marker_options=tmp2,
-                          numbers_options=tmp3, legend_options=tmp4,
-                          axes_options=tmp5, image_options=tmp6,
-                          figure_size=new_figure_size)
-
-        # renderer = _visualize(
-        #     images[im], save_figure_wid.renderer,
-        #     landmark_options_wid.selected_values['render_landmarks'],
-        #     image_is_masked,
-        #     channel_options_wid.selected_values['masked_enabled'],
-        #     channel_options_wid.selected_values['channels'],
-        #     channel_options_wid.selected_values['glyph_enabled'],
-        #     channel_options_wid.selected_values['glyph_block_size'],
-        #     channel_options_wid.selected_values['glyph_use_negative'],
-        #     channel_options_wid.selected_values['sum_enabled'],
-        #     landmark_options_wid.selected_values['group'],
-        #     landmark_options_wid.selected_values['with_labels'],
-        #     tmp1['render_lines'], tmp1['line_style'], tmp1['line_width'],
-        #     line_colour, tmp2['render_markers'], tmp2['marker_style'],
-        #     tmp2['marker_size'], tmp2['marker_edge_width'], marker_edge_colour,
-        #     marker_face_colour, tmp3['render_numbering'],
-        #     tmp3['numbers_font_name'], tmp3['numbers_font_size'],
-        #     tmp3['numbers_font_style'], tmp3['numbers_font_weight'],
-        #     tmp3['numbers_font_colour'][0], tmp3['numbers_horizontal_align'],
-        #     tmp3['numbers_vertical_align'], tmp4['legend_n_columns'],
-        #     tmp4['legend_border_axes_pad'], tmp4['legend_rounded_corners'],
-        #     tmp4['legend_title'], tmp4['legend_horizontal_spacing'],
-        #     tmp4['legend_shadow'], tmp4['legend_location'],
-        #     tmp4['legend_font_name'], tmp4['legend_bbox_to_anchor'],
-        #     tmp4['legend_border'], tmp4['legend_marker_scale'],
-        #     tmp4['legend_vertical_spacing'], tmp4['legend_font_weight'],
-        #     tmp4['legend_font_size'], tmp4['render_legend'],
-        #     tmp4['legend_font_style'], tmp4['legend_border_padding'],
-        #     new_figure_size, tmp5['render_axes'], tmp5['axes_font_name'],
-        #     tmp5['axes_font_size'], tmp5['axes_font_style'],
-        #     tmp5['axes_x_limits'], tmp5['axes_y_limits'],
-        #     tmp5['axes_font_weight'], tmp6['interpolation'], tmp6['alpha'],
-        #     tmp6['cmap_name'])
+        renderer = _visualize_image(
+            images[im], save_figure_wid.renderer,
+            landmark_options_wid.selected_values['render_landmarks'],
+            image_is_masked,
+            channel_options_wid.selected_values['masked_enabled'],
+            channel_options_wid.selected_values['channels'],
+            channel_options_wid.selected_values['glyph_enabled'],
+            channel_options_wid.selected_values['glyph_block_size'],
+            channel_options_wid.selected_values['glyph_use_negative'],
+            channel_options_wid.selected_values['sum_enabled'],
+            landmark_options_wid.selected_values['group'],
+            landmark_options_wid.selected_values['with_labels'],
+            tmp1['render_lines'], tmp1['line_style'], tmp1['line_width'],
+            line_colour, tmp2['render_markers'], tmp2['marker_style'],
+            tmp2['marker_size'], tmp2['marker_edge_width'], marker_edge_colour,
+            marker_face_colour, tmp3['render_numbering'],
+            tmp3['numbers_font_name'], tmp3['numbers_font_size'],
+            tmp3['numbers_font_style'], tmp3['numbers_font_weight'],
+            tmp3['numbers_font_colour'][0], tmp3['numbers_horizontal_align'],
+            tmp3['numbers_vertical_align'], tmp4['legend_n_columns'],
+            tmp4['legend_border_axes_pad'], tmp4['legend_rounded_corners'],
+            tmp4['legend_title'], tmp4['legend_horizontal_spacing'],
+            tmp4['legend_shadow'], tmp4['legend_location'],
+            tmp4['legend_font_name'], tmp4['legend_bbox_to_anchor'],
+            tmp4['legend_border'], tmp4['legend_marker_scale'],
+            tmp4['legend_vertical_spacing'], tmp4['legend_font_weight'],
+            tmp4['legend_font_size'], tmp4['render_legend'],
+            tmp4['legend_font_style'], tmp4['legend_border_padding'],
+            new_figure_size, tmp5['render_axes'], tmp5['axes_font_name'],
+            tmp5['axes_font_size'], tmp5['axes_font_style'],
+            tmp5['axes_x_limits'], tmp5['axes_y_limits'],
+            tmp5['axes_font_weight'], tmp6['interpolation'], tmp6['alpha'],
+            tmp6['cmap_name'])
 
         # Save the current figure id
         save_figure_wid.renderer = renderer
@@ -1306,7 +1293,6 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
     """
-    from menpo.image.base import Image, _convert_patches_list_to_single_array
     print('Initializing...')
 
     # Make sure that patches is a list even with one patches member
@@ -1462,7 +1448,7 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
         text_per_line = [
             "> Patch-Based Image with {} patche{} and {} offset{}.".format(
                 ptchs.shape[0], 's' * (ptchs.shape[0] > 1), ptchs.shape[1],
-                's' * (ptchs.shape[1] > 1)),
+                                's' * (ptchs.shape[1] > 1)),
             "> Each patch has size {}H x {}W with {} channel{}.".format(
                 ptchs.shape[3], ptchs.shape[4], ptchs.shape[2],
                 's' * (ptchs.shape[2] > 1)),
@@ -1748,7 +1734,7 @@ def plot_graph(x_axis, y_axis, legend_entries=None, title=None, x_label=None,
             grid_line_width=opts['grid_line_width'])
 
         # show plot
-        pltshow()
+        plt.show()
 
         # Save the current figure id
         save_figure_wid.renderer = renderer
@@ -2269,7 +2255,6 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
-    from menpo.image import MaskedImage
     print('Initializing...')
 
     # Make sure that appearance_model is a list even with one member
@@ -2404,7 +2389,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
         marker_edge_colour = [tmp2['marker_edge_colour'][lbl_idx]
                               for lbl_idx in with_labels_idx]
 
-        renderer = _visualize(
+        renderer = _visualize_image(
             instance, save_figure_wid.renderer,
             landmark_options_wid.selected_values['render_landmarks'],
             channel_options_wid.selected_values['image_is_masked'],
@@ -2966,7 +2951,6 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
-    from menpo.image import MaskedImage
     print('Initializing...')
 
     # Get the number of levels
@@ -3105,7 +3089,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         marker_edge_colour = [tmp2['marker_edge_colour'][lbl_idx]
                               for lbl_idx in with_labels_idx]
 
-        renderer = _visualize(
+        renderer = _visualize_image(
             instance, save_figure_wid.renderer,
             landmark_options_wid.selected_values['render_landmarks'],
             channel_options_wid.selected_values['image_is_masked'],
@@ -3134,8 +3118,6 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     # Define function that updates the info text
     def update_info(aam, instance, level, group):
         # features info
-        from menpofit.base import name_of_callable
-
         lvl_app_mod = aam.appearance_models[level]
         lvl_shape_mod = aam.shape_models[level]
         aam_mean = lvl_app_mod.mean()
@@ -3537,9 +3519,6 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
     # Define function that updates the info text
     def update_info(aam, appearance_instance, level):
-        # features info
-        from menpofit.base import name_of_callable
-
         lvl_app_mod = aam.appearance_models[level]
         lvl_shape_mod = aam.shape_models[level]
         n_channels = lvl_app_mod.mean().pixels.shape[2]
@@ -3795,7 +3774,6 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
-    from menpo.image import MaskedImage
     print('Initializing...')
 
     # Get the number of levels
@@ -3927,7 +3905,7 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
         marker_edge_colour = [tmp2['marker_edge_colour'][lbl_idx]
                               for lbl_idx in with_labels_idx]
 
-        renderer = _visualize(
+        renderer = _visualize_image(
             instance, save_figure_wid.renderer,
             landmark_options_wid.selected_values['render_landmarks'],
             channel_options_wid.selected_values['image_is_masked'],
@@ -3955,8 +3933,6 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
 
     # Define function that updates the info text
     def update_info(atm, instance, level, group):
-        from menpofit.base import name_of_callable
-
         lvl_shape_mod = atm.shape_models[level]
         tmplt_inst = atm.warped_templates[level]
         n_channels = tmplt_inst.n_channels
@@ -4296,8 +4272,6 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
 
     # Define function that updates the info text
     def update_info(atm, instance, level):
-        from menpofit.base import name_of_callable
-
         lvl_shape_mod = atm.shape_models[level]
         n_channels = instance.pixels.shape[2]
         feat = atm.holistic_features[level]
@@ -4708,7 +4682,6 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
     """
-    from menpo.image import MaskedImage
     print('Initializing...')
 
     # Make sure that fitting_results is a list even with one fitting_result
@@ -4788,7 +4761,8 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
     fitting_result_iterations_options = \
         {'n_iters': fitting_results[0].iter_image.landmarks.n_groups,
          'image_has_gt_shape': not fitting_results[0].gt_shape is None,
-         'n_points': fitting_results[0].fitted_image.landmarks['final'].lms.n_points,
+         'n_points': fitting_results[0].fitted_image.landmarks[
+             'final'].lms.n_points,
          'iter_str': 'iter_',
          'selected_groups': ['iter_0'],
          'render_image': True,
@@ -4952,7 +4926,8 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
             for g in groups:
                 group_idx = all_groups.index(g)
                 tmp1 = renderer_options_wid.selected_values[group_idx]['lines']
-                tmp2 = renderer_options_wid.selected_values[group_idx]['markers']
+                tmp2 = renderer_options_wid.selected_values[group_idx][
+                    'markers']
                 render_lines.append(tmp1['render_lines'])
                 line_colour.append(tmp1['line_colour'])
                 line_style.append(tmp1['line_style'])
@@ -5009,7 +4984,7 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
                            tmp3['y_scale'] * figure_size[1])
 
         # call helper _visualize
-        renderer = _visualize_fitting_result(
+        renderer = _visualize_images(
             image=image, renderer=save_figure_wid.renderer,
             render_image=render_image, render_landmarks=True,
             image_is_masked=False, masked_enabled=False,
@@ -5309,35 +5284,29 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
     renderer_options_wid.options_widgets[3].render_legend_checkbox.value = True
 
 
-def _visualize(image, renderer, render_landmarks, image_is_masked,
-               masked_enabled, channels, glyph_enabled, glyph_block_size,
-               glyph_use_negative, sum_enabled, group, with_labels,
-               render_lines, line_style, line_width, line_colour,
-               render_markers, marker_style, marker_size,
-               marker_edge_width, marker_edge_colour, marker_face_colour,
-               render_numbering, numbers_font_name, numbers_font_size,
-               numbers_font_style, numbers_font_weight, numbers_font_colour,
-               numbers_horizontal_align, numbers_vertical_align,
-               legend_n_columns, legend_border_axes_pad, legend_rounded_corners,
-               legend_title, legend_horizontal_spacing, legend_shadow,
-               legend_location, legend_font_name, legend_bbox_to_anchor,
-               legend_border, legend_marker_scale, legend_vertical_spacing,
-               legend_font_weight, legend_font_size, render_legend,
-               legend_font_style, legend_border_padding, figure_size,
-               render_axes, axes_font_name, axes_font_size, axes_font_style,
-               axes_x_limits, axes_y_limits, axes_font_weight, interpolation,
-               alpha, cmap_name):
-    global glyph
-    if glyph is None:
-        from menpo.feature.visualize import glyph
-    global sum_channels
-    if sum_channels is None:
-        from menpo.feature.visualize import sum_channels
-
+def _visualize_image(image, renderer, render_landmarks, image_is_masked,
+                     masked_enabled, channels, glyph_enabled, glyph_block_size,
+                     glyph_use_negative, sum_enabled, group, with_labels,
+                     render_lines, line_style, line_width, line_colour,
+                     render_markers, marker_style, marker_size,
+                     marker_edge_width, marker_edge_colour, marker_face_colour,
+                     render_numbering, numbers_font_name, numbers_font_size,
+                     numbers_font_style, numbers_font_weight,
+                     numbers_font_colour, numbers_horizontal_align,
+                     numbers_vertical_align, legend_n_columns,
+                     legend_border_axes_pad, legend_rounded_corners,
+                     legend_title, legend_horizontal_spacing, legend_shadow,
+                     legend_location, legend_font_name, legend_bbox_to_anchor,
+                     legend_border, legend_marker_scale,
+                     legend_vertical_spacing, legend_font_weight,
+                     legend_font_size, render_legend, legend_font_style,
+                     legend_border_padding, figure_size, render_axes,
+                     axes_font_name, axes_font_size, axes_font_style,
+                     axes_x_limits, axes_y_limits, axes_font_weight,
+                     interpolation, alpha, cmap_name):
     # This makes the code shorter for dealing with masked images vs non-masked
     # images
-    mask_arguments = ({'masked': masked_enabled}
-                      if image_is_masked else {})
+    mask_arguments = ({'masked': masked_enabled} if image_is_masked else {})
 
     # plot
     if render_landmarks and not group == ' ':
@@ -5502,7 +5471,7 @@ def _visualize(image, renderer, render_landmarks, image_is_masked,
                 **mask_arguments)
 
     # show plot
-    pltshow()
+    plt.show()
 
     return renderer
 
@@ -5523,15 +5492,6 @@ def _visualize_patches(patches, patch_centers, patches_indices, offset_index,
                        axes_font_name, axes_font_size, axes_font_style,
                        axes_font_weight, axes_x_limits, axes_y_limits,
                        figure_size):
-    global glyph
-    if glyph is None:
-        from menpo.feature.visualize import glyph
-    global sum_channels
-    if sum_channels is None:
-        from menpo.feature.visualize import sum_channels
-    from menpo.visualize import view_patches
-    from menpo.transform import UniformScale
-
     if glyph_enabled and render_patches:
         # compute glyph size
         glyph_patch0 = glyph(patches[0, offset_index, ...],
@@ -5652,41 +5612,38 @@ def _visualize_patches(patches, patch_centers, patches_indices, offset_index,
             figure_size=figure_size)
 
     # show plot
-    pltshow()
+    plt.show()
 
     return renderer
 
 
-def _visualize_fitting_result(
-        image, renderer, render_image, render_landmarks, image_is_masked,
-        masked_enabled, channels, glyph_enabled, glyph_block_size,
-        glyph_use_negative, sum_enabled, groups, with_labels,
-        subplots_enabled, subplots_titles, image_axes_mode, render_lines,
-        line_style, line_width, line_colour, render_markers, marker_style,
-        marker_size, marker_edge_width, marker_edge_colour,
-        marker_face_colour, render_numbering, numbers_horizontal_align,
-        numbers_vertical_align, numbers_font_name, numbers_font_size,
-        numbers_font_style, numbers_font_weight, numbers_font_colour,
-        render_legend, legend_title, legend_font_name, legend_font_style,
-        legend_font_size, legend_font_weight, legend_marker_scale,
-        legend_location, legend_bbox_to_anchor, legend_border_axes_pad,
-        legend_n_columns, legend_horizontal_spacing, legend_vertical_spacing,
-        legend_border, legend_border_padding, legend_shadow,
-        legend_rounded_corners, render_axes, axes_font_name, axes_font_size,
-        axes_font_style, axes_font_weight, axes_x_limits, axes_y_limits,
-        interpolation, alpha, figure_size):
-    import matplotlib.pyplot as plt
-
-    global glyph
-    if glyph is None:
-        from menpo.feature.visualize import glyph
-    global sum_channels
-    if sum_channels is None:
-        from menpo.feature.visualize import sum_channels
-
+def _visualize_images(image, renderer, render_image, render_landmarks,
+                      image_is_masked, masked_enabled, channels,
+                      glyph_enabled, glyph_block_size, glyph_use_negative,
+                      sum_enabled, groups, with_labels, subplots_enabled,
+                      subplots_titles, image_axes_mode, render_lines,
+                      line_style, line_width, line_colour, render_markers,
+                      marker_style, marker_size, marker_edge_width,
+                      marker_edge_colour, marker_face_colour,
+                      render_numbering, numbers_horizontal_align,
+                      numbers_vertical_align, numbers_font_name,
+                      numbers_font_size, numbers_font_style,
+                      numbers_font_weight, numbers_font_colour,
+                      render_legend, legend_title, legend_font_name,
+                      legend_font_style, legend_font_size,
+                      legend_font_weight, legend_marker_scale,
+                      legend_location, legend_bbox_to_anchor,
+                      legend_border_axes_pad, legend_n_columns,
+                      legend_horizontal_spacing, legend_vertical_spacing,
+                      legend_border, legend_border_padding, legend_shadow,
+                      legend_rounded_corners, render_axes, axes_font_name,
+                      axes_font_size, axes_font_style, axes_font_weight,
+                      axes_x_limits, axes_y_limits, interpolation, alpha,
+                      figure_size):
     # This makes the code shorter for dealing with masked images vs non-masked
     # images
-    mask_arguments = ({'masked': masked_enabled} if image_is_masked else {})
+    mask_arguments = ({'masked': masked_enabled}
+                      if image_is_masked else {})
 
     # plot
     if render_image:
