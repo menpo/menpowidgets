@@ -1,0 +1,22 @@
+package:
+  name: menpowidgets
+  version: {{ environ['CONDACI_VERSION'] }}
+
+requirements:
+  build:
+    - python
+    - setuptools
+
+  run:
+    - python
+    - menpo 0.4.*
+    - ipython 4.*
+    - jupyter 1.*
+
+test:
+  imports:
+  - menpowidgets
+
+about:
+  home: https://github.com/menpo/menpowidgets/
+  license: BSD
