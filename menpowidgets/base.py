@@ -16,7 +16,7 @@ from menpo.feature.visualize import glyph, sum_channels
 from menpo.visualize import view_patches
 from menpo.transform import UniformScale
 
-from menpofit.base import name_of_callable
+from menpo.base import name_of_callable
 
 from .options import (RendererOptionsWidget, TextPrintWidget,
                       SaveFigureOptionsWidget, AnimationOptionsWidget,
