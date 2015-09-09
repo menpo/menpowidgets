@@ -12,8 +12,8 @@ requirements:
     - menpo 0.6.*
     - ipython 4.*
     - jupyter 1.*
-    - traitlets 4.*
     - ipywidgets 4.*
+    - traitlets 4.*
 
 test:
   imports:

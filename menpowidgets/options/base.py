@@ -4985,7 +4985,7 @@ class LinearModelParametersWidget(ipywidgets.FlexBox):
     Let's create a linear model parameters values widget and then update its
     state. Firstly, we need to import it:
 
-        >>> from menpofit.visualize.widgets import LinearModelParametersWidget
+        >>> from base.visualize.widgets import LinearModelParametersWidget
         >>> from IPython.display import display
 
     Now let's define a render function that will get called on every widget
@@ -5579,7 +5579,7 @@ class FittingResultOptionsWidget(ipywidgets.FlexBox):
     Let's create a fitting result options widget and then update its state.
     Firstly, we need to import it:
 
-        >>> from menpofit.visualize.widgets import FittingResultOptionsWidget
+        >>> from base.visualize.widgets import FittingResultOptionsWidget
         >>> from IPython.display import display
 
     Now let's define a render function that will get called on every widget
@@ -6016,7 +6016,7 @@ class FittingResultIterationsOptionsWidget(ipywidgets.FlexBox):
     Let's create a fitting result iterations options widget and then update its
     state. Firstly, we need to import it:
 
-        >>> from menpofit.visualize.widgets import FittingResultIterationsOptionsWidget
+        >>> from base.visualize.widgets import FittingResultIterationsOptionsWidget
         >>> from IPython.display import display
 
     Now let's define a render function that will get called on every widget

@@ -13,6 +13,6 @@ setup(name='menpowidgets',
                         'ipywidgets>=4.0,<5.0',
                         'traitlets>=4.0,<5.0',
                         'ipython>=4.0,<5.0',
-                        'jupyter>=4.0,<5.0'],
+                        'jupyter>=1.0,<2.0'],
       package_data={'menpo': 'logos/*'}
       )
