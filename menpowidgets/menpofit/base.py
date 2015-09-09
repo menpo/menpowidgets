@@ -17,12 +17,12 @@ from menpo.visualize.viewmatplotlib import (MatplotlibImageViewer2d,
                                             sample_colours_from_colourmap)
 from menpo.image import MaskedImage
 
+from .options import (FittingResultOptionsWidget,
+                      FittingResultIterationsOptionsWidget)
 from ..options import (RendererOptionsWidget, TextPrintWidget,
                        SaveFigureOptionsWidget, AnimationOptionsWidget,
                        LandmarkOptionsWidget, ChannelOptionsWidget,
                        GraphOptionsWidget, PatchOptionsWidget,
-                       FittingResultOptionsWidget,
-                       FittingResultIterationsOptionsWidget,
                        LinearModelParametersWidget)
 from ..tools import (format_box, LogoWidget, map_styles_to_hex_colours)
 from ..checks import check_n_parameters

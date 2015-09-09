@@ -1,7 +1,5 @@
 from .base import (AnimationOptionsWidget, ChannelOptionsWidget,
-                   FeatureOptionsWidget,
-                   FittingResultIterationsOptionsWidget,
-                   FittingResultOptionsWidget, GraphOptionsWidget,
+                   FeatureOptionsWidget, GraphOptionsWidget,
                    LandmarkOptionsWidget, LinearModelParametersWidget,
                    PatchOptionsWidget, RendererOptionsWidget,
                    SaveFigureOptionsWidget, TextPrintWidget)
