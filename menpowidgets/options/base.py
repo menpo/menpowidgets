@@ -4107,12 +4107,13 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
         def preview_function(name, old_value, value):
             if value == 2:
                 # extracting features message
+                val1 = ''
                 for name, f in tmp.items():
                     if f == self.function.func:
                         val1 = name
                 self.preview_output_latex.value = \
-                    "Previewing {} features...".format(val1)
-                self.preview_time_latex.value = ""
+                    'Previewing {} features...'.format(val1)
+                self.preview_time_latex.value = ''
                 # extract feature and time it
                 t = time.time()
                 feat_image = self.function(self.image)

@@ -1,5 +1,6 @@
 # Protect against menpofit being missing
 from menpo.base import name_of_callable, MenpoMissingDependencyError
+
 try:
     import menpofit
 except ImportError:
@@ -16,7 +17,8 @@ import IPython.display as ipydisplay
 from menpo.visualize.viewmatplotlib import (MatplotlibImageViewer2d,
                                             sample_colours_from_colourmap)
 from menpo.image import MaskedImage
-
+from ..base import (_extract_groups_labels, _visualize_image,
+                    _visualize_patches, _visualize_images)
 from .options import (FittingResultOptionsWidget,
                       FittingResultIterationsOptionsWidget)
 from ..options import (RendererOptionsWidget, TextPrintWidget,
@@ -2649,7 +2651,7 @@ def plot_ced(errors, legend_entries=None, error_range=None,
         as part of a parent widget. If ``False``, the widget object is not
         returned, it is just visualized.
     """
-    from base.result import plot_cumulative_error_distribution
+    from menpofit.result import plot_cumulative_error_distribution
     print('Initializing...')
 
     # Make sure that errors is a list even with one list member
@@ -3213,15 +3215,7 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
 
         # Create output str
         if fitting_results[im].gt_shape is not None:
-            from base.result import (
-                compute_root_mean_square_error, compute_point_to_point_error,
-                compute_normalise_point_to_point_error)
-            if value is 'me_norm':
-                func = compute_normalise_point_to_point_error
-            elif value is 'me':
-                func = compute_point_to_point_error
-            elif value is 'rmse':
-                func = compute_root_mean_square_error
+            func = _error_type_key_to_func(value)
             text_per_line = [
                 "> Initial error: {:.4f}".format(
                     fitting_results[im].initial_error(compute_error=func)),
@@ -3458,4 +3452,7 @@ def _error_type_key_to_func(error_type):
         func = compute_point_to_point_error
     elif error_type is 'rmse':
         func = compute_root_mean_square_error
+    else:
+        raise ValueError('Unexpected error_type. '
+                         'Supported values are: {me_norm, me, rmse}')
     return func
