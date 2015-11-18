@@ -1836,7 +1836,7 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         patch_options_wid.set_widget_state(new_patch_options,
                                            allow_callback=False)
         # Update channel options
-        tmp_n_channels = aam.appearance_models[value].mean().pixels.n_channels
+        tmp_n_channels = aam.appearance_models[value].mean().pixels.shape[2]
         tmp_channels = channel_options_wid.selected_values['channels']
         tmp_glyph_enabled = channel_options_wid.selected_values['glyph_enabled']
         tmp_sum_enabled = channel_options_wid.selected_values['sum_enabled']
