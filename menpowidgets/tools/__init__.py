@@ -6,5 +6,5 @@ from .base import (ColourSelectionWidget, DaisyOptionsWidget,
                    LegendOptionsWidget, LineOptionsWidget, LogoWidget,
                    MarkerOptionsWidget, NumberingOptionsWidget,
                    SlicingCommandWidget)
-from .format import (format_box, format_font, map_styles_to_hex_colours,
-                     convert_image_to_bytes)
+from .style import (format_box, format_font, format_slider,
+                    map_styles_to_hex_colours, convert_image_to_bytes)

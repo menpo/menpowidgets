@@ -53,8 +53,9 @@ def map_styles_to_hex_colours(style, background=False):
             return None
 
 
-def format_box(box, box_style, border_visible, border_color, border_style,
-               border_width, border_radius, padding, margin):
+def format_box(box, box_style=None, border_visible=False, border_color='black',
+               border_style='solid', border_width=1, border_radius=0,
+               padding=0, margin=0):
     r"""
     Function that defines the style of an IPython box.
 
@@ -96,7 +97,8 @@ def format_box(box, box_style, border_visible, border_color, border_style,
         box.border_width = 0
 
 
-def format_font(obj, font_family, font_size, font_style, font_weight):
+def format_font(obj, font_family='', font_size=None, font_style='',
+                font_weight=''):
     r"""
     Function that defines the font of a given IPython object.
 
@@ -128,6 +130,14 @@ def format_font(obj, font_family, font_size, font_style, font_weight):
     obj.font_size = font_size
     obj.font_style = font_style
     obj.font_weight = font_weight
+
+
+def format_slider(obj, slider_width='6cm', slider_handle_colour=None,
+                  slider_bar_colour=None, slider_text_visible=True):
+    obj.width = slider_width
+    obj.slider_color = slider_handle_colour
+    obj.background_color = slider_bar_colour
+    obj.readout = slider_text_visible
 
 
 def convert_image_to_bytes(image):

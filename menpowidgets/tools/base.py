@@ -4,8 +4,8 @@ from traitlets import link
 
 import menpo.io as mio
 
-from .format import (map_styles_to_hex_colours, convert_image_to_bytes, 
-                     format_box, format_font)
+from .style import (map_styles_to_hex_colours, convert_image_to_bytes,
+                    format_box, format_font, format_slider)
 
 # Global variables to try and reduce overhead of loading the logo
 MENPO_MINIMAL_LOGO = None
@@ -16,11 +16,10 @@ MENPO_INFO_LOGO = None
 MENPO_LOGO_SCALE = None
 
 
-class LogoWidget(ipywidgets.Box):
+class LogoWidget(ipywidgets.FlexBox):
     r"""
-    Creates a widget with Menpo's logo image. The widget consists of:
-
-        1) Image [`self.image`]: the ipython image widget with Menpo's logo
+    Creates a widget with Menpo's logo image. The widget stores the image in
+    `self.image` using `ipywidgets.Image`.
 
     To set the styling of this widget please refer to the `style()` method.
 
@@ -28,7 +27,7 @@ class LogoWidget(ipywidgets.Box):
     ----------
     scale : `float`, optional
         Defines the scale that will be applied to the logo image
-        (`data/menpo_thumbnail.jpg`).
+        (`logos/menpo_thumbnail.jpg`).
     style : ``{'minimal', 'danger', 'info', 'warning', 'success'}``, optional
         Defines the styling of the logo widget, i.e. the colour around the
         logo image.
@@ -92,7 +91,7 @@ class LogoWidget(ipywidgets.Box):
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0):
         r"""
-        Function that defines the styling of the widget.
+        Function that defines the style of the widget.
 
         Parameters
         ----------
@@ -125,9 +124,7 @@ class LogoWidget(ipywidgets.Box):
 class IndexSliderWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for selecting an index using a slider. The widget consists
-    of:
-
-        1) IntSlider [`self.slider`]: slider for selecting the index
+    of an `ipywidgets.IntSlider` object in `self.slider`.
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -139,22 +136,24 @@ class IndexSliderWidget(ipywidgets.FlexBox):
     index : `dict`
         The dictionary with the default options. For example ::
 
-            index = {'min': 0, 'max': 100, 'step': 1, 'index': 10}
+            index = {'min': 0, 'max': 100, 'step': 1, 'index': 10,
+                     'continuous_update': False}
 
+    description : `str`, optional
+        The title of the widget.
     render_function : `function` or ``None``, optional
         The render function that is executed when the index value changes.
         If ``None``, then nothing is assigned.
     update_function : `function` or ``None``, optional
         The update function that is executed when the index value changes.
         If ``None``, then nothing is assigned.
-    description : `str`, optional
-        The title of the widget.
     """
-    def __init__(self, index, render_function=None,
-                 update_function=None, description='Index: '):
+    def __init__(self, index, description='Index: ', render_function=None,
+                 update_function=None):
         self.slider = ipywidgets.IntSlider(
             min=index['min'], max=index['max'], value=index['index'],
-            step=index['step'], description=description, width='5cm')
+            step=index['step'], description=description, width='5cm',
+            continuous_update=index['continuous_update'])
         super(IndexSliderWidget, self).__init__(children=[self.slider])
         self.align = 'start'
 
@@ -175,7 +174,8 @@ class IndexSliderWidget(ipywidgets.FlexBox):
     def style(self, box_style=None, border_visible=False, border_color='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
-              font_weight='', slider_width='6cm', slider_colour=None):
+              font_weight='', slider_width='6cm', slider_bar_colour=None,
+              slider_handle_colour=None, slider_text_visible=True):
         r"""
         Function that defines the styling of the widget.
 
@@ -224,15 +224,21 @@ class IndexSliderWidget(ipywidgets.FlexBox):
 
         slider_width : `float`, optional
             The width of the slider
-        slider_colour : `str`, optional
-            The colour of the slider's handler.
+        slider_bar_colour : `str`, optional
+            The colour of the slider's bar.
+        slider_handle_colour : `str`, optional
+            The colour of the slider's handle.
+        slider_text_visible : `bool`, optional
+            Whether the selected value of the slider is visible.
         """
         format_box(self, box_style, border_visible, border_color, border_style,
                    border_width, border_radius, padding, margin)
         format_font(self, font_family, font_size, font_style,
                     font_weight)
-        self.slider.width = slider_width
-        self.slider.slider_color = slider_colour
+        format_slider(self.slider, slider_width=slider_width,
+                      slider_handle_colour=slider_handle_colour,
+                      slider_bar_colour=slider_bar_colour,
+                      slider_text_visible=slider_text_visible)
 
     def add_render_function(self, render_function):
         r"""
@@ -324,7 +330,8 @@ class IndexSliderWidget(ipywidgets.FlexBox):
         index : `dict`
             The dictionary with the selected options. For example ::
 
-                index = {'min': 0, 'max': 100, 'step': 1, 'index': 10}
+                index = {'min': 0, 'max': 100, 'step': 1, 'index': 10,
+                         'continuous_update': False}
 
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
@@ -333,7 +340,9 @@ class IndexSliderWidget(ipywidgets.FlexBox):
         if not (index['min'] == self.selected_values['min'] and
                 index['max'] == self.selected_values['max'] and
                 index['step'] == self.selected_values['step'] and
-                index['index'] == self.selected_values['index']):
+                index['index'] == self.selected_values['index'] and
+                index['continuous_update'] == self.selected_values[
+                        'continuous_update']):
             if not allow_callback:
                 # temporarily remove render and update functions
                 render_function = self._render_function
@@ -342,6 +351,7 @@ class IndexSliderWidget(ipywidgets.FlexBox):
                 self.remove_update_function()
 
             # set values to slider
+            self.slider.continuous_update = index['continuous_update']
             self.slider.min = index['min']
             self.slider.max = index['max']
             self.slider.step = index['step']
