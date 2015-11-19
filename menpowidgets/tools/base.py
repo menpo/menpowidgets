@@ -5,7 +5,9 @@ from traitlets import link
 import menpo.io as mio
 
 from .style import (map_styles_to_hex_colours, convert_image_to_bytes,
-                    format_box, format_font, format_slider)
+                    format_box, format_font, format_slider,
+                    parse_font_awesome_icon)
+from .utils import _lists_are_the_same
 
 # Global variables to try and reduce overhead of loading the logo
 MENPO_MINIMAL_LOGO = None
@@ -87,7 +89,7 @@ class LogoWidget(ipywidgets.FlexBox):
                              "given.".format(style))
         super(LogoWidget, self).__init__(children=[self.image])
 
-    def style(self, box_style=None, border_visible=False, border_color='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0):
         r"""
@@ -104,8 +106,8 @@ class LogoWidget(ipywidgets.FlexBox):
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
-        border_color : `str`, optional
-            The color of the border around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
@@ -117,7 +119,7 @@ class LogoWidget(ipywidgets.FlexBox):
         margin : `float`, optional
             The margin around the widget.
         """
-        format_box(self, box_style, border_visible, border_color, border_style,
+        format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
 
 
@@ -136,11 +138,14 @@ class IndexSliderWidget(ipywidgets.FlexBox):
     index : `dict`
         The dictionary with the default options. For example ::
 
-            index = {'min': 0, 'max': 100, 'step': 1, 'index': 10,
-                     'continuous_update': False}
+            index = {'min': 0, 'max': 100, 'step': 1, 'index': 10}
 
     description : `str`, optional
         The title of the widget.
+    continuous_update : `bool`, optional
+        If ``True``, then the render and update functions are called while moving
+        the slider's handle. If ``False``, then the the functions are called only
+        when the handle (mouse click) is realised.
     render_function : `function` or ``None``, optional
         The render function that is executed when the index value changes.
         If ``None``, then nothing is assigned.
@@ -148,12 +153,12 @@ class IndexSliderWidget(ipywidgets.FlexBox):
         The update function that is executed when the index value changes.
         If ``None``, then nothing is assigned.
     """
-    def __init__(self, index, description='Index: ', render_function=None,
-                 update_function=None):
+    def __init__(self, index, description='Index: ', continuous_update=False,
+                 render_function=None, update_function=None):
         self.slider = ipywidgets.IntSlider(
             min=index['min'], max=index['max'], value=index['index'],
             step=index['step'], description=description, width='5cm',
-            continuous_update=index['continuous_update'])
+            continuous_update=continuous_update)
         super(IndexSliderWidget, self).__init__(children=[self.slider])
         self.align = 'start'
 
@@ -171,7 +176,7 @@ class IndexSliderWidget(ipywidgets.FlexBox):
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, box_style=None, border_visible=False, border_color='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight='', slider_width='6cm', slider_bar_colour=None,
@@ -190,8 +195,8 @@ class IndexSliderWidget(ipywidgets.FlexBox):
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
-        border_color : `str`, optional
-            The color of the border around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
@@ -231,7 +236,7 @@ class IndexSliderWidget(ipywidgets.FlexBox):
         slider_text_visible : `bool`, optional
             Whether the selected value of the slider is visible.
         """
-        format_box(self, box_style, border_visible, border_color, border_style,
+        format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
         format_font(self, font_family, font_size, font_style,
                     font_weight)
@@ -320,7 +325,8 @@ class IndexSliderWidget(ipywidgets.FlexBox):
         # add new function
         self.add_update_function(update_function)
 
-    def set_widget_state(self, index, allow_callback=True):
+    def set_widget_state(self, index, continuous_update=False,
+                         allow_callback=True):
         r"""
         Method that updates the state of the widget, if the provided `index`
         values are different than `self.selected_values()`.
@@ -330,9 +336,12 @@ class IndexSliderWidget(ipywidgets.FlexBox):
         index : `dict`
             The dictionary with the selected options. For example ::
 
-                index = {'min': 0, 'max': 100, 'step': 1, 'index': 10,
-                         'continuous_update': False}
+                index = {'min': 0, 'max': 100, 'step': 1, 'index': 10}
 
+        continuous_update : `bool`, optional
+            If ``True``, then the render and update functions are called while
+            moving the slider's handle. If ``False``, then the the functions are
+            called only when the handle (mouse click) is realised.
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
@@ -341,8 +350,7 @@ class IndexSliderWidget(ipywidgets.FlexBox):
                 index['max'] == self.selected_values['max'] and
                 index['step'] == self.selected_values['step'] and
                 index['index'] == self.selected_values['index'] and
-                index['continuous_update'] == self.selected_values[
-                        'continuous_update']):
+                self.slider.continuous_update == continuous_update):
             if not allow_callback:
                 # temporarily remove render and update functions
                 render_function = self._render_function
@@ -351,7 +359,7 @@ class IndexSliderWidget(ipywidgets.FlexBox):
                 self.remove_update_function()
 
             # set values to slider
-            self.slider.continuous_update = index['continuous_update']
+            self.slider.continuous_update = continuous_update
             self.slider.min = index['min']
             self.slider.max = index['max']
             self.slider.step = index['step']
@@ -369,12 +377,12 @@ class IndexSliderWidget(ipywidgets.FlexBox):
 class IndexButtonsWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for selecting an index using plus/minus buttons. The widget
-    consists of:
+    consists of the following objects from `ipywidgets`:
 
-        1) Latex [`self.title`]: the description of the widget
-        2) Button [`self.button_plus`]: the plus button to increase the index
-        3) Button [`self.button_minus`]: the minus button to decrease the index
-        4) IntText [`self.index_text`]: text area with the selected index. It
+        1) `Latex` [`self.title`]: the description of the widget
+        2) `Button` [`self.button_plus`]: the plus button to increase the index
+        3) `Button` [`self.button_minus`]: the minus button to decrease the index
+        4) `IntText` [`self.index_text`]: text area with the selected index. It
            can either be editable or not.
 
     The selected values are stored in `self.selected_values` `dict`. To set the
@@ -398,9 +406,11 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
     description : `str`, optional
         The title of the widget.
     minus_description : `str`, optional
-        The title of the button that decreases the index.
+        The text/icon of the button that decreases the index. If the `str` starts
+        with `'fa-'`, then a font-awesome icon is defined.
     plus_description : `str`, optional
-        The title of the button that increases the index.
+        The title of the button that increases the index. If the `str` starts
+        with `'fa-'`, then a font-awesome icon is defined.
     loop_enabled : `bool`, optional
         If ``True``, then if by pressing the buttons we reach the minimum
         (maximum) index values, then the counting will continue from the end
@@ -410,13 +420,16 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
         Flag that determines whether the index text will be editable.
     """
     def __init__(self, index, render_function=None, update_function=None,
-                 description='Index: ', minus_description='-',
-                 plus_description='+', loop_enabled=True, text_editable=True):
+                 description='Index: ', minus_description='fa-minus',
+                 plus_description='fa-plus', loop_enabled=True,
+                 text_editable=True):
         self.title = ipywidgets.Latex(value=description, padding=6, margin=6)
-        self.button_minus = ipywidgets.Button(description=minus_description,
-                                              width='1cm')
-        self.button_plus = ipywidgets.Button(description=plus_description,
-                                             width='1cm')
+        m_icon, m_description = parse_font_awesome_icon(minus_description)
+        self.button_minus = ipywidgets.Button(description=m_description,
+                                              icon=m_icon, width='1cm')
+        p_icon, p_description = parse_font_awesome_icon(plus_description)
+        self.button_plus = ipywidgets.Button(description=p_description,
+                                             icon=p_icon, width='1cm')
         self.index_text = ipywidgets.IntText(
             value=index['index'], min=index['min'], max=index['max'],
             disabled=not text_editable)
@@ -466,7 +479,7 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, box_style=None, border_visible=False, border_color='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight='', minus_style='', plus_style='',
@@ -485,8 +498,8 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
-        border_color : `str`, optional
-            The color of the border around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
@@ -536,7 +549,7 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
         text_background_colour : `str`, optional
             The background colour of the index text.
         """
-        format_box(self, box_style, border_visible, border_color, border_style,
+        format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
         format_font(self.title, font_family, font_size, font_style,
                     font_weight)
@@ -645,6 +658,13 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
 
                 index = {'min': 0, 'max': 100, 'step': 1, 'index': 10}
 
+        loop_enabled : `bool`, optional
+            If ``True``, then if by pressing the buttons we reach the minimum
+            (maximum) index values, then the counting will continue from the end
+            (beginning). If ``False``, the counting will stop at the minimum
+            (maximum) value.
+        text_editable : `bool`, optional
+            Flag that determines whether the index text will be editable.
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
@@ -702,25 +722,6 @@ def _decode_colour(colour):
         b_val = colour[2]
         colour = 'custom'
     return colour, r_val, g_val, b_val
-
-
-def _lists_are_the_same(a, b):
-    r"""
-    Function that checks if two `lists` have the same elements in the same
-    order.
-
-    Returns
-    -------
-    _lists_are_the_same : `bool`
-        ``True`` if the lists are the same.
-    """
-    if len(a) == len(b):
-        for i, j in zip(a, b):
-            if i != j:
-                return False
-        return True
-    else:
-        return False
 
 
 class ColourSelectionWidget(ipywidgets.FlexBox):
@@ -885,7 +886,7 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         self._apply_to_all_render_function = None
         self.add_render_function(render_function)
 
-    def style(self, box_style=None, border_visible=False, border_color='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight='', label_background_colour=None,
@@ -906,8 +907,8 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
-        border_color : `str`, optional
-            The color of the border around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
@@ -951,7 +952,7 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
                 ``None``
 
         """
-        format_box(self, box_style, border_visible, border_color, border_style,
+        format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
         format_font(self, font_family, font_size, font_style, font_weight)
         format_font(self.label_dropdown, font_family, font_size, font_style,
@@ -1234,7 +1235,7 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, box_style=None, border_visible=False, border_color='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight='', alpha_colour=None, cmap_colour=None):
@@ -1252,8 +1253,8 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
-        border_color : `str`, optional
-            The color of the border around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
@@ -1289,7 +1290,7 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
         cmap_colour : `str`, optional
             The colour of the cmap selector.
         """
-        format_box(self, box_style, border_visible, border_color, border_style,
+        format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
         format_font(self, font_family, font_size, font_style, font_weight)
         format_font(self.alpha_slider, font_family, font_size, font_style,
@@ -1488,7 +1489,7 @@ class LineOptionsWidget(ipywidgets.FlexBox):
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, box_style=None, border_visible=False, border_color='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -1506,8 +1507,8 @@ class LineOptionsWidget(ipywidgets.FlexBox):
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
-        border_color : `str`, optional
-            The color of the border around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
@@ -1539,7 +1540,7 @@ class LineOptionsWidget(ipywidgets.FlexBox):
                  ``'extra bold'``, ``'black'``}
 
         """
-        format_box(self, box_style, border_visible, border_color, border_style,
+        format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
         format_font(self, font_family, font_size, font_style, font_weight)
         format_font(self.render_lines_checkbox, font_family, font_size,
@@ -1797,7 +1798,7 @@ class MarkerOptionsWidget(ipywidgets.FlexBox):
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, box_style=None, border_visible=False, border_color='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -1815,8 +1816,8 @@ class MarkerOptionsWidget(ipywidgets.FlexBox):
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
-        border_color : `str`, optional
-            The color of the border around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
@@ -1848,7 +1849,7 @@ class MarkerOptionsWidget(ipywidgets.FlexBox):
                  ``'extra bold'``, ``'black'``}
 
         """
-        format_box(self, box_style, border_visible, border_color, border_style,
+        format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
         format_font(self, font_family, font_size, font_style, font_weight)
         format_font(self.render_markers_checkbox, font_family, font_size,
@@ -2186,7 +2187,7 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, box_style=None, border_visible=False, border_color='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -2204,8 +2205,8 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
-        border_color : `str`, optional
-            The color of the border around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
@@ -2237,7 +2238,7 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
                  ``'extra bold'``, ``'black'``}
 
         """
-        format_box(self, box_style, border_visible, border_color, border_style,
+        format_box(self, box_style, border_visible, border_colour, border_style,
                     border_width, border_radius, padding, margin)
         format_font(self, font_family, font_size, font_style, font_weight)
         format_font(self.render_numbering_checkbox, font_family, font_size,
@@ -2665,7 +2666,7 @@ class FigureOptionsOneScaleWidget(ipywidgets.FlexBox):
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, box_style=None, border_visible=False, border_color='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -2683,8 +2684,8 @@ class FigureOptionsOneScaleWidget(ipywidgets.FlexBox):
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
-        border_color : `str`, optional
-            The color of the border around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
@@ -2716,7 +2717,7 @@ class FigureOptionsOneScaleWidget(ipywidgets.FlexBox):
                  ``'extra bold'``, ``'black'``}
 
         """
-        format_box(self, box_style, border_visible, border_color, border_style,
+        format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
         format_font(self, font_family, font_size, font_style, font_weight)
         format_font(self.figure_scale_slider, font_family, font_size,
@@ -3232,7 +3233,7 @@ class FigureOptionsTwoScalesWidget(ipywidgets.FlexBox):
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, box_style=None, border_visible=False, border_color='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -3250,8 +3251,8 @@ class FigureOptionsTwoScalesWidget(ipywidgets.FlexBox):
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
-        border_color : `str`, optional
-            The color of the border around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
@@ -3283,7 +3284,7 @@ class FigureOptionsTwoScalesWidget(ipywidgets.FlexBox):
                  ``'extra bold'``, ``'black'``}
 
         """
-        format_box(self, box_style, border_visible, border_color, border_style,
+        format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
         format_font(self, font_family, font_size, font_style, font_weight)
         format_font(self.x_scale_slider, font_family, font_size, font_style,
@@ -3880,7 +3881,7 @@ class LegendOptionsWidget(ipywidgets.FlexBox):
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, box_style=None, border_visible=False, border_color='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -3898,8 +3899,8 @@ class LegendOptionsWidget(ipywidgets.FlexBox):
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
-        border_color : `str`, optional
-            The color of the border around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
@@ -3931,7 +3932,7 @@ class LegendOptionsWidget(ipywidgets.FlexBox):
                  ``'extra bold'``, ``'black'``}
 
         """
-        format_box(self, box_style, border_visible, border_color, border_style,
+        format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
         format_font(self, font_family, font_size, font_style, font_weight)
         format_font(self.render_legend_checkbox, font_family, font_size,
@@ -4306,7 +4307,7 @@ class GridOptionsWidget(ipywidgets.FlexBox):
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, box_style=None, border_visible=False, border_color='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -4324,8 +4325,8 @@ class GridOptionsWidget(ipywidgets.FlexBox):
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
-        border_color : `str`, optional
-            The color of the border around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
@@ -4357,7 +4358,7 @@ class GridOptionsWidget(ipywidgets.FlexBox):
                  ``'extra bold'``, ``'black'``}
 
         """
-        format_box(self, box_style, border_visible, border_color, border_style,
+        format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
         format_font(self, font_family, font_size, font_style, font_weight)
         format_font(self.render_grid_checkbox, font_family, font_size,
@@ -4700,7 +4701,7 @@ class HOGOptionsWidget(ipywidgets.FlexBox):
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, box_style=None, border_visible=False, border_color='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -4718,8 +4719,8 @@ class HOGOptionsWidget(ipywidgets.FlexBox):
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
-        border_color : `str`, optional
-            The color of the border around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
@@ -4751,7 +4752,7 @@ class HOGOptionsWidget(ipywidgets.FlexBox):
                  ``'extra bold'``, ``'black'``}
 
         """
-        format_box(self, box_style, border_visible, border_color, border_style,
+        format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
         format_font(self, font_family, font_size, font_style, font_weight)
         format_font(self.options_box, font_family, font_size, font_style,
@@ -5006,7 +5007,7 @@ class DSIFTOptionsWidget(ipywidgets.FlexBox):
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, box_style=None, border_visible=False, border_color='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -5024,8 +5025,8 @@ class DSIFTOptionsWidget(ipywidgets.FlexBox):
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
-        border_color : `str`, optional
-            The color of the border around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
@@ -5057,7 +5058,7 @@ class DSIFTOptionsWidget(ipywidgets.FlexBox):
                  ``'extra bold'``, ``'black'``}
 
         """
-        format_box(self, box_style, border_visible, border_color, border_style,
+        format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
         format_font(self, font_family, font_size, font_style, font_weight)
         format_font(self.options_box, font_family, font_size, font_style,
@@ -5325,7 +5326,7 @@ class DaisyOptionsWidget(ipywidgets.FlexBox):
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, box_style=None, border_visible=False, border_color='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -5343,8 +5344,8 @@ class DaisyOptionsWidget(ipywidgets.FlexBox):
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
-        border_color : `str`, optional
-            The color of the border around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
@@ -5376,7 +5377,7 @@ class DaisyOptionsWidget(ipywidgets.FlexBox):
                  ``'extra bold'``, ``'black'``}
 
         """
-        format_box(self, box_style, border_visible, border_color, border_style,
+        format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
         format_font(self, font_family, font_size, font_style, font_weight)
         format_font(self.step_text, font_family, font_size, font_style,
@@ -5580,7 +5581,7 @@ class LBPOptionsWidget(ipywidgets.FlexBox):
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, box_style=None, border_visible=False, border_color='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -5598,8 +5599,8 @@ class LBPOptionsWidget(ipywidgets.FlexBox):
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
-        border_color : `str`, optional
-            The color of the border around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
@@ -5631,7 +5632,7 @@ class LBPOptionsWidget(ipywidgets.FlexBox):
                  ``'extra bold'``, ``'black'``}
 
         """
-        format_box(self, box_style, border_visible, border_color, border_style,
+        format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
         format_font(self, font_family, font_size, font_style, font_weight)
         format_font(self.mapping_type_dropdown, font_family, font_size,
@@ -5754,7 +5755,7 @@ class IGOOptionsWidget(ipywidgets.FlexBox):
         self._render_function = None
         self.add_render_function(render_function)
 
-    def style(self, box_style=None, border_visible=False, border_color='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -5772,8 +5773,8 @@ class IGOOptionsWidget(ipywidgets.FlexBox):
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
-        border_color : `str`, optional
-            The color of the border around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
@@ -5805,7 +5806,7 @@ class IGOOptionsWidget(ipywidgets.FlexBox):
                  ``'extra bold'``, ``'black'``}
 
         """
-        format_box(self, box_style, border_visible, border_color, border_style,
+        format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
         format_font(self, font_family, font_size, font_style, font_weight)
         format_font(self.double_angles_checkbox, font_family, font_size,
@@ -6466,9 +6467,9 @@ class SlicingCommandWidget(ipywidgets.FlexBox):
         if allow_callback:
             self._render_function('', 0)
 
-    def style(self, box_style=None, border_visible=False, border_color='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
-              margin=0, text_box_style=None, text_box_background_color=None,
+              margin=0, text_box_style=None, text_box_background_colour=None,
               text_box_width=None, font_family='', font_size=None,
               font_style='', font_weight=''):
         r"""
@@ -6485,8 +6486,8 @@ class SlicingCommandWidget(ipywidgets.FlexBox):
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
-        border_color : `str`, optional
-            The color of the border around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
@@ -6504,8 +6505,8 @@ class SlicingCommandWidget(ipywidgets.FlexBox):
                 or
                 ``None``
 
-        text_box_background_color : `str`, optional
-            The background color of the command text box.
+        text_box_background_colour : `str`, optional
+            The background colour of the command text box.
         text_box_width : `str`, optional
             The width of the command text box.
         font_family : See Below, optional
@@ -6529,14 +6530,14 @@ class SlicingCommandWidget(ipywidgets.FlexBox):
                  ``'extra bold'``, ``'black'``}
 
         """
-        format_box(self, box_style, border_visible, border_color, border_style,
+        format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
         format_font(self, font_family, font_size, font_style, font_weight)
         format_font(self.cmd_text, font_family, font_size, font_style,
                     font_weight)
         self.cmd_text.color = map_styles_to_hex_colours(text_box_style)
         self.cmd_text.background_color = map_styles_to_hex_colours(
-            text_box_background_color, background=True)
+            text_box_background_colour, background=True)
         self.cmd_text.border_color = map_styles_to_hex_colours(text_box_style)
         self.cmd_text.font_family = 'monospace'
         self.cmd_text.border_width = 1

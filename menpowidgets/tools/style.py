@@ -53,16 +53,17 @@ def map_styles_to_hex_colours(style, background=False):
             return None
 
 
-def format_box(box, box_style=None, border_visible=False, border_color='black',
+def format_box(box, box_style=None, border_visible=False, border_colour='black',
                border_style='solid', border_width=1, border_radius=0,
                padding=0, margin=0):
     r"""
-    Function that defines the style of an IPython box.
+    Function that defines the style of an `ipywidgets.Box`, `ipywidgets.FlexBox`
+    or subclass object.
 
     Parameters
     ----------
-    box : `IPython.html.widgets.Box`, `IPython.html.widgets.FlexBox` or subclass
-        The ipython box object.
+    box : `ipywidgets.Box`, `ipywidgets.FlexBox` or subclass
+        The box object.
     box_style : `str` or ``None`` (see below)
         Style options ::
 
@@ -72,8 +73,8 @@ def format_box(box, box_style=None, border_visible=False, border_color='black',
 
     border_visible : `bool`
         Defines whether to draw the border line around the widget.
-    border_color : `str`
-        The color of the border around the widget.
+    border_colour : `str`
+        The colour of the border around the widget.
     border_style : `str`
         The line style of the border around the widget.
     border_width : `float`
@@ -89,7 +90,7 @@ def format_box(box, box_style=None, border_visible=False, border_color='black',
     box.padding = padding
     box.margin = margin
     if border_visible:
-        box.border_color = border_color
+        box.border_color = border_colour
         box.border_style = border_style
         box.border_width = border_width
         box.border_radius = border_radius
@@ -100,11 +101,11 @@ def format_box(box, box_style=None, border_visible=False, border_color='black',
 def format_font(obj, font_family='', font_size=None, font_style='',
                 font_weight=''):
     r"""
-    Function that defines the font of a given IPython object.
+    Function that defines the font of a given `ipywidgets` object.
 
     Parameters
     ----------
-    obj : `IPython.html.widgets`
+    obj : `ipywidgets`
         The ipython widget object.
     font_family : See Below, optional
         The font of the axes.
@@ -134,10 +135,56 @@ def format_font(obj, font_family='', font_size=None, font_style='',
 
 def format_slider(obj, slider_width='6cm', slider_handle_colour=None,
                   slider_bar_colour=None, slider_text_visible=True):
+    r"""
+    Function that defines the options of a given `ipywidgets` slider object.
+
+    Parameters
+    ----------
+    obj : `ipywidgets.IntSlider` or `ipywidgets.FloatSlider`
+        The ipython slider object.
+    slider_width : float, optional
+        The width of the slider.
+    slider_handle_colour : `str`, optional
+        The colour of the slider's handle.
+    slider_bar_colour : `str`, optional
+        The colour of the slider's bar.
+    slider_text_visible : `bool`, optional
+        Whether the slider's text is visible.
+    """
     obj.width = slider_width
     obj.slider_color = slider_handle_colour
     obj.background_color = slider_bar_colour
     obj.readout = slider_text_visible
+
+
+def parse_font_awesome_icon(option):
+    r"""
+    Function that parses an argument related to the `icon` and `description`
+    properties of `ipywidgets.Button`. If the provided option is an `str` that
+    starts with `fa-`, then a font-awesome icon is assumed.
+
+    Parameters
+    ----------
+    option : `str` or ``None``
+        The selected `description` option.
+
+    Returns
+    -------
+    icon : `str` or ``None``
+        The selected icon option.
+    description : `str` or ``None``
+        The selected description option.
+    """
+    if option is None:
+        icon = description = None
+    else:
+        if len(option) > 3 and option[:3] == 'fa-':
+            icon = option
+            description = ''
+        else:
+            icon = None
+            description = option
+    return icon, description
 
 
 def convert_image_to_bytes(image):
