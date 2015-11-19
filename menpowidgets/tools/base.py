@@ -7,7 +7,7 @@ import menpo.io as mio
 from .style import (map_styles_to_hex_colours, convert_image_to_bytes,
                     format_box, format_font, format_slider,
                     parse_font_awesome_icon)
-from .utils import _lists_are_the_same
+from .utils import lists_are_the_same, decode_colour
 
 # Global variables to try and reduce overhead of loading the logo
 MENPO_MINIMAL_LOGO = None
@@ -694,52 +694,17 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
         self.selected_values = index
 
 
-def _decode_colour(colour):
-    r"""
-    Function that decodes a given colour to its RGB values.
-
-    Parameters
-    ----------
-    obj : `str` or `list`
-        Either an `str` colour or a `list` of length ``3`` with the RGB values.
-
-    Returns
-    -------
-    colour : `str`
-        Returns either the original `colour` of ``'custom'`` if the original
-        `colour` was a `list`.
-    r_val : `float`
-        The Red channel. ``0.`` if `colour` is an `str`.
-    g_val : `float`
-        The Green channel. ``0.`` if `colour` is an `str`.
-    b_val : `float`
-        The Blue channel. ``0.`` if `colour` is an `str`.
-    """
-    r_val = g_val = b_val = 0.
-    if not isinstance(colour, str):
-        r_val = colour[0]
-        g_val = colour[1]
-        b_val = colour[2]
-        colour = 'custom'
-    return colour, r_val, g_val, b_val
-
-
 class ColourSelectionWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for colour selection of various items. The widget consists
-    of:
+    of the following `ipywidgets` objects:
 
-        1) Dropdown [`self.label_dropdown`]: the menu with the available labels
-        2) Button [`self.apply_to_all_button`]: button that sets the same colour
-           to all available labels
-        3) VBox [`self.labels_box`]: the box containing (1) and (2)
-        4) Dropdown [`self.colour_dropdown`]: the menu with the predefined
-           colours and custom option
-        5) BoundedFloatText [`self.r_text`]: text area for the R value
-        6) BoundedFloatText [`self.g_text`]: text area for the G value
-        7) BoundedFloatText [`self.b_text`]: text area for the B value
-        8) VBox [`self.rgb_values`]: box with (5), (6) and (7)
-        9) VBox [`self.rgb_box`]: box with (4) and (8)
+        1) `Dropdown` [`self.label_dropdown`]: the menu with the available labels
+        2) `Button` [`self.apply_to_all_button`]: button that sets the same
+           colour to all available labels
+        3) `VBox` [`self.labels_box`]: the box containing (1) and (2)
+        4) `ColorPicker` [`self.colour_widget`]: the HTML colour picker
+        5) `VBox` [`self.rgb_box`]: box with (3) and (4)
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -749,10 +714,10 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
     Parameters
     ----------
     colours_list : `list` of `str` or [`float`, `float`, `float`]
-        If `str`, it must be one of ::
+        If `str`, it must either a hex code or a colour name, such as ::
 
-            {``'b'``, ``'g'``, ``'r'``, ``'c'``,
-             ``'m'``, ``'y'``, ``'k'``, ``'w'``}
+            {``'blue'``, ``'green'``, ``'red'``, ``'cyan'``,
+             ``'magenta'``, ``'yellow'``, ``'black'``, ``'white'``}
 
         If [`float`, `float`, `float`], it defines an RGB value and must have
         length 3.
@@ -768,21 +733,11 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
     def __init__(self, colours_list, render_function=None, description='Colour',
                  labels=None):
         # Check if multiple mode should be enabled
+        if isinstance(colours_list, str) or isinstance(colours_list, unicode):
+            colours_list = [colours_list]
         n_labels = len(colours_list)
         multiple = n_labels > 1
         self.description = description
-
-        # Colours dictionary
-        colour_dict = OrderedDict()
-        colour_dict['blue'] = 'b'
-        colour_dict['green'] = 'g'
-        colour_dict['red'] = 'r'
-        colour_dict['cyan'] = 'c'
-        colour_dict['magenta'] = 'm'
-        colour_dict['yellow'] = 'y'
-        colour_dict['black'] = 'k'
-        colour_dict['white'] = 'w'
-        colour_dict['custom'] = 'custom'
 
         # Labels box (it must be invisible if multiple == False)
         labels_dict = OrderedDict()
@@ -796,34 +751,25 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
                 labels_dict[l] = k
         self.label_dropdown = ipywidgets.Dropdown(description=description,
                                                   options=labels_dict, value=0)
-        self.apply_to_all_button = ipywidgets.Button(description='Apply to all')
+        self.apply_to_all_button = ipywidgets.Button(description=' Apply to all',
+                                                     icon='fa-paint-brush')
         self.labels_box = ipywidgets.VBox(
             children=[self.label_dropdown, self.apply_to_all_button],
             visible=multiple, align='end')
 
-        # Decode colour values of the first label
-        default_colour, r_val, g_val, b_val = _decode_colour(colours_list[0])
+        # Decode the colour of the first label
+        default_colour = decode_colour(colours_list[0])
 
-        # Create colour widgets
-        self.colour_dropdown = ipywidgets.Dropdown(
-            options=colour_dict, value=default_colour, description='')
+        # Create colour widget
+        colour_description = ''
         if not multiple:
-            self.colour_dropdown.description = description
-        self.r_text = ipywidgets.BoundedFloatText(
-            value=r_val, min=0.0, max=1.0, description='R', width='1.5cm')
-        self.g_text = ipywidgets.BoundedFloatText(
-            value=g_val, min=0.0, max=1.0, description='G', width='1.5cm')
-        self.b_text = ipywidgets.BoundedFloatText(
-            value=b_val, min=0.0, max=1.0, description='B', width='1.5cm')
-        self.rgb_values = ipywidgets.VBox(
-            children=[self.r_text, self.g_text, self.b_text],
-            visible=default_colour == 'custom', padding=6)
-        self.rgb_box = ipywidgets.VBox(
-            children=[self.colour_dropdown, self.rgb_values], align='start')
+            colour_description = description
+        self.colour_widget = ipywidgets.ColorPicker(
+            value=default_colour, description=colour_description, width='3cm')
 
         # Final widget
         super(ColourSelectionWidget, self).__init__(
-            children=[self.labels_box, self.rgb_box])
+            children=[self.labels_box, self.colour_widget])
         self.orientation = 'horizontal'
         self.align = 'start'
 
@@ -831,15 +777,8 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         self.selected_values = {'colour': colours_list, 'labels': labels}
 
         # Set functionality
-        def show_rgb_values(name, value):
-            self.rgb_values.visible = value == 'custom'
-        self.colour_dropdown.on_trait_change(show_rgb_values, 'value')
-
         def apply_to_all_function(name):
-            if self.colour_dropdown.value == 'custom':
-                tmp = [self.r_text.value, self.g_text.value, self.b_text.value]
-            else:
-                tmp = self.colour_dropdown.value
+            tmp = self.colour_widget.value
             for idx in range(len(self.selected_values['colour'])):
                 self.selected_values['colour'][idx] = tmp
             self.label_dropdown.value = 0
@@ -849,37 +788,19 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
 
         def update_colour_wrt_label(name, value):
             # temporarily remove render_function from r, g, b traits
-            self.colour_dropdown.on_trait_change(self._render_function, 'value',
-                                                 remove=True)
-            self.r_text.on_trait_change(self._render_function, 'value',
-                                        remove=True)
-            self.g_text.on_trait_change(self._render_function, 'value',
-                                        remove=True)
-            self.b_text.on_trait_change(self._render_function, 'value',
-                                        remove=True)
+            self.colour_widget.on_trait_change(self._render_function, 'value',
+                                               remove=True)
             # update colour widgets
-            (self.colour_dropdown.value, self.r_text.value, self.g_text.value,
-             self.b_text.value) = _decode_colour(
+            self.colour_widget.value = decode_colour(
                 self.selected_values['colour'][value])
             # re-assign render_function
-            self.colour_dropdown.on_trait_change(self._render_function, 'value')
-            self.r_text.on_trait_change(self._render_function, 'value')
-            self.g_text.on_trait_change(self._render_function, 'value')
-            self.b_text.on_trait_change(self._render_function, 'value')
+            self.colour_widget.on_trait_change(self._render_function, 'value')
         self.label_dropdown.on_trait_change(update_colour_wrt_label, 'value')
 
         def save_colour(name, value):
             idx = self.label_dropdown.value
-            if self.colour_dropdown.value == 'custom':
-                self.selected_values['colour'][idx] = [self.r_text.value,
-                                                       self.g_text.value,
-                                                       self.b_text.value]
-            else:
-                self.selected_values['colour'][idx] = self.colour_dropdown.value
-        self.colour_dropdown.on_trait_change(save_colour, 'value')
-        self.r_text.on_trait_change(save_colour, 'value')
-        self.g_text.on_trait_change(save_colour, 'value')
-        self.b_text.on_trait_change(save_colour, 'value')
+            self.selected_values['colour'][idx] = self.colour_widget.value
+        self.colour_widget.on_trait_change(save_colour, 'value')
 
         # Set render function
         self._render_function = None
@@ -890,9 +811,7 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight='', label_background_colour=None,
-              colour_background_colour=None,
-              rgb_text_background_colour=None,
-              apply_to_all_style=''):
+              colour_background_colour=None, apply_to_all_style=''):
         r"""
         Function that defines the styling of the widget.
 
@@ -913,6 +832,8 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
             The line style of the border around the widget.
         border_width : `float`, optional
             The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the cornerns of the border around the widget.
         padding : `float`, optional
             The padding around the widget.
         margin : `float`, optional
@@ -959,20 +880,11 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
                     font_weight)
         format_font(self.apply_to_all_button, font_family, font_size,
                     font_style, font_weight)
-        format_font(self.r_text, font_family, font_size, font_style,
-                    font_weight)
-        format_font(self.g_text, font_family, font_size, font_style,
-                    font_weight)
-        format_font(self.b_text, font_family, font_size, font_style,
-                    font_weight)
-        format_font(self.colour_dropdown, font_family, font_size, font_style,
+        format_font(self.colour_widget, font_family, font_size, font_style,
                     font_weight)
         self.label_dropdown.background_color = label_background_colour
-        self.colour_dropdown.background_color = colour_background_colour
+        self.colour_widget.background_color = colour_background_colour
         self.apply_to_all_button.button_style = apply_to_all_style
-        self.r_text.background_color = rgb_text_background_colour
-        self.g_text.background_color = rgb_text_background_colour
-        self.b_text.background_color = rgb_text_background_colour
 
     def add_render_function(self, render_function):
         r"""
@@ -988,21 +900,15 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         self._render_function = render_function
         self._apply_to_all_render_function = None
         if self._render_function is not None:
-            self.colour_dropdown.on_trait_change(self._render_function, 'value')
-            self.r_text.on_trait_change(self._render_function, 'value')
-            self.g_text.on_trait_change(self._render_function, 'value')
-            self.b_text.on_trait_change(self._render_function, 'value')
+            self.colour_widget.on_trait_change(self._render_function, 'value')
 
     def remove_render_function(self):
         r"""
         Method that removes the current `self._render_function()` from the
         widget and sets ``self._render_function = None``.
         """
-        self.colour_dropdown.on_trait_change(self._render_function, 'value',
-                                             remove=True)
-        self.r_text.on_trait_change(self._render_function, 'value', remove=True)
-        self.g_text.on_trait_change(self._render_function, 'value', remove=True)
-        self.b_text.on_trait_change(self._render_function, 'value', remove=True)
+        self.colour_widget.on_trait_change(self._render_function, 'value',
+                                           remove=True)
         self._render_function = None
 
     def replace_render_function(self, render_function):
@@ -1031,13 +937,13 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         Parameters
         ----------
         colours_list : `list` of `str` or [`float`, `float`, `float`]
-            If `str`, it must be one of ::
+            If `str`, it must either a hex code or a colour name, such as ::
 
-                {``'b'``, ``'g'``, ``'r'``, ``'c'``,
-                 ``'m'``, ``'y'``, ``'k'``, ``'w'``}
+                {``'blue'``, ``'green'``, ``'red'``, ``'cyan'``,
+                 ``'magenta'``, ``'yellow'``, ``'black'``, ``'white'``}
 
-            If [`float`, `float`, `float`], it defines an RGB value and must
-            have length 3.
+            If [`float`, `float`, `float`], it defines an RGB value and must have
+            length 3.
         labels : `list` or ``None``, optional
             A `list` with the labels' names. If ``None``, then a `list` of the
             form ``label {}`` is automatically defined.
@@ -1049,8 +955,8 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
 
         sel_colours = self.selected_values['colour']
         sel_labels = self.selected_values['labels']
-        if (_lists_are_the_same(sel_colours, colours_list) and
-                not _lists_are_the_same(sel_labels, labels)):
+        if (lists_are_the_same(sel_colours, colours_list) and
+                not lists_are_the_same(sel_labels, labels)):
             # the provided colours are the same, but the labels changed, so
             # update the labels
             self.selected_values['labels'] = labels
@@ -1064,8 +970,8 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
                 else:
                     self.label_dropdown.value = 1
                     self.label_dropdown.value = 0
-        elif (not _lists_are_the_same(sel_colours, colours_list) and
-              _lists_are_the_same(sel_labels, labels)):
+        elif (not lists_are_the_same(sel_colours, colours_list) and
+              lists_are_the_same(sel_labels, labels)):
             # the provided labels are the same, but the colours are different
             # assign colour
             self.selected_values['colour'] = colours_list
@@ -1074,21 +980,20 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
             self.remove_render_function()
             # update colour widgets
             k = self.label_dropdown.value
-            (self.colour_dropdown.value, self.r_text.value, self.g_text.value,
-             self.b_text.value) = _decode_colour(colours_list[k])
+            self.colour_widget.value = decode_colour(colours_list[k])
             # re-assign render_function
             self.add_render_function(render_function)
             # trigger render function if allowed
             if allow_callback:
                 self._render_function('', True)
-        elif (not _lists_are_the_same(sel_colours, colours_list) and
-              not _lists_are_the_same(sel_labels, labels)):
+        elif (not lists_are_the_same(sel_colours, colours_list) and
+              not lists_are_the_same(sel_labels, labels)):
             # both the colours and the labels are different
             self.labels_box.visible = len(labels) > 1
             if len(labels) > 1:
-                self.colour_dropdown.description = ''
+                self.colour_widget.description = ''
             else:
-                self.colour_dropdown.description = self.description
+                self.colour_widget.description = self.description
             self.selected_values['colour'] = colours_list
             self.selected_values['labels'] = labels
             labels_dict = OrderedDict()
@@ -1107,8 +1012,7 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
             render_function = self._render_function
             self.remove_render_function()
             # update colour widgets
-            (self.colour_dropdown.value, self.r_text.value, self.g_text.value,
-             self.b_text.value) = _decode_colour(colours_list[0])
+            self.colour_widget.value = decode_colour(colours_list[0])
             # re-assign render_function
             self.add_render_function(render_function)
             # trigger render function if allowed
