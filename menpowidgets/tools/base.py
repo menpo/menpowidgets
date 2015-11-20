@@ -5,7 +5,7 @@ from traitlets import link
 import menpo.io as mio
 
 from .style import (map_styles_to_hex_colours, convert_image_to_bytes,
-                    format_box, format_font, format_slider,
+                    format_box, format_font, format_slider, format_text_box,
                     parse_font_awesome_icon)
 from .utils import lists_are_the_same, decode_colour
 
@@ -346,11 +346,8 @@ class IndexSliderWidget(ipywidgets.FlexBox):
             If ``True``, it allows triggering of any callback functions.
         """
         # Check if update is required
-        if not (index['min'] == self.selected_values['min'] and
-                index['max'] == self.selected_values['max'] and
-                index['step'] == self.selected_values['step'] and
-                index['index'] == self.selected_values['index'] and
-                self.slider.continuous_update == continuous_update):
+        if (index != self.selected_values or
+                self.slider.continuous_update != continuous_update):
             if not allow_callback:
                 # temporarily remove render and update functions
                 render_function = self._render_function
@@ -483,7 +480,7 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight='', minus_style='', plus_style='',
-              text_background_colour=None):
+              text_colour=None, text_background_colour=None):
         r"""
         Function that defines the styling of the widget.
 
@@ -546,6 +543,8 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
                 or
                 ``None``
 
+        text_colour : `str`, optional
+            The text colour of the index text.
         text_background_colour : `str`, optional
             The background colour of the index text.
         """
@@ -561,7 +560,7 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
                     font_weight)
         self.button_minus.button_style = minus_style
         self.button_plus.button_style = plus_style
-        self.index_text.background_color = text_background_colour
+        format_text_box(self.index_text, text_colour, text_background_colour)
 
     def add_render_function(self, render_function):
         r"""
@@ -674,7 +673,7 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
         self.index_text.disabled = not text_editable
 
         # Check if update is required
-        if not index['index'] == self.selected_values['index']:
+        if index != self.selected_values:
             if not allow_callback:
                 # temporarily remove render and update functions
                 render_function = self._render_function
@@ -683,6 +682,8 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
                 self.remove_update_function()
 
             # set value to index text
+            self.index_text.min = index['min']
+            self.index_text.max = index['max']
             self.index_text.value = str(index['index'])
 
             if not allow_callback:
@@ -765,7 +766,7 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         if not multiple:
             colour_description = description
         self.colour_widget = ipywidgets.ColorPicker(
-            value=default_colour, description=colour_description, width='4cm')
+            value=default_colour, description=colour_description, width='5cm')
 
         # Final widget
         super(ColourSelectionWidget, self).__init__(
@@ -799,7 +800,7 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
 
         def save_colour(name, value):
             idx = self.label_dropdown.value
-            self.selected_values['colour'][idx] = self.colour_widget.value
+            self.selected_values['colour'][idx] = str(self.colour_widget.value)
         self.colour_widget.on_trait_change(save_colour, 'value')
 
         # Set render function
@@ -810,8 +811,9 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
-              font_weight='', label_background_colour=None,
-              colour_background_colour=None, apply_to_all_style=''):
+              font_weight='', label_colour=None, label_background_colour=None,
+              picker_colour=None, picker_background_colour=None,
+              apply_to_all_style=''):
         r"""
         Function that defines the styling of the widget.
 
@@ -858,12 +860,14 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
                  ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
                  ``'extra bold'``, ``'black'``}
 
+        label_colour : `str`, optional
+            The text colour of the labels dropdown selection.
         label_background_colour : `str`, optional
-            The colour of the labels dropdown selection.
-        colour_background_colour : `str`, optional
-            The colour of the colour dropdown selection.
-        rgb_text_background_colour : `str`, optional
-            The colour of the R, G, B text boxes.
+            The background colour of the labels dropdown selection.
+        picker_colour : `str`, optional
+            The text colour of the colour picker.
+        picker_background_colour : `str`, optional
+            The background colour of the colour picker.
         apply_to_all_style : `str`,
             Style options ::
 
@@ -882,8 +886,10 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
                     font_style, font_weight)
         format_font(self.colour_widget, font_family, font_size, font_style,
                     font_weight)
-        self.label_dropdown.background_color = label_background_colour
-        self.colour_widget.background_color = colour_background_colour
+        format_text_box(self.label_dropdown, label_colour,
+                        label_background_colour)
+        format_text_box(self.colour_widget, picker_colour,
+                        picker_background_colour)
         self.apply_to_all_button.button_style = apply_to_all_style
 
     def add_render_function(self, render_function):
@@ -1019,28 +1025,15 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
             if allow_callback:
                 self._render_function('', True)
 
-    def disabled(self, disabled):
-        r"""
-        Method that disables the widget, if ``disabled == True``.
-
-        Parameters
-        ----------
-        disabled : `bool`
-            If ``True``, the widget is disabled.
-        """
-        self.label_dropdown.disabled = disabled
-        self.apply_to_all_button.disabled = disabled
-        self.colour_widget.disabled = disabled
-
 
 class ImageOptionsWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for selecting image rendering options. Specifically, it
-    consists of:
+    consists of the following `ipywidgets` objects:
 
-        1) Checkbox [`self.interpolation_checkbox`]: interpolation checkbox
-        2) FloatSlider [`self.alpha_slider`]: sets the alpha value
-        3) Select [`self.cmap_select`]: sets the cmap
+        1) `Checkbox` [`self.interpolation_checkbox`]: interpolation checkbox
+        2) `FloatSlider` [`self.alpha_slider`]: sets the alpha value
+        3) `Select` [`self.cmap_select`]: sets the colourmap
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -1067,7 +1060,7 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
             value=image_options['interpolation'] == 'none')
         self.alpha_slider = ipywidgets.FloatSlider(
             description='Alpha', value=image_options['alpha'],
-            min=0.0, max=1.0, step=0.05, width='4cm')
+            min=0.0, max=1.0, step=0.05, width='4cm', continuous_update=False)
         cmap_dict = OrderedDict()
         cmap_dict['None'] = None
         cmap_dict['afmhot'] = 'afmhot'
@@ -1108,10 +1101,12 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
         self.cmap_select = ipywidgets.Select(
             options=cmap_dict, value='gray', description='Colourmap',
             width='3cm', height='2cm')
+        self.alpha_interpolation_box = ipywidgets.VBox(children=[
+            self.alpha_slider, self.interpolation_checkbox])
         super(ImageOptionsWidget, self).__init__(
-            children=[self.alpha_slider, self.interpolation_checkbox,
-                      self.cmap_select])
+            children=[self.cmap_select, self.alpha_interpolation_box])
         self.align = 'start'
+        self.orientation = 'horizontal'
 
         # Assign output
         self.selected_values = image_options
@@ -1139,7 +1134,9 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
-              font_weight='', alpha_colour=None, cmap_colour=None):
+              font_weight='', alpha_handle_colour=None,
+              alpha_bar_colour=None, cmap_colour=None,
+              cmap_background_colour=None):
         r"""
         Function that defines the styling of the widget.
 
@@ -1186,10 +1183,14 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
                  ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
                  ``'extra bold'``, ``'black'``}
 
-        alpha_colour : `str`, optional
-            The colour of the alpha slider.
+        alpha_handle_colour : `str`, optional
+            The colour of the handle of alpha slider.
+        alpha_bar_colour : `str`, optional
+            The colour of the bar of alpha slider.
         cmap_colour : `str`, optional
-            The colour of the cmap selector.
+            The text colour of the cmap selector.
+        cmap_background_colour : `str`, optional
+            The background colour of the cmap selector.
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
@@ -1200,8 +1201,11 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
                     font_style, font_weight)
         format_font(self.cmap_select, font_family, font_size, font_style,
                     font_weight)
-        self.cmap_select.background_color = cmap_colour
-        self.alpha_slider.slider_color = alpha_colour
+        format_slider(self.alpha_slider, slider_width='4cm',
+                      slider_handle_colour=alpha_handle_colour,
+                      slider_bar_colour=alpha_bar_colour,
+                      slider_text_visible=True)
+        format_text_box(self.cmap_select, cmap_colour, cmap_background_colour)
 
     def add_render_function(self, render_function):
         r"""
@@ -1267,44 +1271,38 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
-        # Assign new options dict to selected_values
-        self.selected_values = image_options
+        if image_options != self.selected_values:
+            # temporarily remove render callback
+            render_function = self._render_function
+            self.remove_render_function()
 
-        # temporarily remove render callback
-        render_function = self._render_function
-        self.remove_render_function()
-
-        # update alpha slider
-        if 'alpha' in image_options.keys():
+            # update
             self.alpha_slider.value = image_options['alpha']
-
-        # update interpolation checkbox
-        if 'interpolation' in image_options.keys():
             self.interpolation_checkbox.value = \
                 image_options['interpolation'] == 'none'
-
-        # update cmap selector
-        if 'cmap_name' in image_options.keys():
             self.cmap_select.value = image_options['cmap_name']
 
-        # re-assign render callback
-        self.add_render_function(render_function)
+            # re-assign render callback
+            self.add_render_function(render_function)
 
-        # trigger render function if allowed
-        if allow_callback:
-            self._render_function('', True)
+            # trigger render function if allowed
+            if allow_callback:
+                self._render_function('', True)
+
+        # Assign output
+        self.selected_values = image_options
 
 
 class LineOptionsWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for selecting line rendering options. Specifically, it
-    consists of:
+    consists of the following `ipywidgets`:
 
-        1) Checkbox [`self.render_lines_checkbox`]: whether to render lines
-        2) BoundedFloatText [`self.line_width_text`]: sets the line width
-        3) Dropdown [`self.line_style_dropdown`]: sets the line style
-        4) ColourSelectionWidget [`self.line_colour_widget`]: sets line colour
-        5) Box [`self.options_box`]: box that contains (2), (3) and (4)
+        1) `Checkbox` [`self.render_lines_checkbox`]: whether to render lines
+        2) `BoundedFloatText` [`self.line_width_text`]: sets the line width
+        3) `Dropdown` [`self.line_style_dropdown`]: sets the line style
+        4) `ColourSelectionWidget` [`self.line_colour_widget`]: sets line colour
+        5) `Box` [`self.line_options_box`]: box that contains (2), (3) and (4)
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -1352,21 +1350,17 @@ class LineOptionsWidget(ipywidgets.FlexBox):
         self.line_options_box = ipywidgets.Box(
             children=[self.line_style_dropdown, self.line_width_text,
                       self.line_colour_widget])
-        self.options_box = ipywidgets.VBox(children=[self.render_lines_checkbox,
-                                                     self.line_options_box],
-                                           align='end')
         super(LineOptionsWidget, self).__init__(
-            children=[self.options_box])
+            children=[self.render_lines_checkbox, self.line_options_box])
         self.align = 'start'
+        self.orientation = 'horizontal'
 
         # Assign output
         self.selected_values = line_options
 
         # Set functionality
         def line_options_visible(name, value):
-            self.line_style_dropdown.disabled = not value
-            self.line_width_text.disabled = not value
-            self.line_colour_widget.disabled(not value)
+            self.line_options_box.visible = value
         line_options_visible('', line_options['render_lines'])
         self.render_lines_checkbox.on_trait_change(line_options_visible,
                                                    'value')
@@ -1453,8 +1447,9 @@ class LineOptionsWidget(ipywidgets.FlexBox):
         self.line_colour_widget.style(
             box_style=None, border_visible=False, font_family=font_family,
             font_size=font_size, font_weight=font_weight, font_style=font_style,
-            label_background_colour=None, colour_background_colour=None,
-            rgb_text_background_colour=None, apply_to_all_style='')
+            label_colour=None, label_background_colour=None,
+            picker_colour=None, picker_background_colour=None,
+            apply_to_all_style='')
 
     def add_render_function(self, render_function):
         r"""
@@ -1528,54 +1523,47 @@ class LineOptionsWidget(ipywidgets.FlexBox):
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
-        # Assign new options dict to selected_values
-        self.selected_values = line_options
+        if self.selected_values != line_options:
+            # temporarily remove render callback
+            render_function = self._render_function
+            self.remove_render_function()
 
-        # temporarily remove render callback
-        render_function = self._render_function
-        self.remove_render_function()
-
-        # update render lines checkbox
-        if 'render_lines' in line_options.keys():
+            # update
             self.render_lines_checkbox.value = line_options['render_lines']
-
-        # update line_style dropdown menu
-        if 'line_style' in line_options.keys():
             self.line_style_dropdown.value = line_options['line_style']
-
-        # update line_width text box
-        if 'line_width' in line_options.keys():
             self.line_width_text.value = float(line_options['line_width'])
 
-        # re-assign render callback
-        self.add_render_function(render_function)
+            # re-assign render callback
+            self.add_render_function(render_function)
 
-        # update line_colour
-        if 'line_colour' in line_options.keys():
+            # update line_colour
             self.line_colour_widget.set_widget_state(
                 line_options['line_colour'], labels=labels,
                 allow_callback=False)
 
-        # trigger render function if allowed
-        if allow_callback:
-            self._render_function('', True)
+            # trigger render function if allowed
+            if allow_callback:
+                self._render_function('', True)
+
+        # Assign output
+        self.selected_values = line_options
 
 
 class MarkerOptionsWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for selecting marker rendering options. Specifically, it
-    consists of:
+    consists of the following `ipywidgets` objects:
 
-        1) Checkbox [`self.render_markers_checkbox`]: whether to render markers
-        2) BoundedIntText [`self.marker_size_text`]: sets the marker size
-        3) BoundedFloatText [`self.marker_edge_width_text`]: sets the marker
+        1) `Checkbox` [`self.render_markers_checkbox`]: whether to render markers
+        2) `BoundedIntText` [`self.marker_size_text`]: sets the marker size
+        3) `BoundedFloatText` [`self.marker_edge_width_text`]: sets the marker
            edge width
-        4) Dropdown [`self.marker_style_dropdown`]: sets the marker style
-        5) ColourSelectionWidget [`self.marker_edge_colour_widget`]: sets the
+        4) `Dropdown` [`self.marker_style_dropdown`]: sets the marker style
+        5) `ColourSelectionWidget` [`self.marker_edge_colour_widget`]: sets the
            marker edge colour
-        6) ColourSelectionWidget [`self.marker_face_colour_widget`]: sets the
+        6) `ColourSelectionWidget` [`self.marker_face_colour_widget`]: sets the
            marker face colour
-        7) Box [`self.options_box`]: box that contains (2), (3), (4), (5), (6)
+        7) `Box` [`self.options_box`]: box that contains (2), (3), (4), (5), (6)
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -1652,22 +1640,17 @@ class MarkerOptionsWidget(ipywidgets.FlexBox):
                       self.marker_edge_width_text,
                       self.marker_face_colour_widget,
                       self.marker_edge_colour_widget])
-        self.options_box = ipywidgets.VBox(
-            children=[self.render_markers_checkbox, self.marker_options_box],
-            align='end')
-        super(MarkerOptionsWidget, self).__init__(children=[self.options_box])
+        super(MarkerOptionsWidget, self).__init__(children=[
+            self.render_markers_checkbox, self.marker_options_box])
         self.align = 'start'
+        self.orientation = 'horizontal'
 
         # Assign output
         self.selected_values = marker_options
 
         # Set functionality
         def marker_options_visible(name, value):
-            self.marker_style_dropdown.disabled = not value
-            self.marker_size_text.disabled = not value
-            self.marker_edge_width_text.disabled = not value
-            self.marker_face_colour_widget.disabled(not value)
-            self.marker_edge_colour_widget.disabled(not value)
+            self.marker_options_box.visible = value
         marker_options_visible('', marker_options['render_markers'])
         self.render_markers_checkbox.on_trait_change(marker_options_visible,
                                                      'value')
@@ -1764,13 +1747,15 @@ class MarkerOptionsWidget(ipywidgets.FlexBox):
         self.marker_edge_colour_widget.style(
             box_style=None, border_visible=False, font_family=font_family,
             font_size=font_size, font_weight=font_weight, font_style=font_style,
-            label_background_colour=None, colour_background_colour=None,
-            rgb_text_background_colour=None, apply_to_all_style='')
+            label_colour=None, label_background_colour=None,
+            picker_colour=None, picker_background_colour=None,
+            apply_to_all_style='')
         self.marker_face_colour_widget.style(
             box_style=None, border_visible=False, font_family=font_family,
             font_size=font_size, font_weight=font_weight, font_style=font_style,
-            label_background_colour=None, colour_background_colour=None,
-            rgb_text_background_colour=None, apply_to_all_style='')
+            label_colour=None, label_background_colour=None,
+            picker_colour=None, picker_background_colour=None,
+            apply_to_all_style='')
 
     def add_render_function(self, render_function):
         r"""
@@ -1854,49 +1839,37 @@ class MarkerOptionsWidget(ipywidgets.FlexBox):
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
-        # Assign new options dict to selected_values
-        self.selected_values = marker_options
+        if self.selected_values != marker_options:
+            # temporarily remove render callback
+            render_function = self._render_function
+            self.remove_render_function()
 
-        # temporarily remove render callback
-        render_function = self._render_function
-        self.remove_render_function()
-
-        # update render markers checkbox
-        if 'render_markers' in marker_options.keys():
-            self.render_markers_checkbox.value = \
-                marker_options['render_markers']
-
-        # update marker_style dropdown menu
-        if 'marker_style' in marker_options.keys():
+            # update
+            self.render_markers_checkbox.value = marker_options['render_markers']
             self.marker_style_dropdown.value = marker_options['marker_style']
-
-        # update marker_size text box
-        if 'marker_size' in marker_options.keys():
             self.marker_size_text.value = int(marker_options['marker_size'])
-
-        # update marker_edge_width text box
-        if 'marker_edge_width' in marker_options.keys():
             self.marker_edge_width_text.value = \
                 float(marker_options['marker_edge_width'])
 
-        # re-assign render callback
-        self.add_render_function(render_function)
+            # re-assign render callback
+            self.add_render_function(render_function)
 
-        # update marker_face_colour
-        if 'marker_face_colour' in marker_options.keys():
+            # update marker_face_colour
             self.marker_face_colour_widget.set_widget_state(
                 marker_options['marker_face_colour'], labels=labels,
                 allow_callback=False)
 
-        # update marker_edge_colour
-        if 'marker_edge_colour' in marker_options.keys():
+            # update marker_edge_colour
             self.marker_edge_colour_widget.set_widget_state(
                 marker_options['marker_edge_colour'], labels=labels,
                 allow_callback=False)
 
-        # trigger render function if allowed
-        if allow_callback:
-            self._render_function('', True)
+            # trigger render function if allowed
+            if allow_callback:
+                self._render_function('', True)
+
+        # Assign output
+        self.selected_values = marker_options
 
 
 class NumberingOptionsWidget(ipywidgets.FlexBox):

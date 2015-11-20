@@ -157,6 +157,24 @@ def format_slider(obj, slider_width='6cm', slider_handle_colour=None,
     obj.readout = slider_text_visible
 
 
+def format_text_box(obj, colour=None, background_colour=None):
+    r"""
+    Function that defines the options of a given `ipywidgets` text box object,
+    such as `Text`, `TextArea`, `IntText`, `Select` etc.
+
+    Parameters
+    ----------
+    obj : `ipywidgets` textbox-like object
+        The ipython object.
+    colour : `str`, optional
+        The text colour of the widget.
+    background_colour : `str`, optional
+        The background colour of the widget.
+    """
+    obj.background_color = background_colour
+    obj.color = colour
+
+
 def parse_font_awesome_icon(option):
     r"""
     Function that parses an argument related to the `icon` and `description`

@@ -21,7 +21,7 @@ def lists_are_the_same(a, b):
 
 
 def rgb2hex(rgb):
-    return unicode('#' + struct_pack('BBB',*rgb).encode('hex'))
+    return str('#' + struct_pack('BBB', *rgb).encode('hex'))
 
 
 def decode_colour(colour):
@@ -29,4 +29,4 @@ def decode_colour(colour):
         # we assume that RGB was passed in. Convert it to unicode hex
         return rgb2hex(colour)
     else:
-        return unicode(colour)
+        return str(colour)
