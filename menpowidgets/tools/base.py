@@ -751,8 +751,8 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
                 labels_dict[l] = k
         self.label_dropdown = ipywidgets.Dropdown(description=description,
                                                   options=labels_dict, value=0)
-        self.apply_to_all_button = ipywidgets.Button(description=' Apply to all',
-                                                     icon='fa-paint-brush')
+        self.apply_to_all_button = ipywidgets.Button(
+            description=' Apply to all', icon='fa-paint-brush')
         self.labels_box = ipywidgets.VBox(
             children=[self.label_dropdown, self.apply_to_all_button],
             visible=multiple, align='end')
@@ -765,7 +765,7 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         if not multiple:
             colour_description = description
         self.colour_widget = ipywidgets.ColorPicker(
-            value=default_colour, description=colour_description, width='3cm')
+            value=default_colour, description=colour_description, width='4cm')
 
         # Final widget
         super(ColourSelectionWidget, self).__init__(
@@ -1021,7 +1021,7 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
 
     def disabled(self, disabled):
         r"""
-        Method that disables the widget, if the ``disabled == True``.
+        Method that disables the widget, if ``disabled == True``.
 
         Parameters
         ----------
@@ -1030,10 +1030,7 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         """
         self.label_dropdown.disabled = disabled
         self.apply_to_all_button.disabled = disabled
-        self.colour_dropdown.disabled = disabled
-        self.r_text.disabled = disabled
-        self.b_text.disabled = disabled
-        self.g_text.disabled = disabled
+        self.colour_widget.disabled = disabled
 
 
 class ImageOptionsWidget(ipywidgets.FlexBox):
