@@ -1314,12 +1314,11 @@ class ZoomOneScaleWidget(ipywidgets.FlexBox):
 
         # Check if update is required
         if zoom_options != self.selected_values:
-            if not allow_callback:
-                # temporarily remove render and update functions
-                render_function = self._render_function
-                update_function = self._update_function
-                self.remove_render_function()
-                self.remove_update_function()
+            # temporarily remove render and update functions
+            render_function = self._render_function
+            update_function = self._update_function
+            self.remove_render_function()
+            self.remove_update_function()
 
             # update widgets
             self.zoom_text.min = zoom_options['min']
@@ -1328,10 +1327,13 @@ class ZoomOneScaleWidget(ipywidgets.FlexBox):
             self.zoom_slider.max = zoom_options['max']
             self.zoom_text.value = "{:.2f}".format(zoom_options['zoom'])
 
-            if not allow_callback:
-                # re-assign render and update callbacks
-                self.add_update_function(update_function)
-                self.add_render_function(render_function)
+            # re-assign render and update callbacks
+            self.add_update_function(update_function)
+            self.add_render_function(render_function)
+
+            # trigger render function if allowed
+            if allow_callback:
+                self._render_function('', True)
 
         # Assign output
         self.selected_values = zoom_options
@@ -1783,12 +1785,11 @@ class ZoomTwoScalesWidget(ipywidgets.FlexBox):
 
         # Check if update is required
         if zoom_options != self.selected_values:
-            if not allow_callback:
-                # temporarily remove render and update functions
-                render_function = self._render_function
-                update_function = self._update_function
-                self.remove_render_function()
-                self.remove_update_function()
+            # temporarily remove render and update functions
+            render_function = self._render_function
+            update_function = self._update_function
+            self.remove_render_function()
+            self.remove_update_function()
 
             # update widgets
             self.x_zoom_text.min = zoom_options['min']
@@ -1805,10 +1806,13 @@ class ZoomTwoScalesWidget(ipywidgets.FlexBox):
             self.y_zoom_text.value = "{:.2f}".format(zoom_options['zoom_y'])
             self.lock_aspect_button.value = zoom_options['lock_aspect_ratio']
 
-            if not allow_callback:
-                # re-assign render and update callbacks
-                self.add_update_function(update_function)
-                self.add_render_function(render_function)
+            # re-assign render and update callbacks
+            self.add_update_function(update_function)
+            self.add_render_function(render_function)
+
+            # trigger render function if allowed
+            if allow_callback:
+                self._render_function('', True)
 
         # Assign output
         self.selected_values = zoom_options
@@ -2996,6 +3000,331 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
 
         # Assign output
         self.selected_values = numbers_options
+
+
+class AxesLimitsWidget(ipywidgets.FlexBox):
+    r"""
+    Creates a widget for selecting the axes limits.
+
+    The selected values are stored in `self.selected_values` `dict`. To set the
+    styling of this widget please refer to the `style()` method. To update the
+    state and functions of the widget, please refer to the `set_widget_state()`,
+    `replace_update_function()` and `replace_render_function()` methods.
+
+    Parameters
+    ----------
+    axes_limits : `dict`
+        The dictionary with the default options. For example ::
+
+            axes_limits = {'x': None, 'y': 0.1, 'x_min': 0, 'x_max':100,
+                           'y_min': 0, 'y_max':100}
+
+    render_function : `function` or ``None``, optional
+        The render function that is executed when the index value changes.
+        If ``None``, then nothing is assigned.
+    update_function : `function` or ``None``, optional
+        The update function that is executed when the index value changes.
+        If ``None``, then nothing is assigned.
+    """
+    def __init__(self, axes_limits, render_function=None, update_function=None):
+        # x limits
+        if axes_limits['x'] is None:
+            toggles_initial_value = 'auto'
+            slider_initial_value = 0.
+            slider_visible = False
+            range_initial_value = [0, 100]
+            range_visible = False
+        elif isinstance(axes_limits['x'], float):
+            toggles_initial_value = 'percentage'
+            slider_initial_value = axes_limits['x']
+            slider_visible = True
+            range_initial_value = [0, 100]
+            range_visible = False
+        else:
+            toggles_initial_value = 'range'
+            slider_initial_value = 0.
+            slider_visible = False
+            range_initial_value = axes_limits['x']
+            range_visible = False
+        self.axes_x_limits_toggles = ipywidgets.ToggleButtons(
+            description='X axis:', value=toggles_initial_value,
+            options=['auto', 'percentage', 'range'], margin='0.2cm')
+        self.axes_x_limits_percentage = ipywidgets.FloatSlider(
+            min=-1.5, max=1.5, value=slider_initial_value, width='4cm',
+            visible=slider_visible, continuous_update=False)
+        self.axes_x_limits_range = ipywidgets.FloatRangeSlider(
+            value=range_initial_value, width='4cm', visible=range_visible,
+            continuous_update=False, min=axes_limits['x_min'],
+            max=axes_limits['x_max'])
+        self.axes_x_limits_options_box = ipywidgets.VBox(
+            children=[self.axes_x_limits_percentage, self.axes_x_limits_range])
+        self.axes_x_limits_box = ipywidgets.HBox(
+            children=[self.axes_x_limits_toggles,
+                      self.axes_x_limits_options_box], align='center')
+
+        # y limits
+        if axes_limits['y'] is None:
+            toggles_initial_value = 'auto'
+            slider_initial_value = 0.
+            slider_visible = False
+            range_initial_value = [0, 100]
+            range_visible = False
+        elif isinstance(axes_limits['y'], float):
+            toggles_initial_value = 'percentage'
+            slider_initial_value = axes_limits['y']
+            slider_visible = True
+            range_initial_value = [0, 100]
+            range_visible = False
+        else:
+            toggles_initial_value = 'range'
+            slider_initial_value = 0.
+            slider_visible = False
+            range_initial_value = axes_limits['y']
+            range_visible = False
+        self.axes_y_limits_toggles = ipywidgets.ToggleButtons(
+            description='Y axis:', value=toggles_initial_value,
+            options=['auto', 'percentage', 'range'], margin='0.2cm')
+        self.axes_y_limits_percentage = ipywidgets.FloatSlider(
+            min=-1.5, max=1.5, value=slider_initial_value, width='4cm',
+            visible=slider_visible, continuous_update=False)
+        self.axes_y_limits_range = ipywidgets.FloatRangeSlider(
+            value=range_initial_value, width='4cm', visible=range_visible,
+            continuous_update=False, min=axes_limits['y_min'],
+            max=axes_limits['y_max'])
+        self.axes_y_limits_options_box = ipywidgets.VBox(
+            children=[self.axes_y_limits_percentage, self.axes_y_limits_range])
+        self.axes_y_limits_box = ipywidgets.HBox(
+            children=[self.axes_y_limits_toggles,
+                      self.axes_y_limits_options_box], align='center')
+
+        super(AxesLimitsWidget, self).__init__(children=[self.axes_x_limits_box,
+                                                         self.axes_y_limits_box])
+        self.align = 'start'
+
+        # Assign output
+        self.selected_values = axes_limits
+
+        # Set functionality
+        def x_visibility(name, value):
+            if value == 'auto':
+                self.axes_x_limits_percentage.visible = False
+                self.axes_x_limits_range.visible = False
+            elif value == 'percentage':
+                self.axes_x_limits_percentage.visible = True
+                self.axes_x_limits_range.visible = False
+            else:
+                self.axes_x_limits_percentage.visible = False
+                self.axes_x_limits_range.visible = True
+        self.axes_x_limits_toggles.on_trait_change(x_visibility, 'value')
+
+        def get_x_value(name, value):
+            self.selected_values['x'] = value
+        self.axes_x_limits_percentage.on_trait_change(get_x_value, 'value')
+        self.axes_x_limits_range.on_trait_change(get_x_value, 'value')
+
+        def y_visibility(name, value):
+            if value == 'auto':
+                self.axes_y_limits_percentage.visible = False
+                self.axes_y_limits_range.visible = False
+            elif value == 'percentage':
+                self.axes_y_limits_percentage.visible = True
+                self.axes_y_limits_range.visible = False
+            else:
+                self.axes_y_limits_percentage.visible = False
+                self.axes_y_limits_range.visible = True
+        self.axes_y_limits_toggles.on_trait_change(y_visibility, 'value')
+
+        def get_y_value(name, value):
+            self.selected_values['y'] = value
+        self.axes_y_limits_percentage.on_trait_change(get_y_value, 'value')
+        self.axes_y_limits_range.on_trait_change(get_y_value, 'value')
+
+        # Set render and update functions
+        self._update_function = None
+        self.add_update_function(update_function)
+        self._render_function = None
+        self.add_render_function(render_function)
+
+    def add_render_function(self, render_function):
+        r"""
+        Method that adds a `render_function()` to the widget. The signature of
+        the given function is also stored in `self._render_function`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._render_function = render_function
+        if self._render_function is not None:
+            self.axes_x_limits_toggles.on_trait_change(self._render_function,
+                                                       'value')
+            self.axes_x_limits_percentage.on_trait_change(self._render_function,
+                                                          'value')
+            self.axes_x_limits_range.on_trait_change(self._render_function,
+                                                     'value')
+            self.axes_y_limits_toggles.on_trait_change(self._render_function,
+                                                       'value')
+            self.axes_y_limits_percentage.on_trait_change(self._render_function,
+                                                          'value')
+            self.axes_y_limits_range.on_trait_change(self._render_function,
+                                                     'value')
+
+    def remove_render_function(self):
+        r"""
+        Method that removes the current `self._render_function()` from the
+        widget and sets ``self._render_function = None``.
+        """
+        self.axes_x_limits_toggles.on_trait_change(self._render_function,
+                                                   'value', remove=True)
+        self.axes_x_limits_percentage.on_trait_change(self._render_function,
+                                                      'value', remove=True)
+        self.axes_x_limits_range.on_trait_change(self._render_function,
+                                                 'value', remove=True)
+        self.axes_y_limits_toggles.on_trait_change(self._render_function,
+                                                   'value', remove=True)
+        self.axes_y_limits_percentage.on_trait_change(self._render_function,
+                                                      'value', remove=True)
+        self.axes_y_limits_range.on_trait_change(self._render_function, 'value',
+                                                 remove=True)
+        self._render_function = None
+
+    def replace_render_function(self, render_function):
+        r"""
+        Method that replaces the current `self._render_function()` of the widget
+        with the given `render_function()`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_render_function()
+
+        # add new function
+        self.add_render_function(render_function)
+
+    def add_update_function(self, update_function):
+        r"""
+        Method that adds a `update_function()` to the widget. The signature of
+        the given function is also stored in `self._update_function`.
+
+        Parameters
+        ----------
+        update_function : `function` or ``None``, optional
+            The update function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._update_function = update_function
+        if self._update_function is not None:
+            self.axes_x_limits_toggles.on_trait_change(self._update_function,
+                                                       'value')
+            self.axes_x_limits_percentage.on_trait_change(self._update_function,
+                                                          'value')
+            self.axes_x_limits_range.on_trait_change(self._update_function,
+                                                     'value')
+            self.axes_y_limits_toggles.on_trait_change(self._update_function,
+                                                       'value')
+            self.axes_y_limits_percentage.on_trait_change(self._update_function,
+                                                          'value')
+            self.axes_y_limits_range.on_trait_change(self._update_function,
+                                                     'value')
+
+    def remove_update_function(self):
+        r"""
+        Method that removes the current `self._update_function()` from the
+        widget and sets ``self._update_function = None``.
+        """
+        self.axes_x_limits_toggles.on_trait_change(self._update_function,
+                                                   'value', remove=True)
+        self.axes_x_limits_percentage.on_trait_change(self._update_function,
+                                                      'value', remove=True)
+        self.axes_x_limits_range.on_trait_change(self._update_function,
+                                                 'value', remove=True)
+        self.axes_y_limits_toggles.on_trait_change(self._update_function,
+                                                   'value', remove=True)
+        self.axes_y_limits_percentage.on_trait_change(self._update_function,
+                                                      'value', remove=True)
+        self.axes_y_limits_range.on_trait_change(self._update_function, 'value',
+                                                 remove=True)
+        self._update_function = None
+
+    def replace_update_function(self, update_function):
+        r"""
+        Method that replaces the current `self._update_function()` of the widget
+        with the given `update_function()`.
+
+        Parameters
+        ----------
+        update_function : `function` or ``None``, optional
+            The update function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_update_function()
+
+        # add new function
+        self.add_update_function(update_function)
+
+    def set_widget_state(self, axes_limits, allow_callback=True):
+        r"""
+        Method that updates the state of the widget, if the provided `index`
+        values are different than `self.selected_values()`.
+
+        Parameters
+        ----------
+        axes_limits : `dict`
+            The dictionary with the selected options. For example ::
+
+                axes_limits = {'x': None, 'y': 0.1, 'x_min': 0, 'x_max':100,
+                               'y_min': 0, 'y_max':100}
+
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        # Check if update is required
+        if axes_limits != self.selected_values:
+            # temporarily remove render and update functions
+            render_function = self._render_function
+            update_function = self._update_function
+            self.remove_render_function()
+            self.remove_update_function()
+
+            # update
+            self.axes_x_limits_range.min = axes_limits['x_min']
+            self.axes_x_limits_range.max = axes_limits['x_max']
+            self.axes_y_limits_range.min = axes_limits['y_min']
+            self.axes_y_limits_range.max = axes_limits['y_max']
+            if axes_limits['x'] is None:
+                self.axes_x_limits_toggles.value = 'auto'
+            elif isinstance(axes_limits['x'], float):
+                self.axes_x_limits_toggles.value = 'percentage'
+                self.axes_x_limits_percentage.value = axes_limits['x']
+            else:
+                self.axes_x_limits_toggles.value = 'range'
+                self.axes_x_limits_range.value = axes_limits['x']
+            if axes_limits['y'] is None:
+                self.axes_y_limits_toggles.value = 'auto'
+            elif isinstance(axes_limits['y'], float):
+                self.axes_y_limits_toggles.value = 'percentage'
+                self.axes_x_limits_percentage.value = axes_limits['y']
+            else:
+                self.axes_y_limits_toggles.value = 'range'
+                self.axes_y_limits_range.value = axes_limits['y']
+
+            # re-assign render and update callbacks
+            self.add_update_function(update_function)
+            self.add_render_function(render_function)
+
+            # trigger render function if allowed
+            if allow_callback:
+                self._render_function('', True)
+
+        # Assign output
+        self.selected_values = axes_limits
 
 
 class FigureOptionsOneScaleWidget(ipywidgets.FlexBox):
