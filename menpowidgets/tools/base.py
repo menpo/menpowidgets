@@ -1005,6 +1005,815 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
                 self._render_function('', True)
 
 
+class ZoomOneScaleWidget(ipywidgets.FlexBox):
+    r"""
+    Creates a widget for selecting zoom options with a single scale.
+
+    The selected values are stored in `self.selected_values` `dict`. To set the
+    styling of this widget please refer to the `style()` method. To update the
+    state and functions of the widget, please refer to the `set_widget_state()`,
+    `replace_update_function()` and `replace_render_function()` methods.
+
+    Parameters
+    ----------
+    zoom_options : `dict`
+        The dictionary with the default options. For example ::
+
+            zoom_options = {'min': 0.1, 'max': 4., 'step': 0.05, 'zoom': 1.}
+
+    render_function : `function` or ``None``, optional
+        The render function that is executed when the index value changes.
+        If ``None``, then nothing is assigned.
+    update_function : `function` or ``None``, optional
+        The update function that is executed when the index value changes.
+        If ``None``, then nothing is assigned.
+    description : `str`, optional
+        The title of the widget.
+    minus_description : `str`, optional
+        The text/icon of the button that zooms_out. If the `str` starts with
+        `'fa-'`, then a font-awesome icon is defined.
+    plus_description : `str`, optional
+        The title of the button that zooms in. If the `str` starts with
+        `'fa-'`, then a font-awesome icon is defined.
+    continuous_update : `bool`, optional
+        If ``True``, then the render and update functions are called while
+        moving the zoom slider's handle. If ``False``, then the the functions
+        are called only when the handle (mouse click) is realised.
+    """
+    def __init__(self, zoom_options, render_function=None, update_function=None,
+                 description='Figure scale: ', minus_description='fa-minus',
+                 plus_description='fa-plus', continuous_update=False):
+        self.title = ipywidgets.Latex(value=description, padding=6, margin=6)
+        m_icon, m_description = parse_font_awesome_icon(minus_description)
+        self.button_minus = ipywidgets.Button(description=m_description,
+                                              icon=m_icon, width='1cm')
+        p_icon, p_description = parse_font_awesome_icon(plus_description)
+        self.button_plus = ipywidgets.Button(description=p_description,
+                                             icon=p_icon, width='1cm')
+        self.zoom_slider = ipywidgets.FloatSlider(
+            value=zoom_options['zoom'], min=zoom_options['min'],
+            max=zoom_options['max'], readout=False, width='6cm',
+            continuous_update=continuous_update)
+        self.zoom_text = ipywidgets.FloatText(
+            value=zoom_options['zoom'], min=zoom_options['min'],
+            max=zoom_options['max'], width='1.5cm')
+        super(ZoomOneScaleWidget, self).__init__(
+            children=[self.title, self.button_minus, self.zoom_slider,
+                      self.button_plus, self.zoom_text])
+        self.orientation = 'horizontal'
+        self.align = 'start'
+
+        # Link the zoom text and slider
+        ipywidgets.jslink((self.zoom_slider, 'value'),
+                          (self.zoom_text, 'value'))
+
+        # Assign output
+        self.selected_values = zoom_options
+
+        # Set functionality
+        def value_plus(name):
+            tmp_val = float(self.zoom_text.value) + self.selected_values['step']
+            if tmp_val > self.selected_values['max']:
+                self.zoom_text.value = "{:.2f}".format(
+                    self.selected_values['max'])
+            else:
+                self.zoom_text.value = "{:.2f}".format(tmp_val)
+        self.button_plus.on_click(value_plus)
+
+        def value_minus(name):
+            tmp_val = float(self.zoom_text.value) - self.selected_values['step']
+            if tmp_val < self.selected_values['min']:
+                self.zoom_text.value = "{:.2f}".format(
+                    self.selected_values['min'])
+            else:
+                self.zoom_text.value = "{:.2f}".format(tmp_val)
+        self.button_minus.on_click(value_minus)
+
+        def save_zoom_slider(name, value):
+            self.selected_values['zoom'] = value
+        self.zoom_slider.on_trait_change(save_zoom_slider, 'value')
+
+        def save_zoom_text(name, value):
+            self.selected_values['zoom'] = float(value)
+        self.zoom_text.on_trait_change(save_zoom_text, 'value')
+
+        # Set render and update functions
+        self._update_function = None
+        self.add_update_function(update_function)
+        self._render_function = None
+        self.add_render_function(render_function)
+
+    def style(self, box_style=None, border_visible=False, border_colour='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
+              font_weight='', minus_style='', plus_style='',
+              text_colour=None, text_background_colour=None, slider_width='6cm',
+              slider_bar_colour=None, slider_handle_colour=None,
+              slider_text_visible=True):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        box_style : `str` or ``None`` (see below), optional
+            Widget style options ::
+
+                {'success', 'info', 'warning', 'danger', ''}
+                or
+                None
+
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the corners of the box.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {'serif', 'sans-serif', 'cursive', 'fantasy',
+                 'monospace', 'helvetica'}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : ``{'normal', 'italic', 'oblique'}``, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {'ultralight', 'light', 'normal', 'regular', 'book',
+                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
+                 'heavy', 'extra bold', 'black'}
+
+        minus_style : `str` or ``None`` (see below), optional
+            Style options ::
+
+                {'success', 'info', 'warning', 'danger', 'primary', ''}
+                or
+                None
+
+        plus_style : `str` or ``None`` (see below), optional
+            Style options ::
+
+                {'success', 'info', 'warning', 'danger', 'primary', ''}
+                or
+                None
+
+        text_colour : `str`, optional
+            The text colour of the index text.
+        text_background_colour : `str`, optional
+            The background colour of the index text.
+        slider_width : `float`, optional
+            The width of the slider
+        slider_bar_colour : `str`, optional
+            The colour of the slider's bar.
+        slider_handle_colour : `str`, optional
+            The colour of the slider's handle.
+        slider_text_visible : `bool`, optional
+            Whether the selected value of the slider is visible.
+        """
+        format_box(self, box_style, border_visible, border_colour, border_style,
+                   border_width, border_radius, padding, margin)
+        format_font(self.title, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.button_minus, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.button_plus, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.zoom_text, font_family, font_size, font_style,
+                    font_weight)
+        self.button_minus.button_style = minus_style
+        self.button_plus.button_style = plus_style
+        format_text_box(self.zoom_text, text_colour, text_background_colour)
+        format_slider(self.zoom_slider, slider_width=slider_width,
+                      slider_handle_colour=slider_handle_colour,
+                      slider_bar_colour=slider_bar_colour,
+                      slider_text_visible=slider_text_visible)
+        self.zoom_slider.readout = False
+
+    def add_render_function(self, render_function):
+        r"""
+        Method that adds a `render_function()` to the widget. The signature of
+        the given function is also stored in `self._render_function`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._render_function = render_function
+        if self._render_function is not None:
+            self.zoom_slider.on_trait_change(self._render_function, 'value')
+            self.zoom_text.on_trait_change(self._render_function, 'value')
+
+    def remove_render_function(self):
+        r"""
+        Method that removes the current `self._render_function()` from the
+        widget and sets ``self._render_function = None``.
+        """
+        self.zoom_slider.on_trait_change(self._render_function, 'value',
+                                         remove=True)
+        self.zoom_text.on_trait_change(self._render_function, 'value',
+                                       remove=True)
+        self._render_function = None
+
+    def replace_render_function(self, render_function):
+        r"""
+        Method that replaces the current `self._render_function()` of the widget
+        with the given `render_function()`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_render_function()
+
+        # add new function
+        self.add_render_function(render_function)
+
+    def add_update_function(self, update_function):
+        r"""
+        Method that adds a `update_function()` to the widget. The signature of
+        the given function is also stored in `self._update_function`.
+
+        Parameters
+        ----------
+        update_function : `function` or ``None``, optional
+            The update function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._update_function = update_function
+        if self._update_function is not None:
+            self.zoom_slider.on_trait_change(self._update_function, 'value')
+            self.zoom_text.on_trait_change(self._update_function, 'value')
+
+    def remove_update_function(self):
+        r"""
+        Method that removes the current `self._update_function()` from the
+        widget and sets ``self._update_function = None``.
+        """
+        self.zoom_slider.on_trait_change(self._update_function, 'value',
+                                         remove=True)
+        self.zoom_text.on_trait_change(self._update_function, 'value',
+                                       remove=True)
+        self._update_function = None
+
+    def replace_update_function(self, update_function):
+        r"""
+        Method that replaces the current `self._update_function()` of the widget
+        with the given `update_function()`.
+
+        Parameters
+        ----------
+        update_function : `function` or ``None``, optional
+            The update function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_update_function()
+
+        # add new function
+        self.add_update_function(update_function)
+
+    def set_widget_state(self, zoom_options, continuous_update=False,
+                         allow_callback=True):
+        r"""
+        Method that updates the state of the widget, if the provided `index`
+        values are different than `self.selected_values()`.
+
+        Parameters
+        ----------
+        zoom_options : `dict`
+            The dictionary with the selected options. For example ::
+
+                zoom_options = {'min': 0.1, 'max': 4., 'step': 0.05, 'zoom': 1.}
+
+        continuous_update : `bool`, optional
+            If ``True``, then the render and update functions are called while
+            moving the zoom slider's handle. If ``False``, then the the
+            functions are called only when the handle (mouse click) is realised.
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        # update the continuous update property of the zoom slider
+        self.zoom_slider.continuous_update = continuous_update
+
+        # Check if update is required
+        if zoom_options != self.selected_values:
+            if not allow_callback:
+                # temporarily remove render and update functions
+                render_function = self._render_function
+                update_function = self._update_function
+                self.remove_render_function()
+                self.remove_update_function()
+
+            # update widgets
+            self.zoom_text.min = zoom_options['min']
+            self.zoom_slider.min = zoom_options['min']
+            self.zoom_text.max = zoom_options['max']
+            self.zoom_slider.max = zoom_options['max']
+            self.zoom_text.value = "{:.2f}".format(zoom_options['zoom'])
+
+            if not allow_callback:
+                # re-assign render and update callbacks
+                self.add_update_function(update_function)
+                self.add_render_function(render_function)
+
+        # Assign output
+        self.selected_values = zoom_options
+
+
+class ZoomTwoScalesWidget(ipywidgets.FlexBox):
+    r"""
+    Creates a widget for selecting zoom options with a single scale.
+
+    The selected values are stored in `self.selected_values` `dict`. To set the
+    styling of this widget please refer to the `style()` method. To update the
+    state and functions of the widget, please refer to the `set_widget_state()`,
+    `replace_update_function()` and `replace_render_function()` methods.
+
+    Parameters
+    ----------
+    zoom_options : `dict`
+        The dictionary with the default options. For example ::
+
+            zoom_options = {'zoom_x': 1., 'zoom_y': 1.,
+                            'min': 0.1, 'max': 4., 'step': 0.05,
+                            'lock_aspect_ratio': False}
+
+    render_function : `function` or ``None``, optional
+        The render function that is executed when the index value changes.
+        If ``None``, then nothing is assigned.
+    update_function : `function` or ``None``, optional
+        The update function that is executed when the index value changes.
+        If ``None``, then nothing is assigned.
+    description : `str`, optional
+        The title of the widget.
+    minus_description : `str`, optional
+        The text/icon of the button that zooms_out. If the `str` starts with
+        `'fa-'`, then a font-awesome icon is defined.
+    plus_description : `str`, optional
+        The title of the button that zooms in. If the `str` starts with
+        `'fa-'`, then a font-awesome icon is defined.
+    continuous_update : `bool`, optional
+        If ``True``, then the render and update functions are called while
+        moving the zoom slider's handle. If ``False``, then the the functions
+        are called only when the handle (mouse click) is realised.
+    """
+    def __init__(self, zoom_options, render_function=None, update_function=None,
+                 description='Figure scale: ', minus_description='fa-minus',
+                 plus_description='fa-plus', continuous_update=False):
+        # titles
+        self.title = ipywidgets.Latex(value=description, padding=6, margin=6)
+        self.x_title = ipywidgets.Latex(value='X', padding=6, margin=6)
+        self.y_title = ipywidgets.Latex(value='Y', padding=6, margin=6)
+
+        # buttons
+        m_icon, m_description = parse_font_awesome_icon(minus_description)
+        self.x_button_minus = ipywidgets.Button(description=m_description,
+                                                icon=m_icon, width='1cm')
+        self.y_button_minus = ipywidgets.Button(description=m_description,
+                                                icon=m_icon, width='1cm')
+        p_icon, p_description = parse_font_awesome_icon(plus_description)
+        self.x_button_plus = ipywidgets.Button(description=p_description,
+                                               icon=p_icon, width='1cm')
+        self.y_button_plus = ipywidgets.Button(description=p_description,
+                                               icon=p_icon, width='1cm')
+
+        # sliders and texts
+        self.x_zoom_slider = ipywidgets.FloatSlider(
+            value=zoom_options['zoom_x'], min=zoom_options['min'],
+            max=zoom_options['max'], readout=False, width='6cm',
+            continuous_update=continuous_update)
+        self.y_zoom_slider = ipywidgets.FloatSlider(
+            value=zoom_options['zoom_y'], min=zoom_options['min'],
+            max=zoom_options['max'], readout=False, width='6cm',
+            continuous_update=continuous_update)
+        self.x_zoom_text = ipywidgets.FloatText(
+            value=zoom_options['zoom_x'], min=zoom_options['min'],
+            max=zoom_options['max'], width='1.5cm')
+        self.y_zoom_text = ipywidgets.FloatText(
+            value=zoom_options['zoom_y'], min=zoom_options['min'],
+            max=zoom_options['max'], width='1.5cm')
+
+        # x and y boxes
+        self.x_box = ipywidgets.HBox(
+            children=[self.x_title, self.x_button_minus, self.x_zoom_slider,
+                      self.x_button_plus, self.x_zoom_text], margin='0.05cm')
+        self.y_box = ipywidgets.HBox(
+            children=[self.y_title, self.y_button_minus, self.y_zoom_slider,
+                      self.y_button_plus, self.y_zoom_text], margin='0.05cm')
+        self.x_y_box = ipywidgets.VBox(children=[self.x_box, self.y_box])
+
+        # link button
+        self.lock_link = ipywidgets.jslink((self.x_zoom_slider, 'value'),
+                                           (self.y_zoom_slider, 'value'))
+        lock_icon = 'fa-link'
+        if not zoom_options['lock_aspect_ratio']:
+            lock_icon = 'fa-unlink'
+            self.lock_link.unlink()
+        self.lock_aspect_button = ipywidgets.ToggleButton(
+            value=zoom_options['lock_aspect_ratio'], description='',
+            icon=lock_icon)
+        self.options_box = ipywidgets.HBox(
+            children=[self.lock_aspect_button, self.x_y_box], align='center')
+
+        super(ZoomTwoScalesWidget, self).__init__(
+            children=[self.title, self.options_box])
+        self.orientation = 'horizontal'
+        self.align = 'center'
+
+        # Link the zoom texts and sliders
+        ipywidgets.jslink((self.x_zoom_slider, 'value'),
+                          (self.x_zoom_text, 'value'))
+        ipywidgets.jslink((self.y_zoom_slider, 'value'),
+                          (self.y_zoom_text, 'value'))
+
+        # Assign output
+        self.selected_values = zoom_options
+
+        # Set functionality
+        def x_value_plus(name):
+            tmp_val = float(self.x_zoom_text.value) + self.selected_values[
+                'step']
+            if tmp_val > self.selected_values['max']:
+                self.x_zoom_text.value = "{:.2f}".format(
+                    self.selected_values['max'])
+            else:
+                self.x_zoom_text.value = "{:.2f}".format(tmp_val)
+        self.x_button_plus.on_click(x_value_plus)
+
+        def x_value_minus(name):
+            tmp_val = float(self.x_zoom_text.value) - self.selected_values[
+                'step']
+            if tmp_val < self.selected_values['min']:
+                self.x_zoom_text.value = "{:.2f}".format(
+                    self.selected_values['min'])
+            else:
+                self.x_zoom_text.value = "{:.2f}".format(tmp_val)
+        self.x_button_minus.on_click(x_value_minus)
+
+        def y_value_plus(name):
+            tmp_val = float(self.y_zoom_text.value) + self.selected_values[
+                'step']
+            if tmp_val > self.selected_values['max']:
+                self.y_zoom_text.value = "{:.2f}".format(
+                    self.selected_values['max'])
+            else:
+                self.y_zoom_text.value = "{:.2f}".format(tmp_val)
+        self.y_button_plus.on_click(y_value_plus)
+
+        def y_value_minus(name):
+            tmp_val = float(self.y_zoom_text.value) - self.selected_values[
+                'step']
+            if tmp_val < self.selected_values['min']:
+                self.y_zoom_text.value = "{:.2f}".format(
+                    self.selected_values['min'])
+            else:
+                self.y_zoom_text.value = "{:.2f}".format(tmp_val)
+        self.y_button_minus.on_click(y_value_minus)
+
+        def x_save_zoom_slider(name, value):
+            self.selected_values['zoom_x'] = value
+            if self.selected_values['lock_aspect_ratio']:
+                self.selected_values['zoom_y'] = value
+        self.x_zoom_slider.on_trait_change(x_save_zoom_slider, 'value')
+
+        def x_save_zoom_text(name, value):
+            self.selected_values['zoom_x'] = float(value)
+            if self.selected_values['lock_aspect_ratio']:
+                self.selected_values['zoom_y'] = float(value)
+        self.x_zoom_text.on_trait_change(x_save_zoom_text, 'value')
+
+        def y_save_zoom_slider(name, value):
+            self.selected_values['zoom_y'] = value
+            if self.selected_values['lock_aspect_ratio']:
+                self.selected_values['zoom_x'] = value
+        self.y_zoom_slider.on_trait_change(y_save_zoom_slider, 'value')
+
+        def y_save_zoom_text(name, value):
+            self.selected_values['zoom_y'] = float(value)
+            if self.selected_values['lock_aspect_ratio']:
+                self.selected_values['zoom_x'] = float(value)
+        self.y_zoom_text.on_trait_change(y_save_zoom_text, 'value')
+
+        def link_button(name, value):
+            self.selected_values['lock_aspect_ratio'] = value
+            if value:
+                self.lock_aspect_button.icon = 'fa-link'
+                self.lock_link = ipywidgets.jslink(
+                    (self.x_zoom_slider, 'value'),
+                    (self.y_zoom_slider, 'value'))
+                self.selected_values['zoom_y'] = self.selected_values['zoom_x']
+            else:
+                self.lock_aspect_button.icon = 'fa-unlink'
+                self.lock_link.unlink()
+        self.lock_aspect_button.on_trait_change(link_button, 'value')
+
+        # Set render and update functions
+        self._update_function = None
+        self.add_update_function(update_function)
+        self._render_function = None
+        self.add_render_function(render_function)
+
+    def style(self, box_style=None, border_visible=False, border_colour='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
+              font_weight='', minus_style='', plus_style='', lock_style='',
+              text_colour=None, text_background_colour=None, slider_width='6cm',
+              slider_bar_colour=None, slider_handle_colour=None,
+              slider_text_visible=True):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        box_style : `str` or ``None`` (see below), optional
+            Widget style options ::
+
+                {'success', 'info', 'warning', 'danger', ''}
+                or
+                None
+
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the corners of the box.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {'serif', 'sans-serif', 'cursive', 'fantasy',
+                 'monospace', 'helvetica'}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : ``{'normal', 'italic', 'oblique'}``, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {'ultralight', 'light', 'normal', 'regular', 'book',
+                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
+                 'heavy', 'extra bold', 'black'}
+
+        minus_style : `str` or ``None`` (see below), optional
+            Style options ::
+
+                {'success', 'info', 'warning', 'danger', 'primary', ''}
+                or
+                None
+
+        plus_style : `str` or ``None`` (see below), optional
+            Style options ::
+
+                {'success', 'info', 'warning', 'danger', 'primary', ''}
+                or
+                None
+
+        text_colour : `str`, optional
+            The text colour of the index text.
+        text_background_colour : `str`, optional
+            The background colour of the index text.
+        slider_width : `float`, optional
+            The width of the slider
+        slider_bar_colour : `str`, optional
+            The colour of the slider's bar.
+        slider_handle_colour : `str`, optional
+            The colour of the slider's handle.
+        slider_text_visible : `bool`, optional
+            Whether the selected value of the slider is visible.
+        """
+        format_box(self, box_style, border_visible, border_colour, border_style,
+                   border_width, border_radius, padding, margin)
+        format_font(self.title, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.x_title, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.y_title, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.x_button_minus, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.x_button_plus, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.x_zoom_text, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.y_button_minus, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.y_button_plus, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.y_zoom_text, font_family, font_size, font_style,
+                    font_weight)
+        self.x_button_minus.button_style = minus_style
+        self.x_button_plus.button_style = plus_style
+        self.y_button_minus.button_style = minus_style
+        self.y_button_plus.button_style = plus_style
+        self.lock_aspect_button.button_style = lock_style
+        format_text_box(self.x_zoom_text, text_colour, text_background_colour)
+        format_text_box(self.y_zoom_text, text_colour, text_background_colour)
+        format_slider(self.x_zoom_slider, slider_width=slider_width,
+                      slider_handle_colour=slider_handle_colour,
+                      slider_bar_colour=slider_bar_colour,
+                      slider_text_visible=slider_text_visible)
+        self.x_zoom_slider.readout = False
+        format_slider(self.y_zoom_slider, slider_width=slider_width,
+                      slider_handle_colour=slider_handle_colour,
+                      slider_bar_colour=slider_bar_colour,
+                      slider_text_visible=slider_text_visible)
+        self.y_zoom_slider.readout = False
+
+    def add_render_function(self, render_function):
+        r"""
+        Method that adds a `render_function()` to the widget. The signature of
+        the given function is also stored in `self._render_function`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._render_function = render_function
+        if self._render_function is not None:
+            self.x_zoom_slider.on_trait_change(self._render_function, 'value')
+            self.x_zoom_text.on_trait_change(self._render_function, 'value')
+            self.y_zoom_slider.on_trait_change(self._render_function, 'value')
+            self.y_zoom_text.on_trait_change(self._render_function, 'value')
+            self.lock_aspect_button.on_trait_change(self._render_function,
+                                                    'value')
+
+    def remove_render_function(self):
+        r"""
+        Method that removes the current `self._render_function()` from the
+        widget and sets ``self._render_function = None``.
+        """
+        self.x_zoom_slider.on_trait_change(self._render_function, 'value',
+                                           remove=True)
+        self.x_zoom_text.on_trait_change(self._render_function, 'value',
+                                         remove=True)
+        self.y_zoom_slider.on_trait_change(self._render_function, 'value',
+                                           remove=True)
+        self.y_zoom_text.on_trait_change(self._render_function, 'value',
+                                         remove=True)
+        self.lock_aspect_button.on_trait_change(self._render_function, 'value',
+                                                remove=True)
+        self._render_function = None
+
+    def replace_render_function(self, render_function):
+        r"""
+        Method that replaces the current `self._render_function()` of the widget
+        with the given `render_function()`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_render_function()
+
+        # add new function
+        self.add_render_function(render_function)
+
+    def add_update_function(self, update_function):
+        r"""
+        Method that adds a `update_function()` to the widget. The signature of
+        the given function is also stored in `self._update_function`.
+
+        Parameters
+        ----------
+        update_function : `function` or ``None``, optional
+            The update function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._update_function = update_function
+        if self._update_function is not None:
+            self.x_zoom_slider.on_trait_change(self._update_function, 'value')
+            self.x_zoom_text.on_trait_change(self._update_function, 'value')
+            self.y_zoom_slider.on_trait_change(self._update_function, 'value')
+            self.y_zoom_text.on_trait_change(self._update_function, 'value')
+            self.lock_aspect_button.on_trait_change(self._update_function,
+                                                    'value')
+
+    def remove_update_function(self):
+        r"""
+        Method that removes the current `self._update_function()` from the
+        widget and sets ``self._update_function = None``.
+        """
+        self.x_zoom_slider.on_trait_change(self._update_function, 'value',
+                                           remove=True)
+        self.x_zoom_text.on_trait_change(self._update_function, 'value',
+                                         remove=True)
+        self.y_zoom_slider.on_trait_change(self._update_function, 'value',
+                                           remove=True)
+        self.y_zoom_text.on_trait_change(self._update_function, 'value',
+                                         remove=True)
+        self.lock_aspect_button.on_trait_change(self._update_function, 'value',
+                                                remove=True)
+        self._update_function = None
+
+    def replace_update_function(self, update_function):
+        r"""
+        Method that replaces the current `self._update_function()` of the widget
+        with the given `update_function()`.
+
+        Parameters
+        ----------
+        update_function : `function` or ``None``, optional
+            The update function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_update_function()
+
+        # add new function
+        self.add_update_function(update_function)
+
+    def set_widget_state(self, zoom_options, continuous_update=False,
+                         allow_callback=True):
+        r"""
+        Method that updates the state of the widget, if the provided `index`
+        values are different than `self.selected_values()`.
+
+        Parameters
+        ----------
+        zoom_options : `dict`
+            The dictionary with the selected options. For example ::
+
+            zoom_options = {'zoom_x': 1., 'zoom_y': 1.,
+                            'min': 0.1, 'max': 4., 'step': 0.05,
+                            'lock_aspect_ratio': False}
+
+        continuous_update : `bool`, optional
+            If ``True``, then the render and update functions are called while
+            moving the zoom slider's handle. If ``False``, then the the
+            functions are called only when the handle (mouse click) is realised.
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        # update the continuous update property of the zoom sliders
+        self.x_zoom_slider.continuous_update = continuous_update
+        self.y_zoom_slider.continuous_update = continuous_update
+
+        # Check if update is required
+        if zoom_options != self.selected_values:
+            if not allow_callback:
+                # temporarily remove render and update functions
+                render_function = self._render_function
+                update_function = self._update_function
+                self.remove_render_function()
+                self.remove_update_function()
+
+            # update widgets
+            self.x_zoom_text.min = zoom_options['min']
+            self.x_zoom_slider.min = zoom_options['min']
+            self.y_zoom_text.min = zoom_options['min']
+            self.y_zoom_slider.min = zoom_options['min']
+            self.x_zoom_text.max = zoom_options['max']
+            self.x_zoom_slider.max = zoom_options['max']
+            self.y_zoom_text.max = zoom_options['max']
+            self.y_zoom_slider.max = zoom_options['max']
+            if zoom_options['lock_aspect_ratio']:
+                zoom_options['zoom_y'] = zoom_options['zoom_x']
+            self.x_zoom_text.value = "{:.2f}".format(zoom_options['zoom_x'])
+            self.y_zoom_text.value = "{:.2f}".format(zoom_options['zoom_y'])
+            self.lock_aspect_button.value = zoom_options['lock_aspect_ratio']
+
+            if not allow_callback:
+                # re-assign render and update callbacks
+                self.add_update_function(update_function)
+                self.add_render_function(render_function)
+
+        # Assign output
+        self.selected_values = zoom_options
+
+
 class ImageOptionsWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for selecting image rendering options.
@@ -6013,14 +6822,7 @@ def list_has_constant_step(l):
 
 class SlicingCommandWidget(ipywidgets.FlexBox):
     r"""
-    Creates a widget for selecting a slicing command. Specifically, it consists
-    of:
-
-        1) Text [`self.cmd_text`]: the command text
-        2) Latex [`self.example`]: explains what kind of commands are accepted
-        3) Latex [`self.error_msg`]: error message text
-        4) IntSlider [`self.single_slider`]: slider for selecting single indices
-        5) IntRangeSlider [`self.multiple_slider`]: slider for index range
+    Creates a widget for selecting a slicing command.
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -6094,7 +6896,7 @@ class SlicingCommandWidget(ipywidgets.FlexBox):
                     self.error_msg.value = "Error! ',' at start or end"
                 elif e.message == "Command cannot contain numbers greater " \
                                   "than {}.".format(
-                        self.selected_values['length']):
+                    self.selected_values['length']):
                     self.error_msg.value = "Error! Number > {}".format(
                         self.selected_values['length'])
                 else:
