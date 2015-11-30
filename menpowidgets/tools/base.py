@@ -98,11 +98,11 @@ class LogoWidget(ipywidgets.FlexBox):
         Parameters
         ----------
         box_style : `str` or ``None`` (see below), optional
-            Style options ::
+            Widget style options ::
 
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                {'success', 'info', 'warning', 'danger', ''}
                 or
-                ``None``
+                None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -125,8 +125,7 @@ class LogoWidget(ipywidgets.FlexBox):
 
 class IndexSliderWidget(ipywidgets.FlexBox):
     r"""
-    Creates a widget for selecting an index using a slider. The widget consists
-    of an `ipywidgets.IntSlider` object in `self.slider`.
+    Creates a widget for selecting an index using a slider.
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -187,11 +186,11 @@ class IndexSliderWidget(ipywidgets.FlexBox):
         Parameters
         ----------
         box_style : `str` or ``None`` (see below), optional
-            Style options ::
+            Widget style options ::
 
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                {'success', 'info', 'warning', 'danger', ''}
                 or
-                ``None``
+                None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -373,14 +372,7 @@ class IndexSliderWidget(ipywidgets.FlexBox):
 
 class IndexButtonsWidget(ipywidgets.FlexBox):
     r"""
-    Creates a widget for selecting an index using plus/minus buttons. The widget
-    consists of the following objects from `ipywidgets`:
-
-        1) `Latex` [`self.title`]: the description of the widget
-        2) `Button` [`self.button_plus`]: the plus button to increase the index
-        3) `Button` [`self.button_minus`]: the minus button to decrease the index
-        4) `IntText` [`self.index_text`]: text area with the selected index. It
-           can either be editable or not.
+    Creates a widget for selecting an index using plus/minus buttons.
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -487,11 +479,11 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
         Parameters
         ----------
         box_style : `str` or ``None`` (see below), optional
-            Style options ::
+            Widget style options ::
 
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                {'success', 'info', 'warning', 'danger', ''}
                 or
-                ``None``
+                None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -511,37 +503,34 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
             The font family to be used.
             Example options ::
 
-                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
-                 ``'monospace'``, ``'helvetica'``}
+                {'serif', 'sans-serif', 'cursive', 'fantasy',
+                 'monospace', 'helvetica'}
 
         font_size : `int`, optional
             The font size.
-        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+        font_style : ``{'normal', 'italic', 'oblique'}``, optional
             The font style.
         font_weight : See Below, optional
             The font weight.
             Example options ::
 
-                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
-                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
-                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
-                 ``'extra bold'``, ``'black'``}
+                {'ultralight', 'light', 'normal', 'regular', 'book',
+                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
+                 'heavy', 'extra bold', 'black'}
 
         minus_style : `str` or ``None`` (see below), optional
             Style options ::
 
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``,
-                 ``'primary'``, ``''``}
+                {'success', 'info', 'warning', 'danger', 'primary', ''}
                 or
-                ``None``
+                None
 
         plus_style : `str` or ``None`` (see below), optional
             Style options ::
 
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``,
-                 ``'primary'``, ``''``}
+                {'success', 'info', 'warning', 'danger', 'primary', ''}
                 or
-                ``None``
+                None
 
         text_colour : `str`, optional
             The text colour of the index text.
@@ -697,15 +686,7 @@ class IndexButtonsWidget(ipywidgets.FlexBox):
 
 class ColourSelectionWidget(ipywidgets.FlexBox):
     r"""
-    Creates a widget for colour selection of various items. The widget consists
-    of the following `ipywidgets` objects:
-
-        1) `Dropdown` [`self.label_dropdown`]: the menu with the available labels
-        2) `Button` [`self.apply_to_all_button`]: button that sets the same
-           colour to all available labels
-        3) `VBox` [`self.labels_box`]: the box containing (1) and (2)
-        4) `ColorPicker` [`self.colour_widget`]: the HTML colour picker
-        5) `VBox` [`self.rgb_box`]: box with (3) and (4)
+    Creates a widget for colour selection of a single or multiple objects.
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -717,8 +698,8 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
     colours_list : `list` of `str` or [`float`, `float`, `float`]
         If `str`, it must either a hex code or a colour name, such as ::
 
-            {``'blue'``, ``'green'``, ``'red'``, ``'cyan'``,
-             ``'magenta'``, ``'yellow'``, ``'black'``, ``'white'``}
+            {'blue', 'green', 'red', 'cyan', 'magenta', 'yellow',
+             'black', 'white'}
 
         If [`float`, `float`, `float`], it defines an RGB value and must have
         length 3.
@@ -766,7 +747,7 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         if not multiple:
             colour_description = description
         self.colour_widget = ipywidgets.ColorPicker(
-            value=default_colour, description=colour_description, width='5cm')
+            value=default_colour, description=colour_description)
 
         # Final widget
         super(ColourSelectionWidget, self).__init__(
@@ -820,11 +801,11 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         Parameters
         ----------
         box_style : `str` or ``None`` (see below), optional
-            Style options ::
+            Widget style options ::
 
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                {'success', 'info', 'warning', 'danger', ''}
                 or
-                ``None``
+                None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -844,21 +825,20 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
             The font family to be used.
             Example options ::
 
-                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
-                 ``'monospace'``, ``'helvetica'``}
+                {'serif', 'sans-serif', 'cursive', 'fantasy',
+                 'monospace', 'helvetica'}
 
         font_size : `int`, optional
             The font size.
-        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+        font_style : ``{'normal', 'italic', 'oblique'}``, optional
             The font style.
         font_weight : See Below, optional
             The font weight.
             Example options ::
 
-                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
-                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
-                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
-                 ``'extra bold'``, ``'black'``}
+                {'ultralight', 'light', 'normal', 'regular', 'book',
+                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
+                 'heavy', 'extra bold', 'black'}
 
         label_colour : `str`, optional
             The text colour of the labels dropdown selection.
@@ -871,10 +851,9 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         apply_to_all_style : `str`,
             Style options ::
 
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``,
-                 ``'primary'``, ``''``}
+                {'success', 'info', 'warning', 'danger', 'primary', ''}
                 or
-                ``None``
+                None
 
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
@@ -945,8 +924,8 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
         colours_list : `list` of `str` or [`float`, `float`, `float`]
             If `str`, it must either a hex code or a colour name, such as ::
 
-                {``'blue'``, ``'green'``, ``'red'``, ``'cyan'``,
-                 ``'magenta'``, ``'yellow'``, ``'black'``, ``'white'``}
+                {'blue', 'green', 'red', 'cyan', 'magenta', 'yellow',
+                'black', 'white'}
 
             If [`float`, `float`, `float`], it defines an RGB value and must have
             length 3.
@@ -1028,12 +1007,7 @@ class ColourSelectionWidget(ipywidgets.FlexBox):
 
 class ImageOptionsWidget(ipywidgets.FlexBox):
     r"""
-    Creates a widget for selecting image rendering options. Specifically, it
-    consists of the following `ipywidgets` objects:
-
-        1) `Checkbox` [`self.interpolation_checkbox`]: interpolation checkbox
-        2) `FloatSlider` [`self.alpha_slider`]: sets the alpha value
-        3) `Select` [`self.cmap_select`]: sets the colourmap
+    Creates a widget for selecting image rendering options.
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -1145,9 +1119,9 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
         box_style : `str` or ``None`` (see below), optional
             Widget style options ::
 
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                {'success', 'info', 'warning', 'danger', ''}
                 or
-                ``None``
+                None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -1167,21 +1141,20 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
             The font family to be used.
             Example options ::
 
-                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
-                 ``'monospace'``, ``'helvetica'``}
+                {'serif', 'sans-serif', 'cursive', 'fantasy',
+                 'monospace', 'helvetica'}
 
         font_size : `int`, optional
             The font size.
-        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+        font_style : ``{'normal', 'italic', 'oblique'}``, optional
             The font style.
         font_weight : See Below, optional
             The font weight.
             Example options ::
 
-                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
-                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
-                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
-                 ``'extra bold'``, ``'black'``}
+                {'ultralight', 'light', 'normal', 'regular', 'book',
+                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
+                 'heavy', 'extra bold', 'black'}
 
         alpha_handle_colour : `str`, optional
             The colour of the handle of alpha slider.
@@ -1295,14 +1268,7 @@ class ImageOptionsWidget(ipywidgets.FlexBox):
 
 class LineOptionsWidget(ipywidgets.FlexBox):
     r"""
-    Creates a widget for selecting line rendering options. Specifically, it
-    consists of the following `ipywidgets`:
-
-        1) `Checkbox` [`self.render_lines_checkbox`]: whether to render lines
-        2) `BoundedFloatText` [`self.line_width_text`]: sets the line width
-        3) `Dropdown` [`self.line_style_dropdown`]: sets the line style
-        4) `ColourSelectionWidget` [`self.line_colour_widget`]: sets line colour
-        5) `Box` [`self.line_options_box`]: box that contains (2), (3) and (4)
+    Creates a widget for selecting line rendering options.
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -1315,7 +1281,7 @@ class LineOptionsWidget(ipywidgets.FlexBox):
         The initial line options. Example ::
 
             line_options = {'render_lines': True, 'line_width': 1,
-                            'line_colour': ['b'], 'line_style': '-'}
+                            'line_colour': ['blue'], 'line_style': '-'}
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
@@ -1396,9 +1362,9 @@ class LineOptionsWidget(ipywidgets.FlexBox):
         box_style : `str` or ``None`` (see below), optional
             Widget style options ::
 
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                {'success', 'info', 'warning', 'danger', ''}
                 or
-                ``None``
+                None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -1418,21 +1384,20 @@ class LineOptionsWidget(ipywidgets.FlexBox):
             The font family to be used.
             Example options ::
 
-                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
-                 ``'monospace'``, ``'helvetica'``}
+                {'serif', 'sans-serif', 'cursive', 'fantasy',
+                 'monospace', 'helvetica'}
 
         font_size : `int`, optional
             The font size.
-        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+        font_style : ``{'normal', 'italic', 'oblique'}``, optional
             The font style.
         font_weight : See Below, optional
             The font weight.
             Example options ::
 
-                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
-                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
-                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
-                 ``'extra bold'``, ``'black'``}
+                {'ultralight', 'light', 'normal', 'regular', 'book',
+                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
+                 'heavy', 'extra bold', 'black'}
 
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
@@ -1513,7 +1478,7 @@ class LineOptionsWidget(ipywidgets.FlexBox):
 
                 line_options = {'render_lines': True,
                                 'line_width': 2,
-                                'line_colour': ['r'],
+                                'line_colour': ['red'],
                                 'line_style': '-'}
 
         labels : `list` or ``None``, optional
@@ -1551,19 +1516,7 @@ class LineOptionsWidget(ipywidgets.FlexBox):
 
 class MarkerOptionsWidget(ipywidgets.FlexBox):
     r"""
-    Creates a widget for selecting marker rendering options. Specifically, it
-    consists of the following `ipywidgets` objects:
-
-        1) `Checkbox` [`self.render_markers_checkbox`]: whether to render markers
-        2) `BoundedIntText` [`self.marker_size_text`]: sets the marker size
-        3) `BoundedFloatText` [`self.marker_edge_width_text`]: sets the marker
-           edge width
-        4) `Dropdown` [`self.marker_style_dropdown`]: sets the marker style
-        5) `ColourSelectionWidget` [`self.marker_edge_colour_widget`]: sets the
-           marker edge colour
-        6) `ColourSelectionWidget` [`self.marker_face_colour_widget`]: sets the
-           marker face colour
-        7) `Box` [`self.options_box`]: box that contains (2), (3), (4), (5), (6)
+    Creates a widget for selecting marker rendering options.
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -1577,8 +1530,8 @@ class MarkerOptionsWidget(ipywidgets.FlexBox):
 
             marker_options = {'render_markers': True,
                               'marker_size': 20,
-                              'marker_face_colour': ['r'],
-                              'marker_edge_colour': ['k'],
+                              'marker_face_colour': ['red'],
+                              'marker_edge_colour': ['black'],
                               'marker_style': 'o',
                               'marker_edge_width': 1}
 
@@ -1629,17 +1582,21 @@ class MarkerOptionsWidget(ipywidgets.FlexBox):
         self.marker_style_dropdown = ipywidgets.Dropdown(
             options=marker_style_dict, value=marker_options['marker_style'],
             description='Style')
+        self.marker_box_1 = ipywidgets.VBox(
+            children=[self.marker_style_dropdown, self.marker_size_text,
+                      self.marker_edge_width_text], margin='0.1cm')
         self.marker_face_colour_widget = ColourSelectionWidget(
             marker_options['marker_face_colour'], description='Face colour',
             labels=labels, render_function=render_function)
         self.marker_edge_colour_widget = ColourSelectionWidget(
             marker_options['marker_edge_colour'], description='Edge colour',
             labels=labels, render_function=render_function)
-        self.marker_options_box = ipywidgets.VBox(
-            children=[self.marker_style_dropdown, self.marker_size_text,
-                      self.marker_edge_width_text,
-                      self.marker_face_colour_widget,
-                      self.marker_edge_colour_widget])
+        self.marker_box_2 = ipywidgets.VBox(
+            children=[self.marker_face_colour_widget,
+                      self.marker_edge_colour_widget], margin='0.1cm',
+            align='end')
+        self.marker_options_box = ipywidgets.HBox(
+            children=[self.marker_box_1, self.marker_box_2])
         super(MarkerOptionsWidget, self).__init__(children=[
             self.render_markers_checkbox, self.marker_options_box])
         self.align = 'start'
@@ -1694,9 +1651,9 @@ class MarkerOptionsWidget(ipywidgets.FlexBox):
         box_style : `str` or ``None`` (see below), optional
             Widget style options ::
 
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                {'success', 'info', 'warning', 'danger', ''}
                 or
-                ``None``
+                None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -1716,21 +1673,20 @@ class MarkerOptionsWidget(ipywidgets.FlexBox):
             The font family to be used.
             Example options ::
 
-                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
-                 ``'monospace'``, ``'helvetica'``}
+                {'serif', 'sans-serif', 'cursive', 'fantasy',
+                 'monospace', 'helvetica'}
 
         font_size : `int`, optional
             The font size.
-        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+        font_style : ``{'normal', 'italic', 'oblique'}``, optional
             The font style.
         font_weight : See Below, optional
             The font weight.
             Example options ::
 
-                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
-                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
-                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
-                 ``'extra bold'``, ``'black'``}
+                {'ultralight', 'light', 'normal', 'regular', 'book',
+                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
+                 'heavy', 'extra bold', 'black'}
 
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
@@ -1827,8 +1783,8 @@ class MarkerOptionsWidget(ipywidgets.FlexBox):
 
                 marker_options = {'render_markers': True,
                                   'marker_size': 20,
-                                  'marker_face_colour': ['r'],
-                                  'marker_edge_colour': ['k'],
+                                  'marker_face_colour': ['red'],
+                                  'marker_edge_colour': ['black'],
                                   'marker_style': 'o',
                                   'marker_edge_width': 1}
 
@@ -1874,23 +1830,7 @@ class MarkerOptionsWidget(ipywidgets.FlexBox):
 
 class NumberingOptionsWidget(ipywidgets.FlexBox):
     r"""
-    Creates a widget for selecting numbering rendering options. Specifically, it
-    consists of:
-
-        1) Checkbox [`self.render_numbering_checkbox`]: whether to render
-           numbers
-        2) Dropdown [`self.numbers_font_name_dropdown`]: the font family
-        3) BoundedIntText [`self.numbers_font_size_text`]: the font size
-        4) Dropdown [`self.numbers_font_style_dropdown`]: the font style
-        5) Dropdown [`self.numbers_font_weight_dropdown`]: the font weight
-        6) ColourSelectionWidget [`self.numbers_font_colour_widget`]: sets the
-           font colour
-        7) Dropdown [`self.numbers_horizontal_align_dropdown`]: the horizontal
-           alignment
-        8) Dropdown [`self.numbers_vertical_align_dropdown`]: the vertical
-            alignment
-        9) Box [`self.options_box`]: box that contains (2), (3), (4), (5), (6),
-           (7) and (8)
+    Creates a widget for selecting numbering rendering options.
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -1907,7 +1847,7 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
                                'numbers_font_size': 10,
                                'numbers_font_style': 'normal',
                                'numbers_font_weight': 'normal',
-                               'numbers_font_colour': ['k'],
+                               'numbers_font_colour': ['black'],
                                'numbers_horizontal_align': 'center',
                                'numbers_vertical_align': 'bottom'}
 
@@ -1916,11 +1856,6 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
         If ``None``, then nothing is assigned.
     render_checkbox_title : `str`, optional
         The description of the render numbering checkbox.
-    labels : `list` or ``None``, optional
-        A `list` with the labels' names that get passed in to the
-        `ColourSelectionWidget`. If ``None``, then a `list` of the form
-        ``label {}`` is automatically defined. Note that the labels are defined
-        only for the colour option and not the rest of the options.
     """
     def __init__(self, numbers_options, render_function=None,
                  render_checkbox_title='Render numbering'):
@@ -1937,7 +1872,7 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
             options=numbers_font_name_dict,
             value=numbers_options['numbers_font_name'], description='Font')
         self.numbers_font_size_text = ipywidgets.BoundedIntText(
-            description='Size', min=2, max=10**6,
+            description='Size', min=0, max=10**6,
             value=numbers_options['numbers_font_size'])
         numbers_font_style_dict = OrderedDict()
         numbers_font_style_dict['normal'] = 'normal'
@@ -1996,25 +1931,18 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
         self.numbering_options_box = ipywidgets.HBox(
             children=[self.name_size_style_weight,
                       self.colour_horizontal_vertical_align])
-        self.options_box = ipywidgets.VBox(
-            children=[self.render_numbering_checkbox,
-                      self.numbering_options_box], align='end')
         super(NumberingOptionsWidget, self).__init__(
-            children=[self.options_box])
+            children=[self.render_numbering_checkbox,
+                      self.numbering_options_box])
         self.align = 'start'
+        self.orientation = 'horizontal'
 
         # Assign output
         self.selected_values = numbers_options
 
         # Set functionality
         def numbering_options_visible(name, value):
-            self.numbers_font_name_dropdown.disabled = not value
-            self.numbers_font_size_text.disabled = not value
-            self.numbers_font_style_dropdown.disabled = not value
-            self.numbers_font_weight_dropdown.disabled = not value
-            self.numbers_horizontal_align_dropdown.disabled = not value
-            self.numbers_vertical_align_dropdown.disabled = not value
-            self.numbers_font_colour_widget.disabled(not value)
+            self.numbering_options_box.visible = value
         numbering_options_visible('', numbers_options['render_numbering'])
         self.render_numbering_checkbox.on_trait_change(
             numbering_options_visible, 'value')
@@ -2073,9 +2001,9 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
         box_style : `str` or ``None`` (see below), optional
             Widget style options ::
 
-                {``'success'``, ``'info'``, ``'warning'``, ``'danger'``, ``''``}
+                {'success', 'info', 'warning', 'danger', ''}
                 or
-                ``None``
+                None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -2095,25 +2023,24 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
             The font family to be used.
             Example options ::
 
-                {``'serif'``, ``'sans-serif'``, ``'cursive'``, ``'fantasy'``,
-                 ``'monospace'``, ``'helvetica'``}
+                {'serif', 'sans-serif', 'cursive', 'fantasy',
+                 'monospace', 'helvetica'}
 
         font_size : `int`, optional
             The font size.
-        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+        font_style : ``{'normal', 'italic', 'oblique'}``, optional
             The font style.
         font_weight : See Below, optional
             The font weight.
             Example options ::
 
-                {``'ultralight'``, ``'light'``, ``'normal'``, ``'regular'``,
-                 ``'book'``, ``'medium'``, ``'roman'``, ``'semibold'``,
-                 ``'demibold'``, ``'demi'``, ``'bold'``, ``'heavy'``,
-                 ``'extra bold'``, ``'black'``}
+                {'ultralight', 'light', 'normal', 'regular', 'book',
+                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
+                 'heavy', 'extra bold', 'black'}
 
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
-                    border_width, border_radius, padding, margin)
+                   border_width, border_radius, padding, margin)
         format_font(self, font_family, font_size, font_style, font_weight)
         format_font(self.render_numbering_checkbox, font_family, font_size,
                     font_style, font_weight)
@@ -2132,8 +2059,9 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
         self.numbers_font_colour_widget.style(
             box_style=None, border_visible=False, font_family=font_family,
             font_size=font_size, font_weight=font_weight, font_style=font_style,
-            label_background_colour=None, colour_background_colour=None,
-            rgb_text_background_colour=None, apply_to_all_style='')
+            label_colour=None, label_background_colour=None,
+            picker_colour=None, picker_background_colour=None,
+            apply_to_all_style='')
 
     def add_render_function(self, render_function):
         r"""
@@ -2203,81 +2131,62 @@ class NumberingOptionsWidget(ipywidgets.FlexBox):
         # add new function
         self.add_render_function(render_function)
 
-    def set_widget_state(self, numbering_options, allow_callback=True):
+    def set_widget_state(self, numbers_options, allow_callback=True):
         r"""
         Method that updates the state of the widget with a new set of values.
 
         Parameters
         ----------
-        numbering_options : `dict`
+        numbers_options : `dict`
             The new set of options. For example ::
 
-                numbering_options = {'render_numbering': True,
-                                     'numbers_font_name': 'serif',
-                                     'numbers_font_size': 10,
-                                     'numbers_font_style': 'normal',
-                                     'numbers_font_weight': 'normal',
-                                     'numbers_font_colour': ['k'],
-                                     'numbers_horizontal_align': 'center',
-                                     'numbers_vertical_align': 'bottom'}
+                numbers_options = {'render_numbering': True,
+                                   'numbers_font_name': 'serif',
+                                   'numbers_font_size': 10,
+                                   'numbers_font_style': 'normal',
+                                   'numbers_font_weight': 'normal',
+                                   'numbers_font_colour': ['white'],
+                                   'numbers_horizontal_align': 'center',
+                                   'numbers_vertical_align': 'bottom'}
 
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
-        # Assign new options dict to selected_values
-        self.selected_values = numbering_options
+        if self.selected_values != numbers_options:
+            # temporarily remove render callback
+            render_function = self._render_function
+            self.remove_render_function()
 
-        # temporarily remove render callback
-        render_function = self._render_function
-        self.remove_render_function()
-
-        # update render numbering checkbox
-        if 'render_numbering' in numbering_options.keys():
+            # update
             self.render_numbering_checkbox.value = \
-                numbering_options['render_numbering']
-
-        # update numbers_font_name dropdown menu
-        if 'numbers_font_name' in numbering_options.keys():
+                numbers_options['render_numbering']
             self.numbers_font_name_dropdown.value = \
-                numbering_options['numbers_font_name']
-
-        # update numbers_font_size text box
-        if 'numbers_font_size' in numbering_options.keys():
+                numbers_options['numbers_font_name']
             self.numbers_font_size_text.value = \
-                int(numbering_options['numbers_font_size'])
-
-        # update numbers_font_style dropdown menu
-        if 'numbers_font_style' in numbering_options.keys():
+                int(numbers_options['numbers_font_size'])
             self.numbers_font_style_dropdown.value = \
-                numbering_options['numbers_font_style']
-
-        # update numbers_font_weight dropdown menu
-        if 'numbers_font_weight' in numbering_options.keys():
+                numbers_options['numbers_font_style']
             self.numbers_font_weight_dropdown.value = \
-                numbering_options['numbers_font_weight']
-
-        # update numbers_horizontal_align dropdown menu
-        if 'numbers_horizontal_align' in numbering_options.keys():
+                numbers_options['numbers_font_weight']
             self.numbers_horizontal_align_dropdown.value = \
-                numbering_options['numbers_horizontal_align']
-
-        # update numbers_vertical_align dropdown menu
-        if 'numbers_vertical_align' in numbering_options.keys():
+                numbers_options['numbers_horizontal_align']
             self.numbers_vertical_align_dropdown.value = \
-                numbering_options['numbers_vertical_align']
+                numbers_options['numbers_vertical_align']
 
-        # re-assign render callback
-        self.add_render_function(render_function)
+            # re-assign render callback
+            self.add_render_function(render_function)
 
-        # update numbers_font_colour
-        if 'numbers_font_colour' in numbering_options.keys():
+            # update numbers_font_colour
             self.numbers_font_colour_widget.set_widget_state(
-                numbering_options['numbers_font_colour'],
+                numbers_options['numbers_font_colour'],
                 allow_callback=False)
 
-        # trigger render function if allowed
-        if allow_callback:
-            self._render_function('', True)
+            # trigger render function if allowed
+            if allow_callback:
+                self._render_function('', True)
+
+        # Assign output
+        self.selected_values = numbers_options
 
 
 class FigureOptionsOneScaleWidget(ipywidgets.FlexBox):
