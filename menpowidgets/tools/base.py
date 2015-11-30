@@ -3047,7 +3047,7 @@ class AxesLimitsWidget(ipywidgets.FlexBox):
             range_initial_value = axes_limits['x']
             range_visible = False
         self.axes_x_limits_toggles = ipywidgets.ToggleButtons(
-            description='X axis:', value=toggles_initial_value,
+            description='X:', value=toggles_initial_value,
             options=['auto', 'percentage', 'range'], margin='0.2cm')
         self.axes_x_limits_percentage = ipywidgets.FloatSlider(
             min=-1.5, max=1.5, value=slider_initial_value, width='4cm',
@@ -3082,7 +3082,7 @@ class AxesLimitsWidget(ipywidgets.FlexBox):
             range_initial_value = axes_limits['y']
             range_visible = False
         self.axes_y_limits_toggles = ipywidgets.ToggleButtons(
-            description='Y axis:', value=toggles_initial_value,
+            description='Y:', value=toggles_initial_value,
             options=['auto', 'percentage', 'range'], margin='0.2cm')
         self.axes_y_limits_percentage = ipywidgets.FloatSlider(
             min=-1.5, max=1.5, value=slider_initial_value, width='4cm',
@@ -3144,6 +3144,103 @@ class AxesLimitsWidget(ipywidgets.FlexBox):
         self.add_update_function(update_function)
         self._render_function = None
         self.add_render_function(render_function)
+
+    def style(self, box_style=None, border_visible=False, border_colour='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
+              font_weight='', toggles_style='', slider_width='4cm',
+              slider_bar_colour=None, slider_handle_colour=None):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        box_style : `str` or ``None`` (see below), optional
+            Widget style options ::
+
+                {'success', 'info', 'warning', 'danger', ''}
+                or
+                None
+
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the corners of the box.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {'serif', 'sans-serif', 'cursive', 'fantasy',
+                 'monospace', 'helvetica'}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : ``{'normal', 'italic', 'oblique'}``, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {'ultralight', 'light', 'normal', 'regular', 'book',
+                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
+                 'heavy', 'extra bold', 'black'}
+
+        toggles_style : `str` or ``None`` (see below), optional
+            Style options ::
+
+                {'success', 'info', 'warning', 'danger', 'primary', ''}
+                or
+                None
+
+        slider_width : `float`, optional
+            The width of the slider
+        slider_bar_colour : `str`, optional
+            The colour of the slider's bar.
+        slider_handle_colour : `str`, optional
+            The colour of the slider's handle.
+        """
+        format_box(self, box_style, border_visible, border_colour, border_style,
+                   border_width, border_radius, padding, margin)
+        format_font(self.axes_x_limits_toggles, font_family, font_size,
+                    font_style, font_weight)
+        format_font(self.axes_y_limits_toggles, font_family, font_size,
+                    font_style, font_weight)
+        format_font(self.axes_x_limits_percentage, font_family, font_size,
+                    font_style, font_weight)
+        format_font(self.axes_x_limits_range, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.axes_y_limits_percentage, font_family, font_size,
+                    font_style, font_weight)
+        format_font(self.axes_y_limits_range, font_family, font_size, font_style,
+                    font_weight)
+        self.axes_x_limits_toggles.button_style = toggles_style
+        self.axes_y_limits_toggles.button_style = toggles_style
+        format_slider(self.axes_x_limits_percentage, slider_width=slider_width,
+                      slider_handle_colour=slider_handle_colour,
+                      slider_bar_colour=slider_bar_colour,
+                      slider_text_visible=True)
+        format_slider(self.axes_y_limits_percentage, slider_width=slider_width,
+                      slider_handle_colour=slider_handle_colour,
+                      slider_bar_colour=slider_bar_colour,
+                      slider_text_visible=True)
+        format_slider(self.axes_x_limits_range, slider_width=slider_width,
+                      slider_handle_colour=slider_handle_colour,
+                      slider_bar_colour=slider_bar_colour,
+                      slider_text_visible=True)
+        format_slider(self.axes_y_limits_range, slider_width=slider_width,
+                      slider_handle_colour=slider_handle_colour,
+                      slider_bar_colour=slider_bar_colour,
+                      slider_text_visible=True)
 
     def add_render_function(self, render_function):
         r"""
