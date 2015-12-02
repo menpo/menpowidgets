@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import ipywidgets
 from traitlets import link
+from traitlets.traitlets import List
 
 import menpo.io as mio
 
@@ -18,6 +19,65 @@ MENPO_WARNING_LOGO = None
 MENPO_SUCCESS_LOGO = None
 MENPO_INFO_LOGO = None
 MENPO_LOGO_SCALE = None
+
+
+class MenpoWidget(ipywidgets.FlexBox):
+    def __init__(self, children, trait, trait_default_value,
+                 render_function=None, orientation='vertical', align='start'):
+        # Create box object
+        super(MenpoWidget, self).__init__(children=children)
+        self.orientation = orientation
+        self.align = align
+
+        # Add trait for selected values
+        selected_values = trait(default_value=trait_default_value)
+        selected_values_trait = {'selected_values': selected_values}
+        self.add_traits(**selected_values_trait)
+
+        # Set render function
+        self._render_function = None
+        self.add_render_function(render_function)
+
+    def add_render_function(self, render_function):
+        r"""
+        Method that adds a `render_function()` to the widget. The signature of
+        the given function is also stored in `self._render_function`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is added.
+        """
+        self._render_function = render_function
+        if self._render_function is not None:
+            self.on_trait_change(self._render_function, 'selected_values')
+
+    def remove_render_function(self):
+        r"""
+        Method that removes the current `self._render_function()` from the
+        widget and sets ``self._render_function = None``.
+        """
+        self.on_trait_change(self._render_function, 'selected_values',
+                             remove=True)
+        self._render_function = None
+
+    def replace_render_function(self, render_function):
+        r"""
+        Method that replaces the current `self._render_function()` of the widget
+        with the given `render_function()`.
+
+        Parameters
+        ----------
+        render_function : `function` or ``None``, optional
+            The render function that behaves as a callback. If ``None``, then
+            nothing is happening.
+        """
+        # remove old function
+        self.remove_render_function()
+
+        # add new function
+        self.add_render_function(render_function)
 
 
 class LogoWidget(ipywidgets.FlexBox):
@@ -125,10 +185,201 @@ class LogoWidget(ipywidgets.FlexBox):
                    border_width, border_radius, padding, margin)
 
 
-class ListWidget(ipywidgets.FlexBox):
+class ListWidget(MenpoWidget):
     r"""
     Creates a widget for selecting a list with numbers. It supports both
     integers and floats.
+
+    The selected values are stored in the `self.selected_values` `trait`. To
+    set the styling of this widget please refer to the `style()` method. To
+    update the state and function of the widget, please refer to the
+    `set_widget_state()` and `replace_render_function()` methods.
+
+    Parameters
+    ----------
+    selected_list : `list`
+        The initial list.
+    mode : ``{'int', 'float'}``, optional
+        Defines the data type of the list members.
+    description : `str`, optional
+        The description of the command text box.
+    render_function : `function` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    example_visible : `bool`, optional
+        If `True`, then a line with command examples is printed below the
+        main text box.
+    """
+    def __init__(self, selected_list, mode='float', description='Command:',
+                 render_function=None, example_visible=True):
+        # Create command text widget
+        selected_cmd = ''
+        if mode == 'int':
+            for i in selected_list:
+                selected_cmd += '{}, '.format(i)
+        elif mode == 'float':
+            for i in selected_list:
+                selected_cmd += '{:.1f}, '.format(i)
+        else:
+            raise ValueError("mode must be either int or float.")
+        self.cmd_text = ipywidgets.Text(value=selected_cmd[:-2],
+                                        description=description)
+
+        # Create the rest of the widgets
+        if mode == 'int':
+            self.example = ipywidgets.Latex(
+                value="e.g. '[1, 2]', '10', '10, 20', 'range(10)', "
+                      "'range(1, 8, 2)' etc.",
+                font_size=11, font_style='italic', visible=example_visible)
+        else:
+            self.example = ipywidgets.Latex(
+                value="e.g. '10.', '10., 20.', 'range(10.)', "
+                      "'range(2.5, 5., 2.)' etc.",
+                font_size=11, font_style='italic', visible=example_visible)
+        self.error_msg = ipywidgets.Latex(value='', font_style='italic',
+                                          color='#FF0000')
+
+        # Create final widget
+        children = [self.cmd_text, self.example, self.error_msg]
+        trait = List
+        trait_default_value = selected_list
+        super(ListWidget, self).__init__(
+            children, trait, trait_default_value,
+            render_function=render_function, orientation='vertical',
+            align='end')
+
+        # Assign properties
+        self.mode = mode
+
+        # Set functionality
+        def save_cmd(name):
+            self.error_msg.value = ''
+            try:
+                if self.mode == 'int':
+                    self.selected_values = parse_int_range_command(
+                        str(self.cmd_text.value))
+                else:
+                    self.selected_values = parse_float_range_command(
+                        str(self.cmd_text.value))
+            except ValueError as e:
+                self.error_msg.value = str(e)
+        self.cmd_text.on_submit(save_cmd)
+
+    def set_widget_state(self, selected_list, allow_callback=True):
+        r"""
+        Method that updates the state of the widget with a new set of values.
+
+        Parameters
+        ----------
+        selected_list : `list`
+            The selected list.
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        if not lists_are_the_same(selected_list, self.selected_values):
+            # Assign new options dict to selected_values
+            selected_cmd = ''
+            if self.mode == 'int':
+                for i in selected_list:
+                    selected_cmd += '{}, '.format(i)
+            elif self.mode == 'float':
+                for i in selected_list:
+                    selected_cmd += '{:.1f}, '.format(i)
+
+            # temporarily remove render callback
+            render_function = self._render_function
+            self.remove_render_function()
+
+            # update command text
+            self.selected_values = selected_list
+            self.cmd_text.value = selected_cmd[:-2]
+
+            # re-assign render callback
+            self.add_render_function(render_function)
+
+        # trigger render function if allowed
+        if allow_callback:
+            self._render_function('', 0)
+
+    def style(self, box_style=None, border_visible=False, border_colour='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, text_box_style=None, text_box_background_colour=None,
+              text_box_width=None, font_family='', font_size=None,
+              font_style='', font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        box_style : `str` or ``None`` (see below), optional
+            Widget style options ::
+
+                {'success', 'info', 'warning', 'danger', ''}
+                or
+                None
+
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the border around the widget.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
+        text_box_style : `str` or ``None`` (see below), optional
+            Command text box style options ::
+
+                {'success', 'info', 'warning', 'danger', ''}
+                or
+                None
+
+        text_box_background_colour : `str`, optional
+            The background colour of the command text box.
+        text_box_width : `str`, optional
+            The width of the command text box.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {'serif', 'sans-serif', 'cursive', 'fantasy',
+                 'monospace', 'helvetica'}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {'ultralight', 'light', 'normal', 'regular', 'book',
+                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
+                 'heavy', 'extra bold', 'black'}
+
+        """
+        format_box(self, box_style, border_visible, border_colour, border_style,
+                   border_width, border_radius, padding, margin)
+        format_font(self, font_family, font_size, font_style, font_weight)
+        format_font(self.cmd_text, font_family, font_size, font_style,
+                    font_weight)
+        self.cmd_text.color = map_styles_to_hex_colours(text_box_style)
+        self.cmd_text.background_color = map_styles_to_hex_colours(
+            text_box_background_colour, background=True)
+        self.cmd_text.border_color = map_styles_to_hex_colours(text_box_style)
+        self.cmd_text.font_family = 'monospace'
+        self.cmd_text.border_width = 1
+        self.cmd_text.width = text_box_width
+
+
+class SlicingCommandWidget(ipywidgets.FlexBox):
+    r"""
+    Creates a widget for selecting a slicing command.
 
     The selected values are stored in `self.selected_values` `dict`. To set the
     styling of this widget please refer to the `style()` method. To update the
@@ -137,44 +388,57 @@ class ListWidget(ipywidgets.FlexBox):
 
     Parameters
     ----------
-    list_cmd : `dict`
-        The initial list options. Example ::
+    slice_cmd : `dict`
+        The initial slicing options. Example ::
 
-            list_cmd = {'list': [0, 1, 2], 'command': 'range(3)'}
+            slice_cmd = {'indices': [0, 1, 2], 'command': ':3', 'length': 68}
 
-    mode : ``{'int', 'float'}``, optional
-        Defines the data type of the list members.
     description : `str`, optional
         The description of the command text box.
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
+    example_visible : `bool`, optional
+        If ``True``, then a line with command examples is printed below the
+        main text box.
+    continuous_update : `bool`, optional
+        If ``True``, then the render and update functions are called while
+        moving the slider's handle. If ``False``, then the the functions are
+        called only when the handle (mouse click) is realised.
     """
-    def __init__(self, list_cmd, mode='float', description='Command:',
-                 render_function=None, example_visible=True):
+    def __init__(self, slice_cmd, description='Command:',
+                 render_function=None, example_visible=True,
+                 continuous_update=False):
         # Create command text widget
-        if mode == 'int':
-            list_cmd['list'] = parse_int_range_command(list_cmd['command'])
-        elif mode == 'float':
-            list_cmd['list'] = parse_float_range_command(list_cmd['command'])
-        else:
-            raise ValueError("mode must be either int or float.")
-        self.cmd_text = ipywidgets.Text(value=list_cmd['command'],
+        slice_cmd['indices'] = parse_slicing_command(slice_cmd['command'],
+                                                     slice_cmd['length'])
+        self.cmd_text = ipywidgets.Text(value=slice_cmd['command'],
                                         description=description)
-        self.mode = mode
 
         # Assign output
-        self.selected_values = list_cmd
+        self.selected_values = slice_cmd
 
         # Create the rest of the widgets
         self.example = ipywidgets.Latex(
-            value="e.g. '[1, 2]', '10', '10, 20', 'range(10)', "
-                  "'range(1, 8, 2)' etc.",
+            value="e.g. ':3', '-3:', '1:{}:2', '3::', '0, {}', '7', "
+                  "'range({})' etc.".format(slice_cmd['length'],
+                                            slice_cmd['length'],
+                                            slice_cmd['length']),
             font_size=11, font_style='italic', visible=example_visible)
         self.error_msg = ipywidgets.Latex(value='', font_style='italic',
                                           color='#FF0000')
-        super(ListWidget, self).__init__(
-            children=[self.cmd_text, self.example, self.error_msg])
+        self.single_slider = ipywidgets.IntSlider(
+            min=0, max=slice_cmd['length']-1, value=0, width='6.8cm',
+            visible=self._single_slider_visible(),
+            continuous_update=continuous_update)
+        self.multiple_slider = ipywidgets.IntRangeSlider(
+            min=0, max=slice_cmd['length']-1,
+            value=(slice_cmd['indices'][0], slice_cmd['indices'][-1]),
+            width='6.8cm', visible=self._multiple_slider_visible()[0],
+            continuous_update=continuous_update)
+        super(SlicingCommandWidget, self).__init__(
+            children=[self.cmd_text, self.example, self.error_msg,
+                      self.single_slider, self.multiple_slider])
         self.orientation = 'vertical'
         self.align = 'end'
 
@@ -183,20 +447,58 @@ class ListWidget(ipywidgets.FlexBox):
             self.error_msg.value = ''
             try:
                 self.selected_values['command'] = str(self.cmd_text.value)
-                if self.mode == 'int':
-                    self.selected_values['list'] = parse_int_range_command(
-                        str(self.cmd_text.value))
-                else:
-                    self.selected_values['list'] = parse_float_range_command(
-                        str(self.cmd_text.value))
+                self.selected_values['indices'] = parse_slicing_command(
+                    str(self.cmd_text.value), self.selected_values['length'])
             except ValueError as e:
                 self.error_msg.value = str(e)
+
+            # set single slider visibility and value
+            self.single_slider.visible = self._single_slider_visible()
+            if self._single_slider_visible():
+                self.single_slider.on_trait_change(self._render_function,
+                                                   'value', remove=True)
+                self.single_slider.value = self.selected_values['indices'][0]
+                self.single_slider.on_trait_change(self._render_function,
+                                                   'value')
+
+            # set multiple slider visibility and value
+            vis, step = self._multiple_slider_visible()
+            self.multiple_slider.visible = vis
+            if vis:
+                self.multiple_slider.step = step
+                self.multiple_slider.on_trait_change(self._render_function,
+                                                     'value', remove=True)
+                self.multiple_slider.value = (
+                    self.selected_values['indices'][0],
+                    self.selected_values['indices'][-1])
+                self.multiple_slider.on_trait_change(self._render_function,
+                                                     'value')
         self.cmd_text.on_submit(save_cmd)
+
+        def single_slider_value(name, value):
+            self.selected_values['indices'] = [value]
+            self.cmd_text.value = str(value)
+            self.selected_values['command'] = str(value)
+        self.single_slider.on_trait_change(single_slider_value, 'value')
+
+        def multiple_slider_value(name, value):
+            self.selected_values['indices'] = range(value[0], value[1]+1,
+                                                    self.multiple_slider.step)
+            self.cmd_text.value = "{}:{}:{}".format(value[0], value[1]+1,
+                                                    self.multiple_slider.step)
+            self.selected_values['command'] = str(self.cmd_text.value)
+        self.multiple_slider.on_trait_change(multiple_slider_value, 'value')
 
         # Set render function
         self._render_function = None
         self._render_function_2 = None
         self.add_render_function(render_function)
+
+    def _single_slider_visible(self):
+        return len(self.selected_values['indices']) == 1
+
+    def _multiple_slider_visible(self):
+        return list_has_constant_step(self.selected_values['indices'])
 
     def add_render_function(self, render_function):
         r"""
@@ -213,8 +515,12 @@ class ListWidget(ipywidgets.FlexBox):
         if self._render_function is not None:
             def render_function_2(name):
                 self._render_function(name, '')
+
             self._render_function_2 = render_function_2
+
             self.cmd_text.on_submit(self._render_function_2)
+            self.single_slider.on_trait_change(self._render_function, 'value')
+            self.multiple_slider.on_trait_change(self._render_function, 'value')
 
     def remove_render_function(self):
         r"""
@@ -222,6 +528,10 @@ class ListWidget(ipywidgets.FlexBox):
         widget and sets ``self._render_function = None``.
         """
         self.cmd_text.on_submit(self._render_function_2, remove=True)
+        self.single_slider.on_trait_change(self._render_function, 'value',
+                                           remove=True)
+        self.multiple_slider.on_trait_change(self._render_function, 'value',
+                                             remove=True)
         self._render_function = None
         self._render_function_2 = None
 
@@ -242,30 +552,43 @@ class ListWidget(ipywidgets.FlexBox):
         # add new function
         self.add_render_function(render_function)
 
-    def set_widget_state(self, list_cmd, allow_callback=True):
+    def set_widget_state(self, slice_cmd, allow_callback=True):
         r"""
         Method that updates the state of the widget with a new set of values.
 
         Parameters
         ----------
-        list_cmd : `dict`
-            The selected list options. Example ::
+        slice_cmd : `dict`
+            The initial slicing options. Example ::
 
-                list_cmd = {'list': [0, 1, 2], 'command': 'range(3)'}
+                slice_cmd = {'indices': [10], 'command': '10', 'length': 30}
 
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
         # Assign new options dict to selected_values
-        if self.mode == 'int':
-            list_cmd['list'] = parse_int_range_command(list_cmd['command'])
-        else:
-            list_cmd['list'] = parse_float_range_command(list_cmd['command'])
-        self.selected_values = list_cmd
+        slice_cmd['indices'] = parse_slicing_command(slice_cmd['command'],
+                                                     slice_cmd['length'])
+        self.selected_values = slice_cmd
 
         # temporarily remove render callback
         render_function = self._render_function
         self.remove_render_function()
+
+        # update single slider
+        self.single_slider.visible = self._single_slider_visible()
+        self.single_slider.max = self.selected_values['length'] - 1
+        if self._single_slider_visible():
+            self.single_slider.value = self.selected_values['indices'][0]
+
+        # update multiple slider
+        vis, step = self._multiple_slider_visible()
+        self.multiple_slider.visible = vis
+        self.multiple_slider.max = slice_cmd['length'] - 1
+        if vis:
+            self.multiple_slider.step = step
+            self.multiple_slider.value = (slice_cmd['indices'][0],
+                                          slice_cmd['indices'][-1])
 
         # update command text
         self.cmd_text.value = self.selected_values['command']
@@ -351,6 +674,14 @@ class ListWidget(ipywidgets.FlexBox):
         self.cmd_text.font_family = 'monospace'
         self.cmd_text.border_width = 1
         self.cmd_text.width = text_box_width
+        self.single_slider.slider_color = map_styles_to_hex_colours(
+            box_style, background=False)
+        self.single_slider.background_color = map_styles_to_hex_colours(
+            box_style, background=False)
+        self.multiple_slider.slider_color = map_styles_to_hex_colours(
+            box_style, background=False)
+        self.multiple_slider.background_color = map_styles_to_hex_colours(
+            box_style, background=False)
 
 
 class IndexSliderWidget(ipywidgets.FlexBox):
@@ -3274,7 +3605,7 @@ class AxesLimitsWidget(ipywidgets.FlexBox):
             slider_initial_value = 0.
             slider_visible = False
             range_initial_value = axes_limits['x']
-            range_visible = False
+            range_visible = True
         self.axes_x_limits_toggles = ipywidgets.ToggleButtons(
             description='X:', value=toggles_initial_value,
             options=['auto', 'percentage', 'range'], margin='0.2cm')
@@ -3309,7 +3640,7 @@ class AxesLimitsWidget(ipywidgets.FlexBox):
             slider_initial_value = 0.
             slider_visible = False
             range_initial_value = axes_limits['y']
-            range_visible = False
+            range_visible = True
         self.axes_y_limits_toggles = ipywidgets.ToggleButtons(
             description='Y:', value=toggles_initial_value,
             options=['auto', 'percentage', 'range'], margin='0.2cm')
@@ -3347,7 +3678,13 @@ class AxesLimitsWidget(ipywidgets.FlexBox):
         self.axes_x_limits_toggles.on_trait_change(x_visibility, 'value')
 
         def get_x_value(name, value):
-            self.selected_values['x'] = value
+            if self.axes_x_limits_toggles.value == 'auto':
+                self.selected_values['x'] = None
+            elif value == 'percentage':
+                self.selected_values['x'] = self.axes_x_limits_percentage.value
+            else:
+                self.selected_values['x'] = list(self.axes_x_limits_range.value)
+        self.axes_x_limits_toggles.on_trait_change(get_x_value, 'value')
         self.axes_x_limits_percentage.on_trait_change(get_x_value, 'value')
         self.axes_x_limits_range.on_trait_change(get_x_value, 'value')
 
@@ -3364,7 +3701,13 @@ class AxesLimitsWidget(ipywidgets.FlexBox):
         self.axes_y_limits_toggles.on_trait_change(y_visibility, 'value')
 
         def get_y_value(name, value):
-            self.selected_values['y'] = value
+            if self.axes_y_limits_toggles.value == 'auto':
+                self.selected_values['y'] = None
+            elif value == 'percentage':
+                self.selected_values['y'] = self.axes_y_limits_percentage.value
+            else:
+                self.selected_values['y'] = list(self.axes_y_limits_range.value)
+        self.axes_y_limits_toggles.on_trait_change(get_y_value, 'value')
         self.axes_y_limits_percentage.on_trait_change(get_y_value, 'value')
         self.axes_y_limits_range.on_trait_change(get_y_value, 'value')
 
@@ -7094,317 +7437,3 @@ class IGOOptionsWidget(ipywidgets.FlexBox):
 
         # add new function
         self.add_render_function(render_function)
-
-
-class SlicingCommandWidget(ipywidgets.FlexBox):
-    r"""
-    Creates a widget for selecting a slicing command.
-
-    The selected values are stored in `self.selected_values` `dict`. To set the
-    styling of this widget please refer to the `style()` method. To update the
-    state and function of the widget, please refer to the `set_widget_state()`
-    and `replace_render_function()` methods.
-
-    Parameters
-    ----------
-    slice_cmd : `dict`
-        The initial slicing options. Example ::
-
-            slice_cmd = {'indices': [0, 1, 2], 'command': ':3', 'length': 68}
-
-    description : `str`, optional
-        The description of the command text box.
-    render_function : `function` or ``None``, optional
-        The render function that is executed when a widgets' value changes.
-        If ``None``, then nothing is assigned.
-    """
-    def __init__(self, slice_cmd, description='Command:', render_function=None):
-        # Create command text widget
-        slice_cmd['indices'] = parse_slicing_command(slice_cmd['command'],
-                                                     slice_cmd['length'])
-        self.cmd_text = ipywidgets.Text(value=slice_cmd['command'],
-                                        description=description)
-
-        # Assign output
-        self.selected_values = slice_cmd
-
-        # Create the rest of the widgets
-        self.example = ipywidgets.Latex(
-            value="e.g. ':3', '-3:', '1:{}:2', '3::', '0, {}', '7', "
-                  "'range({})' etc.".format(slice_cmd['length'],
-                                            slice_cmd['length'],
-                                            slice_cmd['length']),
-            font_size=11, font_style='italic')
-        self.error_msg = ipywidgets.Latex(value='', font_style='italic',
-                                          color='#FF0000')
-        self.single_slider = ipywidgets.IntSlider(
-            min=0, max=slice_cmd['length']-1, value=0, width='6.8cm',
-            visible=self._single_slider_visible())
-        self.multiple_slider = ipywidgets.IntRangeSlider(
-            min=0, max=slice_cmd['length']-1,
-            value=(slice_cmd['indices'][0], slice_cmd['indices'][-1]),
-            width='6.8cm', visible=self._multiple_slider_visible()[0])
-        super(SlicingCommandWidget, self).__init__(
-            children=[self.cmd_text, self.example, self.error_msg,
-                      self.single_slider, self.multiple_slider])
-        self.orientation = 'vertical'
-        self.align = 'end'
-
-        # Set functionality
-        def save_cmd(name):
-            self.error_msg.value = ''
-            try:
-                self.selected_values['command'] = str(self.cmd_text.value)
-                self.selected_values['indices'] = parse_slicing_command(
-                    str(self.cmd_text.value), self.selected_values['length'])
-            except ValueError as e:
-                if e.message == "Command contains more than two ':'.":
-                    self.error_msg.value = "Error! More than 2 ':'"
-                elif e.message == "Wrong command.":
-                    self.error_msg.value = "Error! Wrong command"
-                elif e.message == "Command must contain positive or " \
-                                  "negative integers.":
-                    self.error_msg.value = "Error! Only positive or negative " \
-                                           "integers"
-                elif e.message == "Command cannot start or end with ','.":
-                    self.error_msg.value = "Error! ',' at start or end"
-                elif e.message == "Command cannot contain numbers greater " \
-                                  "than {}.".format(
-                    self.selected_values['length']):
-                    self.error_msg.value = "Error! Number > {}".format(
-                        self.selected_values['length'])
-                else:
-                    self.error_latex.value = e.message
-
-            # set single slider visibility and value
-            self.single_slider.visible = self._single_slider_visible()
-            if self._single_slider_visible():
-                self.single_slider.on_trait_change(self._render_function,
-                                                   'value', remove=True)
-                self.single_slider.value = self.selected_values['indices'][0]
-                self.single_slider.on_trait_change(self._render_function,
-                                                   'value')
-
-            # set multiple slider visibility and value
-            vis, step = self._multiple_slider_visible()
-            self.multiple_slider.visible = vis
-            if vis:
-                self.multiple_slider.step = step
-                self.multiple_slider.on_trait_change(self._render_function,
-                                                     'value', remove=True)
-                self.multiple_slider.value = (
-                    self.selected_values['indices'][0],
-                    self.selected_values['indices'][-1])
-                self.multiple_slider.on_trait_change(self._render_function,
-                                                     'value')
-        self.cmd_text.on_submit(save_cmd)
-
-        def single_slider_value(name, value):
-            self.selected_values['indices'] = [value]
-            self.cmd_text.value = str(value)
-            self.selected_values['command'] = str(value)
-        self.single_slider.on_trait_change(single_slider_value, 'value')
-
-        def multiple_slider_value(name, value):
-            self.selected_values['indices'] = range(value[0], value[1]+1,
-                                                    self.multiple_slider.step)
-            self.cmd_text.value = "{}:{}:{}".format(value[0], value[1]+1,
-                                                    self.multiple_slider.step)
-            self.selected_values['command'] = str(self.cmd_text.value)
-        self.multiple_slider.on_trait_change(multiple_slider_value, 'value')
-
-        # Set render function
-        self._render_function = None
-        self._render_function_2 = None
-        self.add_render_function(render_function)
-
-    def _single_slider_visible(self):
-        return len(self.selected_values['indices']) == 1
-
-    def _multiple_slider_visible(self):
-        return list_has_constant_step(self.selected_values['indices'])
-
-    def add_render_function(self, render_function):
-        r"""
-        Method that adds a `render_function()` to the widget. The signature of
-        the given function is also stored in `self._render_function`.
-
-        Parameters
-        ----------
-        render_function : `function` or ``None``, optional
-            The render function that behaves as a callback. If ``None``, then
-            nothing is added.
-        """
-        self._render_function = render_function
-        if self._render_function is not None:
-            def render_function_2(name):
-                self._render_function(name, '')
-
-            self._render_function_2 = render_function_2
-
-            self.cmd_text.on_submit(self._render_function_2)
-            self.single_slider.on_trait_change(self._render_function, 'value')
-            self.multiple_slider.on_trait_change(self._render_function, 'value')
-
-    def remove_render_function(self):
-        r"""
-        Method that removes the current `self._render_function()` from the
-        widget and sets ``self._render_function = None``.
-        """
-        self.cmd_text.on_submit(self._render_function_2, remove=True)
-        self.single_slider.on_trait_change(self._render_function, 'value',
-                                           remove=True)
-        self.multiple_slider.on_trait_change(self._render_function, 'value',
-                                             remove=True)
-        self._render_function = None
-        self._render_function_2 = None
-
-    def replace_render_function(self, render_function):
-        r"""
-        Method that replaces the current `self._render_function()` of the widget
-        with the given `render_function()`.
-
-        Parameters
-        ----------
-        render_function : `function` or ``None``, optional
-            The render function that behaves as a callback. If ``None``, then
-            nothing is happening.
-        """
-        # remove old function
-        self.remove_render_function()
-
-        # add new function
-        self.add_render_function(render_function)
-
-    def set_widget_state(self, slice_cmd, allow_callback=True):
-        r"""
-        Method that updates the state of the widget with a new set of values.
-
-        Parameters
-        ----------
-        slice_cmd : `dict`
-            The initial slicing options. Example ::
-
-                slice_cmd = {'indices': [10],
-                             'command': '10',
-                             'length': 30}
-
-        allow_callback : `bool`, optional
-            If ``True``, it allows triggering of any callback functions.
-        """
-        # Assign new options dict to selected_values
-        slice_cmd['indices'] = parse_slicing_command(slice_cmd['command'],
-                                                     slice_cmd['length'])
-        self.selected_values = slice_cmd
-
-        # temporarily remove render callback
-        render_function = self._render_function
-        self.remove_render_function()
-
-        # update single slider
-        self.single_slider.visible = self._single_slider_visible()
-        self.single_slider.max = self.selected_values['length'] - 1
-        if self._single_slider_visible():
-            self.single_slider.value = self.selected_values['indices'][0]
-
-        # update multiple slider
-        vis, step = self._multiple_slider_visible()
-        self.multiple_slider.visible = vis
-        self.multiple_slider.max = slice_cmd['length'] - 1
-        if vis:
-            self.multiple_slider.step = step
-            self.multiple_slider.value = (slice_cmd['indices'][0],
-                                          slice_cmd['indices'][-1])
-
-        # update command text
-        self.cmd_text.value = self.selected_values['command']
-
-        # re-assign render callback
-        self.add_render_function(render_function)
-
-        # trigger render function if allowed
-        if allow_callback:
-            self._render_function('', 0)
-
-    def style(self, box_style=None, border_visible=False, border_colour='black',
-              border_style='solid', border_width=1, border_radius=0, padding=0,
-              margin=0, text_box_style=None, text_box_background_colour=None,
-              text_box_width=None, font_family='', font_size=None,
-              font_style='', font_weight=''):
-        r"""
-        Function that defines the styling of the widget.
-
-        Parameters
-        ----------
-        box_style : `str` or ``None`` (see below), optional
-            Widget style options ::
-
-                {'success', 'info', 'warning', 'danger', ''}
-                or
-                None
-
-        border_visible : `bool`, optional
-            Defines whether to draw the border line around the widget.
-        border_colour : `str`, optional
-            The colour of the border around the widget.
-        border_style : `str`, optional
-            The line style of the border around the widget.
-        border_width : `float`, optional
-            The line width of the border around the widget.
-        border_radius : `float`, optional
-            The radius of the border around the widget.
-        padding : `float`, optional
-            The padding around the widget.
-        margin : `float`, optional
-            The margin around the widget.
-        text_box_style : `str` or ``None`` (see below), optional
-            Command text box style options ::
-
-                {'success', 'info', 'warning', 'danger', ''}
-                or
-                None
-
-        text_box_background_colour : `str`, optional
-            The background colour of the command text box.
-        text_box_width : `str`, optional
-            The width of the command text box.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
-
-                {'serif', 'sans-serif', 'cursive', 'fantasy',
-                 'monospace', 'helvetica'}
-
-        font_size : `int`, optional
-            The font size.
-        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
-            The font style.
-        font_weight : See Below, optional
-            The font weight.
-            Example options ::
-
-                {'ultralight', 'light', 'normal', 'regular', 'book',
-                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
-                 'heavy', 'extra bold', 'black'}
-
-        """
-        format_box(self, box_style, border_visible, border_colour, border_style,
-                   border_width, border_radius, padding, margin)
-        format_font(self, font_family, font_size, font_style, font_weight)
-        format_font(self.cmd_text, font_family, font_size, font_style,
-                    font_weight)
-        self.cmd_text.color = map_styles_to_hex_colours(text_box_style)
-        self.cmd_text.background_color = map_styles_to_hex_colours(
-            text_box_background_colour, background=True)
-        self.cmd_text.border_color = map_styles_to_hex_colours(text_box_style)
-        self.cmd_text.font_family = 'monospace'
-        self.cmd_text.border_width = 1
-        self.cmd_text.width = text_box_width
-        self.single_slider.slider_color = map_styles_to_hex_colours(
-            box_style, background=False)
-        self.single_slider.background_color = map_styles_to_hex_colours(
-            box_style, background=False)
-        self.multiple_slider.slider_color = map_styles_to_hex_colours(
-            box_style, background=False)
-        self.multiple_slider.background_color = map_styles_to_hex_colours(
-            box_style, background=False)

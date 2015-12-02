@@ -415,8 +415,7 @@ def parse_slicing_command_with_one_colon(cmd, length):
                 else:
                     return tmp_list[:n]
             else:
-                raise ValueError("Command must contain positive or negative "
-                                 "integers.")
+                raise ValueError("Command must contain integers.")
         else:
             # cmd is ":"
             return tmp_list
@@ -433,8 +432,7 @@ def parse_slicing_command_with_one_colon(cmd, length):
                 else:
                     return tmp_list[n:]
             else:
-                raise ValueError("Command must contain positive or negative "
-                                 "integers.")
+                raise ValueError("Command must contain integers.")
         else:
             # cmd is ":"
             return tmp_list
@@ -454,8 +452,7 @@ def parse_slicing_command_with_one_colon(cmd, length):
             else:
                 return tmp_list[start:end]
         else:
-            raise ValueError("Command must contain positive or negative "
-                             "integers.")
+            raise ValueError("Command must contain integers.")
 
 
 def parse_slicing_command_with_two_colon(cmd, length):
@@ -503,8 +500,7 @@ def parse_slicing_command_with_two_colon(cmd, length):
                 n = int(i)
                 return tmp_list[::n]
             else:
-                raise ValueError("Command must contain positive or negative "
-                                 "integers.")
+                raise ValueError("Command must contain integers.")
         else:
             # cmd is "::"
             return tmp_list
@@ -521,8 +517,7 @@ def parse_slicing_command_with_two_colon(cmd, length):
                 else:
                     return tmp_list[n::]
             else:
-                raise ValueError("Command must contain positive or negative "
-                                 "integers.")
+                raise ValueError("Command must contain integers.")
         else:
             # cmd is "::"
             return tmp_list
@@ -545,8 +540,7 @@ def parse_slicing_command_with_two_colon(cmd, length):
             else:
                 return tmp_list[start:end:step]
         else:
-            raise ValueError("Command must contain positive or negative "
-                             "integers.")
+            raise ValueError("Command must contain integers.")
 
 
 def parse_slicing_command(cmd, length):
@@ -614,14 +608,14 @@ def parse_slicing_command(cmd, length):
         elif n_colon == 2:
             return parse_slicing_command_with_two_colon(cmd, length)
         else:
-            raise ValueError("Command contains more than two ':'.")
+            raise ValueError("More than 2 ':'.")
     elif n_comma == 0 and n_colon == 0:
         # cmd has the form of "10"
         if str_is_int(cmd):
             n = int(cmd)
             if n >= length:
-                raise ValueError("Command cannot contain numbers greater "
-                                 "than {}.".format(length))
+                raise ValueError("Cannot contain numbers greater "
+                                 "than {}".format(length))
             else:
                 return [n]
         else:
