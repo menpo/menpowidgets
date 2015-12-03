@@ -26,7 +26,7 @@ from ..options import (RendererOptionsWidget, TextPrintWidget,
                        LandmarkOptionsWidget, ChannelOptionsWidget,
                        GraphOptionsWidget, PatchOptionsWidget,
                        LinearModelParametersWidget)
-from ..tools import (format_box, LogoWidget, map_styles_to_hex_colours)
+from ..tools_old import (format_box, LogoWidget, map_styles_to_hex_colours)
 from ..checks import check_n_parameters
 
 

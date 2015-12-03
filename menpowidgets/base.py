@@ -20,7 +20,8 @@ from .options import (RendererOptionsWidget, TextPrintWidget,
                       LandmarkOptionsWidget, ChannelOptionsWidget,
                       FeatureOptionsWidget, GraphOptionsWidget,
                       PatchOptionsWidget)
-from .tools import (format_box, LogoWidget, map_styles_to_hex_colours)
+from .style import format_box, map_styles_to_hex_colours
+from .tools import LogoWidget
 
 
 def menpowidgets_src_dir_path():

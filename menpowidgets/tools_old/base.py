@@ -21,65 +21,6 @@ MENPO_INFO_LOGO = None
 MENPO_LOGO_SCALE = None
 
 
-class MenpoWidget(ipywidgets.FlexBox):
-    def __init__(self, children, trait, trait_default_value,
-                 render_function=None, orientation='vertical', align='start'):
-        # Create box object
-        super(MenpoWidget, self).__init__(children=children)
-        self.orientation = orientation
-        self.align = align
-
-        # Add trait for selected values
-        selected_values = trait(default_value=trait_default_value)
-        selected_values_trait = {'selected_values': selected_values}
-        self.add_traits(**selected_values_trait)
-
-        # Set render function
-        self._render_function = None
-        self.add_render_function(render_function)
-
-    def add_render_function(self, render_function):
-        r"""
-        Method that adds a `render_function()` to the widget. The signature of
-        the given function is also stored in `self._render_function`.
-
-        Parameters
-        ----------
-        render_function : `function` or ``None``, optional
-            The render function that behaves as a callback. If ``None``, then
-            nothing is added.
-        """
-        self._render_function = render_function
-        if self._render_function is not None:
-            self.on_trait_change(self._render_function, 'selected_values')
-
-    def remove_render_function(self):
-        r"""
-        Method that removes the current `self._render_function()` from the
-        widget and sets ``self._render_function = None``.
-        """
-        self.on_trait_change(self._render_function, 'selected_values',
-                             remove=True)
-        self._render_function = None
-
-    def replace_render_function(self, render_function):
-        r"""
-        Method that replaces the current `self._render_function()` of the widget
-        with the given `render_function()`.
-
-        Parameters
-        ----------
-        render_function : `function` or ``None``, optional
-            The render function that behaves as a callback. If ``None``, then
-            nothing is happening.
-        """
-        # remove old function
-        self.remove_render_function()
-
-        # add new function
-        self.add_render_function(render_function)
-
-
 class LogoWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget with Menpo's logo image. The widget stores the image in
@@ -241,12 +182,9 @@ class ListWidget(MenpoWidget):
 
         # Create final widget
         children = [self.cmd_text, self.example, self.error_msg]
-        trait = List
-        trait_default_value = selected_list
         super(ListWidget, self).__init__(
-            children, trait, trait_default_value,
-            render_function=render_function, orientation='vertical',
-            align='end')
+            children, List, selected_list, render_function=render_function,
+            orientation='vertical', align='end')
 
         # Assign properties
         self.mode = mode
@@ -377,11 +315,11 @@ class ListWidget(MenpoWidget):
         self.cmd_text.width = text_box_width
 
 
-class SlicingCommandWidget(ipywidgets.FlexBox):
+class SlicingCommandWidget(MenpoWidget):
     r"""
     Creates a widget for selecting a slicing command.
 
-    The selected values are stored in `self.selected_values` `dict`. To set the
+    The selected values are stored in `self.selected_values` `trait`. To set the
     styling of this widget please refer to the `style()` method. To update the
     state and function of the widget, please refer to the `set_widget_state()`
     and `replace_render_function()` methods.
@@ -415,9 +353,6 @@ class SlicingCommandWidget(ipywidgets.FlexBox):
         self.cmd_text = ipywidgets.Text(value=slice_cmd['command'],
                                         description=description)
 
-        # Assign output
-        self.selected_values = slice_cmd
-
         # Create the rest of the widgets
         self.example = ipywidgets.Latex(
             value="e.g. ':3', '-3:', '1:{}:2', '3::', '0, {}', '7', "
@@ -429,128 +364,67 @@ class SlicingCommandWidget(ipywidgets.FlexBox):
                                           color='#FF0000')
         self.single_slider = ipywidgets.IntSlider(
             min=0, max=slice_cmd['length']-1, value=0, width='6.8cm',
-            visible=self._single_slider_visible(),
+            visible=self._single_slider_visible(slice_cmd['indices']),
             continuous_update=continuous_update)
         self.multiple_slider = ipywidgets.IntRangeSlider(
             min=0, max=slice_cmd['length']-1,
             value=(slice_cmd['indices'][0], slice_cmd['indices'][-1]),
-            width='6.8cm', visible=self._multiple_slider_visible()[0],
+            width='6.8cm',
+            visible=self._multiple_slider_visible(slice_cmd['indices'])[0],
             continuous_update=continuous_update)
+
+        # Create final widget
+        children = [self.cmd_text, self.example, self.error_msg,
+                    self.single_slider, self.multiple_slider]
         super(SlicingCommandWidget, self).__init__(
-            children=[self.cmd_text, self.example, self.error_msg,
-                      self.single_slider, self.multiple_slider])
-        self.orientation = 'vertical'
-        self.align = 'end'
+            children, List, slice_cmd['indices'],
+            render_function=render_function, orientation='vertical',
+            align='end')
+
+        # Assign properties
+        self.length = slice_cmd['length']
 
         # Set functionality
         def save_cmd(name):
             self.error_msg.value = ''
             try:
-                self.selected_values['command'] = str(self.cmd_text.value)
-                self.selected_values['indices'] = parse_slicing_command(
-                    str(self.cmd_text.value), self.selected_values['length'])
+                self.selected_values = parse_slicing_command(
+                    str(self.cmd_text.value), self.length)
             except ValueError as e:
                 self.error_msg.value = str(e)
 
             # set single slider visibility and value
-            self.single_slider.visible = self._single_slider_visible()
-            if self._single_slider_visible():
-                self.single_slider.on_trait_change(self._render_function,
-                                                   'value', remove=True)
-                self.single_slider.value = self.selected_values['indices'][0]
-                self.single_slider.on_trait_change(self._render_function,
-                                                   'value')
+            vis = self._single_slider_visible(self.selected_values)
+            self.single_slider.visible = vis
+            if vis:
+                self.single_slider.value = self.selected_values[0]
 
             # set multiple slider visibility and value
-            vis, step = self._multiple_slider_visible()
+            vis, step = self._multiple_slider_visible(self.selected_values)
             self.multiple_slider.visible = vis
             if vis:
                 self.multiple_slider.step = step
-                self.multiple_slider.on_trait_change(self._render_function,
-                                                     'value', remove=True)
-                self.multiple_slider.value = (
-                    self.selected_values['indices'][0],
-                    self.selected_values['indices'][-1])
-                self.multiple_slider.on_trait_change(self._render_function,
-                                                     'value')
+                self.multiple_slider.value = (self.selected_values[0],
+                                              self.selected_values[-1])
         self.cmd_text.on_submit(save_cmd)
 
         def single_slider_value(name, value):
-            self.selected_values['indices'] = [value]
+            self.selected_values = [value]
             self.cmd_text.value = str(value)
-            self.selected_values['command'] = str(value)
         self.single_slider.on_trait_change(single_slider_value, 'value')
 
         def multiple_slider_value(name, value):
-            self.selected_values['indices'] = range(value[0], value[1]+1,
-                                                    self.multiple_slider.step)
+            self.selected_values = range(value[0], value[1]+1,
+                                         self.multiple_slider.step)
             self.cmd_text.value = "{}:{}:{}".format(value[0], value[1]+1,
                                                     self.multiple_slider.step)
-            self.selected_values['command'] = str(self.cmd_text.value)
         self.multiple_slider.on_trait_change(multiple_slider_value, 'value')
 
-        # Set render function
-        self._render_function = None
-        self._render_function_2 = None
-        self.add_render_function(render_function)
+    def _single_slider_visible(self, selected_values):
+        return len(selected_values) == 1
 
-    def _single_slider_visible(self):
-        return len(self.selected_values['indices']) == 1
-
-    def _multiple_slider_visible(self):
-        return list_has_constant_step(self.selected_values['indices'])
-
-    def add_render_function(self, render_function):
-        r"""
-        Method that adds a `render_function()` to the widget. The signature of
-        the given function is also stored in `self._render_function`.
-
-        Parameters
-        ----------
-        render_function : `function` or ``None``, optional
-            The render function that behaves as a callback. If ``None``, then
-            nothing is added.
-        """
-        self._render_function = render_function
-        if self._render_function is not None:
-            def render_function_2(name):
-                self._render_function(name, '')
-
-            self._render_function_2 = render_function_2
-
-            self.cmd_text.on_submit(self._render_function_2)
-            self.single_slider.on_trait_change(self._render_function, 'value')
-            self.multiple_slider.on_trait_change(self._render_function, 'value')
-
-    def remove_render_function(self):
-        r"""
-        Method that removes the current `self._render_function()` from the
-        widget and sets ``self._render_function = None``.
-        """
-        self.cmd_text.on_submit(self._render_function_2, remove=True)
-        self.single_slider.on_trait_change(self._render_function, 'value',
-                                           remove=True)
-        self.multiple_slider.on_trait_change(self._render_function, 'value',
-                                             remove=True)
-        self._render_function = None
-        self._render_function_2 = None
-
-    def replace_render_function(self, render_function):
-        r"""
-        Method that replaces the current `self._render_function()` of the widget
-        with the given `render_function()`.
-
-        Parameters
-        ----------
-        render_function : `function` or ``None``, optional
-            The render function that behaves as a callback. If ``None``, then
-            nothing is happening.
-        """
-        # remove old function
-        self.remove_render_function()
-
-        # add new function
-        self.add_render_function(render_function)
+    def _multiple_slider_visible(self, selected_values):
+        return list_has_constant_step(selected_values)
 
     def set_widget_state(self, slice_cmd, allow_callback=True):
         r"""
@@ -567,28 +441,31 @@ class SlicingCommandWidget(ipywidgets.FlexBox):
             If ``True``, it allows triggering of any callback functions.
         """
         # Assign new options dict to selected_values
-        slice_cmd['indices'] = parse_slicing_command(slice_cmd['command'],
-                                                     slice_cmd['length'])
-        self.selected_values = slice_cmd
+        self.length = slice_cmd['length']
 
         # temporarily remove render callback
         render_function = self._render_function
         self.remove_render_function()
 
+        # update selected values
+        self.selected_values = parse_slicing_command(slice_cmd['command'],
+                                                     self.length)
+
         # update single slider
-        self.single_slider.visible = self._single_slider_visible()
-        self.single_slider.max = self.selected_values['length'] - 1
-        if self._single_slider_visible():
-            self.single_slider.value = self.selected_values['indices'][0]
+        vis = self._single_slider_visible(self.selected_values)
+        self.single_slider.visible = vis
+        self.single_slider.max = self.length - 1
+        if vis:
+            self.single_slider.value = self.selected_values[0]
 
         # update multiple slider
-        vis, step = self._multiple_slider_visible()
+        vis, step = self._multiple_slider_visible(self.selected_values)
         self.multiple_slider.visible = vis
-        self.multiple_slider.max = slice_cmd['length'] - 1
+        self.multiple_slider.max = self.length - 1
         if vis:
             self.multiple_slider.step = step
-            self.multiple_slider.value = (slice_cmd['indices'][0],
-                                          slice_cmd['indices'][-1])
+            self.multiple_slider.value = (self.selected_values[0],
+                                          self.selected_values[-1])
 
         # update command text
         self.cmd_text.value = self.selected_values['command']

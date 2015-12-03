@@ -5,18 +5,18 @@ import numpy as np
 import ipywidgets
 from traitlets import link
 
-from menpowidgets.tools import (IndexButtonsWidget, IndexSliderWidget, 
-                                LineOptionsWidget, MarkerOptionsWidget, 
-                                ImageOptionsWidget, NumberingOptionsWidget, 
-                                FigureOptionsOneScaleWidget, 
-                                FigureOptionsTwoScalesWidget, 
-                                LegendOptionsWidget, GridOptionsWidget, 
-                                ColourSelectionWidget, HOGOptionsWidget, 
-                                DaisyOptionsWidget, LBPOptionsWidget,  
-                                IGOOptionsWidget, DSIFTOptionsWidget, 
-                                SlicingCommandWidget, format_box, format_font,
-                                convert_image_to_bytes, 
-                                map_styles_to_hex_colours)
+from menpowidgets.tools_old import (IndexButtonsWidget, IndexSliderWidget,
+                                    LineOptionsWidget, MarkerOptionsWidget,
+                                    ImageOptionsWidget, NumberingOptionsWidget,
+                                    FigureOptionsOneScaleWidget,
+                                    FigureOptionsTwoScalesWidget,
+                                    LegendOptionsWidget, GridOptionsWidget,
+                                    ColourSelectionWidget, HOGOptionsWidget,
+                                    DaisyOptionsWidget, LBPOptionsWidget,
+                                    IGOOptionsWidget, DSIFTOptionsWidget,
+                                    SlicingCommandWidget, format_box, format_font,
+                                    convert_image_to_bytes,
+                                    map_styles_to_hex_colours)
 
 
 class ChannelOptionsWidget(ipywidgets.FlexBox):

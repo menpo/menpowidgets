@@ -2,8 +2,8 @@ from collections import OrderedDict
 import ipywidgets
 from menpowidgets.options import AnimationOptionsWidget
 
-from menpowidgets.tools import (format_box, format_font,
-                                map_styles_to_hex_colours)
+from menpowidgets.tools_old import (format_box, format_font,
+                                    map_styles_to_hex_colours)
 
 
 class FittingResultOptionsWidget(ipywidgets.FlexBox):
