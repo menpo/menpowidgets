@@ -93,7 +93,7 @@ class ChannelOptionsWidget(ipywidgets.FlexBox):
     Let's create a channels widget and then update its state. Firstly, we need
     to import it:
 
-        >>> from menpowidgets.options import ChannelOptionsWidget
+        >>> from menpowidgets.options_old import ChannelOptionsWidget
         >>> from IPython.display import display
 
     Now let's define a render function that will get called on every widget
@@ -726,7 +726,7 @@ class LandmarkOptionsWidget(ipywidgets.FlexBox):
     Let's create a landmarks widget and then update its state. Firstly, we need
     to import it:
 
-        >>> from menpowidgets.options import LandmarkOptionsWidget
+        >>> from menpowidgets.options_old import LandmarkOptionsWidget
         >>> from IPython.display import display
 
     Now let's define a render function that will get called on every widget
@@ -1387,7 +1387,7 @@ class TextPrintWidget(ipywidgets.FlexBox):
     Let's create an text widget and then update its state. Firstly, we need
     to import it:
 
-        >>> from menpowidgets.options import TextPrintWidget
+        >>> from menpowidgets.options_old import TextPrintWidget
         >>> from IPython.display import display
 
     Create the widget with some initial options and display it:
@@ -1628,7 +1628,7 @@ class AnimationOptionsWidget(ipywidgets.FlexBox):
     Let's create an animation widget and then update its state. Firstly, we need
     to import it:
 
-        >>> from menpowidgets.options import AnimationOptionsWidget
+        >>> from menpowidgets.options_old import AnimationOptionsWidget
         >>> from IPython.display import display
 
     Now let's define a render function that will get called on every widget
@@ -2229,7 +2229,7 @@ class RendererOptionsWidget(ipywidgets.FlexBox):
     Let's create a rendering options widget and then update its state. Firstly,
     we need to import it:
 
-        >>> from menpowidgets.options import RendererOptionsWidget
+        >>> from menpowidgets.options_old import RendererOptionsWidget
         >>> from IPython.display import display
 
     Let's set some initial options:
@@ -4360,7 +4360,7 @@ class PatchOptionsWidget(ipywidgets.FlexBox):
     Let's create a patches widget and then update its state. Firstly, we need
     to import it:
 
-        >>> from menpowidgets.options import PatchOptionsWidget
+        >>> from menpowidgets.options_old import PatchOptionsWidget
         >>> from IPython.display import display
 
     Now let's define a render function that will get called on every widget
@@ -4986,7 +4986,7 @@ class LinearModelParametersWidget(ipywidgets.FlexBox):
     Let's create a linear model parameters values widget and then update its
     state. Firstly, we need to import it:
 
-        >>> from menpowidgets.options import LinearModelParametersWidget
+        >>> from menpowidgets.options_old import LinearModelParametersWidget
         >>> from IPython.display import display
 
     Now let's define a render function that will get called on every widget

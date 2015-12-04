@@ -15,11 +15,11 @@ from menpo.feature.visualize import glyph, sum_channels
 from menpo.visualize import view_patches
 from menpo.transform import UniformScale
 
-from .options import (RendererOptionsWidget, TextPrintWidget,
-                      SaveFigureOptionsWidget, AnimationOptionsWidget,
-                      LandmarkOptionsWidget, ChannelOptionsWidget,
-                      FeatureOptionsWidget, GraphOptionsWidget,
-                      PatchOptionsWidget)
+from .options_old import (RendererOptionsWidget, TextPrintWidget,
+                          SaveFigureOptionsWidget, AnimationOptionsWidget,
+                          LandmarkOptionsWidget, ChannelOptionsWidget,
+                          FeatureOptionsWidget, GraphOptionsWidget,
+                          PatchOptionsWidget)
 from .style import format_box, map_styles_to_hex_colours
 from .tools import LogoWidget
 

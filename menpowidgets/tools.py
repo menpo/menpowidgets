@@ -338,7 +338,7 @@ class SlicingCommandWidget(MenpoWidget):
     continuous_update : `bool`, optional
         If ``True``, then the render and update functions are called while
         moving the slider's handle. If ``False``, then the the functions are
-        called only when the handle (mouse click) is realised.
+        called only when the handle (mouse click) is released.
     """
     def __init__(self, slice_options, description='Command:',
                  render_function=None, example_visible=True,
@@ -579,7 +579,7 @@ class IndexSliderWidget(MenpoWidget):
     continuous_update : `bool`, optional
         If ``True``, then the render and update functions are called while moving
         the slider's handle. If ``False``, then the the functions are called only
-        when the handle (mouse click) is realised.
+        when the handle (mouse click) is released.
     render_function : `function` or ``None``, optional
         The render function that is executed when the index value changes.
         If ``None``, then nothing is assigned.
@@ -687,7 +687,7 @@ class IndexSliderWidget(MenpoWidget):
         continuous_update : `bool`, optional
             If ``True``, then the render and update functions are called while
             moving the slider's handle. If ``False``, then the the functions are
-            called only when the handle (mouse click) is realised.
+            called only when the handle (mouse click) is released.
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
@@ -1236,11 +1236,12 @@ class ZoomOneScaleWidget(MenpoWidget):
     continuous_update : `bool`, optional
         If ``True``, then the render and update functions are called while
         moving the zoom slider's handle. If ``False``, then the the functions
-        are called only when the handle (mouse click) is realised.
+        are called only when the handle (mouse click) is released.
     """
     def __init__(self, zoom_options, render_function=None,
-                 description='Figure scale: ', minus_description='fa-minus',
-                 plus_description='fa-plus', continuous_update=False):
+                 description='Figure scale: ',
+                 minus_description='fa-search-minus',
+                 plus_description='fa-search-plus', continuous_update=False):
         # Create children
         self.title = ipywidgets.Latex(value=description, padding=6, margin=6)
         m_icon, m_description = parse_font_awesome_icon(minus_description)
@@ -1403,7 +1404,7 @@ class ZoomOneScaleWidget(MenpoWidget):
         continuous_update : `bool`, optional
             If ``True``, then the render and update functions are called while
             moving the zoom slider's handle. If ``False``, then the the
-            functions are called only when the handle (mouse click) is realised.
+            functions are called only when the handle (mouse click) is released.
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
@@ -1466,11 +1467,12 @@ class ZoomTwoScalesWidget(MenpoWidget):
     continuous_update : `bool`, optional
         If ``True``, then the render and update functions are called while
         moving the zoom slider's handle. If ``False``, then the the functions
-        are called only when the handle (mouse click) is realised.
+        are called only when the handle (mouse click) is released.
     """
     def __init__(self, zoom_options, render_function=None,
-                 description='Figure scale: ', minus_description='fa-minus',
-                 plus_description='fa-plus', continuous_update=False):
+                 description='Figure scale: ',
+                 minus_description='fa-search-minus',
+                 plus_description='fa-search-plus', continuous_update=False):
         # Create children
         self.title = ipywidgets.Latex(value=description, padding=6, margin=6)
         self.x_title = ipywidgets.Latex(value='X', padding=6, margin=6)
@@ -1733,7 +1735,7 @@ class ZoomTwoScalesWidget(MenpoWidget):
         continuous_update : `bool`, optional
             If ``True``, then the render and update functions are called while
             moving the zoom slider's handle. If ``False``, then the the
-            functions are called only when the handle (mouse click) is realised.
+            functions are called only when the handle (mouse click) is released.
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """

@@ -1,6 +1,6 @@
 from collections import OrderedDict
 import ipywidgets
-from menpowidgets.options import AnimationOptionsWidget
+from menpowidgets.options_old import AnimationOptionsWidget
 
 from menpowidgets.tools_old import (format_box, format_font,
                                     map_styles_to_hex_colours)

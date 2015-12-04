@@ -21,11 +21,11 @@ from ..base import (_extract_groups_labels, _visualize_image,
                     _visualize_patches, _visualize_images)
 from .options import (FittingResultOptionsWidget,
                       FittingResultIterationsOptionsWidget)
-from ..options import (RendererOptionsWidget, TextPrintWidget,
-                       SaveFigureOptionsWidget, AnimationOptionsWidget,
-                       LandmarkOptionsWidget, ChannelOptionsWidget,
-                       GraphOptionsWidget, PatchOptionsWidget,
-                       LinearModelParametersWidget)
+from ..options_old import (RendererOptionsWidget, TextPrintWidget,
+                           SaveFigureOptionsWidget, AnimationOptionsWidget,
+                           LandmarkOptionsWidget, ChannelOptionsWidget,
+                           GraphOptionsWidget, PatchOptionsWidget,
+                           LinearModelParametersWidget)
 from ..tools_old import (format_box, LogoWidget, map_styles_to_hex_colours)
 from ..checks import check_n_parameters
 
