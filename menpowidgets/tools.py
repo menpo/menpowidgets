@@ -339,10 +339,12 @@ class SlicingCommandWidget(MenpoWidget):
         If ``True``, then the render and update functions are called while
         moving the slider's handle. If ``False``, then the the functions are
         called only when the handle (mouse click) is released.
+    orientation : ``{'horizontal', 'vertical'}``, optional
+        The orientation between the command text box and the sliders.
     """
     def __init__(self, slice_options, description='Command:',
                  render_function=None, example_visible=True,
-                 continuous_update=False):
+                 continuous_update=False, orientation='horizontal'):
         # Create children
         indices = parse_slicing_command(slice_options['command'],
                                         slice_options['length'])
@@ -366,13 +368,21 @@ class SlicingCommandWidget(MenpoWidget):
             width='6.8cm',
             visible=self._multiple_slider_visible(indices)[0],
             continuous_update=continuous_update)
+        self.command_error_box = ipywidgets.VBox(
+            children=[self.cmd_text, self.example, self.error_msg], align='end',
+            margin='0.1cm')
+        self.sliders_box = ipywidgets.VBox(
+            children=[self.single_slider, self.multiple_slider], align='start',
+            margin='0.1cm')
 
         # Create final widget
-        children = [self.cmd_text, self.example, self.error_msg,
-                    self.single_slider, self.multiple_slider]
+        children = [self.command_error_box, self.sliders_box]
+        align = 'end'
+        if orientation == 'horizontal':
+            align = 'start'
         super(SlicingCommandWidget, self).__init__(
             children, List, indices, render_function=render_function,
-            orientation='vertical', align='end')
+            orientation=orientation, align=align)
 
         # Assign properties
         self.length = slice_options['length']
@@ -428,7 +438,7 @@ class SlicingCommandWidget(MenpoWidget):
         slice_options : `dict`
             The initial slicing options. Example ::
 
-                slice_cmd = {'command': '10', 'length': 30}
+                slice_options = {'command': '10', 'length': 30}
 
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.

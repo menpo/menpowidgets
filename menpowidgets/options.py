@@ -257,7 +257,7 @@ class AnimationOptionsWidget(MenpoWidget):
             self.selected_values = self.index_wid.selected_values
         self.index_wid.on_trait_change(save_value, 'selected_values')
 
-    def style(self, box_style=None, border_visible=False, border_color='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -282,8 +282,8 @@ class AnimationOptionsWidget(MenpoWidget):
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
-        border_color : `str`, optional
-            The color of the border around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
@@ -313,7 +313,7 @@ class AnimationOptionsWidget(MenpoWidget):
                  'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
                  'extra bold', 'black'}
         """
-        format_box(self, box_style, border_visible, border_color, border_style,
+        format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
         format_font(self, font_family, font_size, font_style, font_weight)
         format_font(self.play_stop_toggle, font_family, font_size, font_style,
@@ -448,27 +448,23 @@ class ChannelOptionsWidget(MenpoWidget):
     Creates a widget for selecting channel options when rendering an image. The
     widget consists of the following parts from `IPython.html.widgets`:
 
-    == ============== ================================== =======================
-    No Object         Variable (`self.`)                 Description
-    == ============== ================================== =======================
-    1  RadioButtons   `mode_radiobuttons`                The mode selector
-
-                                                         'Single' or 'Multiple'
-    2  Checkbox       `masked_checkbox`                  Controls masked mode
-    3  IntSlider      `single_slider`                    Single channel selector
-    4  IntRangeSlider `multiple_slider`                  Channels range selector
-    5  Checkbox       `rgb_checkbox`                     View as RGB
-    6  Checkbox       `sum_checkbox`                     View sum of channels
-    7  Checkbox       `glyph_checkbox`                   View glyph
-    8  BoundedIntText `glyph_block_size_text`            Glyph block size
-    9  Checkbox       `glyph_use_negative_checkbox`      Use negative values
-    10 VBox           `glyph_options_box`                Contains 8, 9
-    11 VBox           `glyph_box`                        Contains 7, 10
-    12 HBox           `multiple_options_box`             Contains 6, 11, 5
-    13 Box            `sliders_box`                      Contains 3, 4
-    14 Box            `sliders_and_multiple_options_box` Contains 13, 12
-    15 VBox           `mode_and_masked_box`              Contains 1, 2
-    == ============== ================================== =======================
+    == ==================== ============================= =====================
+    No Object               Variable (`self.`)            Description
+    == ==================== ============================= =====================
+    1  SlicingCommandWidget `channels_wid`                The channels selector
+    2  Checkbox             `masked_checkbox`             Controls masked mode
+    3  Checkbox             `rgb_checkbox`                View as RGB
+    4  Checkbox             `sum_checkbox`                View sum of channels
+    5  Checkbox             `glyph_checkbox`              View glyph
+    6  BoundedIntText       `glyph_block_size_text`       Glyph block size
+    7  Checkbox             `glyph_use_negative_checkbox` Use negative values
+    8  VBox                 `glyph_options_box`           Contains 6, 7
+    9  VBox                 `glyph_box`                   Contains 5, 8
+    10 HBox                 `rgb_masked_options_box`      Contains 2, 3
+    11 HBox                 `glyph_sum_options_box`       Contains 4, 9
+    12 VBox                 `checkboxes_box`              Contains 10, 11
+    13 Latex                `no_options_latex`            No options available
+    == ==================== ============================= =====================
 
     Note that:
 
@@ -517,8 +513,7 @@ class ChannelOptionsWidget(MenpoWidget):
     Let's create a channels widget and then update its state. Firstly, we need
     to import it:
 
-        >>> from menpowidgets.options_old import ChannelOptionsWidget
-        >>> from IPython.display import display
+        >>> from menpowidgets.options import ChannelOptionsWidget
 
     Now let's define a render function that will get called on every widget
     change and will dynamically print the selected channels and masked flag:
@@ -543,7 +538,7 @@ class ChannelOptionsWidget(MenpoWidget):
         >>> wid = ChannelOptionsWidget(channel_options,
         >>>                            render_function=render_function,
         >>>                            style='warning')
-        >>> display(wid)
+        >>> wid
 
     By playing around with the widget, printed message gets updated. Finally,
     let's change the widget status with a new dictionary of options:
@@ -565,14 +560,16 @@ class ChannelOptionsWidget(MenpoWidget):
 
         # Parse channels
         if channel_options['channels'] is None:
-            channels = str(range(channel_options['n_channels'])).strip('[]')
+            channels = '0, 1, 2'
         elif isinstance(channel_options['channels'], list):
             channels = str(channel_options['channels']).strip('[]')
         else:
             channels = str(channel_options['channels'])
 
         # Parse sum, glyph
-        if channel_options['sum_enabled'] and channel_options['glyph_enabled']:
+        if (channel_options['n_channels'] == 1 or
+                (channel_options['sum_enabled'] and
+                    channel_options['glyph_enabled'])):
             channel_options['sum_enabled'] = False
             channel_options['glyph_enabled'] = False
 
@@ -581,416 +578,358 @@ class ChannelOptionsWidget(MenpoWidget):
                          'length': channel_options['n_channels']}
         self.channels_wid = SlicingCommandWidget(
             slice_options, description='Channels:', render_function=None,
-            example_visible=True, continuous_update=False)
+            example_visible=True, continuous_update=False,
+            orientation='horizontal')
         self.masked_checkbox = ipywidgets.Checkbox(
             value=channel_options['masked_enabled'], description='Masked',
-            visible=channel_options['image_is_masked'])
+            margin='0.1cm')
         self.rgb_checkbox = ipywidgets.Checkbox(
             value=(channel_options['n_channels'] == 3 and
                    channel_options['channels'] is None),
-            description='RGB')
+            description='RGB', margin='0.1cm')
         self.sum_checkbox = ipywidgets.Checkbox(
-            value=channel_options['sum_enabled'], description='Sum')
+            value=channel_options['sum_enabled'], description='Sum',
+            margin='0.1cm')
         self.glyph_checkbox = ipywidgets.Checkbox(
-            value=channel_options['glyph_enabled'], description='Glyph')
+            value=channel_options['glyph_enabled'], description='Glyph',
+            margin='0.1cm')
         self.glyph_block_size_text = ipywidgets.BoundedIntText(
             description='Block size', min=1, max=25,
             value=channel_options['glyph_block_size'], width='1.5cm')
         self.glyph_use_negative_checkbox = ipywidgets.Checkbox(
             description='Negative', value=channel_options['glyph_use_negative'])
+        self.no_options_latex = ipywidgets.Latex(value='No options available')
 
         # Group widgets
         self.glyph_options_box = ipywidgets.VBox(
             children=[self.glyph_block_size_text,
-                      self.glyph_use_negative_checkbox])
+                      self.glyph_use_negative_checkbox],
+            visible=channel_options['glyph_enabled'], margin='0.1cm')
         self.glyph_box = ipywidgets.HBox(children=[self.glyph_checkbox,
                                                    self.glyph_options_box],
                                          align='start')
-        self.glyph_sum_options_box = ipywidgets.VBox(
-            children=[self.sum_checkbox, self.glyph_box])
-        self.rgb_masked_options_box = ipywidgets.VBox(
+        self.rgb_masked_options_box = ipywidgets.HBox(
             children=[self.rgb_checkbox, self.masked_checkbox])
+        self.glyph_sum_options_box = ipywidgets.HBox(
+            children=[self.sum_checkbox, self.glyph_box])
+        self.checkboxes_box = ipywidgets.VBox(
+            children=[self.rgb_masked_options_box, self.glyph_sum_options_box])
 
         # Create final widget
-        if channel_options['n_channels'] == 1:
-            if channel_options['image_is_masked']:
-                children = [self.masked_checkbox]
-            else:
-                children = [ipywidgets.Latex(value='No options available')]
-        else:
-            children = [self.channels_wid, self.rgb_masked_options_box,
-                        self.glyph_sum_options_box]
+        children = [self.channels_wid, self.checkboxes_box,
+                    self.no_options_latex]
+        initial_dict = {
+            'channels': channel_options['channels'],
+            'glyph_enabled': channel_options['glyph_enabled'],
+            'glyph_block_size': channel_options['glyph_block_size'],
+            'glyph_use_negative': channel_options['glyph_use_negative'],
+            'sum_enabled': channel_options['sum_enabled'],
+            'masked_enabled': channel_options['masked_enabled']}
         super(ChannelOptionsWidget, self).__init__(
-            children, Dict, channel_options, render_function=render_function,
+            children, Dict, initial_dict, render_function=render_function,
             orientation='horizontal', align='start')
 
-        # Set style
-        #self.predefined_style(style)
+        # Assign properties
+        self.n_channels = channel_options['n_channels']
+        self.image_is_masked = channel_options['image_is_masked']
 
-    #     # Set functionality
-    #     def mode_selection(name, value):
-    #         # Temporarily remove render function
-    #         self.sum_checkbox.on_trait_change(self._render_function, 'value',
-    #                                           remove=True)
-    #         self.glyph_checkbox.on_trait_change(self._render_function, 'value',
-    #                                             remove=True)
-    #         # Control visibility of widgets
-    #         if value == 'Single':
-    #             self.multiple_slider.visible = False
-    #             self.single_slider.visible = True
-    #             self.sum_checkbox.visible = False
-    #             self.sum_checkbox.value = False
-    #             self.glyph_checkbox.visible = False
-    #             self.glyph_checkbox.value = False
-    #             self.glyph_options_box.visible = False
-    #             self.rgb_checkbox.visible = \
-    #                 self.selected_values['n_channels'] == 3
-    #         else:
-    #             self.single_slider.visible = False
-    #             self.multiple_slider.visible = True
-    #             self.sum_checkbox.visible = True
-    #             self.sum_checkbox.value = False
-    #             self.glyph_checkbox.visible = \
-    #                 self.selected_values['n_channels'] > 1
-    #             self.glyph_checkbox.value = False
-    #             self.glyph_options_box.visible = False
-    #             self.rgb_checkbox.visible = False
-    #         # Add render function
-    #         if self._render_function is not None:
-    #             self.sum_checkbox.on_trait_change(self._render_function,
-    #                                               'value')
-    #             self.glyph_checkbox.on_trait_change(self._render_function,
-    #                                                 'value')
-    #     self.mode_radiobuttons.on_trait_change(mode_selection, 'value')
-    #
-    #     def glyph_options_visibility(name, value):
-    #         # Temporarily remove render function
-    #         self.sum_checkbox.on_trait_change(self._render_function, 'value',
-    #                                           remove=True)
-    #         # Check value of sum checkbox
-    #         if value:
-    #             self.sum_checkbox.value = False
-    #         # Add render function
-    #         if self._render_function is not None:
-    #             self.sum_checkbox.on_trait_change(self._render_function,
-    #                                               'value')
-    #         # Control glyph options visibility
-    #         self.glyph_options_box.visible = value
-    #     self.glyph_checkbox.on_trait_change(glyph_options_visibility, 'value')
-    #
-    #     self.link_rgb_checkbox_and_single_slider = link(
-    #         (self.rgb_checkbox, 'value'), (self.single_slider, 'disabled'))
-    #
-    #     def sum_fun(name, value):
-    #         # Temporarily remove render function
-    #         self.glyph_checkbox.on_trait_change(self._render_function, 'value',
-    #                                             remove=True)
-    #         # Check value of glyph checkbox
-    #         if value:
-    #             self.glyph_checkbox.value = False
-    #         # Add render function
-    #         if self._render_function is not None:
-    #             self.glyph_checkbox.on_trait_change(self._render_function,
-    #                                                 'value')
-    #     self.sum_checkbox.on_trait_change(sum_fun, 'value')
-    #
-    #     def get_glyph_options(name, value):
-    #         self.selected_values['glyph_enabled'] = self.glyph_checkbox.value
-    #         self.selected_values['sum_enabled'] = self.sum_checkbox.value
-    #         self.selected_values['glyph_use_negative'] = \
-    #             self.glyph_use_negative_checkbox.value
-    #         self.selected_values['glyph_block_size'] = \
-    #             self.glyph_block_size_text.value
-    #     self.glyph_checkbox.on_trait_change(get_glyph_options, 'value')
-    #     self.sum_checkbox.on_trait_change(get_glyph_options, 'value')
-    #     self.glyph_use_negative_checkbox.on_trait_change(get_glyph_options,
-    #                                                      'value')
-    #     self.glyph_block_size_text.on_trait_change(get_glyph_options, 'value')
-    #
-    #     def get_channels(name, value):
-    #         if self.mode_radiobuttons.value == "Single":
-    #             if self.rgb_checkbox.value:
-    #                 self.selected_values['channels'] = None
-    #             else:
-    #                 self.selected_values['channels'] = self.single_slider.value
-    #         else:
-    #             self.selected_values['channels'] = range(
-    #                 self.multiple_slider.lower, self.multiple_slider.upper + 1)
-    #     self.single_slider.on_trait_change(get_channels, 'value')
-    #     self.multiple_slider.on_trait_change(get_channels, 'value')
-    #     self.rgb_checkbox.on_trait_change(get_channels, 'value')
-    #     self.mode_radiobuttons.on_trait_change(get_channels, 'value')
-    #
-    #     def get_masked(name, value):
-    #         self.selected_values['masked_enabled'] = value
-    #     self.masked_checkbox.on_trait_change(get_masked, 'value')
-    #
-    # def _parse_options(self, channels):
-    #     if isinstance(channels, list):
-    #         if len(channels) == 1:
-    #             mode_value = 'Single'
-    #             single_slider_value = channels[0]
-    #             multiple_slider_value = (0, 1)
-    #         else:
-    #             mode_value = 'Multiple'
-    #             single_slider_value = 0
-    #             multiple_slider_value = (min(channels), max(channels))
-    #     elif channels is None:
-    #         mode_value = 'Single'
-    #         single_slider_value = 0
-    #         multiple_slider_value = (0, 1)
-    #     else:
-    #         mode_value = 'Single'
-    #         single_slider_value = channels
-    #         multiple_slider_value = (0, 1)
-    #     return mode_value, single_slider_value, multiple_slider_value
-    #
-    # def _parse_sum_glyph(self, mode_value, sum_enabled, glyph_enabled):
-    #     if mode_value == 'Single' or (sum_enabled and glyph_enabled):
-    #         sum_enabled = False
-    #         glyph_enabled = False
-    #     return sum_enabled, glyph_enabled
-    #
-    # def _single_slider_visible(self, mode):
-    #     return mode == 'Single'
-    #
-    # def _multiple_slider_visible(self, mode):
-    #     return mode == 'Multiple'
-    #
-    # def _rgb_checkbox_visible(self, mode, n_channels):
-    #     return mode == 'Single' and n_channels == 3
-    #
-    # def _sum_checkbox_visible(self, mode, n_channels):
-    #     return mode == 'Multiple' and n_channels > 1
-    #
-    # def _glyph_checkbox_visible(self, mode, n_channels):
-    #     return mode == 'Multiple' and n_channels > 1
-    #
-    # def _glyph_options_visible(self, mode, n_channels, glyph_value):
-    #     return mode == 'Multiple' and n_channels > 1 and glyph_value
-    #
-    # def style(self, box_style=None, border_visible=False, border_color='black',
-    #           border_style='solid', border_width=1, border_radius=0, padding=0,
-    #           margin=0, font_family='', font_size=None, font_style='',
-    #           font_weight='', slider_width='', slider_colour=None):
-    #     r"""
-    #     Function that defines the styling of the widget.
-    #
-    #     Parameters
-    #     ----------
-    #     box_style : See Below, optional
-    #         Style options
-    #
-    #             ========= ============================
-    #             Style     Description
-    #             ========= ============================
-    #             'success' Green-based style
-    #             'info'    Blue-based style
-    #             'warning' Yellow-based style
-    #             'danger'  Red-based style
-    #             ''        Default style
-    #             None      No style
-    #             ========= ============================
-    #
-    #     border_visible : `bool`, optional
-    #         Defines whether to draw the border line around the widget.
-    #     border_color : `str`, optional
-    #         The color of the border around the widget.
-    #     border_style : `str`, optional
-    #         The line style of the border around the widget.
-    #     border_width : `float`, optional
-    #         The line width of the border around the widget.
-    #     border_radius : `float`, optional
-    #         The radius of the corners of the box.
-    #     padding : `float`, optional
-    #         The padding around the widget.
-    #     margin : `float`, optional
-    #         The margin around the widget.
-    #     font_family : See Below, optional
-    #         The font family to be used.
-    #         Example options ::
-    #
-    #             {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
-    #              'helvetica'}
-    #
-    #     font_size : `int`, optional
-    #         The font size.
-    #     font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
-    #         The font style.
-    #     font_weight : See Below, optional
-    #         The font weight.
-    #         Example options ::
-    #
-    #             {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
-    #              'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
-    #              'extra bold', 'black'}
-    #
-    #     slider_width : `str`, optional
-    #         The width of the slider.
-    #     slider_colour : `str`, optional
-    #         The colour of the sliders.
-    #     """
-    #     format_box(self, box_style, border_visible, border_color, border_style,
-    #                border_width, border_radius, padding, margin)
-    #     self.single_slider.width = slider_width
-    #     self.multiple_slider.width = slider_width
-    #     format_font(self, font_family, font_size, font_style, font_weight)
-    #     format_font(self.mode_radiobuttons, font_family, font_size, font_style,
-    #                 font_weight)
-    #     format_font(self.single_slider, font_family, font_size, font_style,
-    #                 font_weight)
-    #     format_font(self.multiple_slider, font_family, font_size, font_style,
-    #                 font_weight)
-    #     format_font(self.masked_checkbox, font_family, font_size, font_style,
-    #                 font_weight)
-    #     format_font(self.rgb_checkbox, font_family, font_size, font_style,
-    #                 font_weight)
-    #     format_font(self.sum_checkbox, font_family, font_size, font_style,
-    #                 font_weight)
-    #     format_font(self.glyph_checkbox, font_family, font_size, font_style,
-    #                 font_weight)
-    #     format_font(self.glyph_use_negative_checkbox, font_family, font_size,
-    #                 font_style, font_weight)
-    #     format_font(self.glyph_block_size_text, font_family, font_size,
-    #                 font_style, font_weight)
-    #     self.single_slider.slider_color = slider_colour
-    #     self.single_slider.background_color = slider_colour
-    #     self.multiple_slider.slider_color = slider_colour
-    #     self.multiple_slider.background_color = slider_colour
-    #
-    # def predefined_style(self, style):
-    #     r"""
-    #     Function that sets a predefined style on the widget.
-    #
-    #     Parameters
-    #     ----------
-    #     style : `str` (see below)
-    #         Style options
-    #
-    #             ========= ============================
-    #             Style     Description
-    #             ========= ============================
-    #             'minimal' Simple black and white style
-    #             'success' Green-based style
-    #             'info'    Blue-based style
-    #             'warning' Yellow-based style
-    #             'danger'  Red-based style
-    #             ''        No style
-    #             ========= ============================
-    #     """
-    #     if style == 'minimal':
-    #         self.style(box_style=None, border_visible=True,
-    #                    border_color='black', border_style='solid',
-    #                    border_width=1, border_radius=0, padding='0.2cm',
-    #                    margin='0.3cm', font_family='', font_size=None,
-    #                    font_style='', font_weight='', slider_width='5cm',
-    #                    slider_colour=None)
-    #         format_box(self.glyph_options_box, box_style='',
-    #                    border_visible=False, border_color='',
-    #                    border_style='solid', border_width=1, border_radius=0,
-    #                    padding='0.1cm', margin=0)
-    #     elif (style == 'info' or style == 'success' or style == 'danger' or
-    #                   style == 'warning'):
-    #         self.style(box_style=style, border_visible=True,
-    #                    border_color=map_styles_to_hex_colours(style),
-    #                    border_style='solid', border_width=1, border_radius=10,
-    #                    padding='0.2cm', margin='0.3cm', font_family='',
-    #                    font_size=None, font_style='', font_weight='',
-    #                    slider_width='5cm',
-    #                    slider_colour=map_styles_to_hex_colours(style))
-    #         format_box(self.glyph_options_box, box_style=style,
-    #                    border_visible=True,
-    #                    border_color=map_styles_to_hex_colours(style),
-    #                    border_style='solid', border_width=1, border_radius=10,
-    #                    padding='0.1cm', margin=0)
-    #     else:
-    #         raise ValueError('style must be minimal or info or success or '
-    #                          'danger or warning')
-    #
-    # def set_widget_state(self, channel_options, allow_callback=True):
-    #     r"""
-    #     Method that updates the state of the widget with a new set of values.
-    #
-    #     Parameters
-    #     ----------
-    #     channel_options : `dict`
-    #         The dictionary with the new options to be used. For example
-    #         ::
-    #
-    #             channel_options = {'n_channels': 10,
-    #                                'image_is_masked': True,
-    #                                'channels': 0,
-    #                                'glyph_enabled': False,
-    #                                'glyph_block_size': 3,
-    #                                'glyph_use_negative': False,
-    #                                'sum_enabled': False,
-    #                                'masked_enabled': True}
-    #
-    #     allow_callback : `bool`, optional
-    #         If ``True``, it allows triggering of any callback functions.
-    #     """
-    #     # temporarily remove render callback
-    #     render_function = self._render_function
-    #     self.remove_render_function()
-    #
-    #     # If image_is_masked is False, then masked_enabled should be False too
-    #     if not channel_options['image_is_masked']:
-    #         channel_options['masked_enabled'] = False
-    #
-    #     # Parse channels
-    #     mode_default, single_slider_default, multiple_slider_default = \
-    #         self._parse_options(channel_options['channels'])
-    #
-    #     # Check sum and glyph options
-    #     channel_options['sum_enabled'], channel_options['glyph_enabled'] = \
-    #         self._parse_sum_glyph(mode_default, channel_options['sum_enabled'],
-    #                               channel_options['glyph_enabled'])
-    #
-    #     # Update widgets' state
-    #     self.mode_radiobuttons.value = mode_default
-    #     self.mode_radiobuttons.disabled = channel_options['n_channels'] == 1
-    #
-    #     self.masked_checkbox.value = channel_options['masked_enabled']
-    #     self.masked_checkbox.visible = channel_options['image_is_masked']
-    #
-    #     self.single_slider.max = channel_options['n_channels'] - 1
-    #     self.single_slider.value = single_slider_default
-    #     self.single_slider.visible = self._single_slider_visible(mode_default)
-    #     self.single_slider.disabled = channel_options['n_channels'] == 1
-    #
-    #     self.multiple_slider.max = channel_options['n_channels'] - 1
-    #     self.multiple_slider.value = multiple_slider_default
-    #     self.multiple_slider.visible = self._multiple_slider_visible(
-    #         mode_default)
-    #
-    #     self.rgb_checkbox.value = (channel_options['n_channels'] == 3 and
-    #                                channel_options['channels'] is None)
-    #     self.rgb_checkbox.visible = self._rgb_checkbox_visible(
-    #         mode_default, channel_options['n_channels'])
-    #
-    #     self.sum_checkbox.value = channel_options['sum_enabled']
-    #     self.sum_checkbox.visible = self._sum_checkbox_visible(
-    #         mode_default, channel_options['n_channels'])
-    #
-    #     self.glyph_checkbox.value = channel_options['glyph_enabled']
-    #     self.glyph_checkbox.visible = self._glyph_checkbox_visible(
-    #         mode_default, channel_options['n_channels'])
-    #
-    #     self.glyph_block_size_text.value = channel_options['glyph_block_size']
-    #
-    #     self.glyph_use_negative_checkbox.value = \
-    #         channel_options['glyph_use_negative']
-    #
-    #     self.glyph_options_box.visible = self._glyph_options_visible(
-    #         mode_default, channel_options['n_channels'],
-    #         channel_options['glyph_enabled'])
-    #
-    #     # Re-assign render callback
-    #     self.add_render_function(render_function)
-    #
-    #     # Assign new options dict to selected_values
-    #     self.selected_values = channel_options
-    #
-    #     # trigger render function if allowed
-    #     if allow_callback:
-    #         self._render_function('', True)
+        # Set widget's visibility
+        self.set_visibility()
+
+        # Set style
+        self.predefined_style(style)
+
+        # Set functionality
+        def save_options(name, value):
+            channels_val = self.channels_wid.selected_values
+            if self.rgb_checkbox.value:
+                channels_val = None
+            self.selected_values = {
+                'channels': channels_val,
+                'glyph_enabled': self.glyph_checkbox.value,
+                'glyph_block_size': self.glyph_block_size_text.value,
+                'glyph_use_negative': self.glyph_use_negative_checkbox.value,
+                'sum_enabled': self.sum_checkbox.value,
+                'masked_enabled': self.masked_checkbox.value}
+        self.glyph_block_size_text.on_trait_change(save_options, 'value')
+        self.glyph_use_negative_checkbox.on_trait_change(save_options, 'value')
+        self.masked_checkbox.on_trait_change(save_options, 'value')
+
+        def save_channels(name, value):
+            if self.n_channels == 3:
+                # temporarily remove rgb callback
+                self.rgb_checkbox.on_trait_change(save_rgb, 'value', remove=True)
+                # set value
+                self.rgb_checkbox.value = False
+                # re-assign rgb callback
+                self.rgb_checkbox.on_trait_change(save_rgb, 'value')
+            save_options('', None)
+        self.channels_wid.on_trait_change(save_channels, 'selected_values')
+
+        def save_rgb(name, value):
+            if value:
+                # temporarily remove channels callback
+                self.channels_wid.on_trait_change(save_channels,
+                                                  'selected_values', remove=True)
+                # update channels widget
+                self.channels_wid.set_widget_state(
+                    {'command': '0, 1, 2', 'length': self.n_channels},
+                    allow_callback=False)
+                # re-assign channels callback
+                self.channels_wid.on_trait_change(save_channels,
+                                                  'selected_values')
+            save_options('', None)
+        self.rgb_checkbox.on_trait_change(save_rgb, 'value')
+
+        def save_sum(name, value):
+            if value and self.glyph_checkbox.value:
+                # temporarily remove glyph callback
+                self.glyph_checkbox.on_trait_change(save_glyph, 'value',
+                                                    remove=True)
+
+                # set glyph to False
+                self.glyph_checkbox.value = False
+                self.glyph_options_box.visible = False
+
+                # re-assign glyph callback
+                self.glyph_checkbox.on_trait_change(save_glyph, 'value')
+            save_options('', None)
+        self.sum_checkbox.on_trait_change(save_sum, 'value')
+
+        def save_glyph(name, value):
+            if value and self.sum_checkbox.value:
+                # temporarily remove sum callback
+                self.sum_checkbox.on_trait_change(save_sum, 'value',
+                                                  remove=True)
+
+                # set glyph to false
+                self.sum_checkbox.value = False
+
+                # re-assign sum callback
+                self.sum_checkbox.on_trait_change(save_sum, 'value')
+            # set visibility
+            self.glyph_options_box.visible = value
+            save_options('', None)
+        self.glyph_checkbox.on_trait_change(save_glyph, 'value')
+
+    def set_visibility(self):
+        self.channels_wid.visible = self.n_channels > 1
+        self.glyph_sum_options_box.visible = self.n_channels > 1
+        self.rgb_checkbox.visible = self.n_channels == 3
+        self.masked_checkbox.visible = self.image_is_masked
+        self.no_options_latex.visible = (self.n_channels == 1 and
+                                         not self.image_is_masked)
+
+    def style(self, box_style=None, border_visible=False, border_colour='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
+              font_weight='', slider_width='4cm'):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        box_style : See Below, optional
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
+
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the corners of the box.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                 'helvetica'}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                 'extra bold', 'black'}
+
+        slider_width : `str`, optional
+            The width of the slider.
+        slider_colour : `str`, optional
+            The colour of the sliders.
+        """
+        format_box(self, box_style, border_visible, border_colour, border_style,
+                   border_width, border_radius, padding, margin)
+        self.channels_wid.single_slider.width = slider_width
+        self.channels_wid.multiple_slider.width = slider_width
+        format_font(self, font_family, font_size, font_style, font_weight)
+        format_font(self.rgb_checkbox, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.masked_checkbox, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.sum_checkbox, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.glyph_checkbox, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.glyph_block_size_text, font_family, font_size,
+                    font_style, font_weight)
+        format_font(self.glyph_use_negative_checkbox, font_family, font_size,
+                    font_style, font_weight)
+        format_font(self.no_options_latex, font_family, font_size, font_style,
+                    font_weight)
+        self.channels_wid.style(
+            box_style=box_style, border_visible=False, text_box_style=None,
+            text_box_background_colour=None, text_box_width=None,
+            font_family=font_family, font_size=font_size, font_style=font_style,
+            font_weight=font_weight)
+
+    def predefined_style(self, style):
+        r"""
+        Function that sets a predefined style on the widget.
+
+        Parameters
+        ----------
+        style : `str` (see below)
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'minimal' Simple black and white style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        No style
+                ========= ============================
+        """
+        if style == 'minimal':
+            self.style(box_style=None, border_visible=True,
+                       border_colour='black', border_style='solid',
+                       border_width=1, border_radius=0, padding='0.2cm',
+                       margin='0.3cm', font_family='', font_size=None,
+                       font_style='', font_weight='', slider_width='4cm')
+            format_box(self.glyph_options_box, box_style='',
+                       border_visible=False, border_colour='',
+                       border_style='solid', border_width=1, border_radius=0,
+                       padding='0.1cm', margin=0)
+        elif (style == 'info' or style == 'success' or style == 'danger' or
+                      style == 'warning'):
+            self.style(box_style=style, border_visible=True,
+                       border_colour=map_styles_to_hex_colours(style),
+                       border_style='solid', border_width=1, border_radius=10,
+                       padding='0.2cm', margin='0.3cm', font_family='',
+                       font_size=None, font_style='', font_weight='',
+                       slider_width='4cm')
+            format_box(self.glyph_options_box, box_style=style,
+                       border_visible=True,
+                       border_colour=map_styles_to_hex_colours(style),
+                       border_style='solid', border_width=1, border_radius=10,
+                       padding='0.1cm', margin=0)
+        else:
+            raise ValueError('style must be minimal or info or success or '
+                             'danger or warning')
+
+    def set_widget_state(self, channel_options, allow_callback=True):
+        r"""
+        Method that updates the state of the widget with a new set of values.
+
+        Parameters
+        ----------
+        channel_options : `dict`
+            The dictionary with the new options to be used. For example
+            ::
+
+                channel_options = {'n_channels': 10,
+                                   'image_is_masked': True,
+                                   'channels': 0,
+                                   'glyph_enabled': False,
+                                   'glyph_block_size': 3,
+                                   'glyph_use_negative': False,
+                                   'sum_enabled': False,
+                                   'masked_enabled': True}
+
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        # temporarily remove render callback
+        render_function = self._render_function
+        self.remove_render_function()
+
+        # If image_is_masked is False, then masked_enabled should be False too
+        if not channel_options['image_is_masked']:
+            channel_options['masked_enabled'] = False
+
+        # Parse channels
+        if channel_options['channels'] is None:
+            channels = '0, 1, 2'
+        elif isinstance(channel_options['channels'], list):
+            channels = str(channel_options['channels']).strip('[]')
+        else:
+            channels = str(channel_options['channels'])
+
+        # Parse sum, glyph
+        if (channel_options['n_channels'] == 1 or
+                (channel_options['sum_enabled'] and
+                 channel_options['glyph_enabled'])):
+            channel_options['sum_enabled'] = False
+            channel_options['glyph_enabled'] = False
+
+        # Set both sum and glyph to False, to make sure that there is no conflict
+        self.sum_checkbox.value = False
+        self.glyph_checkbox.value = False
+
+        # Update widgets' state
+        self.n_channels = channel_options['n_channels']
+        self.image_is_masked = channel_options['image_is_masked']
+        slice_options = {'command': channels,
+                         'length': channel_options['n_channels']}
+        self.channels_wid.set_widget_state(slice_options, allow_callback=False)
+        self.masked_checkbox.value = channel_options['masked_enabled']
+        self.rgb_checkbox.value = (channel_options['n_channels'] == 3 and
+                                   channel_options['channels'] is None)
+        self.sum_checkbox.value = channel_options['sum_enabled']
+        self.glyph_checkbox.value = channel_options['glyph_enabled']
+        self.glyph_block_size_text.value = channel_options['glyph_block_size']
+        self.glyph_use_negative_checkbox.value = \
+            channel_options['glyph_use_negative']
+        # self.selected_values = {
+        #     'channels': channel_options['channels'],
+        #     'glyph_enabled': channel_options['glyph_enabled'],
+        #     'glyph_block_size': channel_options['glyph_block_size'],
+        #     'glyph_use_negative': channel_options['glyph_use_negative'],
+        #     'sum_enabled': channel_options['sum_enabled'],
+        #     'masked_enabled': channel_options['masked_enabled']}
+
+        # Set widget's visibility
+        self.set_visibility()
+
+        # Re-assign render callback
+        self.add_render_function(render_function)
+
+        # trigger render function if allowed
+        if allow_callback:
+            self._render_function('', True)
