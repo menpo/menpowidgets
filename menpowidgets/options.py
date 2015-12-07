@@ -4,7 +4,11 @@ from traitlets import link
 from collections import OrderedDict
 
 from .abstract import MenpoWidget
-from .tools import IndexSliderWidget, IndexButtonsWidget, SlicingCommandWidget
+from .tools import (IndexSliderWidget, IndexButtonsWidget, SlicingCommandWidget,
+                    LineOptionsWidget, MarkerOptionsWidget,
+                    NumberingOptionsWidget, LegendOptionsWidget,
+                    ZoomOneScaleWidget, ZoomTwoScalesWidget, AxesOptionsWidget,
+                    GridOptionsWidget, ImageOptionsWidget)
 from .style import map_styles_to_hex_colours, format_box, format_font
 
 
@@ -448,7 +452,7 @@ class AnimationOptionsWidget(MenpoWidget):
 class ChannelOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting channel options when rendering an image. The
-    widget consists of the following parts from `IPython.html.widgets`:
+    widget consists of the following parts from `ipywidgets`:
 
     == ==================== ============================= =====================
     No Object               Variable (`self.`)            Description
@@ -922,7 +926,7 @@ class ChannelOptionsWidget(MenpoWidget):
 class LandmarkOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for animating through a list of objects. The widget
-    consists of the following parts from `IPython.html.widgets`:
+    consists of the following parts from `ipywidgets`:
 
     == ============= =========================== =========================
     No Object        Variable (`self.`)               Description
@@ -989,7 +993,7 @@ class LandmarkOptionsWidget(MenpoWidget):
     Let's create a landmarks widget and then update its state. Firstly, we need
     to import it:
 
-        >>> from menpowidgets.options_old import LandmarkOptionsWidget
+        >>> from menpowidgets.options import LandmarkOptionsWidget
 
     Now let's define a render function that will get called on every widget
     change and will dynamically print the selected index:
@@ -1205,7 +1209,7 @@ class LandmarkOptionsWidget(MenpoWidget):
         for w in self.labels_box.children:
             w.value = w.description in with_labels
 
-    def style(self, box_style=None, border_visible=False, border_color='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight='', labels_buttons_style=''):
@@ -1230,7 +1234,7 @@ class LandmarkOptionsWidget(MenpoWidget):
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
-        border_color : `str`, optional
+        border_colour : `str`, optional
             The color of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
@@ -1276,7 +1280,7 @@ class LandmarkOptionsWidget(MenpoWidget):
                 None      No style
                 ========= ============================
         """
-        format_box(self, box_style, border_visible, border_color, border_style,
+        format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
         format_font(self, font_family, font_size, font_style, font_weight)
         format_font(self.render_landmarks_checkbox, font_family, font_size,
@@ -1318,14 +1322,14 @@ class LandmarkOptionsWidget(MenpoWidget):
         """
         if style == 'minimal':
             self.style(box_style=None, border_visible=True,
-                       border_color='black', border_style='solid',
+                       border_colour='black', border_style='solid',
                        border_width=1, border_radius=0, padding='0.2cm',
                        margin='0.3cm', font_family='', font_size=None,
                        font_style='', font_weight='', labels_buttons_style='')
         elif (style == 'info' or style == 'success' or style == 'danger' or
                       style == 'warning'):
             self.style(box_style=style, border_visible=True,
-                       border_color=map_styles_to_hex_colours(style),
+                       border_colour=map_styles_to_hex_colours(style),
                        border_style='solid', border_width=1, border_radius=10,
                        padding='0.2cm', margin='0.3cm', font_family='',
                        font_size=None, font_style='', font_weight='',
@@ -1453,3 +1457,1163 @@ class LandmarkOptionsWidget(MenpoWidget):
         # trigger render function if allowed
         if allow_callback:
             self._render_function('', True)
+
+
+class TextPrintWidget(ipywidgets.FlexBox):
+    r"""
+    Creates a widget for printing text. Specifically, it consists of a `list`
+    of `IPython.html.widgets.Latex` objects, i.e. one per text line.
+
+    Note that:
+
+    * To set the styling please refer to the ``style()`` and
+      ``predefined_style()`` methods.
+    * To update the state of the widget, please refer to the
+      ``set_widget_state()`` method.
+
+    Parameters
+    ----------
+    n_lines : `int`
+        The number of lines of the text to be printed.
+    text_per_line : `list` of length `n_lines`
+        The text to be printed per line.
+    style : See Below, optional
+        Sets a predefined style at the widget. Possible options are
+
+            ========= ============================
+            Style     Description
+            ========= ============================
+            'minimal' Simple black and white style
+            'success' Green-based style
+            'info'    Blue-based style
+            'warning' Yellow-based style
+            'danger'  Red-based style
+            ''        No style
+            ========= ============================
+
+    Example
+    -------
+    Let's create an text widget and then update its state. Firstly, we need
+    to import it:
+
+        >>> from menpowidgets.options import TextPrintWidget
+
+    Create the widget with some initial options and display it:
+
+        >>> n_lines = 3
+        >>> text_per_line = ['> The', '> Menpo', '> Team']
+        >>> wid = TextPrintWidget(n_lines, text_per_line, style='success')
+        >>> wid
+
+    The style of the widget can be changed as:
+
+        >>> wid.predefined_style('danger')
+
+    Update the widget state as:
+
+        >>> wid.set_widget_state(5, ['M', 'E', 'N', 'P', 'O'])
+    """
+    def __init__(self, n_lines, text_per_line, style='minimal'):
+        self.latex_texts = [ipywidgets.Latex(value=text_per_line[i])
+                            for i in range(n_lines)]
+        super(TextPrintWidget, self).__init__(children=self.latex_texts)
+        self.align = 'start'
+
+        # Assign options
+        self.n_lines = n_lines
+        self.text_per_line = text_per_line
+
+        # Set style
+        self.predefined_style(style)
+
+    def style(self, box_style=None, border_visible=False, border_colour='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
+              font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        box_style : See Below, optional
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
+
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_colour : `str`, optional
+            The color of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the corners of the box.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                 'helvetica'}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                 'extra bold', 'black'}
+
+        """
+        format_box(self, box_style, border_visible, border_colour, border_style,
+                   border_width, border_radius, padding, margin)
+        format_font(self, font_family, font_size, font_style, font_weight)
+        for i in range(self.n_lines):
+            format_font(self.latex_texts[i], font_family, font_size,
+                        font_style, font_weight)
+
+    def predefined_style(self, style):
+        r"""
+        Function that sets a predefined style on the widget.
+
+        Parameters
+        ----------
+        style : `str` (see below)
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'minimal' Simple black and white style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        No style
+                ========= ============================
+        """
+        if style == 'minimal':
+            self.style(box_style=None, border_visible=True,
+                       border_colour='black', border_style='solid',
+                       border_width=1, border_radius=0, padding='0.1cm',
+                       margin='0.3cm', font_family='', font_size=None,
+                       font_style='', font_weight='')
+        elif (style == 'info' or style == 'success' or style == 'danger' or
+                      style == 'warning'):
+            self.style(box_style=style, border_visible=True,
+                       border_colour=map_styles_to_hex_colours(style),
+                       border_style='solid', border_width=1, border_radius=10,
+                       padding='0.1cm', margin='0.3cm', font_family='',
+                       font_size=None, font_style='', font_weight='')
+        else:
+            raise ValueError('style must be minimal or info or success or '
+                             'danger or warning')
+
+    def set_widget_state(self, n_lines, text_per_line):
+        r"""
+        Method that updates the state of the widget with a new set of values.
+
+        Parameters
+        ----------
+        n_lines : `int`
+            The number of lines of the text to be printed.
+        text_per_line : `list` of length `n_lines`
+            The text to be printed per line.
+        """
+        # Check if n_lines has changed
+        if n_lines != self.n_lines:
+            self.latex_texts = [ipywidgets.Latex(value=text_per_line[i])
+                                for i in range(n_lines)]
+            self.children = self.latex_texts
+        else:
+            for i in range(n_lines):
+                self.latex_texts[i].value = text_per_line[i]
+        self.n_lines = n_lines
+        self.text_per_line = text_per_line
+
+
+class RendererOptionsWidget(MenpoWidget):
+    r"""
+    Creates a widget for selecting rendering options. The widget consists of the
+    following parts from `ipywidgets` and `menpowidgets.tools`:
+
+    == ====================== =========================== ===================
+    No Object                 Variable (`self.`)          Description
+    == ====================== =========================== ===================
+    1  Dropdown               `object_selection_dropdown` The object selector
+    2  LineOptionsWidget      `options_widgets`           `list` with the
+
+       MarkerOptionsWidget                                various rendering
+
+       ImageOptionsWidget                                 sub-options widgets
+
+       NumberingOptionsWidget
+
+       FigureOptionsWidget
+
+       LegendOptionsWidget
+
+       GridOptionsWidget
+    3  Tab                    `suboptions_tab`            Contains all 2
+    == ====================== =========================== ===================
+
+    Note that:
+
+    * The selected values are stored in the ``self.selected_values`` `dict`.
+    * To set the styling please refer to the ``style()`` and
+      ``predefined_style()`` methods.
+    * To update the state of the widget, please refer to the
+      ``set_widget_state()`` method.
+    * To update the callback function please refer to the
+      ``replace_render_function()`` methods.
+
+    Parameters
+    ----------
+    renderer_options : `dict`
+        The initial rendering options. For example
+        ::
+
+            lines_options = {'render_lines': True,
+                             'line_width': 1,
+                             'line_colour': ['b', 'r'],
+                             'line_style': '-'}
+            markers_options = {'render_markers': True,
+                               'marker_size': 20,
+                               'marker_face_colour': ['white', 'white'],
+                               'marker_edge_colour': ['blue', 'red'],
+                               'marker_style': 'o',
+                               'marker_edge_width': 1}
+            numbering_options = {'render_numbering': True,
+                                 'numbers_font_name': 'serif',
+                                 'numbers_font_size': 10,
+                                 'numbers_font_style': 'normal',
+                                 'numbers_font_weight': 'normal',
+                                 'numbers_font_colour': ['black'],
+                                 'numbers_horizontal_align': 'center',
+                                 'numbers_vertical_align': 'bottom'}
+            legend_options = {'render_legend': True,
+                              'legend_title': '',
+                              'legend_font_name': 'serif',
+                              'legend_font_style': 'normal',
+                              'legend_font_size': 10,
+                              'legend_font_weight': 'normal',
+                              'legend_marker_scale': 1.,
+                              'legend_location': 2,
+                              'legend_bbox_to_anchor': (1.05, 1.),
+                              'legend_border_axes_pad': 1.,
+                              'legend_n_columns': 1,
+                              'legend_horizontal_spacing': 1.,
+                              'legend_vertical_spacing': 1.,
+                              'legend_border': True,
+                              'legend_border_padding': 0.5,
+                              'legend_shadow': False,
+                              'legend_rounded_corners': True}
+            zoom_options = {'min': 0.1,
+                            'max': 4.,
+                            'step': 0.05,
+                            'zoom': 1.}
+            axes_options = {'render_axes': True,
+                            'axes_font_name': 'serif',
+                            'axes_font_size': 10,
+                            'axes_font_style': 'normal',
+                            'axes_font_weight': 'normal',
+                            'axes_x_ticks': [0, 100],
+                            'axes_y_ticks': None,
+                            'axes_limits': {'x': None,
+                                            'y': 0.1,
+                                            'x_min': 0,
+                                            'x_max': 100,
+                                            'x_step': 1,
+                                            'y_min': 0,
+                                            'y_max': 100,
+                                            'y_step': 1}}
+            grid_options = {'render_grid': True,
+                            'grid_line_style': '--',
+                            'grid_line_width': 0.5}
+            image_options = {'alpha': 1.,
+                             'interpolation': 'bilinear',
+                             'cmap_name': 'gray'}
+            renderer_options = {'lines': lines_options,
+                                'markers': markers_options,
+                                'numbering': numbering_options,
+                                'legend': legend_options,
+                                'zoom': zoom_options,
+                                'axes': axes_options,
+                                'grid': grid_options,
+                                'image': image_options}
+
+    options_tabs : `list` of `str`
+        `List` that defines the ordering of the options tabs. Possible values
+        are
+
+            ============= ========================
+            Value         Returned class
+            ============= ========================
+            'lines'       `LineOptionsWidget`
+            'markers'     `MarkerOptionsWidget`
+            'numbering'   `NumberingOptionsWidget`
+            'zoom_one'    `ZoomOneScaleWidget`
+            'zoom_two'    `ZoomTwoScalesWidget`
+            'legend'      `LegendOptionsWidget`
+            'grid'        `GridOptionsWidget`
+            'image'       `ImageOptionsWidget`
+            'axes'        `AxesOptionsWidget`
+            ============= ========================
+
+    labels : `list` or ``None``, optional
+        The `list` of labels employed by the `ColourSelectionWidget`.
+    render_function : `function` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    style : See Below, optional
+        Sets a predefined style at the widget. Possible options are
+
+            ========= ============================
+            Style     Description
+            ========= ============================
+            'minimal' Simple black and white style
+            'success' Green-based style
+            'info'    Blue-based style
+            'warning' Yellow-based style
+            'danger'  Red-based style
+            ''        No style
+            ========= ============================
+
+    tabs_style : See Below, optional
+        Sets a predefined style at the tabs of the widget. Possible options
+        are
+
+            ========= ============================
+            Style     Description
+            ========= ============================
+            'minimal' Simple black and white style
+            'success' Green-based style
+            'info'    Blue-based style
+            'warning' Yellow-based style
+            'danger'  Red-based style
+            ''        No style
+            ========= ============================
+
+    Example
+    -------
+    Let's create a rendering options widget and then update its state. Firstly,
+    we need to import it:
+
+        >>> from menpowidgets.options import RendererOptionsWidget
+
+    Let's set some initial options:
+
+        >>> options_tabs = ['markers', 'lines', 'grid']
+        >>> labels = ['jaw', 'eyes']
+
+    Now let's define a render function that will get called on every widget
+    change and will dynamically print the selected marker face colour and line
+    width:
+
+        >>> from menpo.visualize import print_dynamic
+        >>> def render_function(name, value):
+        >>>     s = "Marker face colour: {}, Line width: {}".format(
+        >>>         wid.selected_values['markers']['marker_face_colour'],
+        >>>         wid.selected_values['lines']['line_width'])
+        >>>     print_dynamic(s)
+
+    Create the widget with some initial options and display it:
+
+        >>> markers_options = {'render_markers': True, 'marker_size': 20,
+        >>>                    'marker_face_colour': ['w', 'w'],
+        >>>                    'marker_edge_colour': ['b', 'r'],
+        >>>                    'marker_style': 'o', 'marker_edge_width': 1}
+        >>> lines_options = {'render_lines': True, 'line_width': 1,
+        >>>                  'line_colour': ['b', 'r'], 'line_style': '-'}
+        >>> grid_options = {'render_grid': True, 'grid_line_style': '--',
+        >>>                 'grid_line_width': 0.5}
+        >>> rendering_options = {'lines': lines_options, 'grid': grid_options,
+        >>>                      'markers': markers_options}
+        >>>
+        >>> # Create and display widget
+        >>> wid = RendererOptionsWidget(rendering_options, options_tabs,
+        >>>                             labels=labels,
+        >>>                             render_function=render_function,
+        >>>                             style='info')
+        >>> wid
+
+    By playing around, the printed message gets updated. The style of the widget
+    can be changed as:
+
+        >>> wid.predefined_style('minimal', 'info')
+
+    Finally, let's change the widget status with a new dictionary of options:
+
+        >>> markers_options = {'render_markers': False, 'marker_size': 20,
+        >>>                    'marker_face_colour': ['k'],
+        >>>                    'marker_edge_colour': ['c'],
+        >>>                    'marker_style': 'o', 'marker_edge_width': 1}
+        >>> lines_options = {'render_lines': False, 'line_width': 1,
+        >>>                  'line_colour': ['r'], 'line_style': '-'}
+        >>> grid_options = {'render_grid': True, 'grid_line_style': '--',
+        >>>                 'grid_line_width': 0.5}
+        >>> new_options = {'lines': lines_options, 'grid': grid_options,
+        >>>                'markers': markers_options}
+        >>>
+        >>> # Set new labels
+        >>> labels = ['1']
+        >>>
+        >>> # Update widget state
+        >>> wid.set_widget_state(new_options, labels, allow_callback=True)
+    """
+    def __init__(self, renderer_options, options_tabs, labels=None,
+                 render_function=None, style='minimal', tabs_style='minimal'):
+        # Create children
+        self.options_widgets = []
+        self.tab_titles = []
+        initial_dict = {}
+        for o in options_tabs:
+            if o == 'lines':
+                self.options_widgets.append(LineOptionsWidget(
+                    renderer_options[o], render_function=None,
+                    render_checkbox_title='Render lines', labels=labels))
+                self.tab_titles.append('Lines')
+                initial_dict[o] = renderer_options[o]
+            elif o == 'markers':
+                self.options_widgets.append(MarkerOptionsWidget(
+                    renderer_options[o], render_function=None,
+                    render_checkbox_title='Render markers', labels=labels))
+                self.tab_titles.append('Markers')
+                initial_dict[o] = renderer_options[o]
+            elif o == 'image':
+                self.options_widgets.append(ImageOptionsWidget(
+                    renderer_options[o], render_function=None))
+                self.tab_titles.append('Image')
+                initial_dict[o] = renderer_options[o]
+            elif o == 'numbering':
+                self.options_widgets.append(NumberingOptionsWidget(
+                    renderer_options[o], render_function=None,
+                    render_checkbox_title='Render numbering'))
+                self.tab_titles.append('Numbering')
+                initial_dict[o] = renderer_options[o]
+            elif o == 'zoom':
+                if isinstance(renderer_options[o]['zoom'], list):
+                    self.options_widgets.append(ZoomTwoScalesWidget(
+                        renderer_options[o], render_function=None,
+                        description='Scale: ',
+                        minus_description='fa-search-minus',
+                        plus_description='fa-search-plus',
+                        continuous_update=False))
+                else:
+                    self.options_widgets.append(ZoomOneScaleWidget(
+                        renderer_options[o], render_function=None,
+                        description='Scale: ',
+                        minus_description='fa-search-minus',
+                        plus_description='fa-search-plus',
+                        continuous_update=False))
+                self.tab_titles.append('Zoom')
+                initial_dict['zoom'] = renderer_options[o]['zoom']
+            elif o == 'axes':
+                self.options_widgets.append(AxesOptionsWidget(
+                    renderer_options[o], render_function=None,
+                    render_checkbox_title='Render axes'))
+                self.tab_titles.append('Axes')
+                initial_dict[o] = {
+                    'render_axes': renderer_options[o]['render_axes'],
+                    'axes_font_name': renderer_options[o]['axes_font_name'],
+                    'axes_font_size': renderer_options[o]['axes_font_size'],
+                    'axes_font_style': renderer_options[o]['axes_font_style'],
+                    'axes_font_weight': renderer_options[o]['axes_font_weight'],
+                    'axes_x_ticks': renderer_options[o]['axes_x_ticks'],
+                    'axes_y_ticks': renderer_options[o]['axes_y_ticks'],
+                    'axes_x_limits': renderer_options[o]['axes_limits']['x'],
+                    'axes_y_limits': renderer_options[o]['axes_limits']['y']}
+            elif o == 'legend':
+                self.options_widgets.append(LegendOptionsWidget(
+                    renderer_options[o], render_function=None,
+                    render_checkbox_title='Render legend'))
+                self.tab_titles.append('Legend')
+                initial_dict[o] = renderer_options[o]
+            elif o == 'grid':
+                self.options_widgets.append(GridOptionsWidget(
+                    renderer_options[o], render_function=None,
+                    render_checkbox_title='Render grid'))
+                self.tab_titles.append('Grid')
+                initial_dict[o] = renderer_options[o]
+        self.suboptions_tab = ipywidgets.Tab(children=self.options_widgets)
+        # set titles
+        for (k, tl) in enumerate(self.tab_titles):
+            self.suboptions_tab.set_title(k, tl)
+
+        # Create final widget
+        children = [self.suboptions_tab]
+        super(RendererOptionsWidget, self).__init__(
+            children, Dict, initial_dict, render_function=render_function,
+            orientation='vertical', align='start')
+
+        # Assign properties
+        self.options_tabs = options_tabs
+        self.labels = labels
+
+        # Set style
+        self.predefined_style(style, tabs_style)
+
+        # Set functionality
+        def save_options(name, value):
+            self.selected_values = {o: self.options_widgets[i].selected_values
+                                    for i, o in enumerate(options_tabs)}
+        self._add_callback(save_options)
+
+    def _add_callback(self, fun):
+        for wid in self.options_widgets:
+            wid.on_trait_change(fun, 'selected_values')
+
+    def _remove_callback(self, fun):
+        for wid in self.options_widgets:
+            wid.on_trait_change(fun, 'selected_values', remove=True)
+
+    def style(self, box_style=None, border_visible=False, border_colour='black',
+              border_style='solid', border_width=1, border_radius=0,
+              padding='0.2cm', margin=0, tabs_box_style=None,
+              tabs_border_visible=True, tabs_border_colour='black',
+              tabs_border_style='solid', tabs_border_width=1,
+              tabs_border_radius=1, tabs_padding=0, tabs_margin=0,
+              font_family='', font_size=None, font_style='', font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        box_style : See Below, optional
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
+
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_colour : `str`, optional
+            The color of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the corners of the box.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
+        tabs_box_style : See Below, optional
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
+
+        tabs_border_visible : `bool`, optional
+            Defines whether to draw the border line around the tab widgets.
+        tabs_border_colour : `str`, optional
+            The color of the border around the tab widgets.
+        tabs_border_style : `str`, optional
+            The line style of the border around the tab widgets.
+        tabs_border_width : `float`, optional
+            The line width of the border around the tab widgets.
+        tabs_border_radius : `float`, optional
+            The radius of the corners of the box of the tab widgets.
+        tabs_padding : `float`, optional
+            The padding around the tab widgets.
+        tabs_margin : `float`, optional
+            The margin around the tab widgets.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                 'helvetica'}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                 'extra bold', 'black'}
+        """
+        format_box(self, box_style, border_visible, border_colour, border_style,
+                   border_width, border_radius, padding, margin)
+        for wid in self.options_widgets:
+            wid.style(box_style=tabs_box_style,
+                      border_visible=tabs_border_visible,
+                      border_colour=tabs_border_colour,
+                      border_style=tabs_border_style,
+                      border_width=tabs_border_width,
+                      border_radius=tabs_border_radius, padding=tabs_padding,
+                      margin=tabs_margin, font_family=font_family,
+                      font_size=font_size, font_style=font_style,
+                      font_weight=font_weight)
+        format_font(self, font_family, font_size, font_style, font_weight)
+
+    def predefined_style(self, style, tabs_style='minimal'):
+        r"""
+        Function that sets a predefined style on the widget.
+
+        Parameters
+        ----------
+        style : `str` (see below)
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'minimal' Simple black and white style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        No style
+                ========= ============================
+
+        tabs_style : `str` (see below), optional
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'minimal' Simple black and white style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        No style
+                ========= ============================
+        """
+        if tabs_style == 'minimal' or tabs_style=='':
+            tabs_style = ''
+            tabs_border_visible = False
+            tabs_border_colour = 'black'
+            tabs_border_radius = 0
+            tabs_padding = 0
+        else:
+            tabs_style = tabs_style
+            tabs_border_visible = True
+            tabs_border_colour = map_styles_to_hex_colours(tabs_style)
+            tabs_border_radius = 10
+            tabs_padding = '0.3cm'
+
+        if style == 'minimal':
+            self.style(box_style='', border_visible=True, border_colour='black',
+                       border_style='solid', border_width=1, border_radius=0,
+                       padding='0.2cm', margin='0.5cm', font_family='',
+                       font_size=None, font_style='', font_weight='',
+                       tabs_box_style=tabs_style,
+                       tabs_border_visible=tabs_border_visible,
+                       tabs_border_colour=tabs_border_colour,
+                       tabs_border_style='solid', tabs_border_width=1,
+                       tabs_border_radius=tabs_border_radius,
+                       tabs_padding=tabs_padding, tabs_margin='0.1cm')
+        elif (style == 'info' or style == 'success' or style == 'danger' or
+                      style == 'warning'):
+            self.style(box_style=style, border_visible=True,
+                       border_colour=map_styles_to_hex_colours(style),
+                       border_style='solid', border_width=1, border_radius=10,
+                       padding='0.2cm', margin='0.5cm', font_family='',
+                       font_size=None, font_style='', font_weight='',
+                       tabs_box_style=tabs_style,
+                       tabs_border_visible=tabs_border_visible,
+                       tabs_border_colour=tabs_border_colour,
+                       tabs_border_style='solid', tabs_border_width=1,
+                       tabs_border_radius=tabs_border_radius,
+                       tabs_padding=tabs_padding, tabs_margin='0.1cm')
+        else:
+            raise ValueError('style must be minimal or info or success or '
+                             'danger or warning')
+
+    def set_widget_state(self, renderer_options, labels, allow_callback=True):
+        r"""
+        Method that updates the state of the widget with a new set of values.
+        Note that the number of objects should not change.
+
+        Parameters
+        ----------
+        renderer_options : `dict`
+            The initial rendering options. For example
+            ::
+
+                lines_options = {'render_lines': True,
+                                 'line_width': 1,
+                                 'line_colour': ['b', 'r'],
+                                 'line_style': '-'}
+                markers_options = {'render_markers': True,
+                                   'marker_size': 20,
+                                   'marker_face_colour': ['white', 'white'],
+                                   'marker_edge_colour': ['blue', 'red'],
+                                   'marker_style': 'o',
+                                   'marker_edge_width': 1}
+                numbering_options = {'render_numbering': True,
+                                     'numbers_font_name': 'serif',
+                                     'numbers_font_size': 10,
+                                     'numbers_font_style': 'normal',
+                                     'numbers_font_weight': 'normal',
+                                     'numbers_font_colour': ['black'],
+                                     'numbers_horizontal_align': 'center',
+                                     'numbers_vertical_align': 'bottom'}
+                legend_options = {'render_legend': True,
+                                  'legend_title': '',
+                                  'legend_font_name': 'serif',
+                                  'legend_font_style': 'normal',
+                                  'legend_font_size': 10,
+                                  'legend_font_weight': 'normal',
+                                  'legend_marker_scale': 1.,
+                                  'legend_location': 2,
+                                  'legend_bbox_to_anchor': (1.05, 1.),
+                                  'legend_border_axes_pad': 1.,
+                                  'legend_n_columns': 1,
+                                  'legend_horizontal_spacing': 1.,
+                                  'legend_vertical_spacing': 1.,
+                                  'legend_border': True,
+                                  'legend_border_padding': 0.5,
+                                  'legend_shadow': False,
+                                  'legend_rounded_corners': True}
+                zoom_options = {'min': 0.1,
+                                'max': 4.,
+                                'step': 0.05,
+                                'zoom': 1.}
+                axes_options = {'render_axes': True,
+                                'axes_font_name': 'serif',
+                                'axes_font_size': 10,
+                                'axes_font_style': 'normal',
+                                'axes_font_weight': 'normal',
+                                'axes_x_ticks': [0, 100],
+                                'axes_y_ticks': None,
+                                'axes_limits': {'x': None,
+                                                'y': 0.1,
+                                                'x_min': 0,
+                                                'x_max': 100,
+                                                'x_step': 1,
+                                                'y_min': 0,
+                                                'y_max': 100,
+                                                'y_step': 1}}
+                grid_options = {'render_grid': True,
+                                'grid_line_style': '--',
+                                'grid_line_width': 0.5}
+                image_options = {'alpha': 1.,
+                                 'interpolation': 'bilinear',
+                                 'cmap_name': 'gray'}
+                renderer_options = {'lines': lines_options,
+                                    'markers': markers_options,
+                                    'numbering': numbering_options,
+                                    'legend': legend_options,
+                                    'zoom': zoom_options,
+                                    'axes': axes_options,
+                                    'grid': grid_options,
+                                    'image': image_options}
+
+        labels : `list` or ``None``, optional
+            The `list` of labels employed by the `ColourSelectionWidget`.
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        # Update sub-options widgets
+        for i, tab in enumerate(self.options_tabs):
+            if tab == 'lines' or tab == 'markers':
+                self.options_widgets[i].set_widget_state(
+                    renderer_options[tab], labels=labels, allow_callback=False)
+            else:
+                self.options_widgets[i].set_widget_state(
+                    renderer_options[tab], allow_callback=False)
+
+        # Assign properties
+        self.labels = labels
+
+        # trigger render function if allowed
+        if allow_callback:
+            self._render_function('', True)
+
+
+class SaveFigureOptionsWidget(ipywidgets.FlexBox):
+    r"""
+    Creates a widget for saving a figure to file. The widget consists of the
+    following parts from `IPython.html.widgets` and
+    `menpowidgets.tools`:
+
+    == ===================== ====================== ==========================
+    No Object                Variable (`self.`)     Description
+    == ===================== ====================== ==========================
+    1  Select                `file_format_select`   Image format selector
+    2  FloatText             `dpi_text`             DPI selector
+    3  Dropdown              `orientation_dropdown` Paper orientation selector
+    4  Select                `papertype_select`     Paper type selector
+    5  Checkbox              `transparent_checkbox` Transparency setter
+    6  ColourSelectionWidget `facecolour_widget`    Face colour selector
+    7  ColourSelectionWidget `edgecolour_widget`    Edge colour selector
+    8  FloatText             `pad_inches_text`      Padding in inches setter
+    9  Text                  `filename_text`        Path and filename
+    10 Checkbox              `overwrite_checkbox`   Overwrite flag
+    11 Latex                 `error_latex`          Error message area
+    12 Button                `save_button`          Save button
+    13 VBox                  `path_box`             Contains 9, 1, 10, 4
+    14 VBox                  `page_box`             Contains 3, 2, 8
+    15 VBox                  `colour_box`           Contains 6, 7, 5
+    16 Tab                   `options_tabs`         Contains 13, 14, 15
+    17 HBox                  `save_box`             Contains 12, 11
+    18 VBox                  `options_box`          Contains 16, 17
+    == ===================== ====================== ==========================
+
+    To set the styling please refer to the ``style()`` and
+    ``predefined_style()`` methods.
+
+    Parameters
+    ----------
+    renderer : :map:`Renderer` class or subclass
+        The renderer object that was used to render the figure.
+    file_format : `str`, optional
+        The initial value of the file format.
+    dpi : `float` or ``None``, optional
+        The initial value of the dpi. If ``None``, then dpi is set to ``0``.
+    orientation : {``'portrait'``, ``'landscape'``}, optional
+        The initial value of the orientation.
+    papertype : `str`, optional
+        The initial value of the paper type.
+        Possible options are ::
+
+            {'letter', 'legal', 'executive', 'ledger', 'a0', 'a1', 'a2', 'a3',
+             'a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'a10', 'b0', 'b1', 'b2', 'b3',
+             'b4', 'b5', 'b6', 'b7', 'b8', 'b9', 'b10'}
+
+    transparent : `bool`, optional
+        The initial value of the transparency flag.
+    facecolour : `str` or `list` of `float`, optional
+        The initial value of the face colour.
+    edgecolour : `str` or `list` of `float`, optional
+        The initial value of the edge colour.
+    pad_inches : `float`, optional
+        The initial value of the figure padding in inches.
+    overwrite : `bool`, optional
+        The initial value of the overwrite flag.
+    style : See Below, optional
+        Sets a predefined style at the widget. Possible options are
+
+            ========= ============================
+            Style     Description
+            ========= ============================
+            'minimal' Simple black and white style
+            'success' Green-based style
+            'info'    Blue-based style
+            'warning' Yellow-based style
+            'danger'  Red-based style
+            ''        No style
+            ========= ============================
+    """
+    def __init__(self, renderer, file_format='png', dpi=None,
+                 orientation='portrait', papertype='letter', transparent=False,
+                 facecolour='w', edgecolour='w', pad_inches=0.,
+                 overwrite=False, style='minimal'):
+        from os import getcwd
+        from os.path import join, splitext
+
+        # Create widgets
+        file_format_dict = OrderedDict()
+        file_format_dict['png'] = 'png'
+        file_format_dict['jpg'] = 'jpg'
+        file_format_dict['pdf'] = 'pdf'
+        file_format_dict['eps'] = 'eps'
+        file_format_dict['postscript'] = 'ps'
+        file_format_dict['svg'] = 'svg'
+        self.file_format_select = ipywidgets.Select(
+            options=file_format_dict, value=file_format, description='Format',
+            width='3cm')
+        if dpi is None:
+            dpi = 0
+        self.dpi_text = ipywidgets.FloatText(description='DPI', value=dpi)
+        orientation_dict = OrderedDict()
+        orientation_dict['portrait'] = 'portrait'
+        orientation_dict['landscape'] = 'landscape'
+        self.orientation_dropdown = ipywidgets.Dropdown(
+            options=orientation_dict, value=orientation,
+            description='Orientation')
+        papertype_dict = OrderedDict()
+        papertype_dict['letter'] = 'letter'
+        papertype_dict['legal'] = 'legal'
+        papertype_dict['executive'] = 'executive'
+        papertype_dict['ledger'] = 'ledger'
+        papertype_dict['a0'] = 'a0'
+        papertype_dict['a1'] = 'a1'
+        papertype_dict['a2'] = 'a2'
+        papertype_dict['a3'] = 'a3'
+        papertype_dict['a4'] = 'a4'
+        papertype_dict['a5'] = 'a5'
+        papertype_dict['a6'] = 'a6'
+        papertype_dict['a7'] = 'a7'
+        papertype_dict['a8'] = 'a8'
+        papertype_dict['a9'] = 'a9'
+        papertype_dict['a10'] = 'a10'
+        papertype_dict['b0'] = 'b0'
+        papertype_dict['b1'] = 'b1'
+        papertype_dict['b2'] = 'b2'
+        papertype_dict['b3'] = 'b3'
+        papertype_dict['b4'] = 'b4'
+        papertype_dict['b5'] = 'b5'
+        papertype_dict['b6'] = 'b6'
+        papertype_dict['b7'] = 'b7'
+        papertype_dict['b8'] = 'b8'
+        papertype_dict['b9'] = 'b9'
+        papertype_dict['b10'] = 'b10'
+        self.papertype_select = ipywidgets.Select(
+            options=papertype_dict, value=papertype, description='Paper type',
+            visible=file_format == 'ps', width='3cm')
+        self.transparent_checkbox = ipywidgets.Checkbox(
+            description='Transparent', value=transparent)
+        self.facecolour_widget = ColourSelectionWidget(
+            [facecolour], description='Face colour')
+        self.edgecolour_widget = ColourSelectionWidget(
+            [edgecolour], description='Edge colour')
+        self.pad_inches_text = ipywidgets.FloatText(description='Pad (inch)',
+                                                    value=pad_inches)
+        self.filename_text = ipywidgets.Text(
+            description='Path', value=join(getcwd(), 'Untitled.' + file_format),
+            width='10cm')
+        self.overwrite_checkbox = ipywidgets.Checkbox(
+            description='Overwrite if file exists', value=overwrite)
+        self.error_latex = ipywidgets.Latex(value="", font_weight='bold',
+                                            font_style='italic')
+        self.save_button = ipywidgets.Button(description='Save',
+                                             margin='0.2cm')
+
+        # Group widgets
+        self.path_box = ipywidgets.VBox(
+            children=[self.filename_text, self.file_format_select,
+                      self.papertype_select, self.overwrite_checkbox],
+            align='end', margin='0.2cm')
+        self.page_box = ipywidgets.VBox(
+            children=[self.orientation_dropdown, self.dpi_text,
+                      self.pad_inches_text], margin='0.2cm')
+        self.colour_box = ipywidgets.VBox(
+            children=[self.facecolour_widget, self.edgecolour_widget,
+                      self.transparent_checkbox], margin='0.2cm')
+        self.options_tabs = ipywidgets.Tab(
+            children=[self.path_box, self.page_box, self.colour_box],
+            margin=0, padding='0.1cm')
+        self.options_tabs_box = ipywidgets.Box(
+            children=[self.options_tabs], border_width=1, border_color='black',
+            margin='0.3cm', padding='0.2cm')
+        tab_titles = ['Path', 'Page setup', 'Image colour']
+        for (k, tl) in enumerate(tab_titles):
+            self.options_tabs.set_title(k, tl)
+        self.save_box = ipywidgets.HBox(
+            children=[self.save_button, self.error_latex], align='center')
+        self.options_box = ipywidgets.VBox(
+            children=[self.options_tabs, self.save_box], align='center')
+        super(SaveFigureOptionsWidget, self).__init__(
+            children=[self.options_box])
+        self.align = 'start'
+
+        # Assign renderer
+        self.renderer = renderer
+
+        # Set style
+        self.predefined_style(style)
+
+        # Set functionality
+        def papertype_visibility(name, value):
+            self.papertype_select.visible = value == 'ps'
+        self.file_format_select.on_trait_change(papertype_visibility, 'value')
+
+        def set_extension(name, value):
+            file_name, file_extension = splitext(self.filename_text.value)
+            self.filename_text.value = file_name + '.' + value
+        self.file_format_select.on_trait_change(set_extension, 'value')
+
+        def save_function(name):
+            # set save button state
+            self.error_latex.value = ''
+            self.save_button.description = 'Saving...'
+            self.save_button.disabled = True
+
+            # save figure
+            selected_dpi = self.dpi_text.value
+            if self.dpi_text.value == 0:
+                selected_dpi = None
+            try:
+                self.renderer.save_figure(
+                    filename=self.filename_text.value, dpi=selected_dpi,
+                    face_colour=
+                    self.facecolour_widget.selected_values['colour'][0],
+                    edge_colour=
+                    self.edgecolour_widget.selected_values['colour'][0],
+                    orientation=self.orientation_dropdown.value,
+                    paper_type=self.papertype_select.value,
+                    format=self.file_format_select.value,
+                    transparent=self.transparent_checkbox.value,
+                    pad_inches=self.pad_inches_text.value,
+                    overwrite=self.overwrite_checkbox.value)
+                self.error_latex.value = ''
+            except ValueError as e:
+                if (e.message == 'File already exists. Please set the '
+                                 'overwrite kwarg if you wish to overwrite '
+                                 'the file.'):
+                    self.error_latex.value = 'File exists! ' \
+                                             'Tick overwrite to replace it.'
+                else:
+                    self.error_latex.value = e.message
+
+            # set save button state
+            self.save_button.description = 'Save'
+            self.save_button.disabled = False
+        self.save_button.on_click(save_function)
+
+    def style(self, box_style=None, border_visible=False, border_color='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
+              font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        box_style : See Below, optional
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
+
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_color : `str`, optional
+            The color of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the corners of the box.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                 'helvetica'}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                 'extra bold', 'black'}
+        """
+        format_box(self, box_style, border_visible, border_color, border_style,
+                   border_width, border_radius, padding, margin)
+        format_font(self, font_family, font_size, font_style, font_weight)
+        format_font(self.file_format_select, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.dpi_text, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.orientation_dropdown, font_family, font_size,
+                    font_style, font_weight)
+        format_font(self.papertype_select, font_family, font_size,  font_style,
+                    font_weight)
+        format_font(self.transparent_checkbox, font_family, font_size,
+                    font_style, font_weight)
+        format_font(self.pad_inches_text, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.filename_text, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.overwrite_checkbox, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.save_button, font_family, font_size, font_style,
+                    font_weight)
+        self.facecolour_widget.style(
+            box_style=None, border_visible=False, font_family=font_family,
+            font_size=font_size, font_weight=font_weight, font_style=font_style)
+        self.edgecolour_widget.style(
+            box_style=None, border_visible=False, font_family=font_family,
+            font_size=font_size, font_weight=font_weight, font_style=font_style)
+
+    def predefined_style(self, style):
+        r"""
+        Function that sets a predefined style on the widget.
+
+        Parameters
+        ----------
+        style : `str` (see below)
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'minimal' Simple black and white style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        No style
+                ========= ============================
+        """
+        if style == 'minimal':
+            self.style(box_style='', border_visible=True, border_color='black',
+                       border_style='solid', border_width=1, border_radius=0,
+                       padding='0.2cm', margin='0.3cm', font_family='',
+                       font_size=None, font_style='', font_weight='')
+            self.save_button.button_style = ''
+            self.save_button.font_weight = 'normal'
+        elif (style == 'info' or style == 'success' or style == 'danger' or
+                      style == 'warning'):
+            self.style(box_style=style, border_visible=True,
+                       border_color= map_styles_to_hex_colours(style),
+                       border_style='solid', border_width=1, border_radius=10,
+                       padding='0.2cm', margin='0.3cm', font_family='',
+                       font_size=None, font_style='', font_weight='')
+            self.save_button.button_style = 'primary'
+            self.save_button.font_weight = 'bold'
+        else:
+            raise ValueError('style must be minimal or info or success or '
+                             'danger or warning')

@@ -681,8 +681,7 @@ class IndexSliderWidget(MenpoWidget):
                       slider_bar_colour=slider_bar_colour,
                       slider_text_visible=slider_text_visible)
 
-    def set_widget_state(self, index, continuous_update=False,
-                         allow_callback=True):
+    def set_widget_state(self, index, allow_callback=True):
         r"""
         Method that updates the state of the widget, if the provided `index`
         values are different than `self.selected_values()`.
@@ -694,10 +693,6 @@ class IndexSliderWidget(MenpoWidget):
 
                 index = {'min': 0, 'max': 100, 'step': 1, 'index': 10}
 
-        continuous_update : `bool`, optional
-            If ``True``, then the render and update functions are called while
-            moving the slider's handle. If ``False``, then the the functions are
-            called only when the handle (mouse click) is released.
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
@@ -705,14 +700,12 @@ class IndexSliderWidget(MenpoWidget):
         if (index['index'] != self.selected_values or
                 index['min'] != self.slider.min or
                 index['max'] != self.slider.max or
-                index['step'] != self.slider.step or
-                self.slider.continuous_update != continuous_update):
+                index['step'] != self.slider.step):
             # temporarily remove render function
             render_function = self._render_function
             self.remove_render_function()
 
             # set values to slider
-            self.slider.continuous_update = continuous_update
             self.slider.min = index['min']
             self.slider.max = index['max']
             self.slider.step = index['step']
@@ -1303,10 +1296,7 @@ class ZoomOneScaleWidget(MenpoWidget):
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
-              font_weight='', minus_style='', plus_style='',
-              text_colour=None, text_background_colour=None, slider_width='6cm',
-              slider_bar_colour=None, slider_handle_colour=None,
-              slider_text_visible=True):
+              font_weight='', slider_width='6cm'):
         r"""
         Function that defines the styling of the widget.
 
@@ -1352,32 +1342,8 @@ class ZoomOneScaleWidget(MenpoWidget):
                  'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
                  'heavy', 'extra bold', 'black'}
 
-        minus_style : `str` or ``None`` (see below), optional
-            Style options ::
-
-                {'success', 'info', 'warning', 'danger', 'primary', ''}
-                or
-                None
-
-        plus_style : `str` or ``None`` (see below), optional
-            Style options ::
-
-                {'success', 'info', 'warning', 'danger', 'primary', ''}
-                or
-                None
-
-        text_colour : `str`, optional
-            The text colour of the index text.
-        text_background_colour : `str`, optional
-            The background colour of the index text.
         slider_width : `float`, optional
             The width of the slider
-        slider_bar_colour : `str`, optional
-            The colour of the slider's bar.
-        slider_handle_colour : `str`, optional
-            The colour of the slider's handle.
-        slider_text_visible : `bool`, optional
-            Whether the selected value of the slider is visible.
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
@@ -1389,17 +1355,18 @@ class ZoomOneScaleWidget(MenpoWidget):
                     font_weight)
         format_font(self.zoom_text, font_family, font_size, font_style,
                     font_weight)
-        self.button_minus.button_style = minus_style
-        self.button_plus.button_style = plus_style
-        format_text_box(self.zoom_text, text_colour, text_background_colour)
+        if box_style not in ['', None]:
+            self.button_minus.button_style = 'primary'
+            self.button_plus.button_style = 'primary'
+        else:
+            self.button_minus.button_style = None
+            self.button_plus.button_style = None
         format_slider(self.zoom_slider, slider_width=slider_width,
-                      slider_handle_colour=slider_handle_colour,
-                      slider_bar_colour=slider_bar_colour,
-                      slider_text_visible=slider_text_visible)
-        self.zoom_slider.readout = False
+                      slider_handle_colour=map_styles_to_hex_colours(box_style),
+                      slider_bar_colour=map_styles_to_hex_colours(box_style),
+                      slider_text_visible=False)
 
-    def set_widget_state(self, zoom_options, continuous_update=False,
-                         allow_callback=True):
+    def set_widget_state(self, zoom_options, allow_callback=True):
         r"""
         Method that updates the state of the widget, if the provided `index`
         values are different than `self.selected_values()`.
@@ -1411,16 +1378,9 @@ class ZoomOneScaleWidget(MenpoWidget):
 
                 zoom_options = {'min': 0.1, 'max': 4., 'step': 0.05, 'zoom': 1.}
 
-        continuous_update : `bool`, optional
-            If ``True``, then the render and update functions are called while
-            moving the zoom slider's handle. If ``False``, then the the
-            functions are called only when the handle (mouse click) is released.
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
-        # update the continuous update property of the zoom slider
-        self.zoom_slider.continuous_update = continuous_update
-
         # Check if update is required
         if (zoom_options['zoom'] != self.selected_values or
             zoom_options['min'] != self.zoom_slider.min or
@@ -1606,10 +1566,7 @@ class ZoomTwoScalesWidget(MenpoWidget):
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
-              font_weight='', minus_style='', plus_style='', lock_style='',
-              text_colour=None, text_background_colour=None, slider_width='6cm',
-              slider_bar_colour=None, slider_handle_colour=None,
-              slider_text_visible=True):
+              font_weight='', slider_width='6cm'):
         r"""
         Function that defines the styling of the widget.
 
@@ -1655,39 +1612,8 @@ class ZoomTwoScalesWidget(MenpoWidget):
                  'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
                  'heavy', 'extra bold', 'black'}
 
-        minus_style : `str` or ``None`` (see below), optional
-            Style options ::
-
-                {'success', 'info', 'warning', 'danger', 'primary', ''}
-                or
-                None
-
-        plus_style : `str` or ``None`` (see below), optional
-            Style options ::
-
-                {'success', 'info', 'warning', 'danger', 'primary', ''}
-                or
-                None
-
-        lock_style : `str` or ``None`` (see below), optional
-            Style options ::
-
-                {'success', 'info', 'warning', 'danger', 'primary', ''}
-                or
-                None
-
-        text_colour : `str`, optional
-            The text colour of the index text.
-        text_background_colour : `str`, optional
-            The background colour of the index text.
         slider_width : `float`, optional
             The width of the slider
-        slider_bar_colour : `str`, optional
-            The colour of the slider's bar.
-        slider_handle_colour : `str`, optional
-            The colour of the slider's handle.
-        slider_text_visible : `bool`, optional
-            Whether the selected value of the slider is visible.
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
@@ -1709,26 +1635,28 @@ class ZoomTwoScalesWidget(MenpoWidget):
                     font_weight)
         format_font(self.y_zoom_text, font_family, font_size, font_style,
                     font_weight)
-        self.x_button_minus.button_style = minus_style
-        self.x_button_plus.button_style = plus_style
-        self.y_button_minus.button_style = minus_style
-        self.y_button_plus.button_style = plus_style
-        self.lock_aspect_button.button_style = lock_style
-        format_text_box(self.x_zoom_text, text_colour, text_background_colour)
-        format_text_box(self.y_zoom_text, text_colour, text_background_colour)
+        if box_style not in ['', None]:
+            self.x_button_minus.button_style = 'primary'
+            self.x_button_plus.button_style = 'primary'
+            self.y_button_minus.button_style = 'primary'
+            self.y_button_plus.button_style = 'primary'
+            self.lock_aspect_button.button_style = 'warning'
+        else:
+            self.x_button_minus.button_style = None
+            self.x_button_plus.button_style = None
+            self.y_button_minus.button_style = None
+            self.y_button_plus.button_style = None
+            self.lock_aspect_button.button_style = None
         format_slider(self.x_zoom_slider, slider_width=slider_width,
-                      slider_handle_colour=slider_handle_colour,
-                      slider_bar_colour=slider_bar_colour,
-                      slider_text_visible=slider_text_visible)
-        self.x_zoom_slider.readout = False
+                      slider_handle_colour=map_styles_to_hex_colours(box_style),
+                      slider_bar_colour=map_styles_to_hex_colours(box_style),
+                      slider_text_visible=False)
         format_slider(self.y_zoom_slider, slider_width=slider_width,
-                      slider_handle_colour=slider_handle_colour,
-                      slider_bar_colour=slider_bar_colour,
-                      slider_text_visible=slider_text_visible)
-        self.y_zoom_slider.readout = False
+                      slider_handle_colour=map_styles_to_hex_colours(box_style),
+                      slider_bar_colour=map_styles_to_hex_colours(box_style),
+                      slider_text_visible=False)
 
-    def set_widget_state(self, zoom_options, continuous_update=False,
-                         allow_callback=True):
+    def set_widget_state(self, zoom_options, allow_callback=True):
         r"""
         Method that updates the state of the widget, if the provided `index`
         values are different than `self.selected_values()`.
@@ -1742,17 +1670,9 @@ class ZoomTwoScalesWidget(MenpoWidget):
                             'min': 0.1, 'max': 4., 'step': 0.05,
                             'lock_aspect_ratio': False}
 
-        continuous_update : `bool`, optional
-            If ``True``, then the render and update functions are called while
-            moving the zoom slider's handle. If ``False``, then the the
-            functions are called only when the handle (mouse click) is released.
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
-        # update the continuous update property of the zoom sliders
-        self.x_zoom_slider.continuous_update = continuous_update
-        self.y_zoom_slider.continuous_update = continuous_update
-
         # Check if update is required
         if (not lists_are_the_same(zoom_options['zoom'],
                                    self.selected_values) or
@@ -1897,9 +1817,7 @@ class ImageOptionsWidget(MenpoWidget):
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
-              font_weight='', alpha_handle_colour=None,
-              alpha_bar_colour=None, cmap_colour=None,
-              cmap_background_colour=None):
+              font_weight=''):
         r"""
         Function that defines the styling of the widget.
 
@@ -1945,14 +1863,6 @@ class ImageOptionsWidget(MenpoWidget):
                  'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
                  'heavy', 'extra bold', 'black'}
 
-        alpha_handle_colour : `str`, optional
-            The colour of the handle of alpha slider.
-        alpha_bar_colour : `str`, optional
-            The colour of the bar of alpha slider.
-        cmap_colour : `str`, optional
-            The text colour of the cmap selector.
-        cmap_background_colour : `str`, optional
-            The background colour of the cmap selector.
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
@@ -1964,10 +1874,9 @@ class ImageOptionsWidget(MenpoWidget):
         format_font(self.cmap_select, font_family, font_size, font_style,
                     font_weight)
         format_slider(self.alpha_slider, slider_width='4cm',
-                      slider_handle_colour=alpha_handle_colour,
-                      slider_bar_colour=alpha_bar_colour,
+                      slider_handle_colour=map_styles_to_hex_colours(box_style),
+                      slider_bar_colour=map_styles_to_hex_colours(box_style),
                       slider_text_visible=True)
-        format_text_box(self.cmap_select, cmap_colour, cmap_background_colour)
 
     def set_widget_state(self, image_options, allow_callback=True):
         r"""
@@ -3236,13 +3145,14 @@ class AxesOptionsWidget(MenpoWidget):
             axes_options = {'render_axes': True, 'axes_font_name': 'serif',
                             'axes_font_size': 10, 'axes_font_style': 'normal',
                             'axes_font_weight': 'normal',
-                            'axes_x_ticks': [0, 100], 'axes_y_ticks': None}
+                            'axes_x_ticks': [0, 100], 'axes_y_ticks': None,
+                            'axes_limits': axes_limits_options}
 
-    axes_limits_options : `dict`
-        The initial axes limits options. Example ::
+        where ::
 
-            axes_limits = {'x': None, 'y': 0.1, 'x_min': 0, 'x_max': 100,
-                           'x_step': 1, 'y_min': 0, 'y_max': 100, 'y_step': 1}
+            axes_limits_options = {'x': None, 'y': 0.1,
+                                   'x_min': 0, 'x_max': 100, 'x_step': 1,
+                                   'y_min': 0, 'y_max': 100, 'y_step': 1}
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
@@ -3250,7 +3160,7 @@ class AxesOptionsWidget(MenpoWidget):
     render_checkbox_title : `str`, optional
         The description of the show line checkbox.
     """
-    def __init__(self, axes_options, axes_limits_options, render_function=None,
+    def __init__(self, axes_options, render_function=None,
                  render_checkbox_title='Render axes'):
         # Create children
         # render checkbox
@@ -3320,7 +3230,7 @@ class AxesOptionsWidget(MenpoWidget):
             margin='0.2cm')
 
         # axes limits options
-        self.axes_limits_widget = AxesLimitsWidget(axes_limits_options,
+        self.axes_limits_widget = AxesLimitsWidget(axes_options['axes_limits'],
                                                    render_function=None)
 
         # options tab
@@ -3337,8 +3247,8 @@ class AxesOptionsWidget(MenpoWidget):
                 'axes_font_weight': axes_options['axes_font_weight'],
                 'axes_x_ticks': axes_options['axes_x_ticks'],
                 'axes_y_ticks': axes_options['axes_y_ticks'],
-                'axes_x_limits': axes_limits_options['x'],
-                'axes_y_limits': axes_limits_options['y']}
+                'axes_x_limits': axes_options['axes_limits']['x'],
+                'axes_y_limits': axes_options['axes_limits']['y']}
         children = [self.axes_options_tab]
         super(AxesOptionsWidget, self).__init__(
             children, Dict, opts, render_function=render_function,
@@ -3370,28 +3280,26 @@ class AxesOptionsWidget(MenpoWidget):
         self.axes_ticks_widget.on_trait_change(save_options, 'selected_values')
         self.axes_limits_widget.on_trait_change(save_options, 'selected_values')
 
-    def set_widget_state(self, axes_options, axes_limits_options,
-                         allow_callback=True):
+    def set_widget_state(self, axes_options, allow_callback=True):
         r"""
         Method that updates the state of the widget with a new set of values.
 
         Parameters
         ----------
         axes_options : `dict`
-            The initial axes options. Example ::
+            The new axes options. Example ::
 
                 axes_options = {'render_axes': True, 'axes_font_name': 'serif',
-                                'axes_font_size': 10,
-                                'axes_font_style': 'normal',
+                                'axes_font_size': 10, 'axes_font_style': 'normal',
                                 'axes_font_weight': 'normal',
-                                'axes_x_ticks': [0, 100], 'axes_y_ticks': None}
+                                'axes_x_ticks': [0, 100], 'axes_y_ticks': None,
+                                'axes_limits': axes_limits_options}
 
-        axes_limits_options : `dict`
-            The initial axes limits options. Example ::
+            where ::
 
-                axes_limits = {'x': None, 'y': 0.1, 'x_min': 0, 'x_max': 100,
-                               'x_step': 1, 'y_min': 0, 'y_max': 100,
-                               'y_step': 1}
+                axes_limits_options = {'x': None, 'y': 0.1,
+                                       'x_min': 0, 'x_max': 100, 'x_step': 1,
+                                       'y_min': 0, 'y_max': 100, 'y_step': 1}
 
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
@@ -3403,8 +3311,8 @@ class AxesOptionsWidget(MenpoWidget):
                     'axes_font_weight': axes_options['axes_font_weight'],
                     'axes_x_ticks': axes_options['axes_x_ticks'],
                     'axes_y_ticks': axes_options['axes_y_ticks'],
-                    'axes_x_limits': axes_limits_options['x'],
-                    'axes_y_limits': axes_limits_options['y']}
+                    'axes_x_limits': axes_options['axes_limits']['x'],
+                    'axes_y_limits': axes_options['axes_limits']['y']}
 
         # temporarily remove render callback
         render_function = self._render_function
@@ -3423,7 +3331,7 @@ class AxesOptionsWidget(MenpoWidget):
                           'y': axes_options['axes_y_ticks']}
             self.axes_ticks_widget.set_widget_state(axes_ticks,
                                                     allow_callback=False)
-        self.axes_limits_widget.set_widget_state(axes_limits_options,
+        self.axes_limits_widget.set_widget_state(axes_options['axes_limits'],
                                                  allow_callback=False)
 
         # re-assign render callback
@@ -3680,7 +3588,7 @@ class LegendOptionsWidget(MenpoWidget):
             description='Border', value=legend_options['legend_border'])
         self.legend_border_padding_text = ipywidgets.BoundedFloatText(
             value=legend_options['legend_border_padding'],
-            description='Padding', min=0.)
+            description='Padding', min=0., width='1.5cm')
         self.border_box = ipywidgets.HBox(
             children=[self.legend_border_checkbox,
                       self.legend_border_padding_text])
