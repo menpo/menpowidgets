@@ -1667,8 +1667,7 @@ class ZoomTwoScalesWidget(MenpoWidget):
             The dictionary with the selected options. For example ::
 
             zoom_options = {'zoom_x': 1., 'zoom_y': 1.,
-                            'min': 0.1, 'max': 4., 'step': 0.05,
-                            'lock_aspect_ratio': False}
+                            'min': 0.1, 'max': 4., 'step': 0.05}
 
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
@@ -1694,12 +1693,8 @@ class ZoomTwoScalesWidget(MenpoWidget):
             self.y_zoom_slider.max = zoom_options['max']
             self.x_zoom_slider.step = zoom_options['step']
             self.y_zoom_slider.step = zoom_options['step']
-            if zoom_options['lock_aspect_ratio']:
-                zoom_options['zoom'][1] = zoom_options['zoom'][0]
             self.x_zoom_text.value = "{:.2f}".format(zoom_options['zoom'][0])
             self.y_zoom_text.value = "{:.2f}".format(zoom_options['zoom'][1])
-            self.lock_aspect_button.value = zoom_options['lock_aspect_ratio']
-            self.lock_aspect_ratio = zoom_options['lock_aspect_ratio']
 
             # re-assign render callback
             self.add_render_function(render_function)

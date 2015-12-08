@@ -2,6 +2,7 @@ import ipywidgets
 from traitlets.traitlets import Int, Dict
 from traitlets import link
 from collections import OrderedDict
+import numpy as np
 
 from .abstract import MenpoWidget
 from .tools import (IndexSliderWidget, IndexButtonsWidget, SlicingCommandWidget,
@@ -9,8 +10,10 @@ from .tools import (IndexSliderWidget, IndexButtonsWidget, SlicingCommandWidget,
                     NumberingOptionsWidget, LegendOptionsWidget,
                     ZoomOneScaleWidget, ZoomTwoScalesWidget, AxesOptionsWidget,
                     GridOptionsWidget, ImageOptionsWidget,
-                    ColourSelectionWidget)
+                    ColourSelectionWidget, HOGOptionsWidget, DSIFTOptionsWidget,
+                    IGOOptionsWidget, LBPOptionsWidget, DaisyOptionsWidget)
 from .style import map_styles_to_hex_colours, format_box, format_font
+from .utils import sample_colours_from_colourmap
 
 
 class AnimationOptionsWidget(MenpoWidget):
@@ -453,7 +456,8 @@ class AnimationOptionsWidget(MenpoWidget):
 class ChannelOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting channel options when rendering an image. The
-    widget consists of the following parts from `ipywidgets`:
+    widget consists of the following parts from `ipywidgets` and
+    `menpowidgets.tools`:
 
     == ==================== ============================= =====================
     No Object               Variable (`self.`)            Description
@@ -485,19 +489,10 @@ class ChannelOptionsWidget(MenpoWidget):
 
     Parameters
     ----------
-    channel_options : `dict`
-        The dictionary with the initial options. For example
-        ::
-
-            channel_options = {'n_channels': 10,
-                               'image_is_masked': True,
-                               'channels': 0,
-                               'glyph_enabled': False,
-                               'glyph_block_size': 3,
-                               'glyph_use_negative': False,
-                               'sum_enabled': False,
-                               'masked_enabled': True}
-
+    n_channels : `int`
+        The number of channels of the initial image object.
+    image_is_masked : `bool`
+        Whether the initial image object is masked or not.
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
@@ -542,60 +537,50 @@ class ChannelOptionsWidget(MenpoWidget):
         >>>                    'glyph_use_negative': False,
         >>>                    'sum_enabled': True,
         >>>                    'masked_enabled': True}
-        >>> wid = ChannelOptionsWidget(channel_options,
+        >>> wid = ChannelOptionsWidget(n_channels=30, image_is_masked=True,
         >>>                            render_function=render_function,
         >>>                            style='warning')
         >>> wid
 
     By playing around with the widget, printed message gets updated. Finally,
-    let's change the widget status with a new dictionary of options:
+    let's change the widget status with a object:
 
-        >>> new_options = {'n_channels': 10,
-        >>>                'image_is_masked': True,
-        >>>                'channels': [7, 8, 9],
-        >>>                'glyph_enabled': True,
-        >>>                'glyph_block_size': 3,
-        >>>                'glyph_use_negative': True,
-        >>>                'sum_enabled': False,
-        >>>                'masked_enabled': False}
-        >>> wid.set_widget_state(new_options, allow_callback=False)
+        >>> wid.set_widget_state(n_channels=10, image_is_masked=False,
+        >>>                      allow_callback=False)
     """
-    def __init__(self, channel_options, render_function=None, style='minimal'):
-        # Parse given options
-        channel_options, channels = self._parse_options_dict(channel_options)
+    def __init__(self, n_channels, image_is_masked, render_function=None,
+                 style='minimal'):
+        # Initialise default options dictionary
+        self.default_options = {}
+
+        # Assign properties
+        self.n_channels = None
+        self.image_is_masked = None
 
         # Create children
-        slice_options = {'command': channels,
-                         'length': channel_options['n_channels']}
+        slice_options = {'command': '0', 'length': n_channels}
         self.channels_wid = SlicingCommandWidget(
             slice_options, description='Channels:', render_function=None,
             example_visible=True, continuous_update=False,
             orientation='horizontal')
-        self.masked_checkbox = ipywidgets.Checkbox(
-            value=channel_options['masked_enabled'], description='Masked',
-            margin='0.1cm')
-        self.rgb_checkbox = ipywidgets.Checkbox(
-            value=(channel_options['n_channels'] == 3 and
-                   channel_options['channels'] is None),
-            description='RGB', margin='0.1cm')
-        self.sum_checkbox = ipywidgets.Checkbox(
-            value=channel_options['sum_enabled'], description='Sum',
-            margin='0.1cm')
-        self.glyph_checkbox = ipywidgets.Checkbox(
-            value=channel_options['glyph_enabled'], description='Glyph',
-            margin='0.1cm')
+        self.masked_checkbox = ipywidgets.Checkbox(description='Masked',
+                                                   margin='0.1cm')
+        self.rgb_checkbox = ipywidgets.Checkbox(description='RGB',
+                                                margin='0.1cm')
+        self.sum_checkbox = ipywidgets.Checkbox(description='Sum',
+                                                margin='0.1cm')
+        self.glyph_checkbox = ipywidgets.Checkbox(description='Glyph',
+                                                  margin='0.1cm')
         self.glyph_block_size_text = ipywidgets.BoundedIntText(
-            description='Block size', min=1, max=25,
-            value=channel_options['glyph_block_size'], width='1.5cm')
+            description='Block size', min=1, max=25, width='1.5cm')
         self.glyph_use_negative_checkbox = ipywidgets.Checkbox(
-            description='Negative', value=channel_options['glyph_use_negative'])
+            description='Negative')
         self.no_options_latex = ipywidgets.Latex(value='No options available')
 
         # Group widgets
         self.glyph_options_box = ipywidgets.VBox(
             children=[self.glyph_block_size_text,
-                      self.glyph_use_negative_checkbox],
-            visible=channel_options['glyph_enabled'], margin='0.1cm')
+                      self.glyph_use_negative_checkbox], margin='0.1cm')
         self.glyph_box = ipywidgets.HBox(children=[self.glyph_checkbox,
                                                    self.glyph_options_box],
                                          align='start')
@@ -609,99 +594,110 @@ class ChannelOptionsWidget(MenpoWidget):
         # Create final widget
         children = [self.channels_wid, self.checkboxes_box,
                     self.no_options_latex]
-        initial_dict = {
-            'channels': channel_options['channels'],
-            'glyph_enabled': channel_options['glyph_enabled'],
-            'glyph_block_size': channel_options['glyph_block_size'],
-            'glyph_use_negative': channel_options['glyph_use_negative'],
-            'sum_enabled': channel_options['sum_enabled'],
-            'masked_enabled': channel_options['masked_enabled']}
         super(ChannelOptionsWidget, self).__init__(
-            children, Dict, initial_dict, render_function=render_function,
+            children, Dict, {}, render_function=render_function,
             orientation='horizontal', align='start')
 
-        # Assign properties
-        self.n_channels = channel_options['n_channels']
-        self.image_is_masked = channel_options['image_is_masked']
-
-        # Set widget's visibility
-        self.set_visibility()
+        # Set values
+        self.set_widget_state(n_channels, image_is_masked, allow_callback=False)
 
         # Set style
         self.predefined_style(style)
 
-        # Set functionality
-        def save_options(name, value):
-            channels_val = self.channels_wid.selected_values
-            if self.rgb_checkbox.value:
-                channels_val = None
-            self.selected_values = {
-                'channels': channels_val,
-                'glyph_enabled': self.glyph_checkbox.value,
-                'glyph_block_size': self.glyph_block_size_text.value,
-                'glyph_use_negative': self.glyph_use_negative_checkbox.value,
-                'sum_enabled': self.sum_checkbox.value,
-                'masked_enabled': self.masked_checkbox.value}
-        self.glyph_block_size_text.on_trait_change(save_options, 'value')
-        self.glyph_use_negative_checkbox.on_trait_change(save_options, 'value')
-        self.masked_checkbox.on_trait_change(save_options, 'value')
+    def add_callbacks(self):
+        self.glyph_block_size_text.on_trait_change(self._save_options, 'value')
+        self.glyph_use_negative_checkbox.on_trait_change(self._save_options,
+                                                         'value')
+        self.masked_checkbox.on_trait_change(self._save_options, 'value')
+        self.channels_wid.on_trait_change(self._save_channels, 'selected_values')
+        self.rgb_checkbox.on_trait_change(self._save_rgb, 'value')
+        self.sum_checkbox.on_trait_change(self._save_sum, 'value')
+        self.glyph_checkbox.on_trait_change(self._save_glyph, 'value')
 
-        def save_channels(name, value):
-            if self.n_channels == 3:
-                # temporarily remove rgb callback
-                self.rgb_checkbox.on_trait_change(save_rgb, 'value', remove=True)
-                # set value
-                self.rgb_checkbox.value = False
-                # re-assign rgb callback
-                self.rgb_checkbox.on_trait_change(save_rgb, 'value')
-            save_options('', None)
-        self.channels_wid.on_trait_change(save_channels, 'selected_values')
+    def remove_callbacks(self):
+        self.glyph_block_size_text.on_trait_change(self._save_options,
+                                                   'value', remove=True)
+        self.glyph_use_negative_checkbox.on_trait_change(self._save_options,
+                                                         'value', remove=True)
+        self.masked_checkbox.on_trait_change(self._save_options, 'value',
+                                             remove=True)
+        self.channels_wid.on_trait_change(self._save_channels, 'selected_values',
+                                          remove=True)
+        self.rgb_checkbox.on_trait_change(self._save_rgb, 'value', remove=True)
+        self.sum_checkbox.on_trait_change(self._save_sum, 'value', remove=True)
+        self.glyph_checkbox.on_trait_change(self._save_glyph, 'value',
+                                            remove=True)
 
-        def save_rgb(name, value):
-            if value:
-                # temporarily remove channels callback
-                self.channels_wid.on_trait_change(save_channels,
-                                                  'selected_values', remove=True)
-                # update channels widget
-                self.channels_wid.set_widget_state(
-                    {'command': '0, 1, 2', 'length': self.n_channels},
-                    allow_callback=False)
-                # re-assign channels callback
-                self.channels_wid.on_trait_change(save_channels,
-                                                  'selected_values')
-            save_options('', None)
-        self.rgb_checkbox.on_trait_change(save_rgb, 'value')
+    def _save_options(self, name, value):
+        # get channels value
+        channels_val = self.channels_wid.selected_values
+        if self.rgb_checkbox.value:
+            channels_val = None
+        # update selected values
+        self.selected_values = {
+            'channels': channels_val,
+            'glyph_enabled': self.glyph_checkbox.value,
+            'glyph_block_size': self.glyph_block_size_text.value,
+            'glyph_use_negative': self.glyph_use_negative_checkbox.value,
+            'sum_enabled': self.sum_checkbox.value,
+            'masked_enabled': self.masked_checkbox.value}
+        # update default values
+        current_key = self.get_key(self.n_channels, self.image_is_masked)
+        self.default_options[current_key] = self.selected_values
 
-        def save_sum(name, value):
-            if value and self.glyph_checkbox.value:
-                # temporarily remove glyph callback
-                self.glyph_checkbox.on_trait_change(save_glyph, 'value',
-                                                    remove=True)
+    def _save_channels(self, name, value):
+        if self.n_channels == 3:
+            # temporarily remove rgb callback
+            self.rgb_checkbox.on_trait_change(self._save_rgb, 'value',
+                                              remove=True)
+            # set value
+            self.rgb_checkbox.value = False
+            # re-assign rgb callback
+            self.rgb_checkbox.on_trait_change(self._save_rgb, 'value')
+        self._save_options('', None)
 
-                # set glyph to False
-                self.glyph_checkbox.value = False
-                self.glyph_options_box.visible = False
+    def _save_rgb(self, name, value):
+        if value:
+            # temporarily remove channels callback
+            self.channels_wid.on_trait_change(
+                self._save_channels, 'selected_values', remove=True)
+            # update channels widget
+            self.channels_wid.set_widget_state(
+                {'command': '0, 1, 2', 'length': self.n_channels},
+                allow_callback=False)
+            # re-assign channels callback
+            self.channels_wid.on_trait_change(self._save_channels,
+                                              'selected_values')
+        self._save_options('', None)
 
-                # re-assign glyph callback
-                self.glyph_checkbox.on_trait_change(save_glyph, 'value')
-            save_options('', None)
-        self.sum_checkbox.on_trait_change(save_sum, 'value')
+    def _save_sum(self, name, value):
+        if value and self.glyph_checkbox.value:
+            # temporarily remove glyph callback
+            self.glyph_checkbox.on_trait_change(self._save_glyph, 'value',
+                                                remove=True)
 
-        def save_glyph(name, value):
-            if value and self.sum_checkbox.value:
-                # temporarily remove sum callback
-                self.sum_checkbox.on_trait_change(save_sum, 'value',
-                                                  remove=True)
+            # set glyph to False
+            self.glyph_checkbox.value = False
+            self.glyph_options_box.visible = False
 
-                # set glyph to false
-                self.sum_checkbox.value = False
+            # re-assign glyph callback
+            self.glyph_checkbox.on_trait_change(self._save_glyph, 'value')
+        self._save_options('', None)
 
-                # re-assign sum callback
-                self.sum_checkbox.on_trait_change(save_sum, 'value')
-            # set visibility
-            self.glyph_options_box.visible = value
-            save_options('', None)
-        self.glyph_checkbox.on_trait_change(save_glyph, 'value')
+    def _save_glyph(self, name, value):
+        if value and self.sum_checkbox.value:
+            # temporarily remove sum callback
+            self.sum_checkbox.on_trait_change(self._save_sum, 'value',
+                                              remove=True)
+
+            # set glyph to false
+            self.sum_checkbox.value = False
+
+            # re-assign sum callback
+            self.sum_checkbox.on_trait_change(self._save_sum, 'value')
+        # set visibility
+        self.glyph_options_box.visible = value
+        self._save_options('', None)
 
     def set_visibility(self):
         self.channels_wid.visible = self.n_channels > 1
@@ -711,26 +707,37 @@ class ChannelOptionsWidget(MenpoWidget):
         self.no_options_latex.visible = (self.n_channels == 1 and
                                          not self.image_is_masked)
 
-    def _parse_options_dict(self, channel_options):
-        # If image_is_masked is False, then masked_enabled should be False too
-        if not channel_options['image_is_masked']:
-            channel_options['masked_enabled'] = False
+    def get_key(self, n_channels, image_is_masked):
+        return "{}_{}".format(n_channels, image_is_masked)
 
-        # Parse channels
-        if channel_options['channels'] is None:
-            channels_val = '0, 1, 2'
-        elif isinstance(channel_options['channels'], list):
-            channels_val = str(channel_options['channels']).strip('[]')
+    def get_default_options(self, n_channels, image_is_masked):
+        # create key
+        key = self.get_key(n_channels, image_is_masked)
+        # if the key does not exist in the default options dict, then add it
+        if key not in self.default_options:
+            # if image has 3 channels, visualise it as RGB, else render only the
+            # first channel
+            channels = [0]
+            if n_channels == 3:
+                channels = None
+            # if image is masked, render it as masked
+            masked_enabled = image_is_masked
+            # update default options dictionary
+            self.default_options[key] = {'channels': channels,
+                                         'glyph_enabled': False,
+                                         'glyph_block_size': 3,
+                                         'glyph_use_negative': False,
+                                         'sum_enabled': False,
+                                         'masked_enabled': masked_enabled}
+        return self.default_options[key]
+
+    def _parse_channels_value(self, channels):
+        if channels is None:
+            return '0, 1, 2'
+        elif isinstance(channels, list):
+            return str(channels).strip('[]')
         else:
-            channels_val = str(channel_options['channels'])
-
-        # Parse sum, glyph
-        if (channel_options['n_channels'] == 1 or
-                (channel_options['sum_enabled'] and
-                     channel_options['glyph_enabled'])):
-            channel_options['sum_enabled'] = False
-            channel_options['glyph_enabled'] = False
-        return channel_options, channels_val
+            return str(channels)
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -865,7 +872,8 @@ class ChannelOptionsWidget(MenpoWidget):
             raise ValueError('style must be minimal or info or success or '
                              'danger or warning')
 
-    def set_widget_state(self, channel_options, allow_callback=True):
+    def set_widget_state(self, n_channels, image_is_masked,
+                         allow_callback=True):
         r"""
         Method that updates the state of the widget with a new set of values.
 
@@ -887,37 +895,54 @@ class ChannelOptionsWidget(MenpoWidget):
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
-        # temporarily remove render callback
-        render_function = self._render_function
-        self.remove_render_function()
+        # check if updates are required
+        if (not self.default_options or
+                self.get_key(self.n_channels, self.image_is_masked) !=
+                self.get_key(n_channels, image_is_masked)):
+            # temporarily remove callbacks
+            render_function = self._render_function
+            self.remove_render_function()
+            self.remove_callbacks()
 
-        # Parse given options
-        channel_options, channels = self._parse_options_dict(channel_options)
+            # Assign properties
+            self.n_channels = n_channels
+            self.image_is_masked = image_is_masked
 
-        # Set both sum and glyph to False, to make sure that there is no conflict
-        self.sum_checkbox.value = False
-        self.glyph_checkbox.value = False
+            # Get initial options
+            channel_options = self.get_default_options(n_channels,
+                                                       image_is_masked)
 
-        # Update widgets' state
-        self.n_channels = channel_options['n_channels']
-        self.image_is_masked = channel_options['image_is_masked']
-        slice_options = {'command': channels,
-                         'length': channel_options['n_channels']}
-        self.channels_wid.set_widget_state(slice_options, allow_callback=False)
-        self.masked_checkbox.value = channel_options['masked_enabled']
-        self.rgb_checkbox.value = (channel_options['n_channels'] == 3 and
-                                   channel_options['channels'] is None)
-        self.sum_checkbox.value = channel_options['sum_enabled']
-        self.glyph_checkbox.value = channel_options['glyph_enabled']
-        self.glyph_block_size_text.value = channel_options['glyph_block_size']
-        self.glyph_use_negative_checkbox.value = \
-            channel_options['glyph_use_negative']
+            # Parse channels value
+            channels = self._parse_channels_value(channel_options['channels'])
 
-        # Set widget's visibility
-        self.set_visibility()
+            # Set both sum and glyph to False, to make sure that there is no
+            # conflict
+            self.sum_checkbox.value = False
+            self.glyph_checkbox.value = False
 
-        # Re-assign render callback
-        self.add_render_function(render_function)
+            # Update widgets' state
+            slice_options = {'command': channels, 'length': self.n_channels}
+            self.channels_wid.set_widget_state(slice_options,
+                                               allow_callback=False)
+            self.masked_checkbox.value = channel_options['masked_enabled']
+            self.rgb_checkbox.value = (self.n_channels == 3 and
+                                       channel_options['channels'] is None)
+            self.sum_checkbox.value = channel_options['sum_enabled']
+            self.glyph_checkbox.value = channel_options['glyph_enabled']
+            self.glyph_block_size_text.value = \
+                channel_options['glyph_block_size']
+            self.glyph_use_negative_checkbox.value = \
+                channel_options['glyph_use_negative']
+
+            # Set widget's visibility
+            self.set_visibility()
+
+            # Get values
+            self._save_options('', None)
+
+            # Re-assign callbacks
+            self.add_callbacks()
+            self.add_render_function(render_function)
 
         # trigger render function if allowed
         if allow_callback:
@@ -1030,47 +1055,43 @@ class LandmarkOptionsWidget(MenpoWidget):
         >>>                'with_labels': None}
         >>> wid.set_widget_state(new_options, allow_callback=False)
     """
-    def __init__(self, landmark_options, render_function=None,
+    def __init__(self, group_keys, labels_keys, render_function=None,
                  style='minimal'):
-        # Parse given options
-        landmark_options, group_idx = self._parse_landmark_options_dict(
-            landmark_options)
+        # Initialise default options dictionary
+        self.default_options = {}
+
+        # Assign properties
+        self.style_option = style
+        self.group_keys = []
+        self.labels_keys = []
 
         # Create children
         # Render landmarks checkbox and no landmarks message
         self.no_landmarks_msg = ipywidgets.Latex(
             value='No landmarks available.')
         self.render_landmarks_checkbox = ipywidgets.Checkbox(
-            description='Render landmarks',
-            value=landmark_options['render_landmarks'], margin='0.3cm')
-
+            description='Render landmarks', margin='0.3cm')
         # Create group description, dropdown and slider
         self.group_description = ipywidgets.Latex(value='Group', margin='0.1cm')
-        dropdown_dict = OrderedDict()
-        for gn, gk in enumerate(landmark_options['group_keys']):
-            dropdown_dict[gk] = gn
         self.group_slider = ipywidgets.IntSlider(
-            min=0, max=len(landmark_options['group_keys']) - 1, margin='0.1cm',
-            font_size=0, value=group_idx, width='3cm', continuous_update=False)
+            margin='0.1cm', readout=False, width='3cm', value=0,
+            continuous_update=False, min=0)
         self.group_dropdown = ipywidgets.Dropdown(
-            options=dropdown_dict, description='', value=group_idx,
-            margin='0.1cm')
+            options={'0': 0}, description='', margin='0.1cm', value=0)
+        self.group_latex = ipywidgets.Latex(padding='0.2cm')
         self.group_selection_box = ipywidgets.HBox(
             children=[self.group_description, self.group_slider,
-                      self.group_dropdown], align='center')
+                      self.group_dropdown, self.group_latex], align='center')
         # Link the values of group dropdown and slider
         self.link_group_dropdown_and_slider = link(
             (self.group_dropdown, 'value'), (self.group_slider, 'value'))
         # Create labels
-        self.labels_toggles = [
-            [ipywidgets.ToggleButton(description=k, value=True) for k in s_keys]
-            for s_keys in landmark_options['labels_keys']]
+        self.labels_toggles = [[]]
         self.labels_text = ipywidgets.Latex(value='Labels')
-        self.labels_box = ipywidgets.HBox(
-            children=self.labels_toggles[group_idx], padding='0.3cm')
+        self.labels_box = ipywidgets.HBox(children=self.labels_toggles[0],
+                                          padding='0.3cm')
         self.labels_and_text_box = ipywidgets.HBox(
             children=[self.labels_text, self.labels_box], align='center')
-        self._set_labels_toggles_values(landmark_options['with_labels'])
         self.options_box = ipywidgets.VBox(
             children=[self.group_selection_box, self.labels_and_text_box],
             margin='0.2cm')
@@ -1079,115 +1100,111 @@ class LandmarkOptionsWidget(MenpoWidget):
 
         # Create final widget
         children = [self.render_and_options_box, self.no_landmarks_msg]
-        initial_dict = {
-            'with_labels': landmark_options['with_labels'],
-            'render_landmarks': landmark_options['render_landmarks'],
-            'group': landmark_options['group']}
         super(LandmarkOptionsWidget, self).__init__(
-            children, Dict, initial_dict, render_function=render_function,
+            children, Dict, {}, render_function=render_function,
             orientation='horizontal', align='start')
 
-        # Assign properties
-        self.has_landmarks = landmark_options['has_landmarks']
-        self.group_keys = landmark_options['group_keys']
-        self.labels_keys = landmark_options['labels_keys']
-
-        # Set widget's visibility
-        self.set_visibility()
+        # Set values
+        self.set_widget_state(group_keys, labels_keys, allow_callback=False)
 
         # Set style
         self.predefined_style(style)
 
-        # Set functionality
-        def save_options(name, value):
+    def add_callbacks(self):
+        self.render_landmarks_checkbox.on_trait_change(
+            self._render_landmarks_fun, 'value')
+        self.group_dropdown.on_trait_change(self._group_fun, 'value')
+        self._add_function_to_labels_toggles(self._labels_fun)
+
+    def remove_callbacks(self):
+        self.render_landmarks_checkbox.on_trait_change(
+            self._render_landmarks_fun, 'value', remove=True)
+        self.group_dropdown.on_trait_change(self._group_fun, 'value',
+                                            remove=True)
+        self._remove_function_from_labels_toggles(self._labels_fun)
+
+    def _save_options(self, name, value):
+        if self.group_keys is None:
+            self.selected_values = {
+                'group': None, 'render_landmarks': False, 'with_labels': None}
+        else:
+            tmp_labels = self._get_with_labels()
             self.selected_values = {
                 'group': self.group_keys[self.group_dropdown.value],
                 'render_landmarks': self.render_landmarks_checkbox.value,
-                'with_labels': self._get_with_labels()}
+                'with_labels': tmp_labels}
+            # update default values
+            current_key = self.get_key(self.group_keys, self.labels_keys)
+            self.default_options[current_key] = self.selected_values
 
-        def render_landmarks_fun(name, value):
-            # If render is True, then check whether all the labels are disabled.
-            # If they are, then enable all of them
-            if value:
-                if len(self._get_with_labels()) == 0:
-                    for ww in self.labels_box.children:
-                        # temporarily remove render function
-                        ww.on_trait_change(labels_fun, 'value', remove=True)
-                        # set value
-                        ww.value = True
-                        # re-add render function
-                        ww.on_trait_change(labels_fun, 'value')
-            # set visibility
-            self.options_box.visible = value
-            # save options
-            save_options('', None)
-        self.render_landmarks_checkbox.on_trait_change(render_landmarks_fun,
-                                                       'value')
-
-        def group_fun(name, value):
-            # assign the correct children to the labels toggles
-            self.labels_box.children = self.labels_toggles[value]
-            # save options
-            save_options('', None)
-        self.group_dropdown.on_trait_change(group_fun, 'value')
-
-        def labels_fun(name, value):
-            # if all labels toggles are False, set render landmarks checkbox to
-            # False
+    def _render_landmarks_fun(self, name, value):
+        # If render is True, then check whether all the labels are disabled.
+        # If they are, then enable all of them
+        if value:
             if len(self._get_with_labels()) == 0:
-                # temporarily remove render function
-                self.render_landmarks_checkbox.on_trait_change(
-                    render_landmarks_fun, 'value', remove=True)
-                # set value
-                self.render_landmarks_checkbox.value = False
-                # set visibility
-                self.options_box.visible = False
-                # re-add render function
-                self.render_landmarks_checkbox.on_trait_change(
-                    render_landmarks_fun, 'value')
-            # save options
-            save_options('', None)
-        # assign labels_fun to all labels toggles (even hidden ones)
-        self._add_function_to_labels_toggles(labels_fun)
+                for ww in self.labels_box.children:
+                    # temporarily remove render function
+                    ww.on_trait_change(self._labels_fun, 'value', remove=True)
+                    # set value
+                    ww.value = True
+                    # re-add render function
+                    ww.on_trait_change(self._labels_fun, 'value')
+        # set visibility
+        self.options_box.visible = value
+        # save options
+        self._save_options('', None)
 
-        # Store functions
-        self._render_landmarks_fun = render_landmarks_fun
-        self._group_fun = group_fun
-        self._labels_fun = labels_fun
+    def _group_fun(self, name, value):
+        # assign the correct children to the labels toggles
+        self.labels_box.children = self.labels_toggles[value]
+        # save options
+        self._save_options('', None)
 
-    def _parse_landmark_options_dict(self, landmark_options):
-        if landmark_options['group'] is None:
-            landmark_options['group'] = landmark_options['group_keys'][0]
-        if (len(landmark_options['group_keys']) == 1 and
-                landmark_options['group_keys'][0] == ' '):
-            landmark_options['has_landmarks'] = False
-        if not landmark_options['has_landmarks']:
-            landmark_options['render_landmarks'] = False
-            landmark_options['group_keys'] = [' ']
-            landmark_options['group'] = ' '
-            landmark_options['labels_keys'] = [[' ']]
-            landmark_options['with_labels'] = [' ']
-            group_idx = 0
-        else:
-            # Get selected group value index
-            group_idx = landmark_options['group_keys'].index(
-                landmark_options['group'])
-            if landmark_options['with_labels'] is None:
-                landmark_options['with_labels'] = \
-                    landmark_options['labels_keys'][group_idx]
-            elif len(landmark_options['with_labels']) == 0:
-                landmark_options['render_landmarks'] = False
-        return landmark_options, group_idx
+    def _labels_fun(self, name, value):
+        # if all labels toggles are False, set render landmarks checkbox to
+        # False
+        if len(self._get_with_labels()) == 0:
+            # temporarily remove render function
+            self.render_landmarks_checkbox.on_trait_change(
+                self._render_landmarks_fun, 'value', remove=True)
+            # set value
+            self.render_landmarks_checkbox.value = False
+            # set visibility
+            self.options_box.visible = False
+            # re-add render function
+            self.render_landmarks_checkbox.on_trait_change(
+                self._render_landmarks_fun, 'value')
+        # save options
+        self._save_options('', None)
 
     def set_visibility(self):
-        # control group visibility
-        self.group_slider.visible = len(self.group_keys) > 1
-        self.group_dropdown.disabled = not len(self.group_keys) > 1
-        # has landmarks visibility
-        self.no_landmarks_msg.visible = not self.has_landmarks
-        self.render_and_options_box.visible = self.has_landmarks
-        # render_landmarks visibility
-        self.options_box.visible = self.selected_values['render_landmarks']
+        self.no_landmarks_msg.visible = self.group_keys is None
+        self.render_and_options_box.visible = self.group_keys is not None
+        if self.group_keys is not None:
+            # control group visibility
+            self.group_slider.visible = len(self.group_keys) > 1
+            self.group_dropdown.visible = len(self.group_keys) > 1
+            self.group_latex.visible = len(self.group_keys) == 1
+            # render_landmarks visibility
+            self.options_box.visible = self.selected_values['render_landmarks']
+
+    def get_key(self, group_keys, labels_keys):
+        return "{}_{}".format(group_keys, labels_keys)
+
+    def get_default_options(self, group_keys, labels_keys):
+        # create key
+        key = self.get_key(group_keys, labels_keys)
+        # if the key does not exist in the default options dict, then add it
+        if key not in self.default_options:
+            if group_keys is None:
+                self.default_options[key] = {'group': None,
+                                             'with_labels': None,
+                                             'render_landmarks': False}
+            else:
+                self.default_options[key] = {'group': group_keys[0],
+                                             'with_labels': labels_keys[0],
+                                             'render_landmarks': True}
+        return self.default_options[key]
 
     def _get_with_labels(self):
         with_labels = []
@@ -1339,44 +1356,7 @@ class LandmarkOptionsWidget(MenpoWidget):
             raise ValueError('style must be minimal or info or success or '
                              'danger or warning')
 
-    def _compare_groups_and_labels(self, groups, labels):
-        r"""
-        Function that compares the provided landmarks groups and labels with
-        `self.selected_values['group_keys']` and
-        `self.selected_values['labels_keys']`.
-
-        Parameters
-        ----------
-        groups : `list` of `str`
-            The new `list` of landmark groups.
-        labels : `list` of `list` of `str`
-            The new `list` of `list`s of each landmark group's labels.
-
-        Returns
-        -------
-        _compare_groups_and_labels : `bool`
-            ``True`` if the groups and labels are identical with the ones stored
-            in `self.selected_values['group_keys']` and
-            `self.selected_values['labels_keys']`.
-        """
-        # function that compares two lists without taking into account the order
-        def comp_lists(l1, l2):
-            len_match = len(l1) == len(l2)
-            return len_match and all([g1 == g2 for g1, g2 in zip(l1, l2)])
-
-        # comparison of the given groups
-        groups_same = comp_lists(groups, self.group_keys)
-
-        # if groups are the same, then compare the labels
-        if groups_same:
-            len_match = len(labels) == len(self.labels_keys)
-            tmp = [comp_lists(g1, g2)
-                   for g1, g2 in zip(labels, self.labels_keys)]
-            return len_match and all(tmp)
-        else:
-            return False
-
-    def set_widget_state(self, landmark_options, allow_callback=True):
+    def set_widget_state(self, group_keys, labels_keys, allow_callback=True):
         r"""
         Method that updates the state of the widget with a new set of values.
 
@@ -1396,64 +1376,59 @@ class LandmarkOptionsWidget(MenpoWidget):
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
-        # Parse given options
-        landmark_options, group_idx = self._parse_landmark_options_dict(
-            landmark_options)
-
-        # Check if group_keys and labels_keys are the same with the existing
-        # ones
-        if not self._compare_groups_and_labels(landmark_options['group_keys'],
-                                               landmark_options['labels_keys']):
-            # temporarily remove render callback
+        # check if updates are required
+        if (not self.default_options or
+                self.get_key(self.group_keys, self.labels_keys) !=
+                self.get_key(group_keys, labels_keys)):
+            # temporarily remove callbacks
             render_function = self._render_function
             self.remove_render_function()
-
-            # temporarily remove the rest of the callbacks
-            self.render_landmarks_checkbox.on_trait_change(
-                self._render_landmarks_fun, 'value', remove=True)
-            self.group_dropdown.on_trait_change(self._group_fun, 'value',
-                                                remove=True)
-            self._remove_function_from_labels_toggles(self._labels_fun)
-
-            # Update widgets' state
-            self.group_slider.min = 0
-            self.group_slider.max = len(landmark_options['group_keys']) - 1
-            dropdown_dict = OrderedDict()
-            for gn, gk in enumerate(landmark_options['group_keys']):
-                dropdown_dict[gk] = gn
-            self.group_dropdown.options = dropdown_dict
-            if (group_idx == self.group_dropdown.value and
-                    len(landmark_options['group_keys']) > 1):
-                if self.group_dropdown.value == 0:
-                    self.group_dropdown.value = 1
-                else:
-                    self.group_dropdown.value = 0
-            self.group_dropdown.value = group_idx
-            self.labels_toggles = [
-                [ipywidgets.ToggleButton(description=k, value=True)
-                 for k in s_keys]
-                for s_keys in landmark_options['labels_keys']]
-            self.labels_box.children = self.labels_toggles[group_idx]
-            self._set_labels_toggles_values(landmark_options['with_labels'])
-            self.render_landmarks_checkbox.value = \
-                landmark_options['render_landmarks']
+            self.remove_callbacks()
 
             # Assign properties
-            self.has_landmarks = landmark_options['has_landmarks']
-            self.group_keys = landmark_options['group_keys']
-            self.labels_keys = landmark_options['labels_keys']
+            self.group_keys = group_keys
+            self.labels_keys = labels_keys
+
+            # Update widgets' state
+            if group_keys is not None:
+                # Get options to set
+                landmark_options = self.get_default_options(group_keys,
+                                                            labels_keys)
+                # Update
+                self.group_slider.max = len(group_keys) - 1
+                dropdown_dict = OrderedDict()
+                for gn, gk in enumerate(group_keys):
+                    dropdown_dict[gk] = gn
+                self.group_dropdown.options = dropdown_dict
+                self.group_latex.value = group_keys[0]
+                group_idx = group_keys.index(landmark_options['group'])
+                if (group_idx == self.group_dropdown.value and
+                        len(group_keys) > 1):
+                    if self.group_dropdown.value == 0:
+                        self.group_dropdown.value = 1
+                    else:
+                        self.group_dropdown.value = 0
+                self.group_dropdown.value = group_idx
+                self.labels_toggles = [
+                    [ipywidgets.ToggleButton(description=k, value=True)
+                     for k in s_keys] for s_keys in labels_keys]
+                self.labels_box.children = self.labels_toggles[group_idx]
+                self._set_labels_toggles_values(landmark_options['with_labels'])
+                self.render_landmarks_checkbox.value = \
+                    landmark_options['render_landmarks']
+
+            # Get values
+            self._save_options('', None)
 
             # Set widget's visibility
             self.set_visibility()
 
-            # Re-assign render callback
-            self.add_render_function(render_function)
+            # Set style
+            self.predefined_style(self.style_option)
 
-            # Re-assign the rest of the callbacks
-            self.render_landmarks_checkbox.on_trait_change(
-                self._render_landmarks_fun, 'value')
-            self.group_dropdown.on_trait_change(self._group_fun, 'value')
-            self._add_function_to_labels_toggles(self._labels_fun)
+            # Re-assign callbacks
+            self.add_callbacks()
+            self.add_render_function(render_function)
 
         # trigger render function if allowed
         if allow_callback:
@@ -1880,8 +1855,18 @@ class RendererOptionsWidget(MenpoWidget):
         >>> # Update widget state
         >>> wid.set_widget_state(new_options, labels, allow_callback=True)
     """
-    def __init__(self, renderer_options, options_tabs, labels=None,
-                 render_function=None, style='minimal', tabs_style='minimal'):
+    def __init__(self, options_tabs, labels, render_function=None,
+                 style='minimal', tabs_style='minimal'):
+        # Initialise default options dictionary
+        self.default_options = {}
+
+        # Assign properties
+        self.labels = labels
+        self.options_tabs = options_tabs
+
+        # Get initial options
+        renderer_options = self.get_default_options(labels)
+
         # Create children
         self.options_widgets = []
         self.tab_titles = []
@@ -1910,23 +1895,24 @@ class RendererOptionsWidget(MenpoWidget):
                     render_checkbox_title='Render numbering'))
                 self.tab_titles.append('Numbering')
                 initial_dict[o] = renderer_options[o]
-            elif o == 'zoom':
-                if isinstance(renderer_options[o]['zoom'], list):
-                    self.options_widgets.append(ZoomTwoScalesWidget(
-                        renderer_options[o], render_function=None,
-                        description='Scale: ',
-                        minus_description='fa-search-minus',
-                        plus_description='fa-search-plus',
-                        continuous_update=False))
-                else:
-                    self.options_widgets.append(ZoomOneScaleWidget(
-                        renderer_options[o], render_function=None,
-                        description='Scale: ',
-                        minus_description='fa-search-minus',
-                        plus_description='fa-search-plus',
-                        continuous_update=False))
+            elif o == 'zoom_two':
+                self.options_widgets.append(ZoomTwoScalesWidget(
+                    renderer_options[o], render_function=None,
+                    description='Scale: ',
+                    minus_description='fa-search-minus',
+                    plus_description='fa-search-plus',
+                    continuous_update=False))
                 self.tab_titles.append('Zoom')
-                initial_dict['zoom'] = renderer_options[o]['zoom']
+                initial_dict[o] = renderer_options[o]
+            elif o == 'zoom_one':
+                self.options_widgets.append(ZoomOneScaleWidget(
+                    renderer_options[o], render_function=None,
+                    description='Scale: ',
+                    minus_description='fa-search-minus',
+                    plus_description='fa-search-plus',
+                    continuous_update=False))
+                self.tab_titles.append('Zoom')
+                initial_dict[o] = renderer_options[o]
             elif o == 'axes':
                 self.options_widgets.append(AxesOptionsWidget(
                     renderer_options[o], render_function=None,
@@ -1965,26 +1951,123 @@ class RendererOptionsWidget(MenpoWidget):
             children, Dict, initial_dict, render_function=render_function,
             orientation='vertical', align='start')
 
-        # Assign properties
-        self.options_tabs = options_tabs
-        self.labels = labels
+        # Set values
+        self.set_widget_state(labels, allow_callback=False)
 
         # Set style
         self.predefined_style(style, tabs_style)
 
-        # Set functionality
-        def save_options(name, value):
-            self.selected_values = {o: self.options_widgets[i].selected_values
-                                    for i, o in enumerate(options_tabs)}
-        self._add_callback(save_options)
+        # Add callbacks
+        self.add_callbacks()
 
-    def _add_callback(self, fun):
-        for wid in self.options_widgets:
-            wid.on_trait_change(fun, 'selected_values')
+    def _save_options(self, name, value):
+        # update selected values
+        self.selected_values = {o: self.options_widgets[i].selected_values
+                                for i, o in enumerate(self.options_tabs)}
+        # update default values
+        current_key = self.get_key(self.labels)
+        self.default_options[current_key] = self.selected_values.copy()
+        if 'axes' in self.default_options[current_key]:
+            self.default_options[current_key]['axes']['axes_limits'] = {
+                'x': self.selected_values['axes']['axes_x_limits'],
+                'y': self.selected_values['axes']['axes_y_limits'],
+                'x_min': 0, 'x_max': 100, 'x_step': 1,
+                'y_min': 0, 'y_max': 100, 'y_step': 1}
+        if 'zoom_one' in self.default_options[current_key]:
+            self.default_options[current_key]['zoom_one'] = {
+                'min': 0.1, 'max': 4., 'step': 0.05,
+                'zoom': self.selected_values['zoom_one']}
+        if 'zoom_two' in self.default_options[current_key]:
+            self.default_options[current_key]['zoom_two'] = {
+                'min': 0.1, 'max': 4., 'step': 0.05,
+                'zoom': self.selected_values['zoom_two']}
 
-    def _remove_callback(self, fun):
+    def add_callbacks(self):
         for wid in self.options_widgets:
-            wid.on_trait_change(fun, 'selected_values', remove=True)
+            wid.on_trait_change(self._save_options, 'selected_values')
+
+    def remove_callbacks(self):
+        for wid in self.options_widgets:
+            wid.on_trait_change(self._save_options, 'selected_values',
+                                remove=True)
+
+    def get_key(self, labels):
+        return "{}".format(labels)
+
+    def get_default_options(self, labels):
+        # create key
+        key = self.get_key(labels)
+        # if the key does not exist in the default options dict, then add it
+        if key not in self.default_options:
+            print 'NONTA EDWWWW'
+            self.default_options[key] = {}
+            for o in self.options_tabs:
+                if o == 'lines':
+                    lc = ['red']
+                    if labels is not None:
+                        lc = sample_colours_from_colourmap(len(labels), 'jet')
+                    self.default_options[key][o] = {
+                        'render_lines': True, 'line_width': 1,
+                        'line_colour': lc, 'line_style': '-'}
+                elif o == 'markers':
+                    fc = ['red']
+                    ec = ['black']
+                    if labels is not None:
+                        fc = sample_colours_from_colourmap(len(labels), 'jet')
+                        ec = sample_colours_from_colourmap(len(labels), 'jet')
+                    self.default_options[key][o] = {
+                        'render_markers': True, 'marker_size': 20,
+                        'marker_face_colour': fc, 'marker_edge_colour': ec,
+                        'marker_style': 'o', 'marker_edge_width': 1}
+                elif o == 'image':
+                    self.default_options[key][o] = {
+                        'interpolation': 'bilinear', 'cmap_name': None,
+                        'alpha': 1.}
+                elif o == 'numbering':
+                    self.default_options[key][o] = {
+                        'render_numbering': True, 'numbers_font_name': 'serif',
+                        'numbers_font_size': 10, 'numbers_font_style': 'normal',
+                        'numbers_font_weight': 'normal',
+                        'numbers_font_colour': ['black'],
+                        'numbers_horizontal_align': 'center',
+                        'numbers_vertical_align': 'bottom'}
+                elif o == 'zoom_one':
+                    self.default_options[key][o] = {
+                        'min': 0.1, 'max': 4., 'step': 0.05, 'zoom': 1.}
+                elif o == 'zoom_two':
+                    self.default_options[key][o] = {
+                        'zoom': [1., 1.], 'min': 0.1, 'max': 4.,
+                        'step': 0.05, 'lock_aspect_ratio': False}
+                elif o == 'axes':
+                    self.default_options[key][o] = {
+                        'render_axes': False, 'axes_font_name': 'serif',
+                        'axes_font_size': 10, 'axes_font_style': 'normal',
+                        'axes_font_weight': 'normal',
+                        'axes_limits': {'x': None, 'y': None,
+                                        'x_min': 0, 'x_max': 100, 'x_step': 1,
+                                        'y_min': 0, 'y_max': 100, 'y_step': 1},
+                        'axes_x_ticks': [0, 100], 'axes_y_ticks': None}
+                elif o == 'legend':
+                    rl = True
+                    if labels is None:
+                        rl = False
+                    self.default_options[key][o] = {
+                        'render_legend': rl, 'legend_title': '',
+                        'legend_font_name': 'sans-serif',
+                        'legend_font_style': 'normal', 'legend_font_size': 10,
+                        'legend_font_weight': 'normal',
+                        'legend_marker_scale': 1., 'legend_location': 2,
+                        'legend_bbox_to_anchor': (1.05, 1.),
+                        'legend_border_axes_pad': 1., 'legend_n_columns': 1,
+                        'legend_horizontal_spacing': 1.,
+                        'legend_vertical_spacing': 1., 'legend_border': True,
+                        'legend_border_padding': 0.5, 'legend_shadow': False,
+                        'legend_rounded_corners': False}
+                elif o == 'grid':
+                    self.default_options[key][o] = {
+                        'render_grid': False, 'grid_line_style': '--',
+                        'grid_line_width': 0.5}
+        return self.default_options[key]
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0,
@@ -2162,7 +2245,7 @@ class RendererOptionsWidget(MenpoWidget):
             raise ValueError('style must be minimal or info or success or '
                              'danger or warning')
 
-    def set_widget_state(self, renderer_options, labels, allow_callback=True):
+    def set_widget_state(self, labels, allow_callback=True):
         r"""
         Method that updates the state of the widget with a new set of values.
         Note that the number of objects should not change.
@@ -2247,17 +2330,36 @@ class RendererOptionsWidget(MenpoWidget):
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
-        # Update sub-options widgets
-        for i, tab in enumerate(self.options_tabs):
-            if tab == 'lines' or tab == 'markers':
-                self.options_widgets[i].set_widget_state(
-                    renderer_options[tab], labels=labels, allow_callback=False)
-            else:
-                self.options_widgets[i].set_widget_state(
-                    renderer_options[tab], allow_callback=False)
+        # check if updates are required
+        if (not self.default_options or
+                self.get_key(self.labels) != self.get_key(labels)):
+            # Temporarily remove callbacks
+            render_function = self._render_function
+            self.remove_render_function()
+            self.remove_callbacks()
 
-        # Assign properties
-        self.labels = labels
+            # Get options
+            renderer_options = self.get_default_options(labels)
+
+            # Assign properties
+            self.labels = labels
+
+            # Update subwidgets
+            for i, tab in enumerate(self.options_tabs):
+                if tab == 'lines' or tab == 'markers':
+                    self.options_widgets[i].set_widget_state(
+                        renderer_options[tab], labels=labels,
+                        allow_callback=False)
+                else:
+                    self.options_widgets[i].set_widget_state(
+                        renderer_options[tab], allow_callback=False)
+
+            # Get values
+            self._save_options('', None)
+
+            # Add callbacks
+            self.add_callbacks()
+            self.add_render_function(render_function)
 
         # trigger render function if allowed
         if allow_callback:
@@ -2616,6 +2718,384 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
                        font_size=None, font_style='', font_weight='')
             self.save_button.button_style = 'primary'
             self.save_button.font_weight = 'bold'
+        else:
+            raise ValueError('style must be minimal or info or success or '
+                             'danger or warning')
+
+
+class FeatureOptionsWidget(ipywidgets.FlexBox):
+    r"""
+    Creates a widget for selecting feature options. Specifically, it consists
+    of:
+
+        1) RadioButtons [`self.feature_radiobuttons`]: select feature type
+        2) DSIFTOptionsWidget [`self.dsift_options_widget`]: dsift options widget
+        3) HOGOptionsWidget [`self.hog_options_widget`]: hog options widget
+        4) IGOOptionsWidget [`self.igo_options_widget`]: igo options widget
+        5) LBPOptionsWidget [`self.lbp_options_widget`]: lbp options widget
+        6) DaisyOptionsWidget [`self.daisy_options_widget`]: daisy options
+           widget
+        7) Latex [`self.no_options_widget`]: message for no options available
+        8) Box [`self.per_feature_options_box`]: box that contains (2), (3),
+           (4), (5), (6) and (7)
+        9) Image [`self.preview_image`]: lenna image
+        10) Latex [`self.preview_input_latex`]: the initial image information
+        11) Latex [`self.preview_output_latex`]: the output image information
+        12) Latex [`self.preview_time_latex`]: the timing information
+        13) VBox [`self.preview_box`]: box that contains (9), (10), (11), (12)
+        14) Tab [`self.options_box`]: box that contains (1), (8) and (13)
+
+    To set the styling of this widget please refer to the `style()` method. The
+    widget stores the features `function` to `self.features_function`, the
+    features options `dict` in `self.features_options` and the `partial`
+    function with the options as `self.function`.
+
+    Parameters
+    ----------
+    style : `str` (see below)
+        Sets a predefined style at the widget. Possible options are ::
+
+            {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
+             ``'danger'``, ``''``}
+
+    """
+    def __init__(self, style='minimal'):
+        # import features methods and time
+        import time
+        from functools import partial
+        from menpo.feature import (dsift, hog, lbp, igo, es, daisy, gradient,
+                                   no_op)
+        from menpo.image import Image
+        import menpo.io as mio
+        from menpo.feature.visualize import sum_channels
+        from .style import convert_image_to_bytes
+
+        # Create widgets
+        tmp = OrderedDict()
+        tmp['DSIFT'] = dsift
+        tmp['HOG'] = hog
+        tmp['IGO'] = igo
+        tmp['ES'] = es
+        tmp['Daisy'] = daisy
+        tmp['LBP'] = lbp
+        tmp['Gradient'] = gradient
+        tmp['None'] = no_op
+        self.feature_radiobuttons = ipywidgets.RadioButtons(
+            value=no_op, options=tmp, description='Feature type:')
+        dsift_options_dict = {'window_step_horizontal': 1,
+                              'window_step_vertical': 1,
+                              'num_bins_horizontal': 2, 'num_bins_vertical': 2,
+                              'num_or_bins': 9, 'cell_size_horizontal': 6,
+                              'cell_size_vertical': 6, 'fast': True}
+        self.dsift_options_widget = DSIFTOptionsWidget(dsift_options_dict)
+        self.dsift_options_widget.style(box_style=None, border_visible=False,
+                                        margin='0.2cm')
+        hog_options_dict = {'mode': 'dense', 'algorithm': 'dalaltriggs',
+                            'num_bins': 9, 'cell_size': 8, 'block_size': 2,
+                            'signed_gradient': True, 'l2_norm_clip': 0.2,
+                            'window_height': 1, 'window_width': 1,
+                            'window_unit': 'blocks', 'window_step_vertical': 1,
+                            'window_step_horizontal': 1,
+                            'window_step_unit': 'pixels', 'padding': True}
+        self.hog_options_widget = HOGOptionsWidget(hog_options_dict)
+        self.hog_options_widget.style(box_style=None, border_visible=False,
+                                      margin='0.2cm')
+        igo_options_dict = {'double_angles': True}
+        self.igo_options_widget = IGOOptionsWidget(igo_options_dict)
+        self.igo_options_widget.style(box_style=None, border_visible=False,
+                                      margin='0.2cm')
+        lbp_options_dict = {'radius': range(1, 5), 'samples': [8] * 4,
+                            'mapping_type': 'u2', 'window_step_vertical': 1,
+                            'window_step_horizontal': 1,
+                            'window_step_unit': 'pixels', 'padding': True}
+        self.lbp_options_widget = LBPOptionsWidget(lbp_options_dict)
+        self.lbp_options_widget.style(box_style=None, border_visible=False,
+                                      margin='0.2cm')
+        daisy_options_dict = {'step': 1, 'radius': 15, 'rings': 2,
+                              'histograms': 2, 'orientations': 8,
+                              'normalization': 'l1', 'sigmas': None,
+                              'ring_radii': None}
+        self.daisy_options_widget = DaisyOptionsWidget(daisy_options_dict)
+        self.daisy_options_widget.style(box_style=None, border_visible=False,
+                                        margin='0.2cm')
+        self.no_options_widget = ipywidgets.Latex(value='No options available.')
+
+        # Load and rescale preview image (lenna)
+        self.image = mio.import_builtin_asset.lenna_png()
+        self.image = self.image.crop_to_landmarks_proportion(0.18)
+        self.image = self.image.as_greyscale()
+
+        # Group widgets
+        self.per_feature_options_box = ipywidgets.Box(
+            children=[self.dsift_options_widget, self.hog_options_widget,
+                      self.igo_options_widget, self.lbp_options_widget,
+                      self.daisy_options_widget, self.no_options_widget])
+        self.preview_image = ipywidgets.Image(
+            value=convert_image_to_bytes(self.image), visible=False)
+        self.preview_input_latex = ipywidgets.Latex(
+            value="Input: {}W x {}H x {}C".format(
+                self.image.width, self.image.height, self.image.n_channels),
+            visible=False)
+        self.preview_output_latex = ipywidgets.Latex(value="")
+        self.preview_time_latex = ipywidgets.Latex(value="")
+        self.preview_box = ipywidgets.VBox(
+            children=[self.preview_image, self.preview_input_latex,
+                      self.preview_output_latex, self.preview_time_latex])
+        self.options_box = ipywidgets.Tab(
+            children=[self.feature_radiobuttons, self.per_feature_options_box,
+                      self.preview_box])
+        tab_titles = ['Feature', 'Options', 'Preview']
+        for (k, tl) in enumerate(tab_titles):
+            self.options_box.set_title(k, tl)
+        super(FeatureOptionsWidget, self).__init__(children=[self.options_box])
+        self.align = 'start'
+
+        # Initialize output
+        options = {}
+        self.function = partial(no_op, **options)
+        self.features_function = no_op
+        self.features_options = options
+
+        # Set style
+        self.predefined_style(style)
+
+        # Set functionality
+        def per_feature_options_visibility(name, value):
+            if value == dsift:
+                self.igo_options_widget.visible = False
+                self.lbp_options_widget.visible = False
+                self.daisy_options_widget.visible = False
+                self.no_options_widget.visible = False
+                self.hog_options_widget.visible = False
+                self.dsift_options_widget.visible = True
+            elif value == hog:
+                self.igo_options_widget.visible = False
+                self.lbp_options_widget.visible = False
+                self.daisy_options_widget.visible = False
+                self.no_options_widget.visible = False
+                self.dsift_options_widget.visible = False
+                self.hog_options_widget.visible = True
+            elif value == igo:
+                self.hog_options_widget.visible = False
+                self.lbp_options_widget.visible = False
+                self.daisy_options_widget.visible = False
+                self.no_options_widget.visible = False
+                self.dsift_options_widget.visible = False
+                self.igo_options_widget.visible = True
+            elif value == lbp:
+                self.hog_options_widget.visible = False
+                self.igo_options_widget.visible = False
+                self.daisy_options_widget.visible = False
+                self.no_options_widget.visible = False
+                self.dsift_options_widget.visible = False
+                self.lbp_options_widget.visible = True
+            elif value == daisy:
+                self.hog_options_widget.visible = False
+                self.igo_options_widget.visible = False
+                self.lbp_options_widget.visible = False
+                self.no_options_widget.visible = False
+                self.dsift_options_widget.visible = False
+                self.daisy_options_widget.visible = True
+            else:
+                self.hog_options_widget.visible = False
+                self.igo_options_widget.visible = False
+                self.lbp_options_widget.visible = False
+                self.daisy_options_widget.visible = False
+                self.dsift_options_widget.visible = False
+                self.no_options_widget.visible = True
+                for name, f in tmp.items():
+                    if f == value:
+                        self.no_options_widget.value = \
+                            "{}: No available options.".format(name)
+        self.feature_radiobuttons.on_trait_change(
+            per_feature_options_visibility, 'value')
+        per_feature_options_visibility('', no_op)
+
+        def get_function(name, value):
+            # get options
+            if self.feature_radiobuttons.value == dsift:
+                opts = self.dsift_options_widget.selected_values
+            elif self.feature_radiobuttons.value == hog:
+                opts = self.hog_options_widget.selected_values
+            elif self.feature_radiobuttons.value == igo:
+                opts = self.igo_options_widget.selected_values
+            elif self.feature_radiobuttons.value == lbp:
+                opts = self.lbp_options_widget.selected_values
+            elif self.feature_radiobuttons.value == daisy:
+                opts = self.daisy_options_widget.selected_values
+            else:
+                opts = {}
+            # get features function closure
+            func = partial(self.feature_radiobuttons.value, **opts)
+            # store function
+            self.function = func
+            self.features_function = value
+            self.features_options = opts
+        self.feature_radiobuttons.on_trait_change(get_function, 'value')
+        self.options_box.on_trait_change(get_function, 'selected_index')
+
+        def preview_function(name, old_value, value):
+            if value == 2:
+                # extracting features message
+                val1 = ''
+                for name, f in tmp.items():
+                    if f == self.function.func:
+                        val1 = name
+                self.preview_output_latex.value = \
+                    'Previewing {} features...'.format(val1)
+                self.preview_time_latex.value = ''
+                # extract feature and time it
+                t = time.time()
+                feat_image = self.function(self.image)
+                t = time.time() - t
+                # store feature image shape and n_channels
+                val2 = feat_image.width
+                val3 = feat_image.height
+                val4 = feat_image.n_channels
+                # compute sum of feature image and normalize its pixels in range
+                # (0, 1) because it is required by as_PILImage
+                feat_image = sum_channels(feat_image, channels=None)
+                # feat_image = np.sum(feat_image.pixels, axis=2)
+                feat_image = feat_image.pixels
+                feat_image -= np.min(feat_image)
+                feat_image /= np.max(feat_image)
+                feat_image = Image(feat_image)
+                # update preview
+                self.preview_image.value = convert_image_to_bytes(feat_image)
+                self.preview_input_latex.visible = True
+                self.preview_image.visible = True
+                # set info
+                self.preview_output_latex.value = \
+                    "{}: {}W x {}H x {}C".format(val1, val2, val3, val4)
+                self.preview_time_latex.value = "{0:.2f} secs elapsed".format(t)
+            if old_value == 2:
+                self.preview_input_latex.visible = False
+                self.preview_image.visible = False
+        self.options_box.on_trait_change(preview_function, 'selected_index')
+
+    def style(self, box_style=None, border_visible=False, border_color='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
+              font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        box_style : See Below, optional
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
+
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_color : `str`, optional
+            The color of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the corners of the box.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                 'helvetica'}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                 'extra bold', 'black'}
+        """
+        format_box(self, box_style, border_visible, border_color, border_style,
+                   border_width, border_radius, padding, margin)
+        format_font(self, font_family, font_size, font_style, font_weight)
+        format_font(self.feature_radiobuttons, font_family, font_size,
+                    font_style, font_weight)
+        format_font(self.no_options_widget, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.preview_input_latex, font_family, font_size,
+                    font_style, font_weight)
+        format_font(self.preview_output_latex, font_family, font_size,
+                    font_style, font_weight)
+        format_font(self.preview_time_latex, font_family, font_size, font_style,
+                    font_weight)
+        self.dsift_options_widget.style(
+            box_style=None, border_visible=False, margin='0.2cm',
+            font_family=font_family, font_size=font_size, font_style=font_style,
+            font_weight=font_weight)
+        self.hog_options_widget.style(
+            box_style=None, border_visible=False, margin='0.2cm',
+            font_family=font_family, font_size=font_size, font_style=font_style,
+            font_weight=font_weight)
+        self.igo_options_widget.style(
+            box_style=None, border_visible=False, margin='0.2cm',
+            font_family=font_family, font_size=font_size, font_style=font_style,
+            font_weight=font_weight)
+        self.lbp_options_widget.style(
+            box_style=None, border_visible=False, margin='0.2cm',
+            font_family=font_family, font_size=font_size, font_style=font_style,
+            font_weight=font_weight)
+        self.daisy_options_widget.style(
+            box_style=None, border_visible=False, margin='0.2cm',
+            font_family=font_family, font_size=font_size, font_style=font_style,
+            font_weight=font_weight)
+        self.no_options_widget.margin = '0.2cm'
+
+    def predefined_style(self, style):
+        r"""
+        Function that sets a predefined style on the widget.
+
+        Parameters
+        ----------
+        style : `str` (see below)
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'minimal' Simple black and white style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        No style
+                ========= ============================
+        """
+        if style == 'minimal':
+            self.style(box_style='', border_visible=True, border_color='black',
+                       border_style='solid', border_width=1, border_radius=0,
+                       padding='0.2cm', margin='0.3cm', font_family='',
+                       font_size=None, font_style='', font_weight='')
+        elif (style == 'info' or style == 'success' or style == 'danger' or
+                      style == 'warning'):
+            self.style(box_style=style, border_visible=True,
+                       border_color= map_styles_to_hex_colours(style),
+                       border_style='solid', border_width=1, border_radius=10,
+                       padding='0.2cm', margin='0.3cm', font_family='',
+                       font_size=None, font_style='', font_weight='')
         else:
             raise ValueError('style must be minimal or info or success or '
                              'danger or warning')

@@ -653,3 +653,9 @@ def list_has_constant_step(l):
         return True, step
     else:
         return False, None
+
+
+def sample_colours_from_colourmap(n_colours, colour_map):
+    import matplotlib.pyplot as plt
+    cm = plt.get_cmap(colour_map)
+    return [cm(1.*i/n_colours)[:3] for i in range(n_colours)]
