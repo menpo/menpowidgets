@@ -8,7 +8,8 @@ from .tools import (IndexSliderWidget, IndexButtonsWidget, SlicingCommandWidget,
                     LineOptionsWidget, MarkerOptionsWidget,
                     NumberingOptionsWidget, LegendOptionsWidget,
                     ZoomOneScaleWidget, ZoomTwoScalesWidget, AxesOptionsWidget,
-                    GridOptionsWidget, ImageOptionsWidget)
+                    GridOptionsWidget, ImageOptionsWidget,
+                    ColourSelectionWidget)
 from .style import map_styles_to_hex_colours, format_box, format_font
 
 
@@ -2339,7 +2340,7 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
     """
     def __init__(self, renderer, file_format='png', dpi=None,
                  orientation='portrait', papertype='letter', transparent=False,
-                 facecolour='w', edgecolour='w', pad_inches=0.,
+                 facecolour='white', edgecolour='white', pad_inches=0.,
                  overwrite=False, style='minimal'):
         from os import getcwd
         from os.path import join, splitext
@@ -2357,7 +2358,8 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
             width='3cm')
         if dpi is None:
             dpi = 0
-        self.dpi_text = ipywidgets.FloatText(description='DPI', value=dpi)
+        self.dpi_text = ipywidgets.FloatText(description='DPI', value=dpi,
+                                             min=0.)
         orientation_dict = OrderedDict()
         orientation_dict['portrait'] = 'portrait'
         orientation_dict['landscape'] = 'landscape'
@@ -2397,9 +2399,9 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
         self.transparent_checkbox = ipywidgets.Checkbox(
             description='Transparent', value=transparent)
         self.facecolour_widget = ColourSelectionWidget(
-            [facecolour], description='Face colour')
+            [facecolour], render_function=None, description='Face colour')
         self.edgecolour_widget = ColourSelectionWidget(
-            [edgecolour], description='Edge colour')
+            [edgecolour], render_function=None, description='Edge colour')
         self.pad_inches_text = ipywidgets.FloatText(description='Pad (inch)',
                                                     value=pad_inches)
         self.filename_text = ipywidgets.Text(
@@ -2409,8 +2411,8 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
             description='Overwrite if file exists', value=overwrite)
         self.error_latex = ipywidgets.Latex(value="", font_weight='bold',
                                             font_style='italic')
-        self.save_button = ipywidgets.Button(description='Save',
-                                             margin='0.2cm')
+        self.save_button = ipywidgets.Button(description='  Save',
+                                             icon='fa-floppy-o', margin='0.2cm')
 
         # Group widgets
         self.path_box = ipywidgets.VBox(
@@ -2426,7 +2428,7 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
         self.options_tabs = ipywidgets.Tab(
             children=[self.path_box, self.page_box, self.colour_box],
             margin=0, padding='0.1cm')
-        self.options_tabs_box = ipywidgets.Box(
+        self.options_tabs_box = ipywidgets.VBox(
             children=[self.options_tabs], border_width=1, border_color='black',
             margin='0.3cm', padding='0.2cm')
         tab_titles = ['Path', 'Page setup', 'Image colour']
@@ -2470,9 +2472,9 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
                 self.renderer.save_figure(
                     filename=self.filename_text.value, dpi=selected_dpi,
                     face_colour=
-                    self.facecolour_widget.selected_values['colour'][0],
+                    self.facecolour_widget.selected_values[0],
                     edge_colour=
-                    self.edgecolour_widget.selected_values['colour'][0],
+                    self.edgecolour_widget.selected_values[0],
                     orientation=self.orientation_dropdown.value,
                     paper_type=self.papertype_select.value,
                     format=self.file_format_select.value,
