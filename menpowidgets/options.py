@@ -3695,3 +3695,652 @@ class PatchOptionsWidget(MenpoWidget):
         # trigger render function if allowed
         if allow_callback:
             self._render_function('', True)
+
+
+class PlotOptionsWidget(MenpoWidget):
+    r"""
+    Creates a widget for selecting options for rendering various curves in a
+    graph. The widget consists of the following parts from
+    `IPython.html.widgets` and `menpowidgets.tools`:
+
+    == ===================== ======================= =======================
+    No Object                Variable (`self.`)      Description
+    == ===================== ======================= =======================
+    1  RendererOptionsWidget `renderer_widget`       The rendering widget
+    2  FloatRangeSlider      `x_limit`               Sets the x limit
+    3  FloatRangeSlider      `y_limit`               Sets the y limit
+    4  Text                  `x_label`               Sets the x label
+    5  Text                  `y_label`               Sets the y label
+    6  Text                  `title`                 Sets the title
+    7  Textarea              `legend_entries`        Sets the legend entries
+    8  VBox                  `graph_related_options` Contains 2 - 7
+    9  Tab                   `options_tab`           Contains 8, 1
+    == ===================== ======================= =======================
+
+    Note that:
+
+    * The selected values are stored in the ``self.selected_values`` `dict`.
+    * To set the styling please refer to the ``style()`` and
+      ``predefined_style()`` methods.
+    * To update the state of the widget, please refer to the
+      ``set_widget_state()`` method.
+    * To update the callback function please refer to the
+      ``replace_render_function()`` methods.
+
+    Parameters
+    ----------
+    graph_options : `list` of `str`
+        The initial options. For example, in case we had two curves to render
+        ::
+
+            graph_options = {'legend_entries': ['Nontas', 'Leda'],
+                             'x_label': 'X',
+                             'y_label': 'Y',
+                             'title': 'TITLE',
+                             'x_axis_limits': (2, 7),
+                             'y_axis_limits': (-0.2, 0.2),
+                             'render_lines': [True, True],
+                             'line_colour': ['r', 'b'],
+                             'line_style': ['--', '-'],
+                             'line_width': [1, 3],
+                             'render_markers': [True, False],
+                             'marker_style': ['o', 's'],
+                             'marker_size': [6, 12],
+                             'marker_face_colour': ['k', 'm'],
+                             'marker_edge_colour': ['w', 'c'],
+                             'marker_edge_width': [1, 4],
+                             'render_legend': True,
+                             'legend_title': '',
+                             'legend_font_name': 'sans-serif',
+                             'legend_font_style': 'normal',
+                             'legend_font_size': 10,
+                             'legend_font_weight': 'normal',
+                             'legend_marker_scale': 1.,
+                             'legend_location': 2,
+                             'legend_bbox_to_anchor': (1.05, 1.),
+                             'legend_border_axes_pad': 0.,
+                             'legend_n_columns': 1,
+                             'legend_horizontal_spacing': 0,
+                             'legend_vertical_spacing': 0,
+                             'legend_border': True,
+                             'legend_border_padding': 0,
+                             'legend_shadow': False,
+                             'legend_rounded_corners': False,
+                             'render_axes': True,
+                             'axes_font_name': 'sans-serif',
+                             'axes_font_size': 10,
+                             'axes_font_style': 'normal',
+                             'axes_font_weight': 'normal',
+                             'figure_size': (10, 8),
+                             'render_grid': True,
+                             'grid_line_style': '--',
+                             'grid_line_width': 1}
+
+    x_slider_options : (`float`, `float`, `float`)
+        The attributes of the x limit slider in the form (`min`, `max`, `step`).
+    y_slider_options : (`float`, `float`, `float`)
+        The attributes of the y limit slider in the form (`min`, `max`, `step`).
+    render_function : `function` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    style : See Below, optional
+        Sets a predefined style at the widget. Possible options are
+
+            ========= ============================
+            Style     Description
+            ========= ============================
+            'minimal' Simple black and white style
+            'success' Green-based style
+            'info'    Blue-based style
+            'warning' Yellow-based style
+            'danger'  Red-based style
+            ''        No style
+            ========= ============================
+
+    tabs_style : See Below, optional
+        Sets a predefined style at the tabs of the widget. Possible options
+        are
+
+            ========= ============================
+            Style     Description
+            ========= ============================
+            'minimal' Simple black and white style
+            'success' Green-based style
+            'info'    Blue-based style
+            'warning' Yellow-based style
+            'danger'  Red-based style
+            ''        No style
+            ========= ============================
+
+    renderer_tabs_style : See Below, optional
+        Sets a predefined style at the tabs of the renderer widget. Possible
+        options are
+
+            ========= ============================
+            Style     Description
+            ========= ============================
+            'minimal' Simple black and white style
+            'success' Green-based style
+            'info'    Blue-based style
+            'warning' Yellow-based style
+            'danger'  Red-based style
+            ''        No style
+            ========= ============================
+
+    """
+    def __init__(self, legend_entries, render_function=None, style='minimal',
+                 tabs_style='minimal', renderer_tabs_style='minimal'):
+        # Assign properties
+        self.legend_entries = legend_entries
+        self.n_curves = len(self.legend_entries)
+
+        # Create default options
+        default_options = self.create_default_options()
+
+        # Create children
+        self.options_widgets = []
+        self.options_widgets.append(LineOptionsWidget(
+            {'render_lines': default_options['render_lines'][0],
+             'line_width': default_options['line_width'][0],
+             'line_colour': [default_options['line_colour'][0]],
+             'line_style': default_options['line_style'][0]},
+            render_function=None, render_checkbox_title='Render lines',
+            labels=None))
+        self.options_widgets.append(MarkerOptionsWidget(
+            {'render_markers': default_options['render_markers'][0],
+             'marker_style': default_options['marker_style'][0],
+             'marker_size': default_options['marker_size'][0],
+             'marker_face_colour': default_options['marker_face_colour'][0],
+             'marker_edge_colour': [default_options['marker_edge_colour'][0]],
+             'marker_edge_width': [default_options['marker_edge_width'][0]]},
+            render_function=None, render_checkbox_title='Render markers',
+            labels=None))
+        self.options_widgets.append(LegendOptionsWidget(
+            {'render_legend': default_options['render_legend'],
+             'legend_title': default_options['legend_title'],
+             'legend_font_name': default_options['legend_font_name'],
+             'legend_font_style': default_options['legend_font_style'],
+             'legend_font_size': default_options['legend_font_size'],
+             'legend_font_weight': default_options['legend_font_weight'],
+             'legend_marker_scale': default_options['legend_marker_scale'],
+             'legend_location': default_options['legend_location'],
+             'legend_bbox_to_anchor': default_options['legend_bbox_to_anchor'],
+             'legend_border_axes_pad': default_options['legend_border_axes_pad'],
+             'legend_n_columns': default_options['legend_n_columns'],
+             'legend_horizontal_spacing': default_options['legend_horizontal_spacing'],
+             'legend_vertical_spacing': default_options['legend_vertical_spacing'],
+             'legend_border': default_options['legend_border'],
+             'legend_border_padding': default_options['legend_border_padding'],
+             'legend_shadow': default_options['legend_shadow'],
+             'legend_rounded_corners': default_options['legend_rounded_corners']},
+            render_function=None, render_checkbox_title='Render legend'))
+        self.options_widgets.append(AxesOptionsWidget(
+            {'render_axes': default_options['render_axes'],
+             'axes_font_name': default_options['axes_font_name'],
+             'axes_font_size': default_options['axes_font_size'],
+             'axes_font_style': default_options['axes_font_style'],
+             'axes_font_weight': default_options['axes_font_weight'],
+             'axes_x_limits': default_options['axes_x_limits'],
+             'axes_y_limits': default_options['axes_y_limits'],
+             'axes_x_ticks': default_options['axes_x_ticks'],
+             'axes_y_ticks': default_options['axes_y_ticks']},
+            render_function=None, render_checkbox_title='Render axes'))
+        self.options_widgets.append(ZoomTwoScalesWidget(
+            {'zoom': default_options['zoom'], 'min': 0.1, 'max': 4.,
+             'step': 0.05, 'lock_aspect_ratio': False}, render_function=None,
+            description='Scale: ', continuous_update=False))
+        self.options_widgets.append(GridOptionsWidget(
+            {'render_grid': default_options['render_grid'],
+             'grid_line_width': default_options['grid_line_width'],
+             'grid_line_style': default_options['grid_line_style']},
+            render_function=None, render_checkbox_title='Render grid'))
+
+        self.suboptions_tab = ipywidgets.Tab(children=self.options_widgets)
+        self.options_tab.set_title(0, 'Figure')
+        self.options_tab.set_title(1, 'Renderer')
+
+        self.curves_dropdown = ipywidgets.Dropdown(
+            options=self.legend_entries, value=self.legend_entries[0])
+        self.renderer_widget = RendererOptionsWidget(
+            options_tabs=options_tabs, labels=None, render_function=None)
+        self.renderer_options = ipywidgets.VBox(
+            children=[self.curves_dropdown, self.renderer_widget])
+        self.x_label = ipywidgets.Text(description='X label', margin='0.05cm')
+        self.y_label = ipywidgets.Text(description='Y label', margin='0.05cm')
+        self.title = ipywidgets.Text(description='Title', margin='0.05cm')
+        self.legend_entries_text = ipywidgets.Textarea(
+            description='Legend', width='73mm', margin='0.05cm',
+            value=self._convert_list_to_legend_entries(self.legend_entries))
+        self.plot_related_options = ipywidgets.VBox(
+            children=[self.x_label, self.y_label, self.title,
+                      self.legend_entries_text])
+        self.options_tab = ipywidgets.Tab(
+            children=[self.plot_related_options, self.renderer_widget])
+        self.options_tab.set_title(0, 'Figure')
+        self.options_tab.set_title(1, 'Renderer')
+
+        # Create final widget
+        children = [self.options_tab]
+        super(PlotOptionsWidget, self).__init__(
+            children, Dict, default_options, render_function=render_function,
+            orientation='vertical', align='start')
+
+        # Set style
+        self.predefined_style(style, tabs_style, renderer_tabs_style)
+
+        # Set functionality
+        def legend_entries_function(name, value):
+            tmp_entries = str(self.legend_entries.value).splitlines()
+            if len(tmp_entries) < self.n_curves:
+                n_missing = self.n_curves - len(tmp_entries)
+                for j in range(n_missing):
+                    kk = j + len(tmp_entries)
+                    tmp_entries.append("curve {}".format(kk))
+            self.selected_values['legend_entries'] = tmp_entries[:self.n_curves]
+        self.legend_entries.on_trait_change(legend_entries_function, 'value')
+
+        def update_renderer_widget_objects(name, value):
+            self.renderer_widget.update_object_names(
+                self.selected_values['legend_entries'])
+        self.options_tab.on_trait_change(update_renderer_widget_objects,
+                                         'selected_index')
+
+        def get_graph_related_options(name, value):
+            self.selected_values['x_label'] = str(self.x_label.value)
+            self.selected_values['y_label'] = str(self.y_label.value)
+            self.selected_values['title'] = str(self.title.value)
+            self.selected_values['x_axis_limits'] = self.x_limit.value
+            self.selected_values['y_axis_limits'] = self.y_limit.value
+        self.x_label.on_trait_change(get_graph_related_options, 'value')
+        self.y_label.on_trait_change(get_graph_related_options, 'value')
+        self.title.on_trait_change(get_graph_related_options, 'value')
+        self.x_limit.on_trait_change(get_graph_related_options, 'value')
+        self.y_limit.on_trait_change(get_graph_related_options, 'value')
+
+    def create_default_options(self):
+        render_lines = [True] * self.n_curves
+        line_style = ['-'] * self.n_curves
+        line_width = [1] * self.n_curves
+        render_markers = [True] * self.n_curves
+        marker_style = ['s'] * self.n_curves
+        marker_size = [20] * self.n_curves
+        marker_face_colour = ['white'] * self.n_curves
+        marker_edge_width = [1.] * self.n_curves
+        line_colour = ['red']
+        marker_edge_colour = ['red']
+        if self.n_curves > 1:
+            line_colour = sample_colours_from_colourmap(self.n_curves, 'jet')
+            marker_edge_colour = sample_colours_from_colourmap(
+                self.n_curves, 'jet')
+        return {'title': '', 'x_label': '', 'y_label': '', 'render_legend': True,
+                'legend_title': '', 'legend_font_name': 'sans-serif',
+                'legend_font_style': 'normal', 'legend_font_size': 10,
+                'legend_font_weight': 'normal', 'legend_marker_scale': 1.,
+                'legend_location': 2, 'legend_bbox_to_anchor': (1.05, 1.),
+                'legend_border_axes_pad': 1., 'legend_n_columns': 1,
+                'legend_horizontal_spacing': 1., 'legend_vertical_spacing': 1.,
+                'legend_border': True, 'legend_border_padding': 0.5,
+                'legend_shadow': False, 'legend_rounded_corners': False,
+                'render_axes': False, 'axes_font_name': 'serif',
+                'axes_font_size': 10, 'axes_font_style': 'normal',
+                'axes_font_weight': 'normal', 'axes_x_limits': None,
+                'axes_y_limits': None, 'axes_x_ticks': None,
+                'axes_y_ticks': None, 'render_grid': False,
+                'grid_line_style': '--', 'grid_line_width': 0.5,
+                'render_lines': render_lines, 'line_width': line_width,
+                'line_colour': line_colour, 'line_style': line_style,
+                'render_markers': render_markers, 'marker_size': marker_size,
+                'marker_face_colour': marker_face_colour,
+                'marker_edge_colour': marker_edge_colour,
+                'marker_style': marker_style,
+                'marker_edge_width': marker_edge_width, 'zoom': [1., 1.],}
+
+    def _update_widgets(self):
+        key = self.curves_dropdown.value
+        curve_options = self.curves_options[key]
+        # update lines
+        self.renderer_widget.options_widgets[0].set_widget_state(
+            {'render_lines': curve_options['render_lines'],
+             'line_width': curve_options['line_width'],
+             'line_colour': curve_options['line_colour'],
+             'line_style': curve_options['line_style']}, labels=None)
+
+    def _convert_list_to_legend_entries(self, l):
+        tmp_lines = []
+        for k in l:
+            tmp_lines.append(k)
+            tmp_lines.append('\n')
+        tmp_lines = tmp_lines[:-1]
+        return unicode().join(tmp_lines)
+
+    def style(self, box_style=None, border_visible=False, border_color='black',
+              border_style='solid', border_width=1, border_radius=0,
+              padding='0.2cm', margin=0, tabs_box_style=None,
+              tabs_border_visible=True, tabs_border_color='black',
+              tabs_border_style='solid', tabs_border_width=1,
+              tabs_border_radius=1, tabs_padding=0, tabs_margin=0,
+              renderer_tabs_box_style=None, renderer_tabs_border_visible=True,
+              renderer_tabs_border_color='black',
+              renderer_tabs_border_style='solid',
+              renderer_tabs_border_width=1, renderer_tabs_border_radius=1,
+              renderer_tabs_padding=0, renderer_tabs_margin=0,
+              font_family='', font_size=None, font_style='', font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        box_style : See Below, optional
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
+
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_color : `str`, optional
+            The color of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the corners of the box.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
+        tabs_box_style : See Below, optional
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
+
+        tabs_border_visible : `bool`, optional
+            Defines whether to draw the border line around the tab widgets.
+        tabs_border_color : `str`, optional
+            The color of the border around the tab widgets.
+        tabs_border_style : `str`, optional
+            The line style of the border around the tab widgets.
+        tabs_border_width : `float`, optional
+            The line width of the border around the tab widgets.
+        tabs_border_radius : `float`, optional
+            The radius of the corners of the box of the tab widgets.
+        tabs_padding : `float`, optional
+            The padding around the tab widgets.
+        tabs_margin : `float`, optional
+            The margin around the tab widgets.
+
+        renderer_tabs_box_style : See Below, optional
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
+
+        renderer_tabs_border_visible : `bool`, optional
+            Defines whether to draw the border line around the tab widgets of
+            the renderer widget.
+        renderer_tabs_border_color : `str`, optional
+            The color of the border around the tab widgets of the renderer
+            widget.
+        renderer_tabs_border_style : `str`, optional
+            The line style of the border around the tab widgets of the renderer
+            widget.
+        renderer_tabs_border_width : `float`, optional
+            The line width of the border around the tab widgets of the renderer
+            widget.
+        renderer_tabs_border_radius : `float`, optional
+            The radius of the corners of the box of the tab widgets of the
+            renderer widget.
+        renderer_tabs_padding : `float`, optional
+            The padding around the tab widgets of the renderer widget.
+        renderer_tabs_margin : `float`, optional
+            The margin around the tab widgets of the renderer widget.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                 'helvetica'}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                 'extra bold', 'black'}
+        """
+        format_box(self, box_style, border_visible, border_color, border_style,
+                   border_width, border_radius, padding, margin)
+        format_box(self.graph_related_options, tabs_box_style,
+                   tabs_border_visible, tabs_border_color, tabs_border_style,
+                   tabs_border_width, tabs_border_radius, tabs_padding,
+                   tabs_margin)
+        self.x_limit.slider_color = map_styles_to_hex_colours(tabs_box_style)
+        self.x_limit.background_color = map_styles_to_hex_colours(tabs_box_style)
+        self.y_limit.slider_color = map_styles_to_hex_colours(tabs_box_style)
+        self.y_limit.background_color = map_styles_to_hex_colours(tabs_box_style)
+        format_box(self.renderer_widget, tabs_box_style, tabs_border_visible,
+                   tabs_border_color, tabs_border_style, tabs_border_width,
+                   tabs_border_radius, tabs_padding, tabs_margin)
+        for wid in self.renderer_widget.options_widgets:
+            wid.style(box_style=renderer_tabs_box_style,
+                      border_visible=renderer_tabs_border_visible,
+                      border_color=renderer_tabs_border_color,
+                      border_style=renderer_tabs_border_style,
+                      border_width=renderer_tabs_border_width,
+                      border_radius=renderer_tabs_border_radius,
+                      padding=renderer_tabs_padding,
+                      margin=renderer_tabs_margin, font_family=font_family,
+                      font_size=font_size, font_style=font_style,
+                      font_weight=font_weight)
+        format_font(self, font_family, font_size, font_style, font_weight)
+        format_font(self.renderer_widget.object_selection_dropdown,
+                    font_family, font_size, font_style, font_weight)
+        format_font(self.graph_related_options, font_family, font_size,
+                    font_style, font_weight)
+        format_font(self.x_limit, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.y_limit, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.x_label, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.y_label, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.title, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.legend_entries, font_family, font_size, font_style,
+                    font_weight)
+
+    def predefined_style(self, style, tabs_style='minimal',
+                         renderer_tabs_style='mininal'):
+        r"""
+        Function that sets a predefined style on the widget.
+
+        Parameters
+        ----------
+        style : `str` (see below)
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'minimal' Simple black and white style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        No style
+                ========= ============================
+
+        tabs_style : `str` (see below), optional
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'minimal' Simple black and white style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        No style
+                ========= ============================
+
+        renderer_tabs_style : `str` (see below), optional
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'minimal' Simple black and white style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        No style
+                ========= ============================
+        """
+        if renderer_tabs_style == 'minimal' or renderer_tabs_style == '':
+            renderer_tabs_style = ''
+            renderer_tabs_border_visible = False
+            renderer_tabs_border_color = 'black'
+            renderer_tabs_border_radius = 0
+            renderer_tabs_padding = 0
+        else:
+            renderer_tabs_style = renderer_tabs_style
+            renderer_tabs_border_visible = True
+            renderer_tabs_border_color = \
+                map_styles_to_hex_colours(renderer_tabs_style)
+            renderer_tabs_border_radius = 10
+            renderer_tabs_padding = '0.3cm'
+
+        if tabs_style == 'minimal' or tabs_style == '':
+            tabs_style = ''
+            tabs_border_visible = True
+            tabs_border_color = 'black'
+            tabs_border_radius = 0
+            tabs_padding = 0
+        else:
+            tabs_style = tabs_style
+            tabs_border_visible = True
+            tabs_border_color = map_styles_to_hex_colours(tabs_style)
+            tabs_border_radius = 10
+            tabs_padding = '0.2cm'
+
+        if style == 'minimal':
+            self.style(box_style='', border_visible=True, border_color='black',
+                       border_style='solid', border_width=1, border_radius=0,
+                       padding='0.2cm', margin='0.5cm', font_family='',
+                       font_size=None, font_style='', font_weight='',
+                       tabs_box_style=tabs_style,
+                       tabs_border_visible=tabs_border_visible,
+                       tabs_border_color=tabs_border_color,
+                       tabs_border_style='solid', tabs_border_width=1,
+                       tabs_border_radius=tabs_border_radius,
+                       tabs_padding=tabs_padding, tabs_margin='0.3cm',
+                       renderer_tabs_box_style=renderer_tabs_style,
+                       renderer_tabs_border_visible=renderer_tabs_border_visible,
+                       renderer_tabs_border_color=renderer_tabs_border_color,
+                       renderer_tabs_border_style='solid',
+                       renderer_tabs_border_width=1,
+                       renderer_tabs_border_radius=renderer_tabs_border_radius,
+                       renderer_tabs_padding=renderer_tabs_padding,
+                       renderer_tabs_margin='0.5cm')
+        elif (style == 'info' or style == 'success' or style == 'danger' or
+                      style == 'warning'):
+            self.style(box_style=style, border_visible=True,
+                       border_color=map_styles_to_hex_colours(style),
+                       border_style='solid', border_width=1, border_radius=10,
+                       padding='0.2cm', margin='0.5cm', font_family='',
+                       font_size=None, font_style='', font_weight='',
+                       tabs_box_style=tabs_style,
+                       tabs_border_visible=tabs_border_visible,
+                       tabs_border_color=tabs_border_color,
+                       tabs_border_style='solid', tabs_border_width=1,
+                       tabs_border_radius=tabs_border_radius,
+                       tabs_padding=tabs_padding, tabs_margin='0.3cm',
+                       renderer_tabs_box_style=renderer_tabs_style,
+                       renderer_tabs_border_visible=renderer_tabs_border_visible,
+                       renderer_tabs_border_color=renderer_tabs_border_color,
+                       renderer_tabs_border_style='solid',
+                       renderer_tabs_border_width=1,
+                       renderer_tabs_border_radius=renderer_tabs_border_radius,
+                       renderer_tabs_padding=renderer_tabs_padding,
+                       renderer_tabs_margin='0.5cm')
+        else:
+            raise ValueError('style must be minimal or info or success or '
+                             'danger or warning')
+
+    def _get_selected_options(self):
+        # legend options
+        legend_tmp = self.renderer_widget.selected_values[0]['legend']
+        self.selected_values.update(legend_tmp)
+
+        # axes options
+        figure_tmp = self.renderer_widget.selected_values[0]['figure']
+        self.selected_values['render_axes'] = figure_tmp['render_axes']
+        self.selected_values['axes_font_name'] = figure_tmp['axes_font_name']
+        self.selected_values['axes_font_size'] = figure_tmp['axes_font_size']
+        self.selected_values['axes_font_style'] = figure_tmp['axes_font_style']
+        self.selected_values['axes_font_weight'] = \
+            figure_tmp['axes_font_weight']
+        self.selected_values['figure_size'] = \
+            (figure_tmp['x_scale'] * self.initial_figure_size[0],
+             figure_tmp['y_scale'] * self.initial_figure_size[1])
+
+        # grid options
+        grid_tmp = self.renderer_widget.selected_values[0]['grid']
+        self.selected_values.update(grid_tmp)
+
+        # lines and markers options
+        for j in range(self.n_curves):
+            self.selected_values['render_lines'][j] = \
+                self.renderer_widget.selected_values[j]['lines']['render_lines']
+            self.selected_values['line_colour'][j] = \
+                self.renderer_widget.selected_values[j]['lines']['line_colour'][0]
+            self.selected_values['line_style'][j] = \
+                self.renderer_widget.selected_values[j]['lines']['line_style']
+            self.selected_values['line_width'][j] = \
+                self.renderer_widget.selected_values[j]['lines']['line_width']
+            self.selected_values['render_markers'][j] = \
+                self.renderer_widget.selected_values[j]['markers']['render_markers']
+            self.selected_values['marker_style'][j] = \
+                self.renderer_widget.selected_values[j]['markers']['marker_style']
+            self.selected_values['marker_size'][j] = \
+                self.renderer_widget.selected_values[j]['markers']['marker_size']
+            self.selected_values['marker_face_colour'][j] = \
+                self.renderer_widget.selected_values[j]['markers']['marker_face_colour'][0]
+            self.selected_values['marker_edge_colour'][j] = \
+                self.renderer_widget.selected_values[j]['markers']['marker_edge_colour'][0]
+            self.selected_values['marker_edge_width'][j] = \
+                self.renderer_widget.selected_values[j]['markers']['marker_edge_width']
