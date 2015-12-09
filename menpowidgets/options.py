@@ -1870,31 +1870,26 @@ class RendererOptionsWidget(MenpoWidget):
         # Create children
         self.options_widgets = []
         self.tab_titles = []
-        initial_dict = {}
         for o in options_tabs:
             if o == 'lines':
                 self.options_widgets.append(LineOptionsWidget(
                     renderer_options[o], render_function=None,
                     render_checkbox_title='Render lines', labels=labels))
                 self.tab_titles.append('Lines')
-                initial_dict[o] = renderer_options[o]
             elif o == 'markers':
                 self.options_widgets.append(MarkerOptionsWidget(
                     renderer_options[o], render_function=None,
                     render_checkbox_title='Render markers', labels=labels))
                 self.tab_titles.append('Markers')
-                initial_dict[o] = renderer_options[o]
             elif o == 'image':
                 self.options_widgets.append(ImageOptionsWidget(
                     renderer_options[o], render_function=None))
                 self.tab_titles.append('Image')
-                initial_dict[o] = renderer_options[o]
             elif o == 'numbering':
                 self.options_widgets.append(NumberingOptionsWidget(
                     renderer_options[o], render_function=None,
                     render_checkbox_title='Render numbering'))
                 self.tab_titles.append('Numbering')
-                initial_dict[o] = renderer_options[o]
             elif o == 'zoom_two':
                 self.options_widgets.append(ZoomTwoScalesWidget(
                     renderer_options[o], render_function=None,
@@ -1903,7 +1898,6 @@ class RendererOptionsWidget(MenpoWidget):
                     plus_description='fa-search-plus',
                     continuous_update=False))
                 self.tab_titles.append('Zoom')
-                initial_dict[o] = renderer_options[o]
             elif o == 'zoom_one':
                 self.options_widgets.append(ZoomOneScaleWidget(
                     renderer_options[o], render_function=None,
@@ -1912,34 +1906,21 @@ class RendererOptionsWidget(MenpoWidget):
                     plus_description='fa-search-plus',
                     continuous_update=False))
                 self.tab_titles.append('Zoom')
-                initial_dict[o] = renderer_options[o]
             elif o == 'axes':
                 self.options_widgets.append(AxesOptionsWidget(
                     renderer_options[o], render_function=None,
                     render_checkbox_title='Render axes'))
                 self.tab_titles.append('Axes')
-                initial_dict[o] = {
-                    'render_axes': renderer_options[o]['render_axes'],
-                    'axes_font_name': renderer_options[o]['axes_font_name'],
-                    'axes_font_size': renderer_options[o]['axes_font_size'],
-                    'axes_font_style': renderer_options[o]['axes_font_style'],
-                    'axes_font_weight': renderer_options[o]['axes_font_weight'],
-                    'axes_x_ticks': renderer_options[o]['axes_x_ticks'],
-                    'axes_y_ticks': renderer_options[o]['axes_y_ticks'],
-                    'axes_x_limits': renderer_options[o]['axes_limits']['x'],
-                    'axes_y_limits': renderer_options[o]['axes_limits']['y']}
             elif o == 'legend':
                 self.options_widgets.append(LegendOptionsWidget(
                     renderer_options[o], render_function=None,
                     render_checkbox_title='Render legend'))
                 self.tab_titles.append('Legend')
-                initial_dict[o] = renderer_options[o]
             elif o == 'grid':
                 self.options_widgets.append(GridOptionsWidget(
                     renderer_options[o], render_function=None,
                     render_checkbox_title='Render grid'))
                 self.tab_titles.append('Grid')
-                initial_dict[o] = renderer_options[o]
         self.suboptions_tab = ipywidgets.Tab(children=self.options_widgets)
         # set titles
         for (k, tl) in enumerate(self.tab_titles):
@@ -1948,7 +1929,7 @@ class RendererOptionsWidget(MenpoWidget):
         # Create final widget
         children = [self.suboptions_tab]
         super(RendererOptionsWidget, self).__init__(
-            children, Dict, initial_dict, render_function=render_function,
+            children, Dict, renderer_options, render_function=render_function,
             orientation='vertical', align='start')
 
         # Set values
@@ -1967,12 +1948,6 @@ class RendererOptionsWidget(MenpoWidget):
         # update default values
         current_key = self.get_key(self.labels)
         self.default_options[current_key] = self.selected_values.copy()
-        if 'axes' in self.default_options[current_key]:
-            self.default_options[current_key]['axes']['axes_limits'] = {
-                'x': self.selected_values['axes']['axes_x_limits'],
-                'y': self.selected_values['axes']['axes_y_limits'],
-                'x_min': 0, 'x_max': 100, 'x_step': 1,
-                'y_min': 0, 'y_max': 100, 'y_step': 1}
         if 'zoom_one' in self.default_options[current_key]:
             self.default_options[current_key]['zoom_one'] = {
                 'min': 0.1, 'max': 4., 'step': 0.05,
@@ -1999,7 +1974,6 @@ class RendererOptionsWidget(MenpoWidget):
         key = self.get_key(labels)
         # if the key does not exist in the default options dict, then add it
         if key not in self.default_options:
-            print 'NONTA EDWWWW'
             self.default_options[key] = {}
             for o in self.options_tabs:
                 if o == 'lines':
@@ -2043,9 +2017,7 @@ class RendererOptionsWidget(MenpoWidget):
                         'render_axes': False, 'axes_font_name': 'serif',
                         'axes_font_size': 10, 'axes_font_style': 'normal',
                         'axes_font_weight': 'normal',
-                        'axes_limits': {'x': None, 'y': None,
-                                        'x_min': 0, 'x_max': 100, 'x_step': 1,
-                                        'y_min': 0, 'y_max': 100, 'y_step': 1},
+                        'axes_x_limits': None, 'axes_y_limits': None,
                         'axes_x_ticks': [0, 100], 'axes_y_ticks': None}
                 elif o == 'legend':
                     rl = True
@@ -2598,7 +2570,7 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
             self.save_button.disabled = False
         self.save_button.on_click(save_function)
 
-    def style(self, box_style=None, border_visible=False, border_color='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -2623,7 +2595,7 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
-        border_color : `str`, optional
+        border_colour : `str`, optional
             The color of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
@@ -2654,7 +2626,7 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
                  'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
                  'extra bold', 'black'}
         """
-        format_box(self, box_style, border_visible, border_color, border_style,
+        format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
         format_font(self, font_family, font_size, font_style, font_weight)
         format_font(self.file_format_select, font_family, font_size, font_style,
@@ -2703,7 +2675,7 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
                 ========= ============================
         """
         if style == 'minimal':
-            self.style(box_style='', border_visible=True, border_color='black',
+            self.style(box_style='', border_visible=True, border_colour='black',
                        border_style='solid', border_width=1, border_radius=0,
                        padding='0.2cm', margin='0.3cm', font_family='',
                        font_size=None, font_style='', font_weight='')
@@ -2712,7 +2684,7 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
         elif (style == 'info' or style == 'success' or style == 'danger' or
                       style == 'warning'):
             self.style(box_style=style, border_visible=True,
-                       border_color= map_styles_to_hex_colours(style),
+                       border_colour= map_styles_to_hex_colours(style),
                        border_style='solid', border_width=1, border_radius=10,
                        padding='0.2cm', margin='0.3cm', font_family='',
                        font_size=None, font_style='', font_weight='')
@@ -2973,7 +2945,7 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
                 self.preview_image.visible = False
         self.options_box.on_trait_change(preview_function, 'selected_index')
 
-    def style(self, box_style=None, border_visible=False, border_color='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -2998,7 +2970,7 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
-        border_color : `str`, optional
+        border_colour : `str`, optional
             The color of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
@@ -3029,7 +3001,7 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
                  'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
                  'extra bold', 'black'}
         """
-        format_box(self, box_style, border_visible, border_color, border_style,
+        format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
         format_font(self, font_family, font_size, font_style, font_weight)
         format_font(self.feature_radiobuttons, font_family, font_size,
@@ -3085,17 +3057,641 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
                 ========= ============================
         """
         if style == 'minimal':
-            self.style(box_style='', border_visible=True, border_color='black',
+            self.style(box_style='', border_visible=True, border_colour='black',
                        border_style='solid', border_width=1, border_radius=0,
                        padding='0.2cm', margin='0.3cm', font_family='',
                        font_size=None, font_style='', font_weight='')
         elif (style == 'info' or style == 'success' or style == 'danger' or
                       style == 'warning'):
             self.style(box_style=style, border_visible=True,
-                       border_color= map_styles_to_hex_colours(style),
+                       border_colour= map_styles_to_hex_colours(style),
                        border_style='solid', border_width=1, border_radius=10,
                        padding='0.2cm', margin='0.3cm', font_family='',
                        font_size=None, font_style='', font_weight='')
         else:
             raise ValueError('style must be minimal or info or success or '
                              'danger or warning')
+
+
+class PatchOptionsWidget(MenpoWidget):
+    r"""
+    Creates a widget for selecting patches options when rendering a patch-based
+    image. The widget consists of the following parts from
+    `IPython.html.widgets`:
+
+    == ==================== ========================= ======================
+    No Object               Variable (`self.`)        Description
+    == ==================== ========================= ======================
+    1  Dropdown             `offset_dropdown`         Offset index selection
+    2  SlicingCommandWidget `slicing_wid`             Patch index selection
+    3  LineOptionsWidget    `bboxes_line_options_wid` Bboxes options
+    4  Checkbox             `render_centers`          Render centers flag
+    5  Checkbox             `render_patches`          Render patches flag
+    6  ToggleButton         `background_toggle`       Background colour button
+    7  Latex                `background_title`        Background colour title
+    8  HBox                 `background_box`          Contains 7, 6
+    9  VBox                 `render_checkboxes_box`   Contains 4, 5
+    10 HBox                 `render_box`              Contains 8, 9
+    11 VBox                 `offset_patches_box`      Contains 1, 2, 10
+    == ==================== ========================= ======================
+
+    Note that:
+
+    * The selected values are stored in the ``self.selected_values`` `dict`.
+    * To set the styling please refer to the ``style()`` and
+      ``predefined_style()`` methods.
+    * To update the state of the widget, please refer to the
+      ``set_widget_state()`` method.
+    * To update the callback function please refer to the
+      ``replace_render_function()`` method.
+
+    Parameters
+    ----------
+    patch_options : `dict`
+        The dictionary with the initial options. For example
+        ::
+
+            patch_options = {'patches': {'command': '',
+                                         'indices': [],
+                                         'length': 68},
+                             'offset_index': 0,
+                             'n_offsets': 5,
+                             'render_centers': True,
+                             'render_centers': True,
+                             'background': 'white',
+                             'bboxes': {'render_lines': True,
+                                        'line_colour': ['r'],
+                                        'line_style': '-',
+                                        'line_width': 1}
+                            }
+
+    render_function : `function` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    style : See Below, optional
+        Sets a predefined style at the widget's background. Possible options are
+
+            ========= ============================
+            Style     Description
+            ========= ============================
+            'minimal' Simple black and white style
+            'success' Green-based style
+            'info'    Blue-based style
+            'warning' Yellow-based style
+            'danger'  Red-based style
+            ''        No style
+            ========= ============================
+
+    substyle : See Below, optional
+        Sets a predefined style at the widget's patches and bboxes options.
+        Possible options are
+
+            ========= ============================
+            Style     Description
+            ========= ============================
+            'minimal' Simple black and white style
+            'success' Green-based style
+            'info'    Blue-based style
+            'warning' Yellow-based style
+            'danger'  Red-based style
+            ''        No style
+            ========= ============================
+
+    Example
+    -------
+    Let's create a patches widget and then update its state. Firstly, we need
+    to import it:
+
+        >>> from menpowidgets.options_old import PatchOptionsWidget
+        >>> from IPython.display import display
+
+    Now let's define a render function that will get called on every widget
+    change and will dynamically print the selected patches and bboxes flag:
+
+        >>> from menpo.visualize import print_dynamic
+        >>> def render_function(name, value):
+        >>>     s = "Patches: {}, BBoxes: {}".format(
+        >>>         wid.selected_values['patches']['indices'],
+        >>>         wid.selected_values['bboxes']['render_lines'])
+        >>>     print_dynamic(s)
+
+    Create the widget with some initial options and display it:
+
+        >>> patch_options = {'patches': {'command': '',
+        >>>                              'indices': [],
+        >>>                              'length': 68},
+        >>>                  'offset_index': 0,
+        >>>                  'n_offsets': 5,
+        >>>                  'render_centers': True,
+        >>>                  'render_patches': True,
+        >>>                  'background': 'white',
+        >>>                  'bboxes': {'render_lines': True,
+        >>>                             'line_colour': ['r'],
+        >>>                             'line_style': '-',
+        >>>                             'line_width': 1}
+        >>>                 }
+        >>> wid = PatchOptionsWidget(patch_options,
+        >>>                          render_function=render_function,
+        >>>                          style='info', substyle='danger')
+        >>> display(wid)
+
+    By playing around with the widget, printed message gets updated. Finally,
+    let's change the widget status with a new dictionary of options:
+
+        >>> new_options = {'patches': {'command': '',
+        >>>                            'indices': [],
+        >>>                            'length':  68},
+        >>>                'offset_index': 0,
+        >>>                'n_offsets': 5,
+        >>>                'render_centers': False,
+        >>>                'render_patches': False,
+        >>>                'background': 'black',
+        >>>                'bboxes': {'render_lines': True,
+        >>>                           'line_colour': ['r'],
+        >>>                           'line_style': '-',
+        >>>                           'line_width': 1}
+        >>>                }
+        >>> wid.set_widget_state(new_options, allow_callback=False)
+    """
+    def __init__(self, n_patches, n_offsets, render_function=None,
+                 style='minimal', subwidgets_style='minimal'):
+        # Initialise default options dictionary
+        self.default_options = {}
+
+        # Assign properties
+        self.n_offsets = n_offsets
+        self.n_patches = n_patches
+
+        # Create children
+        self.offset_dropdown = ipywidgets.Dropdown(
+            options={'0': 0}, value=0, description='Offset:', width='2cm')
+        self.render_centers_checkbox = ipywidgets.Checkbox(
+            description='Render centres')
+        self.render_patches_checkbox = ipywidgets.Checkbox(
+            description='Render patches')
+        self.background_toggle = ipywidgets.ToggleButton(
+            description='white', color='#000000', value=True,
+            background_color='#FFFFFF')
+
+        def change_toggle_description(name, value):
+            if value:
+                self.background_toggle.description = 'white'
+                self.background_toggle.background_colour = '#FFFFFF'
+                self.background_toggle.color = '#000000'
+            else:
+                self.background_toggle.description = 'black'
+                self.background_toggle.background_colour = '#000000'
+                self.background_toggle.color = '#FFFFFF'
+        self.background_toggle.on_trait_change(change_toggle_description,
+                                               'value')
+
+        self.background_title = ipywidgets.Latex(value='Background:',
+                                                 margin='0.1cm')
+        slice_options = {'command': "range({})".format(n_patches),
+                         'length': n_patches}
+        self.slicing_wid = SlicingCommandWidget(
+            slice_options, description='Patches:',
+            orientation='vertical', example_visible=True,
+            continuous_update=False)
+        self.bboxes_line_options_wid = LineOptionsWidget(
+            {'render_lines': True, 'line_colour': ['red'], 'line_style': '-',
+             'line_width': 1}, render_checkbox_title='Render bounding boxes')
+
+        # Group widgets
+        self.background_box = ipywidgets.HBox(children=[
+            self.background_title, self.background_toggle], align='center',
+            margin='0.5cm')
+        self.render_checkboxes_box = ipywidgets.Box(children=[
+            self.render_patches_checkbox, self.render_centers_checkbox],
+            margin='0.2cm')
+        self.render_box = ipywidgets.HBox(children=[
+            self.background_box, self.render_checkboxes_box], align='center')
+        self.offset_patches_box = ipywidgets.VBox(
+            children=[self.slicing_wid, self.offset_dropdown, self.render_box])
+
+        # Create final widget
+        children = [self.offset_patches_box, self.bboxes_line_options_wid]
+        super(PatchOptionsWidget, self).__init__(
+            children, Dict, {}, render_function=render_function,
+            orientation='horizontal', align='start')
+
+        # Set values
+        self.set_widget_state(n_patches, n_offsets, allow_callback=False)
+
+        # Set style
+        self.predefined_style(style, subwidgets_style)
+
+    def add_callbacks(self):
+        self.slicing_wid.on_trait_change(self._save_options, 'selected_values')
+        self.offset_dropdown.on_trait_change(self._save_options, 'value')
+        self.background_toggle.on_trait_change(self._save_options, 'value')
+        self.render_patches_checkbox.on_trait_change(self._save_options,
+                                                     'value')
+        self.render_centers_checkbox.on_trait_change(self._save_options,
+                                                     'value')
+        self.bboxes_line_options_wid.on_trait_change(self._save_options,
+                                                     'selected_values')
+
+    def remove_callbacks(self):
+        self.slicing_wid.on_trait_change(self._save_options, 'selected_values',
+                                         remove=True)
+        self.offset_dropdown.on_trait_change(self._save_options, 'value',
+                                             remove=True)
+        self.background_toggle.on_trait_change(self._save_options, 'value',
+                                               remove=True)
+        self.render_patches_checkbox.on_trait_change(self._save_options,
+                                                     'value', remove=True)
+        self.render_centers_checkbox.on_trait_change(self._save_options,
+                                                     'value', remove=True)
+        self.bboxes_line_options_wid.on_trait_change(self._save_options,
+                                                     'selected_values',
+                                                     remove=True)
+
+    def _save_options(self, name, value):
+        # set background attributes
+        bc, c, description = self._background_args_wrt_value(
+            self.background_toggle.value)
+        self.background_toggle.background_color = bc
+        self.background_toggle.color = c
+        self.background_toggle.description = description
+        # update selected values
+        self.selected_values = {
+            'patches_indices': self.slicing_wid.selected_values,
+            'offset_index': int(self.offset_dropdown.value),
+            'background': description,
+            'render_patches': self.render_patches_checkbox.value,
+            'render_centers': self.render_centers_checkbox.value,
+            'render_patches_bboxes':
+                self.bboxes_line_options_wid.selected_values['render_lines'],
+            'bboxes_line_colour':
+                self.bboxes_line_options_wid.selected_values['line_colour'],
+            'bboxes_line_style':
+                self.bboxes_line_options_wid.selected_values['line_style'],
+            'bboxes_line_width':
+                self.bboxes_line_options_wid.selected_values['line_width']}
+        # update default values
+        current_key = self.get_key(self.n_patches, self.n_offsets)
+        self.default_options[current_key] = self.selected_values
+
+    def get_key(self, n_patches, n_offsets):
+        return "{}_{}".format(n_patches, n_offsets)
+
+    def get_default_options(self, n_patches, n_offsets):
+        # create key
+        key = self.get_key(n_patches, n_offsets)
+        # if the key does not exist in the default options dict, then add it
+        if key not in self.default_options:
+            # update default options dictionary
+            self.default_options[key] = {
+                'patches_indices': range(n_patches), 'offset_index': 0,
+                'background': 'white', 'render_patches': True,
+                'render_patches_bboxes': True, 'bboxes_line_colour': ['red'],
+                'bboxes_line_style': '-', 'bboxes_line_width': 1,
+                'render_centers': True}
+        return self.default_options[key]
+
+    def _background_args_wrt_description(self, description):
+        background_colour = '#FFFFFF'
+        color = '#000000'
+        value = True
+        if description == 'black':
+            background_colour = '#000000'
+            color = '#FFFFFF'
+            value = False
+        return background_colour, color, value
+
+    def _background_args_wrt_value(self, value):
+        background_colour = '#FFFFFF'
+        color = '#000000'
+        description = 'white'
+        if not value:
+            background_colour = '#000000'
+            color = '#FFFFFF'
+            description = 'black'
+        return background_colour, color, description
+
+    def style(self, box_style=None, border_visible=False, border_colour='black',
+              border_style='dashed', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
+              font_weight='', bboxes_box_style=None,
+              bboxes_border_visible=False, bboxes_border_colour='black',
+              bboxes_border_style='solid', bboxes_border_width=1,
+              bboxes_border_radius=0, bboxes_padding=0, bboxes_margin=0,
+              patches_box_style=None, patches_border_visible=False,
+              patches_border_colour='black', patches_border_style='solid',
+              patches_border_width=1, patches_border_radius=0,
+              patches_padding=0, patches_margin=0):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        box_style : See Below, optional
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
+
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_colour : `str`, optional
+            The color of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the corners of the box.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                 'helvetica'}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                 'extra bold', 'black'}
+
+        bboxes_box_style : See Below, optional
+            Style options for the bounding boxes
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
+
+        bboxes_border_visible : `bool`, optional
+            Defines whether to draw the border line around the bounding boxes
+            options.
+        bboxes_border_colour : `str`, optional
+            The color of the border around the bounding boxes options.
+        bboxes_border_style : `str`, optional
+            The line style of the border around the bounding boxes options.
+        bboxes_border_width : `float`, optional
+            The line width of the border around the bounding boxes options.
+        bboxes_border_radius : `float`, optional
+            The radius of the corners of the box of the bounding boxes options.
+        bboxes_padding : `float`, optional
+            The padding around the bounding boxes options.
+        bboxes_margin : `float`, optional
+            The margin around the bounding boxes options.
+        patches_box_style : See Below, optional
+            Style options of the patches and offset options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
+
+        patches_border_visible : `bool`, optional
+            Defines whether to draw the border line around the patches and
+            offset options.
+        patches_border_colour : `str`, optional
+            The color of the border around the patches and offset options.
+        patches_border_style : `str`, optional
+            The line style of the border around the patches and offset options.
+        patches_border_width : `float`, optional
+            The line width of the border around the patches and offset options.
+        patches_border_radius : `float`, optional
+            The radius of the corners of the box of the patches and offset
+            options.
+        patches_padding : `float`, optional
+            The padding around the patches and offset options.
+        patches_margin : `float`, optional
+            The margin around the patches and offset options.
+        """
+        format_box(self, box_style, border_visible, border_colour, border_style,
+                   border_width, border_radius, padding, margin)
+        format_font(self, font_family, font_size, font_style, font_weight)
+        format_font(self.offset_dropdown, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.render_patches_checkbox, font_family, font_size,
+                    font_style, font_weight)
+        format_font(self.render_centers_checkbox, font_family, font_size,
+                    font_style, font_weight)
+        format_font(self.background_toggle, font_family, font_size,
+                    font_style, font_weight)
+        format_font(self.background_title, font_family, font_size,
+                    font_style, font_weight)
+        self.bboxes_line_options_wid.style(
+            box_style=bboxes_box_style, border_visible=bboxes_border_visible,
+            border_colour=bboxes_border_colour, border_style=bboxes_border_style,
+            border_width=bboxes_border_width,
+            border_radius=bboxes_border_radius, padding=bboxes_padding,
+            margin=bboxes_margin, font_family=font_family, font_size=font_size,
+            font_style=font_style, font_weight=font_weight)
+        self.slicing_wid.style(
+            box_style=patches_box_style, text_box_style=None,
+            text_box_background_colour=None, text_box_width=None,
+            font_family=font_family, font_size=font_size, font_style=font_style,
+            font_weight=font_weight)
+        format_box(self.offset_patches_box, box_style=patches_box_style,
+                   border_visible=patches_border_visible,
+                   border_colour=patches_border_colour,
+                   border_style=patches_border_style,
+                   border_width=patches_border_width,
+                   border_radius=patches_border_radius,
+                   padding=patches_padding, margin=patches_margin)
+
+    def predefined_style(self, style, subwidgets_style):
+        r"""
+        Function that sets a predefined style on the widget.
+
+        Parameters
+        ----------
+        style : `str` (see below)
+            Main widget (background) style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'minimal' Simple black and white style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        No style
+                ========= ============================
+
+        subwidgets_style : `str` (see below)
+            Sub-widgets (patches and bounding boxes) style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'minimal' Simple black and white style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        No style
+                ========= ============================
+
+        """
+        if style == 'minimal':
+            box_style = None
+            border_visible = False
+            border_colour = 'black'
+            border_radius = 0
+        elif (style == 'info' or style == 'success' or style == 'danger' or
+                      style == 'warning'):
+            box_style = style
+            border_visible = True
+            border_colour = map_styles_to_hex_colours(style)
+            border_radius = 10
+        else:
+            raise ValueError('style and must be minimal or info or success '
+                             'or danger or warning')
+
+        if subwidgets_style == 'minimal':
+            bboxes_box_style = None
+            bboxes_border_colour = 'black'
+            bboxes_border_radius = 0
+            patches_box_style = None
+            patches_border_colour = 'black'
+            patches_border_radius = 0
+        elif (subwidgets_style == 'info' or subwidgets_style == 'success' or
+                      subwidgets_style == 'danger' or subwidgets_style == 'warning'):
+            bboxes_box_style = subwidgets_style
+            bboxes_border_colour = map_styles_to_hex_colours(subwidgets_style)
+            bboxes_border_radius = 10
+            patches_box_style = subwidgets_style
+            patches_border_colour = map_styles_to_hex_colours(subwidgets_style)
+            patches_border_radius = 10
+        else:
+            raise ValueError('subwidgets_style and must be minimal or info '
+                             'or success or danger or warning')
+
+        self.style(
+            box_style=box_style, border_visible=border_visible,
+            border_colour=border_colour, border_style='solid', border_width=1,
+            border_radius=border_radius, padding='0.2cm', margin='0.3cm',
+            font_family='', font_size=None, font_style='', font_weight='',
+            bboxes_box_style=bboxes_box_style, bboxes_border_visible=True,
+            bboxes_border_colour=bboxes_border_colour,
+            bboxes_border_style='solid', bboxes_border_width=1,
+            bboxes_border_radius=bboxes_border_radius, bboxes_padding='0.2cm',
+            bboxes_margin='0.1cm', patches_box_style=patches_box_style,
+            patches_border_visible=True,
+            patches_border_colour=patches_border_colour,
+            patches_border_style='solid', patches_border_width=1,
+            patches_border_radius=patches_border_radius,
+            patches_padding='0.2cm', patches_margin='0.1cm')
+
+    def set_widget_state(self, n_patches, n_offsets, allow_callback=True):
+        r"""
+        Method that updates the state of the widget with a new set of values.
+
+        Parameters
+        ----------
+        patch_options : `dict`
+            The dictionary with the new options to be used. For example
+            ::
+
+                patch_options = {'patches': {'command': '',
+                                             'indices': [],
+                                             'length': 68},
+                                 'offset_index': 0,
+                                 'n_offsets': 5,
+                                 'render_centers': True,
+                                 'render_centers': True,
+                                 'background': 'white',
+                                 'bboxes': {'render_lines': True,
+                                            'line_colour': ['r'],
+                                            'line_style': '-',
+                                            'line_width': 1}
+                                }
+
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        # check if updates are required
+        if (not self.default_options or
+                    self.get_key(self.n_patches, self.n_offsets) !=
+                    self.get_key(n_patches, n_offsets)):
+            # temporarily remove callbacks
+            render_function = self._render_function
+            self.remove_render_function()
+            self.remove_callbacks()
+
+            # Assign properties
+            self.n_patches = n_patches
+            self.n_offsets = n_offsets
+
+            # Get initial options
+            patch_options = self.get_default_options(n_patches, n_offsets)
+
+            # Update widgets' state
+            offsets_dict = OrderedDict()
+            for i in range(self.n_offsets):
+                offsets_dict[str(i)] = i
+            self.offset_dropdown.options = offsets_dict
+            self.offset_dropdown.value = patch_options['offset_index']
+            self.render_patches_checkbox.value = patch_options['render_patches']
+            self.render_centers_checkbox.value = patch_options['render_centers']
+            background_colour = '#FFFFFF'
+            color = '#000000'
+            value = True
+            if patch_options['background'] == 'black':
+                background_colour = '#000000'
+                color = '#FFFFFF'
+                value = False
+            self.background_toggle.description = patch_options['background']
+            self.background_toggle.color = color
+            self.background_toggle.background_color = background_colour
+            self.background_toggle.value = value
+            slice_options = {'command': str(patch_options['patches_indices']),
+                             'length': self.n_patches}
+            self.slicing_wid.set_widget_state(slice_options,
+                                              allow_callback=False)
+            line_opts = {
+                'render_lines': patch_options['render_patches_bboxes'],
+                'line_colour': patch_options['bboxes_line_colour'],
+                'line_style': patch_options['bboxes_line_style'],
+                'line_width': patch_options['bboxes_line_width']}
+            self.bboxes_line_options_wid.set_widget_state(
+                line_opts, labels=None, allow_callback=False)
+
+            # Get values
+            self._save_options('', None)
+
+            # Re-assign callbacks
+            self.add_callbacks()
+            self.add_render_function(render_function)
+
+        # trigger render function if allowed
+        if allow_callback:
+            self._render_function('', True)

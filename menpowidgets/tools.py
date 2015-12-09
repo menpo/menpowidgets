@@ -2614,47 +2614,46 @@ class AxesLimitsWidget(MenpoWidget):
 
     Parameters
     ----------
-    axes_limits : `dict`
-        The dictionary with the default options. For example ::
-
-            axes_limits = {'x': None, 'y': 0.1, 'x_min': 0, 'x_max': 100,
-                           'x_step': 1., 'y_min': 0, 'y_max': 100, 'y_step': 1.}
-
+    axes_x_limits : `float` or [`float`, `float`] or ``None``
+        The limits of the x axis.
+    axes_y_limits : `float` or [`float`, `float`] or ``None``
+        The limits of the y axis.
     render_function : `function` or ``None``, optional
         The render function that is executed when the index value changes.
         If ``None``, then nothing is assigned.
     """
-    def __init__(self, axes_limits, render_function=None):
+    def __init__(self, axes_x_limits, axes_y_limits, render_function=None):
         # Create children
         # x limits
-        if axes_limits['x'] is None:
+        if axes_x_limits is None:
             toggles_initial_value = 'auto'
-            slider_initial_value = 0.
-            slider_visible = False
-            range_initial_value = [axes_limits['x_min'], axes_limits['x_max']]
+            percentage_initial_value = [0.]
+            percentage_visible = False
+            range_initial_value = [0., 100.]
             range_visible = False
-        elif isinstance(axes_limits['x'], float):
+        elif isinstance(axes_x_limits, float):
             toggles_initial_value = 'percentage'
-            slider_initial_value = axes_limits['x']
-            slider_visible = True
-            range_initial_value = [axes_limits['x_min'], axes_limits['x_max']]
+            percentage_initial_value = [axes_x_limits]
+            percentage_visible = True
+            range_initial_value = [0., 100.]
             range_visible = False
         else:
             toggles_initial_value = 'range'
-            slider_initial_value = 0.
-            slider_visible = False
-            range_initial_value = axes_limits['x']
+            percentage_initial_value = [0.]
+            percentage_visible = False
+            range_initial_value = axes_x_limits
             range_visible = True
         self.axes_x_limits_toggles = ipywidgets.ToggleButtons(
             description='X limits:', value=toggles_initial_value,
             options=['auto', 'percentage', 'range'], margin='0.2cm')
-        self.axes_x_limits_percentage = ipywidgets.FloatSlider(
-            min=-1.5, max=1.5, step=0.05, value=slider_initial_value,
-            width='4cm', visible=slider_visible, continuous_update=False)
-        self.axes_x_limits_range = ipywidgets.FloatRangeSlider(
-            value=range_initial_value, width='4cm', visible=range_visible,
-            continuous_update=False, min=axes_limits['x_min'],
-            max=axes_limits['x_max'], step=axes_limits['x_step'])
+        self.axes_x_limits_percentage = ListWidget(
+            percentage_initial_value, mode='float', description='',
+            render_function=None, example_visible=False)
+        self.axes_x_limits_percentage.visible = percentage_visible
+        self.axes_x_limits_range = ListWidget(
+            range_initial_value, mode='float', description='',
+            render_function=None, example_visible=False)
+        self.axes_x_limits_range.visible = range_visible
         self.axes_x_limits_options_box = ipywidgets.VBox(
             children=[self.axes_x_limits_percentage, self.axes_x_limits_range])
         self.axes_x_limits_box = ipywidgets.HBox(
@@ -2662,34 +2661,35 @@ class AxesLimitsWidget(MenpoWidget):
                       self.axes_x_limits_options_box], align='center')
 
         # y limits
-        if axes_limits['y'] is None:
+        if axes_y_limits is None:
             toggles_initial_value = 'auto'
-            slider_initial_value = 0.
-            slider_visible = False
-            range_initial_value = [axes_limits['y_min'], axes_limits['y_max']]
+            percentage_initial_value = [0.]
+            percentage_visible = False
+            range_initial_value = [0., 100.]
             range_visible = False
-        elif isinstance(axes_limits['y'], float):
+        elif isinstance(axes_y_limits, float):
             toggles_initial_value = 'percentage'
-            slider_initial_value = axes_limits['y']
-            slider_visible = True
-            range_initial_value = [axes_limits['y_min'], axes_limits['y_max']]
+            percentage_initial_value = [axes_y_limits]
+            percentage_visible = True
+            range_initial_value = [0., 100.]
             range_visible = False
         else:
             toggles_initial_value = 'range'
-            slider_initial_value = 0.
-            slider_visible = False
-            range_initial_value = axes_limits['y']
+            percentage_initial_value = [0.]
+            percentage_visible = False
+            range_initial_value = axes_y_limits
             range_visible = True
         self.axes_y_limits_toggles = ipywidgets.ToggleButtons(
             description='Y limits:', value=toggles_initial_value,
             options=['auto', 'percentage', 'range'], margin='0.2cm')
-        self.axes_y_limits_percentage = ipywidgets.FloatSlider(
-            min=-1.5, max=1.5, step=0.05, value=slider_initial_value,
-            width='4cm', visible=slider_visible, continuous_update=False)
-        self.axes_y_limits_range = ipywidgets.FloatRangeSlider(
-            value=range_initial_value, width='4cm', visible=range_visible,
-            continuous_update=False, min=axes_limits['y_min'],
-            max=axes_limits['y_max'], step=axes_limits['y_step'])
+        self.axes_y_limits_percentage = ListWidget(
+            percentage_initial_value, mode='float', description='',
+            render_function=None, example_visible=False)
+        self.axes_y_limits_percentage.visible = percentage_visible
+        self.axes_y_limits_range = ListWidget(
+            range_initial_value, mode='float', description='',
+            render_function=None, example_visible=False)
+        self.axes_y_limits_range.visible = range_visible
         self.axes_y_limits_options_box = ipywidgets.VBox(
             children=[self.axes_y_limits_percentage, self.axes_y_limits_range])
         self.axes_y_limits_box = ipywidgets.HBox(
@@ -2699,7 +2699,7 @@ class AxesLimitsWidget(MenpoWidget):
         # Create final widget
         children = [self.axes_x_limits_box, self.axes_y_limits_box]
         super(AxesLimitsWidget, self).__init__(
-            children, Dict, {'x': axes_limits['x'], 'y': axes_limits['y']},
+            children, Dict, {'x': axes_x_limits, 'y': axes_y_limits},
             render_function=render_function, orientation='vertical',
             align='start')
 
@@ -2732,28 +2732,31 @@ class AxesLimitsWidget(MenpoWidget):
             if self.axes_x_limits_toggles.value == 'auto':
                 x_val = None
             elif self.axes_x_limits_toggles.value == 'percentage':
-                x_val = self.axes_x_limits_percentage.value
+                x_val = self.axes_x_limits_percentage.selected_values[0]
             else:
-                x_val = list(self.axes_x_limits_range.value)
+                x_val = self.axes_x_limits_range.selected_values
             if self.axes_y_limits_toggles.value == 'auto':
                 y_val = None
             elif self.axes_y_limits_toggles.value == 'percentage':
-                y_val = self.axes_y_limits_percentage.value
+                y_val = self.axes_y_limits_percentage.selected_values[0]
             else:
-                y_val = list(self.axes_y_limits_range.value)
+                y_val = self.axes_y_limits_range.selected_values
             self.selected_values = {'x': x_val, 'y': y_val}
         self.axes_x_limits_toggles.on_trait_change(save_options, 'value')
-        self.axes_x_limits_percentage.on_trait_change(save_options, 'value')
-        self.axes_x_limits_range.on_trait_change(save_options, 'value')
+        self.axes_x_limits_percentage.on_trait_change(save_options,
+                                                      'selected_values')
+        self.axes_x_limits_range.on_trait_change(save_options,
+                                                 'selected_values')
         self.axes_y_limits_toggles.on_trait_change(save_options, 'value')
-        self.axes_y_limits_percentage.on_trait_change(save_options, 'value')
-        self.axes_y_limits_range.on_trait_change(save_options, 'value')
+        self.axes_y_limits_percentage.on_trait_change(save_options,
+                                                      'selected_values')
+        self.axes_y_limits_range.on_trait_change(save_options,
+                                                 'selected_values')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
-              font_weight='', toggles_style='', slider_width='4cm',
-              slider_bar_colour=None, slider_handle_colour=None):
+              font_weight='', toggles_style=''):
         r"""
         Function that defines the styling of the widget.
 
@@ -2806,12 +2809,6 @@ class AxesLimitsWidget(MenpoWidget):
                 or
                 None
 
-        slider_width : `float`, optional
-            The width of the slider
-        slider_bar_colour : `str`, optional
-            The colour of the slider's bar.
-        slider_handle_colour : `str`, optional
-            The colour of the slider's handle.
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
@@ -2819,88 +2816,71 @@ class AxesLimitsWidget(MenpoWidget):
                     font_style, font_weight)
         format_font(self.axes_y_limits_toggles, font_family, font_size,
                     font_style, font_weight)
-        format_font(self.axes_x_limits_percentage, font_family, font_size,
-                    font_style, font_weight)
-        format_font(self.axes_x_limits_range, font_family, font_size, font_style,
-                    font_weight)
-        format_font(self.axes_y_limits_percentage, font_family, font_size,
-                    font_style, font_weight)
-        format_font(self.axes_y_limits_range, font_family, font_size, font_style,
-                    font_weight)
         self.axes_x_limits_toggles.button_style = toggles_style
         self.axes_y_limits_toggles.button_style = toggles_style
-        format_slider(self.axes_x_limits_percentage, slider_width=slider_width,
-                      slider_handle_colour=slider_handle_colour,
-                      slider_bar_colour=slider_bar_colour,
-                      slider_text_visible=True)
-        format_slider(self.axes_y_limits_percentage, slider_width=slider_width,
-                      slider_handle_colour=slider_handle_colour,
-                      slider_bar_colour=slider_bar_colour,
-                      slider_text_visible=True)
-        format_slider(self.axes_x_limits_range, slider_width=slider_width,
-                      slider_handle_colour=slider_handle_colour,
-                      slider_bar_colour=slider_bar_colour,
-                      slider_text_visible=True)
-        format_slider(self.axes_y_limits_range, slider_width=slider_width,
-                      slider_handle_colour=slider_handle_colour,
-                      slider_bar_colour=slider_bar_colour,
-                      slider_text_visible=True)
+        self.axes_x_limits_percentage.style(
+            box_style=box_style, border_visible=False, padding=0,
+            margin=0, text_box_style=box_style, text_box_width=None,
+            font_family=font_family, font_size=font_size,
+            font_style=font_style, font_weight=font_weight)
+        self.axes_x_limits_range.style(
+            box_style=box_style, border_visible=False, padding=0,
+            margin=0, text_box_style=box_style, text_box_width=None,
+            font_family=font_family, font_size=font_size,
+            font_style=font_style, font_weight=font_weight)
+        self.axes_y_limits_percentage.style(
+            box_style=box_style, border_visible=False, padding=0,
+            margin=0, text_box_style=box_style, text_box_width=None,
+            font_family=font_family, font_size=font_size,
+            font_style=font_style, font_weight=font_weight)
+        self.axes_y_limits_range.style(
+            box_style=box_style, border_visible=False, padding=0,
+            margin=0, text_box_style=box_style, text_box_width=None,
+            font_family=font_family, font_size=font_size,
+            font_style=font_style, font_weight=font_weight)
 
-    def set_widget_state(self, axes_limits, allow_callback=True):
+    def set_widget_state(self, axes_x_limits, axes_y_limits,
+                         allow_callback=True):
         r"""
         Method that updates the state of the widget, if the provided `index`
         values are different than `self.selected_values()`.
 
         Parameters
         ----------
-        axes_limits : `dict`
-            The dictionary with the selected options. For example ::
-
-                axes_limits = {'x': None, 'y': 0.1, 'x_min': 0, 'x_max': 100,
-                               'x_step': 1., 'y_min': 0, 'y_max': 100,
-                               'y_step': 1.}
-
+        axes_x_limits : `float` or [`float`, `float`] or ``None``
+            The limits of the x axis.
+        axes_y_limits : `float` or [`float`, `float`] or ``None``
+            The limits of the y axis.
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
-        selected_opts = {
-            'x': self.selected_values['x'],
-            'y': self.selected_values['y'],
-            'x_min': self.axes_x_limits_range.min,
-            'x_max': self.axes_x_limits_range.max,
-            'x_step': self.axes_x_limits_range.step,
-            'y_min': self.axes_y_limits_range.min,
-            'y_max': self.axes_y_limits_range.max,
-            'y_step': self.axes_y_limits_range.step}
         # Check if update is required
-        if axes_limits != selected_opts:
+        if self.selected_values != {'x': axes_x_limits, 'y': axes_y_limits}:
             # temporarily remove render callback
             render_function = self._render_function
             self.remove_render_function()
 
             # update
-            self.axes_x_limits_range.min = axes_limits['x_min']
-            self.axes_x_limits_range.max = axes_limits['x_max']
-            self.axes_x_limits_range.step = axes_limits['x_step']
-            self.axes_y_limits_range.min = axes_limits['y_min']
-            self.axes_y_limits_range.max = axes_limits['y_max']
-            self.axes_y_limits_range.step = axes_limits['y_step']
-            if axes_limits['x'] is None:
+            if axes_x_limits is None:
                 self.axes_x_limits_toggles.value = 'auto'
-            elif isinstance(axes_limits['x'], float):
+            elif isinstance(axes_x_limits, float):
                 self.axes_x_limits_toggles.value = 'percentage'
-                self.axes_x_limits_percentage.value = axes_limits['x']
+                self.axes_x_limits_percentage.set_widget_state(
+                    [axes_x_limits], allow_callback=False)
             else:
                 self.axes_x_limits_toggles.value = 'range'
-                self.axes_x_limits_range.value = axes_limits['x']
-            if axes_limits['y'] is None:
+                self.axes_x_limits_range.set_widget_state(
+                    axes_x_limits, allow_callback=False)
+            if axes_y_limits is None:
                 self.axes_y_limits_toggles.value = 'auto'
-            elif isinstance(axes_limits['y'], float):
+            elif isinstance(axes_y_limits, float):
                 self.axes_y_limits_toggles.value = 'percentage'
-                self.axes_x_limits_percentage.value = axes_limits['y']
+                self.axes_x_limits_percentage.set_widget_state(
+                    [axes_y_limits], allow_callback=False)
             else:
                 self.axes_y_limits_toggles.value = 'range'
-                self.axes_y_limits_range.value = axes_limits['y']
+                self.axes_y_limits_range.set_widget_state(
+                    axes_y_limits, allow_callback=False)
 
             # re-assign render callback
             self.add_render_function(render_function)
@@ -3141,13 +3121,7 @@ class AxesOptionsWidget(MenpoWidget):
                             'axes_font_size': 10, 'axes_font_style': 'normal',
                             'axes_font_weight': 'normal',
                             'axes_x_ticks': [0, 100], 'axes_y_ticks': None,
-                            'axes_limits': axes_limits_options}
-
-        where ::
-
-            axes_limits_options = {'x': None, 'y': 0.1,
-                                   'x_min': 0, 'x_max': 100, 'x_step': 1,
-                                   'y_min': 0, 'y_max': 100, 'y_step': 1}
+                            'axes_x_limits': None, 'axes_y_limits': 1.}
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
@@ -3225,8 +3199,9 @@ class AxesOptionsWidget(MenpoWidget):
             margin='0.2cm')
 
         # axes limits options
-        self.axes_limits_widget = AxesLimitsWidget(axes_options['axes_limits'],
-                                                   render_function=None)
+        self.axes_limits_widget = AxesLimitsWidget(
+            axes_options['axes_x_limits'], axes_options['axes_y_limits'],
+            render_function=None)
 
         # options tab
         self.axes_options_tab = ipywidgets.Tab(
@@ -3235,18 +3210,9 @@ class AxesOptionsWidget(MenpoWidget):
         self.axes_options_tab.set_title(1, 'Limits')
 
         # Create final widget
-        opts = {'render_axes': axes_options['render_axes'],
-                'axes_font_name': axes_options['axes_font_name'],
-                'axes_font_size': axes_options['axes_font_size'],
-                'axes_font_style': axes_options['axes_font_style'],
-                'axes_font_weight': axes_options['axes_font_weight'],
-                'axes_x_ticks': axes_options['axes_x_ticks'],
-                'axes_y_ticks': axes_options['axes_y_ticks'],
-                'axes_x_limits': axes_options['axes_limits']['x'],
-                'axes_y_limits': axes_options['axes_limits']['y']}
         children = [self.axes_options_tab]
         super(AxesOptionsWidget, self).__init__(
-            children, Dict, opts, render_function=render_function,
+            children, Dict, axes_options, render_function=render_function,
             orientation='vertical', align='start')
 
         # Set functionality
@@ -3285,35 +3251,20 @@ class AxesOptionsWidget(MenpoWidget):
             The new axes options. Example ::
 
                 axes_options = {'render_axes': True, 'axes_font_name': 'serif',
-                                'axes_font_size': 10, 'axes_font_style': 'normal',
+                                'axes_font_size': 10,
+                                'axes_font_style': 'normal',
                                 'axes_font_weight': 'normal',
                                 'axes_x_ticks': [0, 100], 'axes_y_ticks': None,
-                                'axes_limits': axes_limits_options}
-
-            where ::
-
-                axes_limits_options = {'x': None, 'y': 0.1,
-                                       'x_min': 0, 'x_max': 100, 'x_step': 1,
-                                       'y_min': 0, 'y_max': 100, 'y_step': 1}
+                                'axes_x_limits': None, 'axes_y_limits': 1.}
 
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
-        new_opts = {'render_axes': axes_options['render_axes'],
-                    'axes_font_name': axes_options['axes_font_name'],
-                    'axes_font_size': axes_options['axes_font_size'],
-                    'axes_font_style': axes_options['axes_font_style'],
-                    'axes_font_weight': axes_options['axes_font_weight'],
-                    'axes_x_ticks': axes_options['axes_x_ticks'],
-                    'axes_y_ticks': axes_options['axes_y_ticks'],
-                    'axes_x_limits': axes_options['axes_limits']['x'],
-                    'axes_y_limits': axes_options['axes_limits']['y']}
-
         # temporarily remove render callback
         render_function = self._render_function
         self.remove_render_function()
 
-        if self.selected_values != new_opts:
+        if self.selected_values != axes_options:
             # update
             self.render_axes_checkbox.value = axes_options['render_axes']
             self.axes_font_name_dropdown.value = axes_options['axes_font_name']
@@ -3326,8 +3277,10 @@ class AxesOptionsWidget(MenpoWidget):
                           'y': axes_options['axes_y_ticks']}
             self.axes_ticks_widget.set_widget_state(axes_ticks,
                                                     allow_callback=False)
-        self.axes_limits_widget.set_widget_state(axes_options['axes_limits'],
-                                                 allow_callback=False)
+            axes_limits = {'x': axes_options['axes_x_limits'],
+                           'y': axes_options['axes_y_limits']}
+            self.axes_limits_widget.set_widget_state(axes_limits,
+                                                     allow_callback=False)
 
         # re-assign render callback
         self.add_render_function(render_function)
@@ -3406,8 +3359,7 @@ class AxesOptionsWidget(MenpoWidget):
         self.axes_limits_widget.style(
             box_style=None, border_visible=False, font_family=font_family,
             font_size=font_size, font_style=font_style,
-            font_weight=font_weight, toggles_style='', slider_bar_colour=None,
-            slider_handle_colour=None)
+            font_weight=font_weight, toggles_style='')
 
 
 class LegendOptionsWidget(MenpoWidget):
