@@ -2459,7 +2459,7 @@ class NumberingOptionsWidget(MenpoWidget):
                 'numbers_font_style': self.numbers_font_style_dropdown.value,
                 'numbers_font_weight': self.numbers_font_weight_dropdown.value,
                 'numbers_font_colour':
-                    self.numbers_font_colour_widget.selected_values,
+                    self.numbers_font_colour_widget.selected_values[0],
                 'numbers_horizontal_align':
                     self.numbers_horizontal_align_dropdown.value,
                 'numbers_vertical_align':

@@ -1892,16 +1892,20 @@ class RendererOptionsWidget(MenpoWidget):
                     render_checkbox_title='Render numbering'))
                 self.tab_titles.append('Numbering')
             elif o == 'zoom_two':
+                tmp = {'min': 0.1, 'max': 4., 'step': 0.05,
+                       'zoom': renderer_options[o]}
                 self.options_widgets.append(ZoomTwoScalesWidget(
-                    renderer_options[o], render_function=None,
+                    tmp, render_function=None,
                     description='Scale: ',
                     minus_description='fa-search-minus',
                     plus_description='fa-search-plus',
                     continuous_update=False))
                 self.tab_titles.append('Zoom')
             elif o == 'zoom_one':
+                tmp = {'min': 0.1, 'max': 4., 'step': 0.05,
+                       'zoom': renderer_options[o]}
                 self.options_widgets.append(ZoomOneScaleWidget(
-                    renderer_options[o], render_function=None,
+                    tmp, render_function=None,
                     description='Scale: ',
                     minus_description='fa-search-minus',
                     plus_description='fa-search-plus',
@@ -1949,14 +1953,6 @@ class RendererOptionsWidget(MenpoWidget):
         # update default values
         current_key = self.get_key(self.labels)
         self.default_options[current_key] = self.selected_values.copy()
-        if 'zoom_one' in self.default_options[current_key]:
-            self.default_options[current_key]['zoom_one'] = {
-                'min': 0.1, 'max': 4., 'step': 0.05,
-                'zoom': self.selected_values['zoom_one']}
-        if 'zoom_two' in self.default_options[current_key]:
-            self.default_options[current_key]['zoom_two'] = {
-                'min': 0.1, 'max': 4., 'step': 0.05,
-                'zoom': self.selected_values['zoom_two']}
 
     def add_callbacks(self):
         for wid in self.options_widgets:
@@ -2000,26 +1996,24 @@ class RendererOptionsWidget(MenpoWidget):
                         'alpha': 1.}
                 elif o == 'numbering':
                     self.default_options[key][o] = {
-                        'render_numbering': True, 'numbers_font_name': 'serif',
+                        'render_numbering': False,
+                        'numbers_font_name': 'sans-serif',
                         'numbers_font_size': 10, 'numbers_font_style': 'normal',
                         'numbers_font_weight': 'normal',
-                        'numbers_font_colour': ['black'],
+                        'numbers_font_colour': 'black',
                         'numbers_horizontal_align': 'center',
                         'numbers_vertical_align': 'bottom'}
                 elif o == 'zoom_one':
-                    self.default_options[key][o] = {
-                        'min': 0.1, 'max': 4., 'step': 0.05, 'zoom': 1.}
+                    self.default_options[key][o] = 1.
                 elif o == 'zoom_two':
-                    self.default_options[key][o] = {
-                        'zoom': [1., 1.], 'min': 0.1, 'max': 4.,
-                        'step': 0.05, 'lock_aspect_ratio': False}
+                    self.default_options[key][o] = [1., 1.]
                 elif o == 'axes':
                     self.default_options[key][o] = {
-                        'render_axes': False, 'axes_font_name': 'serif',
+                        'render_axes': False, 'axes_font_name': 'sans-serif',
                         'axes_font_size': 10, 'axes_font_style': 'normal',
                         'axes_font_weight': 'normal',
                         'axes_x_limits': None, 'axes_y_limits': None,
-                        'axes_x_ticks': [0, 100], 'axes_y_ticks': None}
+                        'axes_x_ticks': None, 'axes_y_ticks': None}
                 elif o == 'legend':
                     rl = True
                     if labels is None:
@@ -2413,7 +2407,7 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
             ''        No style
             ========= ============================
     """
-    def __init__(self, renderer, file_format='png', dpi=None,
+    def __init__(self, renderer=None, file_format='png', dpi=None,
                  orientation='portrait', papertype='letter', transparent=False,
                  facecolour='white', edgecolour='white', pad_inches=0.,
                  overwrite=False, style='minimal'):
@@ -2518,6 +2512,10 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
         self.align = 'start'
 
         # Assign renderer
+        if renderer is None:
+            from menpo.visualize.viewmatplotlib import MatplotlibImageViewer2d
+            renderer = MatplotlibImageViewer2d(figure_id=None, new_figure=True,
+                                               image=np.zeros((10, 10)))
         self.renderer = renderer
 
         # Set style
@@ -2536,7 +2534,7 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
         def save_function(name):
             # set save button state
             self.error_latex.value = ''
-            self.save_button.description = 'Saving...'
+            self.save_button.description = '  Saving...'
             self.save_button.disabled = True
 
             # save figure
@@ -2567,7 +2565,7 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
                     self.error_latex.value = e.message
 
             # set save button state
-            self.save_button.description = 'Save'
+            self.save_button.description = '  Save'
             self.save_button.disabled = False
         self.save_button.on_click(save_function)
 
@@ -4090,7 +4088,7 @@ class PlotOptionsWidget(MenpoWidget):
                 'legend_horizontal_spacing': 1., 'legend_vertical_spacing': 1.,
                 'legend_border': True, 'legend_border_padding': 0.5,
                 'legend_shadow': False, 'legend_rounded_corners': False,
-                'render_axes': True, 'axes_font_name': 'serif',
+                'render_axes': True, 'axes_font_name': 'sans-serif',
                 'axes_font_size': 10, 'axes_font_style': 'normal',
                 'axes_font_weight': 'normal', 'axes_x_limits': None,
                 'axes_y_limits': None, 'axes_x_ticks': None,
