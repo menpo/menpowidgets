@@ -1,5 +1,5 @@
 import ipywidgets
-from traitlets.traitlets import Int, Dict
+from traitlets.traitlets import Int, Dict, List
 from traitlets import link
 from collections import OrderedDict
 import numpy as np
@@ -12,7 +12,8 @@ from .tools import (IndexSliderWidget, IndexButtonsWidget, SlicingCommandWidget,
                     GridOptionsWidget, ImageOptionsWidget,
                     ColourSelectionWidget, HOGOptionsWidget, DSIFTOptionsWidget,
                     IGOOptionsWidget, LBPOptionsWidget, DaisyOptionsWidget)
-from .style import map_styles_to_hex_colours, format_box, format_font
+from .style import (map_styles_to_hex_colours, format_box, format_font,
+                    format_slider)
 from .utils import sample_colours_from_colourmap
 
 
@@ -3163,7 +3164,6 @@ class PatchOptionsWidget(MenpoWidget):
     to import it:
 
         >>> from menpowidgets.options_old import PatchOptionsWidget
-        >>> from IPython.display import display
 
     Now let's define a render function that will get called on every widget
     change and will dynamically print the selected patches and bboxes flag:
@@ -3193,7 +3193,7 @@ class PatchOptionsWidget(MenpoWidget):
         >>> wid = PatchOptionsWidget(patch_options,
         >>>                          render_function=render_function,
         >>>                          style='info', substyle='danger')
-        >>> display(wid)
+        >>> wid
 
     By playing around with the widget, printed message gets updated. Finally,
     let's change the widget status with a new dictionary of options:
@@ -3829,33 +3829,44 @@ class PlotOptionsWidget(MenpoWidget):
 
     """
     def __init__(self, legend_entries, render_function=None, style='minimal',
-                 tabs_style='minimal', renderer_tabs_style='minimal'):
+                 tabs_style='minimal'):
         # Assign properties
         self.legend_entries = legend_entries
-        self.n_curves = len(self.legend_entries)
+        self.n_curves = len(legend_entries)
 
         # Create default options
         default_options = self.create_default_options()
 
         # Create children
-        self.options_widgets = []
-        self.options_widgets.append(LineOptionsWidget(
+        self.lines_wid = LineOptionsWidget(
             {'render_lines': default_options['render_lines'][0],
              'line_width': default_options['line_width'][0],
              'line_colour': [default_options['line_colour'][0]],
              'line_style': default_options['line_style'][0]},
             render_function=None, render_checkbox_title='Render lines',
-            labels=None))
-        self.options_widgets.append(MarkerOptionsWidget(
+            labels=None)
+        self.markers_wid = MarkerOptionsWidget(
             {'render_markers': default_options['render_markers'][0],
              'marker_style': default_options['marker_style'][0],
              'marker_size': default_options['marker_size'][0],
-             'marker_face_colour': default_options['marker_face_colour'][0],
+             'marker_face_colour': [default_options['marker_face_colour'][0]],
              'marker_edge_colour': [default_options['marker_edge_colour'][0]],
-             'marker_edge_width': [default_options['marker_edge_width'][0]]},
+             'marker_edge_width': default_options['marker_edge_width'][0]},
             render_function=None, render_checkbox_title='Render markers',
-            labels=None))
-        self.options_widgets.append(LegendOptionsWidget(
+            labels=None)
+        curves_dict = {}
+        for i, s in enumerate(self.legend_entries):
+            curves_dict[s] = i
+        self.curves_dropdown = ipywidgets.Dropdown(
+            description='Curve: ', options=curves_dict, value=0)
+        self.lines_markers_tab = ipywidgets.Tab(
+            children=[self.lines_wid, self.markers_wid], margin='0.2cm')
+        self.lines_markers_tab.set_title(0, 'Lines')
+        self.lines_markers_tab.set_title(1, 'Markers')
+        self.lines_markers_box = ipywidgets.VBox(
+            children=[self.curves_dropdown, self.lines_markers_tab],
+            align='start')
+        self.legend_wid = LegendOptionsWidget(
             {'render_legend': default_options['render_legend'],
              'legend_title': default_options['legend_title'],
              'legend_font_name': default_options['legend_font_name'],
@@ -3873,8 +3884,8 @@ class PlotOptionsWidget(MenpoWidget):
              'legend_border_padding': default_options['legend_border_padding'],
              'legend_shadow': default_options['legend_shadow'],
              'legend_rounded_corners': default_options['legend_rounded_corners']},
-            render_function=None, render_checkbox_title='Render legend'))
-        self.options_widgets.append(AxesOptionsWidget(
+            render_function=None, render_checkbox_title='Render legend')
+        self.axes_wid = AxesOptionsWidget(
             {'render_axes': default_options['render_axes'],
              'axes_font_name': default_options['axes_font_name'],
              'axes_font_size': default_options['axes_font_size'],
@@ -3884,40 +3895,40 @@ class PlotOptionsWidget(MenpoWidget):
              'axes_y_limits': default_options['axes_y_limits'],
              'axes_x_ticks': default_options['axes_x_ticks'],
              'axes_y_ticks': default_options['axes_y_ticks']},
-            render_function=None, render_checkbox_title='Render axes'))
-        self.options_widgets.append(ZoomTwoScalesWidget(
+            render_function=None, render_checkbox_title='Render axes')
+        self.zoom_wid = ZoomTwoScalesWidget(
             {'zoom': default_options['zoom'], 'min': 0.1, 'max': 4.,
              'step': 0.05, 'lock_aspect_ratio': False}, render_function=None,
-            description='Scale: ', continuous_update=False))
-        self.options_widgets.append(GridOptionsWidget(
+            description='Scale: ', continuous_update=False)
+        self.grid_wid = GridOptionsWidget(
             {'render_grid': default_options['render_grid'],
              'grid_line_width': default_options['grid_line_width'],
              'grid_line_style': default_options['grid_line_style']},
-            render_function=None, render_checkbox_title='Render grid'))
-
-        self.suboptions_tab = ipywidgets.Tab(children=self.options_widgets)
-        self.options_tab.set_title(0, 'Figure')
-        self.options_tab.set_title(1, 'Renderer')
-
-        self.curves_dropdown = ipywidgets.Dropdown(
-            options=self.legend_entries, value=self.legend_entries[0])
-        self.renderer_widget = RendererOptionsWidget(
-            options_tabs=options_tabs, labels=None, render_function=None)
-        self.renderer_options = ipywidgets.VBox(
-            children=[self.curves_dropdown, self.renderer_widget])
-        self.x_label = ipywidgets.Text(description='X label', margin='0.05cm')
-        self.y_label = ipywidgets.Text(description='Y label', margin='0.05cm')
-        self.title = ipywidgets.Text(description='Title', margin='0.05cm')
+            render_function=None, render_checkbox_title='Render grid')
+        self.x_label = ipywidgets.Text(description='X label', margin='0.05cm',
+                                       value=default_options['x_label'])
+        self.y_label = ipywidgets.Text(description='Y label', margin='0.05cm',
+                                       value=default_options['y_label'])
+        self.title = ipywidgets.Text(description='Title', margin='0.05cm',
+                                     value=default_options['title'])
         self.legend_entries_text = ipywidgets.Textarea(
             description='Legend', width='73mm', margin='0.05cm',
             value=self._convert_list_to_legend_entries(self.legend_entries))
         self.plot_related_options = ipywidgets.VBox(
             children=[self.x_label, self.y_label, self.title,
                       self.legend_entries_text])
+
+        # Group widgets
         self.options_tab = ipywidgets.Tab(
-            children=[self.plot_related_options, self.renderer_widget])
+            children=[self.plot_related_options, self.lines_markers_box,
+                      self.legend_wid, self.axes_wid, self.zoom_wid,
+                      self.grid_wid])
         self.options_tab.set_title(0, 'Figure')
         self.options_tab.set_title(1, 'Renderer')
+        self.options_tab.set_title(2, 'Legend')
+        self.options_tab.set_title(3, 'Axes')
+        self.options_tab.set_title(4, 'Zoom')
+        self.options_tab.set_title(5, 'Grid')
 
         # Create final widget
         children = [self.options_tab]
@@ -3926,36 +3937,134 @@ class PlotOptionsWidget(MenpoWidget):
             orientation='vertical', align='start')
 
         # Set style
-        self.predefined_style(style, tabs_style, renderer_tabs_style)
+        self.predefined_style(style, tabs_style)
 
         # Set functionality
-        def legend_entries_function(name, value):
-            tmp_entries = str(self.legend_entries.value).splitlines()
+        def get_legend_entries(name, value):
+            # get legend entries
+            tmp_entries = str(self.legend_entries_text.value).splitlines()
             if len(tmp_entries) < self.n_curves:
                 n_missing = self.n_curves - len(tmp_entries)
                 for j in range(n_missing):
                     kk = j + len(tmp_entries)
                     tmp_entries.append("curve {}".format(kk))
-            self.selected_values['legend_entries'] = tmp_entries[:self.n_curves]
-        self.legend_entries.on_trait_change(legend_entries_function, 'value')
+            self.legend_entries = tmp_entries[:self.n_curves]
+            # update dropdown menu
+            curves_dir = {}
+            for j, le in enumerate(self.legend_entries):
+                curves_dir[le] = j
+            self.curves_dropdown.options = curves_dir
+            if self.curves_dropdown.value == 0 and self.n_curves > 1:
+                self.curves_dropdown.value = 1
+            self.curves_dropdown.value = 0
+        self.legend_entries_text.on_trait_change(get_legend_entries, 'value')
 
-        def update_renderer_widget_objects(name, value):
-            self.renderer_widget.update_object_names(
-                self.selected_values['legend_entries'])
-        self.options_tab.on_trait_change(update_renderer_widget_objects,
-                                         'selected_index')
+        def save_options(name, value):
+            # get lines and markers options
+            k = self.curves_dropdown.value
+            render_lines = list(self.selected_values['render_lines'])
+            render_lines[k] = self.lines_wid.selected_values['render_lines']
+            line_colour = list(self.selected_values['line_colour'])
+            line_colour[k] = self.lines_wid.selected_values['line_colour'][0]
+            line_style = list(self.selected_values['line_style'])
+            line_style[k] = self.lines_wid.selected_values['line_style']
+            line_width = list(self.selected_values['line_width'])
+            line_width[k] = self.lines_wid.selected_values['line_width']
+            render_markers = list(self.selected_values['render_markers'])
+            render_markers[k] = self.markers_wid.selected_values['render_markers']
+            marker_style = list(self.selected_values['marker_style'])
+            marker_style[k] = self.markers_wid.selected_values['marker_style']
+            marker_size = list(self.selected_values['marker_size'])
+            marker_size[k] = self.markers_wid.selected_values['marker_size']
+            marker_face_colour = list(self.selected_values['marker_face_colour'])
+            marker_face_colour[k] = self.markers_wid.selected_values['marker_face_colour'][0]
+            marker_edge_colour = list(self.selected_values['marker_edge_colour'])
+            marker_edge_colour[k] = self.markers_wid.selected_values['marker_edge_colour'][0]
+            marker_edge_width = list(self.selected_values['marker_edge_width'])
+            marker_edge_width[k] = self.markers_wid.selected_values['marker_edge_width']
+            self.selected_values = {
+                'legend_entries': self.legend_entries,
+                'title': str(self.title.value),
+                'x_label': str(self.x_label.value),
+                'y_label': str(self.y_label.value),
+                'render_lines': render_lines, 'line_colour': line_colour,
+                'line_style': line_style, 'line_width': line_width,
+                'render_markers': render_markers, 'marker_style': marker_style,
+                'marker_size': marker_size,
+                'marker_face_colour': marker_face_colour,
+                'marker_edge_colour': marker_edge_colour,
+                'marker_edge_width': marker_edge_width,
+                'render_legend': self.legend_wid.selected_values['render_legend'],
+                'legend_title': self.legend_wid.selected_values['legend_title'],
+                'legend_font_name': self.legend_wid.selected_values['legend_font_name'],
+                'legend_font_style': self.legend_wid.selected_values['legend_font_style'],
+                'legend_font_size': self.legend_wid.selected_values['legend_font_size'],
+                'legend_font_weight': self.legend_wid.selected_values['legend_font_weight'],
+                'legend_marker_scale': self.legend_wid.selected_values['legend_marker_scale'],
+                'legend_location': self.legend_wid.selected_values['legend_location'],
+                'legend_bbox_to_anchor': self.legend_wid.selected_values['legend_bbox_to_anchor'],
+                'legend_border_axes_pad': self.legend_wid.selected_values['legend_border_axes_pad'],
+                'legend_n_columns': self.legend_wid.selected_values['legend_n_columns'],
+                'legend_horizontal_spacing': self.legend_wid.selected_values['legend_horizontal_spacing'],
+                'legend_vertical_spacing': self.legend_wid.selected_values['legend_vertical_spacing'],
+                'legend_border': self.legend_wid.selected_values['legend_border'],
+                'legend_border_padding': self.legend_wid.selected_values['legend_border_padding'],
+                'legend_shadow': self.legend_wid.selected_values['legend_shadow'],
+                'legend_rounded_corners': self.legend_wid.selected_values['legend_rounded_corners'],
+                'render_axes': self.axes_wid.selected_values['render_axes'],
+                'axes_font_name': self.axes_wid.selected_values['axes_font_name'],
+                'axes_font_size': self.axes_wid.selected_values['axes_font_size'],
+                'axes_font_style': self.axes_wid.selected_values['axes_font_style'],
+                'axes_font_weight': self.axes_wid.selected_values['axes_font_weight'],
+                'axes_x_limits': self.axes_wid.selected_values['axes_x_limits'],
+                'axes_y_limits': self.axes_wid.selected_values['axes_y_limits'],
+                'axes_x_ticks': self.axes_wid.selected_values['axes_x_ticks'],
+                'axes_y_ticks': self.axes_wid.selected_values['axes_y_ticks'],
+                'zoom': self.zoom_wid.selected_values,
+                'render_grid': self.grid_wid.selected_values['render_grid'],
+                'grid_line_style': self.grid_wid.selected_values['grid_line_style'],
+                'grid_line_width': self.grid_wid.selected_values['grid_line_width']}
+        self.title.on_trait_change(save_options, 'value')
+        self.x_label.on_trait_change(save_options, 'value')
+        self.y_label.on_trait_change(save_options, 'value')
+        self.legend_entries_text.on_trait_change(save_options, 'value')
+        self.lines_wid.on_trait_change(save_options, 'selected_values')
+        self.markers_wid.on_trait_change(save_options, 'selected_values')
+        self.axes_wid.on_trait_change(save_options, 'selected_values')
+        self.legend_wid.on_trait_change(save_options, 'selected_values')
+        self.grid_wid.on_trait_change(save_options, 'selected_values')
+        self.zoom_wid.on_trait_change(save_options, 'selected_values')
 
-        def get_graph_related_options(name, value):
-            self.selected_values['x_label'] = str(self.x_label.value)
-            self.selected_values['y_label'] = str(self.y_label.value)
-            self.selected_values['title'] = str(self.title.value)
-            self.selected_values['x_axis_limits'] = self.x_limit.value
-            self.selected_values['y_axis_limits'] = self.y_limit.value
-        self.x_label.on_trait_change(get_graph_related_options, 'value')
-        self.y_label.on_trait_change(get_graph_related_options, 'value')
-        self.title.on_trait_change(get_graph_related_options, 'value')
-        self.x_limit.on_trait_change(get_graph_related_options, 'value')
-        self.y_limit.on_trait_change(get_graph_related_options, 'value')
+        def update_lines_markers(name, value):
+            k = self.curves_dropdown.value
+
+            # remove save options callback
+            self.lines_wid.on_trait_change(save_options, 'selected_values',
+                                           remove=True)
+            self.markers_wid.on_trait_change(save_options, 'selected_values',
+                                             remove=True)
+
+            # update lines
+            self.lines_wid.set_widget_state(
+                {'render_lines': self.selected_values['render_lines'][k],
+                 'line_width': self.selected_values['line_width'][k],
+                 'line_colour': [self.selected_values['line_colour'][k]],
+                 'line_style': self.selected_values['line_style'][k]},
+                labels=None, allow_callback=False)
+            # update markers
+            self.markers_wid.set_widget_state(
+                {'render_markers': self.selected_values['render_markers'][k],
+                 'marker_style': self.selected_values['marker_style'][k],
+                 'marker_size': self.selected_values['marker_size'][k],
+                 'marker_face_colour': [self.selected_values['marker_face_colour'][k]],
+                 'marker_edge_colour': [self.selected_values['marker_edge_colour'][k]],
+                 'marker_edge_width': self.selected_values['marker_edge_width'][k]},
+                labels=None, allow_callback=False)
+
+            # add save options callback
+            self.lines_wid.on_trait_change(save_options, 'selected_values')
+            self.markers_wid.on_trait_change(save_options, 'selected_values')
+        self.curves_dropdown.on_trait_change(update_lines_markers, 'value')
 
     def create_default_options(self):
         render_lines = [True] * self.n_curves
@@ -3981,11 +4090,11 @@ class PlotOptionsWidget(MenpoWidget):
                 'legend_horizontal_spacing': 1., 'legend_vertical_spacing': 1.,
                 'legend_border': True, 'legend_border_padding': 0.5,
                 'legend_shadow': False, 'legend_rounded_corners': False,
-                'render_axes': False, 'axes_font_name': 'serif',
+                'render_axes': True, 'axes_font_name': 'serif',
                 'axes_font_size': 10, 'axes_font_style': 'normal',
                 'axes_font_weight': 'normal', 'axes_x_limits': None,
                 'axes_y_limits': None, 'axes_x_ticks': None,
-                'axes_y_ticks': None, 'render_grid': False,
+                'axes_y_ticks': None, 'render_grid': True,
                 'grid_line_style': '--', 'grid_line_width': 0.5,
                 'render_lines': render_lines, 'line_width': line_width,
                 'line_colour': line_colour, 'line_style': line_style,
@@ -3993,17 +4102,7 @@ class PlotOptionsWidget(MenpoWidget):
                 'marker_face_colour': marker_face_colour,
                 'marker_edge_colour': marker_edge_colour,
                 'marker_style': marker_style,
-                'marker_edge_width': marker_edge_width, 'zoom': [1., 1.],}
-
-    def _update_widgets(self):
-        key = self.curves_dropdown.value
-        curve_options = self.curves_options[key]
-        # update lines
-        self.renderer_widget.options_widgets[0].set_widget_state(
-            {'render_lines': curve_options['render_lines'],
-             'line_width': curve_options['line_width'],
-             'line_colour': curve_options['line_colour'],
-             'line_style': curve_options['line_style']}, labels=None)
+                'marker_edge_width': marker_edge_width, 'zoom': [1., 1.]}
 
     def _convert_list_to_legend_entries(self, l):
         tmp_lines = []
@@ -4016,14 +4115,9 @@ class PlotOptionsWidget(MenpoWidget):
     def style(self, box_style=None, border_visible=False, border_color='black',
               border_style='solid', border_width=1, border_radius=0,
               padding='0.2cm', margin=0, tabs_box_style=None,
-              tabs_border_visible=True, tabs_border_color='black',
+              tabs_border_visible=True, tabs_border_colour='black',
               tabs_border_style='solid', tabs_border_width=1,
               tabs_border_radius=1, tabs_padding=0, tabs_margin=0,
-              renderer_tabs_box_style=None, renderer_tabs_border_visible=True,
-              renderer_tabs_border_color='black',
-              renderer_tabs_border_style='solid',
-              renderer_tabs_border_width=1, renderer_tabs_border_radius=1,
-              renderer_tabs_padding=0, renderer_tabs_margin=0,
               font_family='', font_size=None, font_style='', font_weight=''):
         r"""
         Function that defines the styling of the widget.
@@ -4141,48 +4235,65 @@ class PlotOptionsWidget(MenpoWidget):
         """
         format_box(self, box_style, border_visible, border_color, border_style,
                    border_width, border_radius, padding, margin)
-        format_box(self.graph_related_options, tabs_box_style,
-                   tabs_border_visible, tabs_border_color, tabs_border_style,
-                   tabs_border_width, tabs_border_radius, tabs_padding,
-                   tabs_margin)
-        self.x_limit.slider_color = map_styles_to_hex_colours(tabs_box_style)
-        self.x_limit.background_color = map_styles_to_hex_colours(tabs_box_style)
-        self.y_limit.slider_color = map_styles_to_hex_colours(tabs_box_style)
-        self.y_limit.background_color = map_styles_to_hex_colours(tabs_box_style)
-        format_box(self.renderer_widget, tabs_box_style, tabs_border_visible,
-                   tabs_border_color, tabs_border_style, tabs_border_width,
-                   tabs_border_radius, tabs_padding, tabs_margin)
-        for wid in self.renderer_widget.options_widgets:
-            wid.style(box_style=renderer_tabs_box_style,
-                      border_visible=renderer_tabs_border_visible,
-                      border_color=renderer_tabs_border_color,
-                      border_style=renderer_tabs_border_style,
-                      border_width=renderer_tabs_border_width,
-                      border_radius=renderer_tabs_border_radius,
-                      padding=renderer_tabs_padding,
-                      margin=renderer_tabs_margin, font_family=font_family,
-                      font_size=font_size, font_style=font_style,
-                      font_weight=font_weight)
+        format_box(self.lines_markers_box, box_style=tabs_box_style,
+                   border_visible=tabs_border_style,
+                   border_colour=tabs_border_colour,
+                   border_style=tabs_border_style,
+                   border_width=tabs_border_width,
+                   border_radius=tabs_border_radius, padding=tabs_padding,
+                   margin=tabs_margin)
+        format_box(self.plot_related_options, box_style=tabs_box_style,
+                   border_visible=tabs_border_style,
+                   border_colour=tabs_border_colour,
+                   border_style=tabs_border_style,
+                   border_width=tabs_border_width,
+                   border_radius=tabs_border_radius, padding=tabs_padding,
+                   margin=tabs_margin)
+        self.lines_wid.style(
+            box_style=tabs_box_style, border_visible=False, padding=0,
+            margin=0, font_family=font_family, font_size=font_size,
+            font_weight=font_weight, font_style=font_style)
+        self.markers_wid.style(
+            box_style=tabs_box_style, border_visible=False, padding=0,
+            margin=0, font_family=font_family, font_size=font_size,
+            font_weight=font_weight, font_style=font_style)
+        self.legend_wid.style(
+            box_style=tabs_box_style, border_visible=tabs_border_visible,
+            border_colour=tabs_border_colour, border_style=tabs_border_style,
+            border_width=tabs_border_width, border_radius=tabs_border_radius,
+            padding=tabs_padding, margin=tabs_margin, font_family=font_family,
+            font_size=font_size, font_weight=font_weight, font_style=font_style)
+        self.zoom_wid.style(
+            box_style=tabs_box_style, border_visible=tabs_border_visible,
+            border_colour=tabs_border_colour, border_style=tabs_border_style,
+            border_width=tabs_border_width, border_radius=tabs_border_radius,
+            padding=tabs_padding, margin=tabs_margin, font_family=font_family,
+            font_size=font_size, font_weight=font_weight, font_style=font_style)
+        self.axes_wid.style(
+            box_style=tabs_box_style, border_visible=tabs_border_visible,
+            border_colour=tabs_border_colour, border_style=tabs_border_style,
+            border_width=tabs_border_width, border_radius=tabs_border_radius,
+            padding=tabs_padding, margin=tabs_margin, font_family=font_family,
+            font_size=font_size, font_weight=font_weight, font_style=font_style)
+        self.grid_wid.style(
+            box_style=tabs_box_style, border_visible=tabs_border_visible,
+            border_colour=tabs_border_colour, border_style=tabs_border_style,
+            border_width=tabs_border_width, border_radius=tabs_border_radius,
+            padding=tabs_padding, margin=tabs_margin, font_family=font_family,
+            font_size=font_size, font_weight=font_weight, font_style=font_style)
         format_font(self, font_family, font_size, font_style, font_weight)
-        format_font(self.renderer_widget.object_selection_dropdown,
-                    font_family, font_size, font_style, font_weight)
-        format_font(self.graph_related_options, font_family, font_size,
-                    font_style, font_weight)
-        format_font(self.x_limit, font_family, font_size, font_style,
-                    font_weight)
-        format_font(self.y_limit, font_family, font_size, font_style,
-                    font_weight)
         format_font(self.x_label, font_family, font_size, font_style,
                     font_weight)
         format_font(self.y_label, font_family, font_size, font_style,
                     font_weight)
         format_font(self.title, font_family, font_size, font_style,
                     font_weight)
-        format_font(self.legend_entries, font_family, font_size, font_style,
+        format_font(self.legend_entries_text, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.curves_dropdown, font_family, font_size, font_style,
                     font_weight)
 
-    def predefined_style(self, style, tabs_style='minimal',
-                         renderer_tabs_style='mininal'):
+    def predefined_style(self, style, tabs_style='minimal'):
         r"""
         Function that sets a predefined style on the widget.
 
@@ -4230,30 +4341,16 @@ class PlotOptionsWidget(MenpoWidget):
                 ''        No style
                 ========= ============================
         """
-        if renderer_tabs_style == 'minimal' or renderer_tabs_style == '':
-            renderer_tabs_style = ''
-            renderer_tabs_border_visible = False
-            renderer_tabs_border_color = 'black'
-            renderer_tabs_border_radius = 0
-            renderer_tabs_padding = 0
-        else:
-            renderer_tabs_style = renderer_tabs_style
-            renderer_tabs_border_visible = True
-            renderer_tabs_border_color = \
-                map_styles_to_hex_colours(renderer_tabs_style)
-            renderer_tabs_border_radius = 10
-            renderer_tabs_padding = '0.3cm'
-
         if tabs_style == 'minimal' or tabs_style == '':
             tabs_style = ''
             tabs_border_visible = True
-            tabs_border_color = 'black'
+            tabs_border_colour = 'black'
             tabs_border_radius = 0
             tabs_padding = 0
         else:
             tabs_style = tabs_style
             tabs_border_visible = True
-            tabs_border_color = map_styles_to_hex_colours(tabs_style)
+            tabs_border_colour = map_styles_to_hex_colours(tabs_style)
             tabs_border_radius = 10
             tabs_padding = '0.2cm'
 
@@ -4264,18 +4361,10 @@ class PlotOptionsWidget(MenpoWidget):
                        font_size=None, font_style='', font_weight='',
                        tabs_box_style=tabs_style,
                        tabs_border_visible=tabs_border_visible,
-                       tabs_border_color=tabs_border_color,
+                       tabs_border_colour=tabs_border_colour,
                        tabs_border_style='solid', tabs_border_width=1,
                        tabs_border_radius=tabs_border_radius,
-                       tabs_padding=tabs_padding, tabs_margin='0.3cm',
-                       renderer_tabs_box_style=renderer_tabs_style,
-                       renderer_tabs_border_visible=renderer_tabs_border_visible,
-                       renderer_tabs_border_color=renderer_tabs_border_color,
-                       renderer_tabs_border_style='solid',
-                       renderer_tabs_border_width=1,
-                       renderer_tabs_border_radius=renderer_tabs_border_radius,
-                       renderer_tabs_padding=renderer_tabs_padding,
-                       renderer_tabs_margin='0.5cm')
+                       tabs_padding=tabs_padding, tabs_margin='0.3cm')
         elif (style == 'info' or style == 'success' or style == 'danger' or
                       style == 'warning'):
             self.style(box_style=style, border_visible=True,
@@ -4285,62 +4374,561 @@ class PlotOptionsWidget(MenpoWidget):
                        font_size=None, font_style='', font_weight='',
                        tabs_box_style=tabs_style,
                        tabs_border_visible=tabs_border_visible,
-                       tabs_border_color=tabs_border_color,
+                       tabs_border_colour=tabs_border_colour,
                        tabs_border_style='solid', tabs_border_width=1,
                        tabs_border_radius=tabs_border_radius,
-                       tabs_padding=tabs_padding, tabs_margin='0.3cm',
-                       renderer_tabs_box_style=renderer_tabs_style,
-                       renderer_tabs_border_visible=renderer_tabs_border_visible,
-                       renderer_tabs_border_color=renderer_tabs_border_color,
-                       renderer_tabs_border_style='solid',
-                       renderer_tabs_border_width=1,
-                       renderer_tabs_border_radius=renderer_tabs_border_radius,
-                       renderer_tabs_padding=renderer_tabs_padding,
-                       renderer_tabs_margin='0.5cm')
+                       tabs_padding=tabs_padding, tabs_margin='0.3cm')
         else:
             raise ValueError('style must be minimal or info or success or '
                              'danger or warning')
 
-    def _get_selected_options(self):
-        # legend options
-        legend_tmp = self.renderer_widget.selected_values[0]['legend']
-        self.selected_values.update(legend_tmp)
 
-        # axes options
-        figure_tmp = self.renderer_widget.selected_values[0]['figure']
-        self.selected_values['render_axes'] = figure_tmp['render_axes']
-        self.selected_values['axes_font_name'] = figure_tmp['axes_font_name']
-        self.selected_values['axes_font_size'] = figure_tmp['axes_font_size']
-        self.selected_values['axes_font_style'] = figure_tmp['axes_font_style']
-        self.selected_values['axes_font_weight'] = \
-            figure_tmp['axes_font_weight']
-        self.selected_values['figure_size'] = \
-            (figure_tmp['x_scale'] * self.initial_figure_size[0],
-             figure_tmp['y_scale'] * self.initial_figure_size[1])
+class LinearModelParametersWidget(MenpoWidget):
+    r"""
+    Creates a widget for selecting parameters values when visualizing a linear
+    model (e.g. PCA model). The widget consists of the following parts from
+    `IPython.html.widgets`:
 
-        # grid options
-        grid_tmp = self.renderer_widget.selected_values[0]['grid']
-        self.selected_values.update(grid_tmp)
+    == =========== ================== ==========================
+    No Object      Variable (`self.`) Description
+    == =========== ================== ==========================
+    1  Button      `plot_button`      The plot variance button
+    2  Button      `reset_button`     The reset button
+    3  HBox        `plot_and_reset`   Contains 1, 2
+                         If mode is 'single'
+    ------------------------------------------------------------
+    4  FloatSlider `slider`           The parameter value slider
+    5  Dropdown    `dropdown_params`  The parameter selector
+    6  HBox        `parameters_wid`   Contains 4, 5
+                         If mode is 'multiple'
+    ------------------------------------------------------------
+    7  FloatSlider `sliders`          `list` of all sliders
+    8  VBox        `parameters_wid`   Contains all 7
+    == =========== ================== ==========================
 
-        # lines and markers options
-        for j in range(self.n_curves):
-            self.selected_values['render_lines'][j] = \
-                self.renderer_widget.selected_values[j]['lines']['render_lines']
-            self.selected_values['line_colour'][j] = \
-                self.renderer_widget.selected_values[j]['lines']['line_colour'][0]
-            self.selected_values['line_style'][j] = \
-                self.renderer_widget.selected_values[j]['lines']['line_style']
-            self.selected_values['line_width'][j] = \
-                self.renderer_widget.selected_values[j]['lines']['line_width']
-            self.selected_values['render_markers'][j] = \
-                self.renderer_widget.selected_values[j]['markers']['render_markers']
-            self.selected_values['marker_style'][j] = \
-                self.renderer_widget.selected_values[j]['markers']['marker_style']
-            self.selected_values['marker_size'][j] = \
-                self.renderer_widget.selected_values[j]['markers']['marker_size']
-            self.selected_values['marker_face_colour'][j] = \
-                self.renderer_widget.selected_values[j]['markers']['marker_face_colour'][0]
-            self.selected_values['marker_edge_colour'][j] = \
-                self.renderer_widget.selected_values[j]['markers']['marker_edge_colour'][0]
-            self.selected_values['marker_edge_width'][j] = \
-                self.renderer_widget.selected_values[j]['markers']['marker_edge_width']
+    Note that:
+
+    * The selected parameters are stored in the ``self.parameters`` `list`.
+    * To set the styling please refer to the ``style()`` and
+      ``predefined_style()`` methods.
+    * To update the state of the widget, please refer to the
+      ``set_widget_state()`` method.
+    * To update the callback function please refer to the
+      ``replace_render_function()`` and ``replace_variance_function()``
+      methods.
+
+    Parameters
+    ----------
+    parameters : `list`
+        The `list` of initial parameters values.
+    render_function : `function` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    mode : {``'single'``, ``'multiple'``}, optional
+        If ``'single'``, only a single slider is constructed along with a
+        dropdown menu that allows the parameter selection.
+        If ``'multiple'``, a slider is constructed for each parameter.
+    params_str : `str`, optional
+        The string that will be used as description of the slider(s). The final
+        description has the form `"{}{}".format(params_str, p)`, where `p` is
+        the parameter number.
+    params_bounds : (`float`, `float`), optional
+        The minimum and maximum bounds, in std units, for the sliders.
+    params_step : `float`, optional
+        The step, in std units, of the sliders.
+    plot_variance_visible : `bool`, optional
+        Defines whether the button for plotting the variance will be visible
+        upon construction.
+    plot_variance_function : `function` or ``None``, optional
+        The plot function that is executed when the plot variance button is
+        clicked. If ``None``, then nothing is assigned.
+    style : See Below, optional
+        Sets a predefined style at the widget. Possible options are
+
+            ========= ============================
+            Style     Description
+            ========= ============================
+            'minimal' Simple black and white style
+            'success' Green-based style
+            'info'    Blue-based style
+            'warning' Yellow-based style
+            'danger'  Red-based style
+            ''        No style
+            ========= ============================
+
+    Example
+    -------
+    Let's create a linear model parameters values widget and then update its
+    state. Firstly, we need to import it:
+
+        >>> from menpowidgets.options_old import LinearModelParametersWidget
+
+    Now let's define a render function that will get called on every widget
+    change and will dynamically print the selected parameters:
+
+        >>> from menpo.visualize import print_dynamic
+        >>> def render_function(name, value):
+        >>>     s = "Selected parameters: {}".format(wid.parameters)
+        >>>     print_dynamic(s)
+
+    Create the widget with some initial options and display it:
+
+        >>> parameters = [-3., -2., -1., 0., 1., 2., 3.]
+        >>> wid = LinearModelParametersWidget(parameters,
+        >>>                                   render_function=render_function,
+        >>>                                   params_str='Parameter ',
+        >>>                                   mode='multiple',
+        >>>                                   params_bounds=(-3., 3.),
+        >>>                                   plot_variance_visible=True,
+        >>>                                   style='info')
+        >>> wid
+
+    By moving the sliders, the printed message gets updated. Finally, let's
+    change the widget status with a new set of options:
+
+        >>> wid.set_widget_state(parameters=[-7.] * 3, params_str='',
+        >>>                      params_step=0.1, params_bounds=(-10, 10),
+        >>>                      plot_variance_visible=False,
+        >>>                      allow_callback=True)
+    """
+    def __init__(self, n_parameters, render_function=None, mode='multiple',
+                 params_str='', params_bounds=(-3., 3.), params_step=0.1,
+                 plot_variance_visible=True, plot_variance_function=None,
+                 style='minimal', continuous_update=False):
+        # If only one slider requested, then set mode to multiple
+        if n_parameters == 1:
+            mode = 'multiple'
+
+        # Create children
+        if mode == 'multiple':
+            self.sliders = [
+                ipywidgets.FloatSlider(
+                    description="{}{}".format(params_str, p),
+                    min=params_bounds[0], max=params_bounds[1],
+                    step=params_step, value=0.,
+                    continuous_update=continuous_update)
+                for p in range(n_parameters)]
+            self.parameters_wid = ipywidgets.VBox(children=self.sliders,
+                                                  margin='0.2cm')
+        else:
+            vals = OrderedDict()
+            for p in range(n_parameters):
+                vals["{}{}".format(params_str, p)] = p
+            self.slider = ipywidgets.FloatSlider(
+                description='', min=params_bounds[0], max=params_bounds[1],
+                step=params_step, value=0., margin='0.2cm',
+                continuous_update=continuous_update)
+            self.dropdown_params = ipywidgets.Dropdown(options=vals,
+                                                       margin='0.2cm')
+            self.parameters_wid = ipywidgets.HBox(
+                children=[self.dropdown_params, self.slider])
+        self.plot_button = ipywidgets.Button(
+            description='Variance', margin='0.05cm',
+            visible=plot_variance_visible)
+        self.reset_button = ipywidgets.Button(description='Reset',
+                                              margin='0.05cm')
+        self.plot_and_reset = ipywidgets.HBox(children=[self.plot_button,
+                                                        self.reset_button])
+
+        # Create final widget
+        children = [self.parameters_wid, self.plot_and_reset]
+        super(LinearModelParametersWidget, self).__init__(
+            children, List, [0.] * n_parameters, render_function=render_function,
+            orientation='vertical', align='end')
+
+        # Assign output
+        self.n_parameters = n_parameters
+        self.mode = mode
+        self.params_str = params_str
+        self.params_bounds = params_bounds
+        self.params_step = params_step
+        self.plot_variance_visible = plot_variance_visible
+
+        # Set style
+        self.predefined_style(style)
+
+        # Set functionality
+        if mode == 'single':
+            # Assign slider value to parameters values list
+            def save_slider_value(name, value):
+                current_parameters = list(self.selected_values)
+                current_parameters[self.dropdown_params.value] = value
+                self.selected_values = current_parameters
+            self.slider.on_trait_change(save_slider_value, 'value')
+
+            # Set correct value to slider when drop down menu value changes
+            def set_slider_value(name, value):
+                # Temporarily remove render callback
+                render_function = self._render_function
+                self.remove_render_function()
+                # Set slider value
+                self.slider.value = self.parameters[value]
+                # Re-assign render callback
+                self.add_render_function(render_function)
+            self.dropdown_params.on_trait_change(set_slider_value, 'value')
+        else:
+            # Assign slider value to parameters values list
+            def save_slider_value_from_id(description, name, value):
+                current_parameters = list(self.selected_values)
+                i = int(description[len(params_str)::])
+                current_parameters[i] = value
+                self.selected_values = current_parameters
+
+            # Partial function that helps get the widget's description str
+            def partial_widget(description):
+                return lambda name, value: save_slider_value_from_id(
+                    description, name, value)
+
+            # Assign saving values and main plotting function to all sliders
+            for w in self.sliders:
+                # The widget (w) is lexically scoped and so we need a way of
+                # ensuring that we don't just receive the final value of w at
+                # every iteration. Therefore we create another lambda function
+                # that creates a new lexical scoping so that we can ensure the
+                # value of w is maintained (as x) at each iteration.
+                # In JavaScript, we would just use the 'let' keyword...
+                w.on_trait_change(partial_widget(w.description), 'value')
+
+        def reset_parameters(name):
+            # Temporarily remove render callback
+            render_function = self._render_function
+            self.remove_render_function()
+
+            # Set parameters to 0
+            self.selected_values = [0.0] * self.n_parameters
+            if mode == 'multiple':
+                for ww in self.parameters_wid.children:
+                    ww.value = 0.
+            else:
+                self.parameters_wid.children[0].value = 0
+                self.parameters_wid.children[1].value = 0.
+
+            # Re-assign render callback and trigger it
+            self.add_render_function(render_function)
+            if self._render_function is not None:
+                self._render_function('', True)
+        self.reset_button.on_click(reset_parameters)
+
+        # Set plot variance function
+        self._variance_function = None
+        self.add_variance_function(plot_variance_function)
+
+    def style(self, box_style=None, border_visible=False, border_color='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
+              font_weight='', slider_width='', slider_handle_colour=None,
+              slider_bar_colour=None, buttons_style=''):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        box_style : See Below, optional
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
+
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_color : `str`, optional
+            The color of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the corners of the box.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
+        font_family : See Below, optional
+            The font family to be used.
+            Example options ::
+
+                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                 'helvetica'}
+
+        font_size : `int`, optional
+            The font size.
+        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
+            The font style.
+        font_weight : See Below, optional
+            The font weight.
+            Example options ::
+
+                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                 'extra bold', 'black'}
+
+        slider_width : `str`, optional
+            The width of the slider(s).
+        slider_handle_colour : `str`, optional
+            The colour of the handle(s) of the slider(s).
+        slider_background_colour : `str`, optional
+            The background colour of the slider(s).
+        buttons_style : See Below, optional
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'primary' Blue-based style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        Default style
+                None      No style
+                ========= ============================
+        """
+        format_box(self, box_style, border_visible, border_color, border_style,
+                   border_width, border_radius, padding, margin)
+        format_font(self, font_family, font_size, font_style, font_weight)
+        format_font(self.reset_button, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.plot_button, font_family, font_size, font_style,
+                    font_weight)
+        if self.mode == 'single':
+            format_slider(self.slider, slider_width=slider_width,
+                          slider_handle_colour=slider_handle_colour,
+                          slider_bar_colour=slider_bar_colour,
+                          slider_text_visible=True)
+            format_font(self.slider, font_family, font_size, font_style,
+                        font_weight)
+            format_font(self.dropdown_params, font_family, font_size,
+                        font_style, font_weight)
+        else:
+            for sl in self.sliders:
+                format_slider(sl, slider_width=slider_width,
+                              slider_handle_colour=slider_handle_colour,
+                              slider_bar_colour=slider_bar_colour,
+                              slider_text_visible=True)
+                format_font(sl, font_family, font_size, font_style,
+                            font_weight)
+        self.reset_button.button_style = buttons_style
+        self.plot_button.button_style = buttons_style
+
+    def predefined_style(self, style):
+        r"""
+        Function that sets a predefined style on the widget.
+
+        Parameters
+        ----------
+        style : `str` (see below)
+            Style options
+
+                ========= ============================
+                Style     Description
+                ========= ============================
+                'minimal' Simple black and white style
+                'success' Green-based style
+                'info'    Blue-based style
+                'warning' Yellow-based style
+                'danger'  Red-based style
+                ''        No style
+                ========= ============================
+        """
+        if style == 'minimal':
+            self.style(box_style=None, border_visible=True,
+                       border_color='black', border_style='solid',
+                       border_width=1, border_radius=0, padding='0.2cm',
+                       margin='0.3cm', font_family='', font_size=None,
+                       font_style='', font_weight='', slider_width='',
+                       slider_handle_colour=None, slider_bar_colour=None,
+                       buttons_style='')
+        elif (style == 'info' or style == 'success' or style == 'danger' or
+                    style == 'warning'):
+            self.style(box_style=style, border_visible=True,
+                       border_color=map_styles_to_hex_colours(style),
+                       border_style='solid', border_width=1, border_radius=10,
+                       padding='0.2cm', margin='0.3cm', font_family='',
+                       font_size=None, font_style='', font_weight='',
+                       slider_width='',
+                       slider_handle_colour=map_styles_to_hex_colours(style),
+                       slider_bar_colour=None, buttons_style='primary')
+        else:
+            raise ValueError('style must be minimal or info or success or '
+                             'danger or warning')
+
+    def add_variance_function(self, variance_function):
+        r"""
+        Method that adds a `variance_function()` to the `Variance` button of the
+        widget. The signature of the given function is also stored in
+        `self._variance_function`.
+
+        Parameters
+        ----------
+        variance_function : `function` or ``None``, optional
+            The variance function that behaves as a callback. If ``None``,
+            then nothing is added.
+        """
+        self._variance_function = variance_function
+        if self._variance_function is not None:
+            self.plot_button.on_click(self._variance_function)
+
+    def remove_variance_function(self):
+        r"""
+        Method that removes the current `self._variance_function()` from
+        the `Variance` button of the widget and sets
+        ``self._variance_function = None``.
+        """
+        self.plot_button.on_click(self._variance_function, remove=True)
+        self._variance_function = None
+
+    def replace_variance_function(self, variance_function):
+        r"""
+        Method that replaces the current `self._variance_function()` of the
+        `Variance` button of the widget with the given `variance_function()`.
+
+        Parameters
+        ----------
+        variance_function : `function` or ``None``, optional
+            The variance function that behaves as a callback. If ``None``,
+            then nothing happens.
+        """
+        # remove old function
+        self.remove_variance_function()
+
+        # add new function
+        self.add_variance_function(variance_function)
+
+    def set_widget_state(self, n_parameters=None, params_str=None,
+                         params_bounds=None, params_step=None,
+                         plot_variance_visible=True, allow_callback=True):
+        r"""
+        Method that updates the state of the widget with a new set of options.
+
+        Parameters
+        ----------
+        parameters : `list` or ``None``, optional
+            The `list` of new parameters' values. If ``None``, then nothing
+            changes.
+        params_str : `str` or ``None``, optional
+            The string that will be used as description of the slider(s). The
+            final description has the form `"{}{}".format(params_str, p)`, where
+            `p` is the parameter number. If ``None``, then nothing changes.
+        params_bounds : (`float`, `float`) or ``None``, optional
+            The minimum and maximum bounds, in std units, for the sliders. If
+            ``None``, then nothing changes.
+        params_step : `float` or ``None``, optional
+            The step, in std units, of the sliders. If ``None``, then nothing
+            changes.
+        plot_variance_visible : `bool`, optional
+            Defines whether the button for plotting the variance will be
+            visible.
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        # Temporarily remove render callback
+        render_function = self._render_function
+        self.remove_render_function()
+
+        # Parse given options
+        if n_parameters is None:
+            n_parameters = self.n_parameters
+        if params_str is None:
+            params_str = ''
+        if params_bounds is None:
+            params_bounds = self.params_bounds
+        if params_step is None:
+            params_step = self.params_step
+
+        # Set plot variance visibility
+        self.plot_button.visible = plot_variance_visible
+
+        # Update widget
+        if n_parameters == self.n_parameters:
+            # The number of parameters hasn't changed
+            if self.mode == 'multiple':
+                for p, sl in enumerate(self.sliders):
+                    sl.description = "{}{}".format(params_str, p)
+                    sl.min = params_bounds[0]
+                    sl.max = params_bounds[1]
+                    sl.step = params_step
+            else:
+                self.slider.min = params_bounds[0]
+                self.slider.max = params_bounds[1]
+                self.slider.step = params_step
+                if not params_str == '':
+                    vals = OrderedDict()
+                    for p in range(n_parameters):
+                        vals["{}{}".format(params_str, p)] = p
+                    self.dropdown_params.options = vals
+        else:
+            # The number of parameters has changed
+            self.selected_values = [0.] * n_parameters
+            if self.mode == 'multiple':
+                # Create new sliders
+                self.sliders = [
+                    ipywidgets.FloatSlider(
+                        description="{}{}".format(params_str, p),
+                        min=params_bounds[0], max=params_bounds[1],
+                        step=params_step, value=0.)
+                    for p in range(n_parameters)]
+                # Set sliders as the children of the container
+                self.parameters_wid.children = self.sliders
+
+                # Assign slider value to parameters values list
+                def save_slider_value_from_id(description, name, value):
+                    current_parameters = list(self.selected_values)
+                    i = int(description[len(params_str)::])
+                    current_parameters[i] = value
+                    self.selected_values = current_parameters
+
+                # Partial function that helps get the widget's description str
+                def partial_widget(description):
+                    return lambda name, value: save_slider_value_from_id(
+                        description, name, value)
+
+                # Assign saving values and main plotting function to all sliders
+                for w in self.sliders:
+                    # The widget (w) is lexically scoped and so we need a way of
+                    # ensuring that we don't just receive the final value of w
+                    # at every iteration. Therefore we create another lambda
+                    # function that creates a new lexical scoping so that we can
+                    # ensure the value of w is maintained (as x) at each
+                    # iteration. In JavaScript, we would just use the 'let'
+                    # keyword...
+                    w.on_trait_change(partial_widget(w.description), 'value')
+
+                # Set style
+                if self.box_style is None:
+                    self.predefined_style('minimal')
+                else:
+                    self.predefined_style(self.box_style)
+            else:
+                self.slider.min = params_bounds[0]
+                self.slider.max = params_bounds[1]
+                self.slider.step = params_step
+                vals = OrderedDict()
+                for p in range(n_parameters):
+                    vals["{}{}".format(params_str, p)] = p
+                if self.dropdown_params.value == 0 and n_parameters > 1:
+                    self.dropdown_params.value = 1
+                self.dropdown_params.value = 0
+                self.dropdown_params.options = vals
+                self.slider.value = 0.
+
+        # Re-assign render callback
+        self.add_render_function(render_function)
+
+        # Assign new selected options
+        self.n_parameters = n_parameters
+        self.params_str = params_str
+        self.params_bounds = params_bounds
+        self.params_step = params_step
+        self.plot_variance_visible = plot_variance_visible
+
+        # trigger render function if allowed
+        if allow_callback:
+            self._render_function('', True)
