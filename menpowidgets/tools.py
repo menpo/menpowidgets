@@ -3279,8 +3279,9 @@ class AxesOptionsWidget(MenpoWidget):
                                                     allow_callback=False)
             axes_limits = {'x': axes_options['axes_x_limits'],
                            'y': axes_options['axes_y_limits']}
-            self.axes_limits_widget.set_widget_state(axes_limits,
-                                                     allow_callback=False)
+            self.axes_limits_widget.set_widget_state(
+                axes_options['axes_x_limits'], axes_options['axes_y_limits'],
+                allow_callback=False)
 
         # re-assign render callback
         self.add_render_function(render_function)

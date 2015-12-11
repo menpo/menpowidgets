@@ -1860,12 +1860,14 @@ class RendererOptionsWidget(MenpoWidget):
                  style='minimal', tabs_style='minimal'):
         # Initialise default options dictionary
         self.default_options = {}
+        self.global_options = {}
 
         # Assign properties
         self.labels = labels
         self.options_tabs = options_tabs
 
         # Get initial options
+        self.initialise_global_options(labels)
         renderer_options = self.get_default_options(labels)
 
         # Create children
@@ -1884,16 +1886,16 @@ class RendererOptionsWidget(MenpoWidget):
                 self.tab_titles.append('Markers')
             elif o == 'image':
                 self.options_widgets.append(ImageOptionsWidget(
-                    renderer_options[o], render_function=None))
+                    self.global_options[o], render_function=None))
                 self.tab_titles.append('Image')
             elif o == 'numbering':
                 self.options_widgets.append(NumberingOptionsWidget(
-                    renderer_options[o], render_function=None,
+                    self.global_options[o], render_function=None,
                     render_checkbox_title='Render numbering'))
                 self.tab_titles.append('Numbering')
             elif o == 'zoom_two':
                 tmp = {'min': 0.1, 'max': 4., 'step': 0.05,
-                       'zoom': renderer_options[o]}
+                       'zoom': self.global_options[o]}
                 self.options_widgets.append(ZoomTwoScalesWidget(
                     tmp, render_function=None,
                     description='Scale: ',
@@ -1903,7 +1905,7 @@ class RendererOptionsWidget(MenpoWidget):
                 self.tab_titles.append('Zoom')
             elif o == 'zoom_one':
                 tmp = {'min': 0.1, 'max': 4., 'step': 0.05,
-                       'zoom': renderer_options[o]}
+                       'zoom': self.global_options[o]}
                 self.options_widgets.append(ZoomOneScaleWidget(
                     tmp, render_function=None,
                     description='Scale: ',
@@ -1913,17 +1915,17 @@ class RendererOptionsWidget(MenpoWidget):
                 self.tab_titles.append('Zoom')
             elif o == 'axes':
                 self.options_widgets.append(AxesOptionsWidget(
-                    renderer_options[o], render_function=None,
+                    self.global_options[o], render_function=None,
                     render_checkbox_title='Render axes'))
                 self.tab_titles.append('Axes')
             elif o == 'legend':
                 self.options_widgets.append(LegendOptionsWidget(
-                    renderer_options[o], render_function=None,
+                    self.global_options[o], render_function=None,
                     render_checkbox_title='Render legend'))
                 self.tab_titles.append('Legend')
             elif o == 'grid':
                 self.options_widgets.append(GridOptionsWidget(
-                    renderer_options[o], render_function=None,
+                    self.global_options[o], render_function=None,
                     render_checkbox_title='Render grid'))
                 self.tab_titles.append('Grid')
         self.suboptions_tab = ipywidgets.Tab(children=self.options_widgets)
@@ -1932,9 +1934,11 @@ class RendererOptionsWidget(MenpoWidget):
             self.suboptions_tab.set_title(k, tl)
 
         # Create final widget
+        initial_options = renderer_options.copy()
+        initial_options.update(self.global_options)
         children = [self.suboptions_tab]
         super(RendererOptionsWidget, self).__init__(
-            children, Dict, renderer_options, render_function=render_function,
+            children, Dict, initial_options, render_function=render_function,
             orientation='vertical', align='start')
 
         # Set values
@@ -1952,7 +1956,27 @@ class RendererOptionsWidget(MenpoWidget):
                                 for i, o in enumerate(self.options_tabs)}
         # update default values
         current_key = self.get_key(self.labels)
-        self.default_options[current_key] = self.selected_values.copy()
+        if 'lines' in self.options_tabs:
+            self.default_options[current_key]['lines'] = \
+                self.selected_values['lines'].copy()
+        if 'markers' in self.options_tabs:
+            self.default_options[current_key]['markers'] = \
+                self.selected_values['markers'].copy()
+        # update global values
+        if 'image' in self.options_tabs:
+            self.global_options['image'] = self.selected_values['image']
+        if 'numbering' in self.options_tabs:
+            self.global_options['numbering'] = self.selected_values['numbering']
+        if 'zoom_one' in self.options_tabs:
+            self.global_options['zoom_one'] = self.selected_values['zoom_one']
+        if 'zoom_two' in self.options_tabs:
+            self.global_options['zoom_two'] = self.selected_values['zoom_two']
+        if 'grid' in self.options_tabs:
+            self.global_options['grid'] = self.selected_values['grid']
+        if 'legend' in self.options_tabs:
+            self.global_options['legend'] = self.selected_values['legend']
+        if 'axes' in self.options_tabs:
+            self.global_options['axes'] = self.selected_values['axes']
 
     def add_callbacks(self):
         for wid in self.options_widgets:
@@ -1966,74 +1990,77 @@ class RendererOptionsWidget(MenpoWidget):
     def get_key(self, labels):
         return "{}".format(labels)
 
+    def initialise_global_options(self, labels):
+        self.global_options = {}
+        for o in self.options_tabs:
+            if o == 'image':
+                self.global_options[o] = {
+                    'interpolation': 'bilinear', 'cmap_name': None,
+                    'alpha': 1.}
+            elif o == 'numbering':
+                self.global_options[o] = {
+                    'render_numbering': False,
+                    'numbers_font_name': 'sans-serif',
+                    'numbers_font_size': 10, 'numbers_font_style': 'normal',
+                    'numbers_font_weight': 'normal',
+                    'numbers_font_colour': ['black'],
+                    'numbers_horizontal_align': 'center',
+                    'numbers_vertical_align': 'bottom'}
+            elif o == 'zoom_one':
+                self.global_options[o] = 1.
+            elif o == 'zoom_two':
+                self.global_options[o] = [1., 1.]
+            elif o == 'axes':
+                self.global_options[o] = {
+                    'render_axes': False, 'axes_font_name': 'sans-serif',
+                    'axes_font_size': 10, 'axes_font_style': 'normal',
+                    'axes_font_weight': 'normal',
+                    'axes_x_limits': None, 'axes_y_limits': None,
+                    'axes_x_ticks': None, 'axes_y_ticks': None}
+            elif o == 'legend':
+                rl = True
+                if labels is None:
+                    rl = False
+                self.global_options[o] = {
+                    'render_legend': rl, 'legend_title': '',
+                    'legend_font_name': 'sans-serif',
+                    'legend_font_style': 'normal', 'legend_font_size': 10,
+                    'legend_font_weight': 'normal',
+                    'legend_marker_scale': 1., 'legend_location': 2,
+                    'legend_bbox_to_anchor': (1.05, 1.),
+                    'legend_border_axes_pad': 1., 'legend_n_columns': 1,
+                    'legend_horizontal_spacing': 1.,
+                    'legend_vertical_spacing': 1., 'legend_border': True,
+                    'legend_border_padding': 0.5, 'legend_shadow': False,
+                    'legend_rounded_corners': False}
+            elif o == 'grid':
+                self.global_options[o] = {
+                    'render_grid': False, 'grid_line_style': '--',
+                    'grid_line_width': 0.5}
+
     def get_default_options(self, labels):
         # create key
         key = self.get_key(labels)
         # if the key does not exist in the default options dict, then add it
         if key not in self.default_options:
             self.default_options[key] = {}
-            for o in self.options_tabs:
-                if o == 'lines':
-                    lc = ['red']
-                    if labels is not None:
-                        lc = sample_colours_from_colourmap(len(labels), 'jet')
-                    self.default_options[key][o] = {
-                        'render_lines': True, 'line_width': 1,
-                        'line_colour': lc, 'line_style': '-'}
-                elif o == 'markers':
-                    fc = ['red']
-                    ec = ['black']
-                    if labels is not None:
-                        fc = sample_colours_from_colourmap(len(labels), 'jet')
-                        ec = sample_colours_from_colourmap(len(labels), 'jet')
-                    self.default_options[key][o] = {
-                        'render_markers': True, 'marker_size': 20,
-                        'marker_face_colour': fc, 'marker_edge_colour': ec,
-                        'marker_style': 'o', 'marker_edge_width': 1}
-                elif o == 'image':
-                    self.default_options[key][o] = {
-                        'interpolation': 'bilinear', 'cmap_name': None,
-                        'alpha': 1.}
-                elif o == 'numbering':
-                    self.default_options[key][o] = {
-                        'render_numbering': False,
-                        'numbers_font_name': 'sans-serif',
-                        'numbers_font_size': 10, 'numbers_font_style': 'normal',
-                        'numbers_font_weight': 'normal',
-                        'numbers_font_colour': 'black',
-                        'numbers_horizontal_align': 'center',
-                        'numbers_vertical_align': 'bottom'}
-                elif o == 'zoom_one':
-                    self.default_options[key][o] = 1.
-                elif o == 'zoom_two':
-                    self.default_options[key][o] = [1., 1.]
-                elif o == 'axes':
-                    self.default_options[key][o] = {
-                        'render_axes': False, 'axes_font_name': 'sans-serif',
-                        'axes_font_size': 10, 'axes_font_style': 'normal',
-                        'axes_font_weight': 'normal',
-                        'axes_x_limits': None, 'axes_y_limits': None,
-                        'axes_x_ticks': None, 'axes_y_ticks': None}
-                elif o == 'legend':
-                    rl = True
-                    if labels is None:
-                        rl = False
-                    self.default_options[key][o] = {
-                        'render_legend': rl, 'legend_title': '',
-                        'legend_font_name': 'sans-serif',
-                        'legend_font_style': 'normal', 'legend_font_size': 10,
-                        'legend_font_weight': 'normal',
-                        'legend_marker_scale': 1., 'legend_location': 2,
-                        'legend_bbox_to_anchor': (1.05, 1.),
-                        'legend_border_axes_pad': 1., 'legend_n_columns': 1,
-                        'legend_horizontal_spacing': 1.,
-                        'legend_vertical_spacing': 1., 'legend_border': True,
-                        'legend_border_padding': 0.5, 'legend_shadow': False,
-                        'legend_rounded_corners': False}
-                elif o == 'grid':
-                    self.default_options[key][o] = {
-                        'render_grid': False, 'grid_line_style': '--',
-                        'grid_line_width': 0.5}
+            if 'lines' in self.options_tabs:
+                lc = ['red']
+                if labels is not None:
+                    lc = sample_colours_from_colourmap(len(labels), 'jet')
+                self.default_options[key]['lines'] = {
+                    'render_lines': True, 'line_width': 1,
+                    'line_colour': lc, 'line_style': '-'}
+            if 'markers' in self.options_tabs:
+                fc = ['red']
+                ec = ['black']
+                if labels is not None and len(labels) > 1:
+                    fc = sample_colours_from_colourmap(len(labels), 'jet')
+                    ec = sample_colours_from_colourmap(len(labels), 'jet')
+                self.default_options[key]['markers'] = {
+                    'render_markers': True, 'marker_size': 20,
+                    'marker_face_colour': fc, 'marker_edge_colour': ec,
+                    'marker_style': 'o', 'marker_edge_width': 1}
         return self.default_options[key]
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
@@ -2312,14 +2339,16 @@ class RendererOptionsWidget(MenpoWidget):
             self.labels = labels
 
             # Update subwidgets
-            for i, tab in enumerate(self.options_tabs):
-                if tab == 'lines' or tab == 'markers':
-                    self.options_widgets[i].set_widget_state(
-                        renderer_options[tab], labels=labels,
-                        allow_callback=False)
-                else:
-                    self.options_widgets[i].set_widget_state(
-                        renderer_options[tab], allow_callback=False)
+            if 'lines' in self.options_tabs:
+                i = self.options_tabs.index('lines')
+                self.options_widgets[i].set_widget_state(
+                    renderer_options['lines'], labels=labels,
+                    allow_callback=False)
+            if 'markers' in self.options_tabs:
+                i = self.options_tabs.index('markers')
+                self.options_widgets[i].set_widget_state(
+                    renderer_options['markers'], labels=labels,
+                    allow_callback=False)
 
             # Get values
             self._save_options('', None)

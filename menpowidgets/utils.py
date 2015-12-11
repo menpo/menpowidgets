@@ -658,4 +658,17 @@ def list_has_constant_step(l):
 def sample_colours_from_colourmap(n_colours, colour_map):
     import matplotlib.pyplot as plt
     cm = plt.get_cmap(colour_map)
-    return [cm(1.*i/n_colours)[:3] for i in range(n_colours)]
+    colours = []
+    for i in range(n_colours):
+        c = cm(1.*i/n_colours)[:3]
+        colours.append(decode_colour([i * 255. for i in c]))
+    return colours
+
+
+def extract_group_labels_landmarks(landmark_manager):
+    groups_keys = None
+    labels_keys = None
+    if landmark_manager.has_landmarks:
+        groups_keys = landmark_manager.keys()
+        labels_keys = [landmark_manager[g].keys() for g in groups_keys]
+    return groups_keys, labels_keys
