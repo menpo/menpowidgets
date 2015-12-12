@@ -581,7 +581,8 @@ class ChannelOptionsWidget(MenpoWidget):
         # Group widgets
         self.glyph_options_box = ipywidgets.VBox(
             children=[self.glyph_block_size_text,
-                      self.glyph_use_negative_checkbox], margin='0.1cm')
+                      self.glyph_use_negative_checkbox], margin='0.1cm',
+            visible=False)
         self.glyph_box = ipywidgets.HBox(children=[self.glyph_checkbox,
                                                    self.glyph_options_box],
                                          align='start')

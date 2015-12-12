@@ -1,9 +1,11 @@
-from collections import Sized
+from collections import Sized, OrderedDict
 import matplotlib.pyplot as plt
+from matplotlib import collections as mc
 
 import ipywidgets
 import IPython.display as ipydisplay
 
+from menpo.base import name_of_callable
 from menpo.image import MaskedImage, Image
 from menpo.image.base import _convert_patches_list_to_single_array
 
@@ -11,12 +13,13 @@ from .options import (RendererOptionsWidget, TextPrintWidget,
                       SaveFigureOptionsWidget, AnimationOptionsWidget,
                       LandmarkOptionsWidget, ChannelOptionsWidget,
                       FeatureOptionsWidget, PlotOptionsWidget,
-                      PatchOptionsWidget)
+                      PatchOptionsWidget, LinearModelParametersWidget)
 from .style import format_box, map_styles_to_hex_colours
 from .tools import LogoWidget
 from .utils import (extract_group_labels_from_landmarks,
                     extract_groups_labels_from_image, render_image,
                     render_patches)
+from .checks import check_n_parameters
 
 
 def menpowidgets_src_dir_path():
@@ -1287,3 +1290,938 @@ def features_selection(style='coloured'):
     output = [features_options_wid.function]
 
     return output
+
+
+def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
+                          parameters_bounds=(-3.0, 3.0), figure_size=(10, 8),
+                          style='coloured'):
+    r"""
+    Widget that allows the dynamic visualization of a multilevel linear
+    statistical shape model.
+
+    Parameters
+    -----------
+    shape_model : `list` of :map:`PCAModel` or subclass
+        The multilevel shape model to be visualized. Note that each level can
+        have different number of components.
+    n_parameters : `int` or `list` of `int` or ``None``, optional
+        The number of principal components to be used for the parameters
+        sliders. If `int`, then the number of sliders per level is the minimum
+        between `n_parameters` and the number of active components per level.
+        If `list` of `int`, then a number of sliders is defined per level.
+        If ``None``, all the active components per level will have a slider.
+    mode : {``'single'``, ``'multiple'``}, optional
+        If ``'single'``, then only a single slider is constructed along with a
+        drop down menu. If ``'multiple'``, then a slider is constructed for each
+        parameter.
+    parameters_bounds : (`float`, `float`), optional
+        The minimum and maximum bounds, in std units, for the sliders.
+    figure_size : (`int`, `int`), optional
+        The size of the plotted figures.
+    style : {``'coloured'``, ``'minimal'``}, optional
+        If ``'coloured'``, then the style of the widget will be coloured. If
+        ``minimal``, then the style is simple using black and white colours.
+    """
+    print('Initializing...')
+
+    # Make sure that shape_model is a list even with one member
+    if not isinstance(shape_model, list):
+        shape_model = [shape_model]
+
+    # Get the number of levels (i.e. number of shape models)
+    n_levels = len(shape_model)
+
+    # Define the styling options
+    if style == 'coloured':
+        model_parameters_style = 'info'
+        logo_style = 'warning'
+        widget_box_style = 'warning'
+        widget_border_radius = 10
+        widget_border_width = 1
+        info_style = 'info'
+        renderer_box_style = 'info'
+        renderer_box_border_colour = map_styles_to_hex_colours('info')
+        renderer_box_border_radius = 10
+        renderer_style = 'danger'
+        renderer_tabs_style = 'danger'
+        save_figure_style = 'danger'
+    elif style == 'minimal':
+        model_parameters_style = 'minimal'
+        logo_style = 'minimal'
+        widget_box_style = ''
+        widget_border_radius = 0
+        widget_border_width = 0
+        info_style = 'minimal'
+        renderer_box_style = ''
+        renderer_box_border_colour = 'black'
+        renderer_box_border_radius = 0
+        renderer_style = 'minimal'
+        renderer_tabs_style = 'minimal'
+        save_figure_style = 'minimal'
+    else:
+        raise ValueError("style must be either coloured or minimal")
+
+    # Get the maximum number of components per level
+    max_n_params = [sp.n_active_components for sp in shape_model]
+
+    # Check the given number of parameters (the returned n_parameters is a list
+    # of len n_scales)
+    n_parameters = check_n_parameters(n_parameters, n_levels, max_n_params)
+
+    # Define render function
+    def render_function(name, value):
+        # Clear current figure, but wait until the generation of the new data
+        # that will be rendered
+        ipydisplay.clear_output(wait=True)
+
+        # Get selected level
+        level = 0
+        if n_levels > 1:
+            level = level_wid.value
+
+        # Compute weights
+        parameters = model_parameters_wid.selected_values
+        weights = (parameters *
+                   shape_model[level].eigenvalues[:len(parameters)] ** 0.5)
+
+        # Get the mean
+        mean = shape_model[level].mean()
+
+        # Render shape instance with selected options
+        options = renderer_options_wid.selected_values['lines']
+        options.update(renderer_options_wid.selected_values['markers'])
+        options.update(renderer_options_wid.selected_values['numbering'])
+        options.update(renderer_options_wid.selected_values['axes'])
+        new_figure_size = (
+            renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
+            renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
+        plt.show()
+
+        if mode_wid.value == 1:
+            # Deformation mode
+            # Compute instance
+            instance = shape_model[level].instance(weights)
+
+            # Render mean shape
+            if mean_wid.value:
+                mean.view(
+                    figure_id=save_figure_wid.renderer.figure_id,
+                    new_figure=False, image_view=axes_mode_wid.value == 1,
+                    figure_size=None,
+                    render_lines=options['render_lines'],
+                    line_colour='y', line_style=options['line_style'],
+                    line_width=options['line_width'],
+                    render_markers=options['render_markers'],
+                    marker_style=options['marker_style'],
+                    marker_size=options['marker_size'], marker_face_colour='y',
+                    marker_edge_colour='y',
+                    marker_edge_width=options['marker_edge_width'])
+
+            # Render instance
+            renderer = instance.view(
+                figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+                image_view=axes_mode_wid.value == 1, figure_size=new_figure_size,
+                **options)
+
+            # Get instance range
+            instance_range = instance.range()
+        else:
+            # Vectors mode
+            # Compute instance
+            instance_lower = shape_model[level].instance([-p for p in weights])
+            instance_upper = shape_model[level].instance(weights)
+
+            # Render mean shape
+            renderer = mean.view(
+                figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+                image_view=axes_mode_wid.value == 1, figure_size=new_figure_size,
+                render_lines=options['render_lines'],
+                line_colour='y', line_style=options['line_style'],
+                line_width=options['line_width'],
+                render_markers=options['render_markers'],
+                marker_style=options['marker_style'],
+                marker_size=options['marker_size'], marker_face_colour='y',
+                marker_edge_colour='y',
+                marker_edge_width=options['marker_edge_width'])
+
+            # Render vectors
+            ax = plt.gca()
+            for p in range(mean.n_points):
+                xm = mean.points[p, 0]
+                ym = mean.points[p, 1]
+                xl = instance_lower.points[p, 0]
+                yl = instance_lower.points[p, 1]
+                xu = instance_upper.points[p, 0]
+                yu = instance_upper.points[p, 1]
+                if axes_mode_wid.value == 1:
+                    # image mode
+                    lines = [[(ym, xm), (yl, xl)], [(ym, xm), (yu, xu)]]
+                else:
+                    # point cloud mode
+                    lines = [[(xm, ym), (xl, yl)], [(xm, ym), (xu, yu)]]
+                lc = mc.LineCollection(lines, colors=('g', 'b'),
+                                       linestyles='solid', linewidths=2)
+                ax.add_collection(lc)
+
+            # Get instance range
+            instance_range = mean.range()
+
+        plt.show()
+
+        # Save the current figure id
+        save_figure_wid.renderer = renderer
+
+        # Update info
+        update_info(level, instance_range)
+
+    # Define function that updates the info text
+    def update_info(level, instance_range):
+        text_per_line = [
+            "> Level {} out of {}".format(level + 1, n_levels),
+            "> {} components in total".format(shape_model[level].n_components),
+            "> {} active components".format(
+                shape_model[level].n_active_components),
+            "> {:.1f}% variance kept".format(
+                shape_model[level].variance_ratio() * 100),
+            "> Instance range: {:.1f} x {:.1f}".format(instance_range[0],
+                                                       instance_range[1]),
+            "> {} landmark points, {} features".format(
+                shape_model[level].mean().n_points,
+                shape_model[level].n_features)]
+        info_wid.set_widget_state(n_lines=6, text_per_line=text_per_line)
+
+    # Plot variance function
+    def plot_variance(name):
+        # Clear current figure, but wait until the generation of the new data
+        # that will be rendered
+        ipydisplay.clear_output(wait=True)
+
+        # Get selected level
+        level = 0
+        if n_levels > 1:
+            level = level_wid.value
+
+        # Render
+        new_figure_size = (
+            renderer_options_wid.selected_values['zoom_one'] * 10,
+            renderer_options_wid.selected_values['zoom_one'] * 3)
+        plt.subplot(121)
+        shape_model[level].plot_eigenvalues_ratio(
+            figure_id=save_figure_wid.renderer.figure_id)
+        plt.subplot(122)
+        renderer = shape_model[level].plot_eigenvalues_cumulative_ratio(
+            figure_id=save_figure_wid.renderer.figure_id,
+            figure_size=new_figure_size)
+        plt.show()
+
+        # Save the current figure id
+        save_figure_wid.renderer = renderer
+
+    # Create widgets
+    mode_dict = OrderedDict()
+    mode_dict['Deformation'] = 1
+    mode_dict['Vectors'] = 2
+    mode_wid = ipywidgets.RadioButtons(options=mode_dict,
+                                       description='Mode:', value=1)
+    mode_wid.on_trait_change(render_function, 'value')
+    mean_wid = ipywidgets.Checkbox(value=False,
+                                   description='Render mean shape')
+    mean_wid.on_trait_change(render_function, 'value')
+
+    # Function that controls mean shape checkbox visibility
+    def mean_visible(name, value):
+        if value == 1:
+            mean_wid.disabled = False
+        else:
+            mean_wid.disabled = True
+            mean_wid.value = False
+    mode_wid.on_trait_change(mean_visible, 'value')
+    model_parameters_wid = LinearModelParametersWidget(
+        n_parameters[0], render_function, params_str='param ',
+        mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+        plot_variance_visible=True, plot_variance_function=plot_variance,
+        style=model_parameters_style, continuous_update=False)
+    axes_mode_wid = ipywidgets.RadioButtons(
+        options={'Image': 1, 'Point cloud': 2}, description='Axes mode:',
+        value=2)
+    axes_mode_wid.on_trait_change(render_function, 'value')
+    renderer_options_wid = RendererOptionsWidget(
+        options_tabs=['markers', 'lines', 'numbering', 'zoom_one', 'axes'],
+        labels=None, axes_x_limits=0.1, axes_y_limits=0.1,
+        render_function=render_function, style=renderer_style,
+        tabs_style=renderer_tabs_style)
+    renderer_options_box = ipywidgets.VBox(
+        children=[axes_mode_wid, renderer_options_wid], align='center',
+        margin='0.1cm')
+    info_wid = TextPrintWidget(n_lines=6, text_per_line=[''] * 6,
+                               style=info_style)
+    save_figure_wid = SaveFigureOptionsWidget(renderer=None,
+                                              style=save_figure_style)
+
+    # Define function that updates options' widgets state
+    def update_widgets(name, value):
+        model_parameters_wid.set_widget_state(
+            n_parameters=n_parameters[value], params_str='param ',
+            allow_callback=True)
+
+    # Group widgets
+    if n_levels > 1:
+        radio_str = OrderedDict()
+        for l in range(n_levels):
+            if l == 0:
+                radio_str["Level {} (low)".format(l)] = l
+            elif l == n_levels - 1:
+                radio_str["Level {} (high)".format(l)] = l
+            else:
+                radio_str["Level {}".format(l)] = l
+        level_wid = ipywidgets.RadioButtons(
+            options=radio_str, description='Pyramid:', value=n_levels-1)
+        level_wid.on_trait_change(update_widgets, 'value')
+        level_wid.on_trait_change(render_function, 'value')
+        radio_children = [level_wid, mode_wid, mean_wid]
+    else:
+        radio_children = [mode_wid, mean_wid]
+    radio_wids = ipywidgets.VBox(children=radio_children, margin='0.3cm')
+    tmp_wid = ipywidgets.HBox(children=[radio_wids, model_parameters_wid])
+    options_box = ipywidgets.Tab(children=[tmp_wid, renderer_options_box,
+                                           info_wid, save_figure_wid])
+    tab_titles = ['Model', 'Renderer', 'Info', 'Export']
+    for (k, tl) in enumerate(tab_titles):
+        options_box.set_title(k, tl)
+    logo_wid = LogoWidget(style=logo_style)
+    logo_wid.margin = '0.1cm'
+    wid = ipywidgets.HBox(children=[logo_wid, options_box], align='start')
+
+    # Set widget's style
+    wid.box_style = widget_box_style
+    wid.border_radius = widget_border_radius
+    wid.border_width = widget_border_width
+    wid.border_color = map_styles_to_hex_colours(widget_box_style)
+    renderer_options_wid.margin = '0.2cm'
+    format_box(renderer_options_box, renderer_box_style, True,
+               renderer_box_border_colour, 'solid', 1,
+               renderer_box_border_radius, '0.1cm', '0.2cm')
+
+    # Display final widget
+    ipydisplay.display(wid)
+
+    # Reset value to trigger initial visualization
+    axes_mode_wid.value = 1
+
+
+def visualize_appearance_model(appearance_model, n_parameters=5,
+                               mode='multiple', parameters_bounds=(-3.0, 3.0),
+                               figure_size=(10, 8), style='coloured'):
+    r"""
+    Widget that allows the dynamic visualization of a multilevel linear
+    statistical appearance model.
+
+    Parameters
+    -----------
+    appearance_model : `list` of :map:`PCAModel` or subclass
+        The multilevel appearance model to be visualized. Note that each level
+        can have different number of components.
+    n_parameters : `int` or `list` of `int` or ``None``, optional
+        The number of principal components to be used for the parameters
+        sliders. If `int`, then the number of sliders per level is the minimum
+        between `n_parameters` and the number of active components per level.
+        If `list` of `int`, then a number of sliders is defined per level.
+        If ``None``, all the active components per level will have a slider.
+    mode : {``'single'``, ``'multiple'``}, optional
+        If ``'single'``, then only a single slider is constructed along with a
+        drop down menu. If ``'multiple'``, then a slider is constructed for each
+        parameter.
+    parameters_bounds : (`float`, `float`), optional
+        The minimum and maximum bounds, in std units, for the sliders.
+    figure_size : (`int`, `int`), optional
+        The size of the plotted figures.
+    style : {``'coloured'``, ``'minimal'``}, optional
+        If ``'coloured'``, then the style of the widget will be coloured. If
+        ``minimal``, then the style is simple using black and white colours.
+    """
+    print('Initializing...')
+
+    # Make sure that appearance_model is a list even with one member
+    if not isinstance(appearance_model, list):
+        appearance_model = [appearance_model]
+
+    # Get the number of levels (i.e. number of appearance models)
+    n_levels = len(appearance_model)
+
+    # Define the styling options
+    if style == 'coloured':
+        model_parameters_style = 'info'
+        channels_style = 'info'
+        landmarks_style = 'info'
+        logo_style = 'success'
+        widget_box_style = 'success'
+        widget_border_radius = 10
+        widget_border_width = 1
+        info_style = 'info'
+        renderer_style = 'warning'
+        renderer_tabs_style = 'warning'
+        save_figure_style = 'danger'
+    elif style == 'minimal':
+        model_parameters_style = 'minimal'
+        channels_style = 'minimal'
+        landmarks_style = 'minimal'
+        logo_style = 'minimal'
+        widget_box_style = ''
+        widget_border_radius = 0
+        widget_border_width = 0
+        info_style = 'minimal'
+        renderer_style = 'minimal'
+        renderer_tabs_style = 'minimal'
+        save_figure_style = 'minimal'
+    else:
+        raise ValueError("style must be either coloured or minimal")
+
+    # Get the maximum number of components per level
+    max_n_params = [ap.n_active_components for ap in appearance_model]
+
+    # Check the given number of parameters (the returned n_parameters is a list
+    # of len n_scales)
+    n_parameters = check_n_parameters(n_parameters, n_levels, max_n_params)
+
+    # Define render function
+    def render_function(name, value):
+        # Clear current figure, but wait until the generation of the new data
+        # that will be rendered
+        ipydisplay.clear_output(wait=True)
+
+        # Get selected level
+        level = 0
+        if n_levels > 1:
+            level = level_wid.value
+
+        # Compute weights and instance
+        parameters = model_parameters_wid.selected_values
+        weights = (parameters *
+                   appearance_model[level].eigenvalues[:len(parameters)] ** 0.5)
+        instance = appearance_model[level].instance(weights)
+        image_is_masked = isinstance(instance, MaskedImage)
+        selected_group = landmark_options_wid.selected_values['group']
+
+        # Update info
+        update_info(instance, level, selected_group)
+
+        # show landmarks with selected options
+        tmp1 = renderer_options_wid.selected_values['lines']
+        tmp2 = renderer_options_wid.selected_values['markers']
+        options = renderer_options_wid.selected_values['numbering']
+        options.update(renderer_options_wid.selected_values['axes'])
+        options.update(renderer_options_wid.selected_values['image'])
+        options.update(channel_options_wid.selected_values)
+        options.update(landmark_options_wid.selected_values)
+        new_figure_size = (
+            renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
+            renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
+        # get line and marker colours
+        line_colour = []
+        marker_face_colour = []
+        marker_edge_colour = []
+        if instance.has_landmarks:
+            for lbl in landmark_options_wid.selected_values['with_labels']:
+                lbl_idx = instance.landmarks[selected_group].labels.index(lbl)
+                line_colour.append(tmp1['line_colour'][lbl_idx])
+                marker_face_colour.append(tmp2['marker_face_colour'][lbl_idx])
+                marker_edge_colour.append(tmp2['marker_edge_colour'][lbl_idx])
+
+        # show image with selected options
+        renderer = render_image(
+            image=instance, renderer=save_figure_wid.renderer,
+            image_is_masked=image_is_masked,
+            render_lines=tmp1['render_lines'], line_style=tmp1['line_style'],
+            line_width=tmp1['line_width'], line_colour=line_colour,
+            render_markers=tmp2['render_markers'],
+            marker_style=tmp2['marker_style'],
+            marker_size=tmp2['marker_size'],
+            marker_edge_width=tmp2['marker_edge_width'],
+            marker_edge_colour=marker_edge_colour,
+            marker_face_colour=marker_face_colour,
+            figure_size=new_figure_size, legend_n_columns=None,
+            legend_border_axes_pad=None, legend_rounded_corners=None,
+            legend_title=None, legend_horizontal_spacing=None,
+            legend_shadow=None, legend_location=None, legend_font_name=None,
+            legend_bbox_to_anchor=None, legend_border=None,
+            legend_marker_scale=None, legend_vertical_spacing=None,
+            legend_font_weight=None, legend_font_size=None, render_legend=False,
+            legend_font_style=None, legend_border_padding=None, **options)
+
+        # Save the current figure id
+        save_figure_wid.renderer = renderer
+
+    # Define function that updates the info text
+    def update_info(image, level, group):
+        lvl_app_mod = appearance_model[level]
+        text_per_line = [
+            "> Level: {} out of {}.".format(level + 1, n_levels),
+            "> {} components in total.".format(lvl_app_mod.n_components),
+            "> {} active components.".format(lvl_app_mod.n_active_components),
+            "> {:.1f}% variance kept.".format(
+                lvl_app_mod.variance_ratio() * 100),
+            "> Reference shape of size {} with {} channel{}.".format(
+                image._str_shape(),
+                image.n_channels, 's' * (image.n_channels > 1)),
+            "> {} features.".format(lvl_app_mod.n_features),
+            "> {} landmark points.".format(image.landmarks[group].lms.n_points),
+            "> Instance: min={:.3f}, max={:.3f}".format(image.pixels.min(),
+                                                        image.pixels.max())]
+        info_wid.set_widget_state(n_lines=8, text_per_line=text_per_line)
+
+    # Plot variance function
+    def plot_variance(name):
+        # Clear current figure, but wait until the generation of the new data
+        # that will be rendered
+        ipydisplay.clear_output(wait=True)
+
+        # Get selected level
+        level = 0
+        if n_levels > 1:
+            level = level_wid.value
+
+        # Render
+        new_figure_size = (
+            renderer_options_wid.selected_values['zoom_one'] * 10,
+            renderer_options_wid.selected_values['zoom_one'] * 3)
+        plt.subplot(121)
+        appearance_model[level].plot_eigenvalues_ratio(
+            figure_id=save_figure_wid.renderer.figure_id)
+        plt.subplot(122)
+        renderer = appearance_model[level].plot_eigenvalues_cumulative_ratio(
+            figure_id=save_figure_wid.renderer.figure_id,
+            figure_size=new_figure_size)
+        plt.show()
+
+        # Save the current figure id
+        save_figure_wid.renderer = renderer
+
+    # Create widgets
+    model_parameters_wid = LinearModelParametersWidget(
+        n_parameters[0], render_function, params_str='param ',
+        mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+        plot_variance_visible=True, plot_variance_function=plot_variance,
+        style=model_parameters_style)
+    groups_keys, labels_keys = extract_groups_labels_from_image(
+        appearance_model[0].mean())
+    channel_options_wid = ChannelOptionsWidget(
+        n_channels=appearance_model[0].mean().n_channels,
+        image_is_masked=isinstance(appearance_model[0].mean(), MaskedImage),
+        render_function=render_function, style=channels_style)
+    renderer_options_wid = RendererOptionsWidget(
+        options_tabs=['image', 'markers', 'lines', 'numbering', 'zoom_one',
+                      'axes'], labels=labels_keys[0],
+        axes_x_limits=0., axes_y_limits=None,
+        render_function=render_function,  style=renderer_style,
+        tabs_style=renderer_tabs_style)
+    landmark_options_wid = LandmarkOptionsWidget(
+        group_keys=groups_keys, labels_keys=labels_keys,
+        render_function=render_function, style=landmarks_style,
+        renderer_widget=renderer_options_wid)
+    info_wid = TextPrintWidget(n_lines=8, text_per_line=[''] * 8,
+                               style=info_style)
+    save_figure_wid = SaveFigureOptionsWidget(renderer=None,
+                                              style=save_figure_style)
+
+    # Define function that updates options' widgets state
+    def update_widgets(name, value):
+        # Update model parameters widget
+        model_parameters_wid.set_widget_state(
+            n_parameters[value], params_str='param ', allow_callback=False)
+
+        # Update channel options
+        channel_options_wid.set_widget_state(
+            n_channels=appearance_model[value].mean().n_channels,
+            image_is_masked=isinstance(appearance_model[value].mean(),
+                                       MaskedImage),
+            allow_callback=True)
+
+    # Group widgets
+    tmp_children = [model_parameters_wid]
+    if n_levels > 1:
+        radio_str = OrderedDict()
+        for l in range(n_levels):
+            if l == 0:
+                radio_str["Level {} (low)".format(l)] = l
+            elif l == n_levels - 1:
+                radio_str["Level {} (high)".format(l)] = l
+            else:
+                radio_str["Level {}".format(l)] = l
+        level_wid = ipywidgets.RadioButtons(
+            options=radio_str, description='Pyramid:', value=n_levels-1)
+        level_wid.on_trait_change(update_widgets, 'value')
+        level_wid.on_trait_change(render_function, 'value')
+        tmp_children.insert(0, level_wid)
+    tmp_wid = ipywidgets.HBox(children=tmp_children)
+    options_box = ipywidgets.Tab(children=[tmp_wid, channel_options_wid,
+                                           landmark_options_wid,
+                                           renderer_options_wid,
+                                           info_wid, save_figure_wid])
+    tab_titles = ['Model', 'Channels', 'Landmarks', 'Renderer', 'Info',
+                  'Export']
+    for (k, tl) in enumerate(tab_titles):
+        options_box.set_title(k, tl)
+    logo_wid = LogoWidget(style=logo_style)
+    logo_wid.margin = '0.1cm'
+    wid = ipywidgets.HBox(children=[logo_wid, options_box], align='start')
+
+    # Set widget's style
+    wid.box_style = widget_box_style
+    wid.border_radius = widget_border_radius
+    wid.border_width = widget_border_width
+    wid.border_color = map_styles_to_hex_colours(widget_box_style)
+    renderer_options_wid.margin = '0.2cm'
+
+    # Display final widget
+    ipydisplay.display(wid)
+
+    # Reset value to trigger initial visualization
+    renderer_options_wid.options_widgets[5].axes_limits_widget. \
+        axes_x_limits_toggles.value = 'auto'
+
+
+def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
+                  mode='multiple', parameters_bounds=(-3.0, 3.0),
+                  figure_size=(10, 8), style='coloured'):
+    r"""
+    Widget that allows the dynamic visualization of a multilevel Active
+    Appearance Model.
+
+    Parameters
+    -----------
+    aam : :map:`AAM`
+        The multilevel AAM to be visualized. Note that each level can have
+        different number of components.
+    n_shape_parameters : `int` or `list` of `int` or ``None``, optional
+        The number of principal components to be used for the shape parameters
+        sliders. If `int`, then the number of sliders per level is the minimum
+        between `n_parameters` and the number of active components per level.
+        If `list` of `int`, then a number of sliders is defined per level.
+        If ``None``, all the active components per level will have a slider.
+    n_appearance_parameters : `int` or `list` of `int` or ``None``, optional
+        The number of principal components to be used for the appearance
+        parameters sliders. If `int`, then the number of sliders per level is
+        the minimum between `n_parameters` and the number of active components
+        per level. If `list` of `int`, then a number of sliders is defined per
+        level. If ``None``, all the active components per level will have a
+        slider.
+    mode : {``'single'``, ``'multiple'``}, optional
+        If ``'single'``, then only a single slider is constructed along with a
+        drop down menu. If ``'multiple'``, then a slider is constructed for each
+        parameter.
+    parameters_bounds : (`float`, `float`), optional
+        The minimum and maximum bounds, in std units, for the sliders.
+    figure_size : (`int`, `int`), optional
+        The size of the plotted figures.
+    style : {``'coloured'``, ``'minimal'``}, optional
+        If ``'coloured'``, then the style of the widget will be coloured. If
+        ``minimal``, then the style is simple using black and white colours.
+    """
+    print('Initializing...')
+
+    # Get the number of levels
+    n_levels = aam.n_scales
+
+    # Define the styling options
+    if style == 'coloured':
+        model_style = 'info'
+        model_tab_style = 'danger'
+        model_parameters_style = 'danger'
+        channels_style = 'danger'
+        landmarks_style = 'danger'
+        logo_style = 'info'
+        widget_box_style = 'info'
+        widget_border_radius = 10
+        widget_border_width = 1
+        info_style = 'danger'
+        renderer_style = 'danger'
+        renderer_tabs_style = 'info'
+        save_figure_style = 'danger'
+    elif style == 'minimal':
+        model_style = ''
+        model_tab_style = ''
+        model_parameters_style = 'minimal'
+        channels_style = 'minimal'
+        landmarks_style = 'minimal'
+        logo_style = 'minimal'
+        widget_box_style = ''
+        widget_border_radius = 0
+        widget_border_width = 0
+        info_style = 'minimal'
+        renderer_style = 'minimal'
+        renderer_tabs_style = 'minimal'
+        save_figure_style = 'minimal'
+    else:
+        raise ValueError("style must be either coloured or minimal")
+
+    # Get the maximum number of components per level
+    max_n_shape = [sp.model.n_active_components for sp in aam.shape_models]
+    max_n_appearance = [ap.n_active_components for ap in aam.appearance_models]
+
+    # Check the given number of parameters (the returned n_parameters is a list
+    # of len n_scales)
+    n_shape_parameters = check_n_parameters(n_shape_parameters, n_levels,
+                                            max_n_shape)
+    n_appearance_parameters = check_n_parameters(n_appearance_parameters,
+                                                 n_levels, max_n_appearance)
+
+    # Define render function
+    def render_function(name, value):
+        # Clear current figure, but wait until the generation of the new data
+        # that will be rendered
+        ipydisplay.clear_output(wait=True)
+
+        # Get selected level
+        level = 0
+        if n_levels > 1:
+            level = level_wid.value
+
+        # Compute weights and instance
+        shape_weights = shape_model_parameters_wid.selected_values
+        appearance_weights = appearance_model_parameters_wid.selected_values
+        instance = aam.instance(scale_index=level, shape_weights=shape_weights,
+                                appearance_weights=appearance_weights)
+        image_is_masked = isinstance(instance, MaskedImage)
+        selected_group = landmark_options_wid.selected_values['group']
+
+        # Update info
+        update_info(aam, instance, level, selected_group)
+
+        # Render instance with selected options
+        tmp1 = renderer_options_wid.selected_values['lines']
+        tmp2 = renderer_options_wid.selected_values['markers']
+        options = renderer_options_wid.selected_values['numbering']
+        options.update(renderer_options_wid.selected_values['axes'])
+        options.update(renderer_options_wid.selected_values['image'])
+        options.update(channel_options_wid.selected_values)
+        options.update(landmark_options_wid.selected_values)
+        new_figure_size = (
+            renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
+            renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
+        # get line and marker colours
+        line_colour = []
+        marker_face_colour = []
+        marker_edge_colour = []
+        if instance.has_landmarks:
+            for lbl in landmark_options_wid.selected_values['with_labels']:
+                lbl_idx = instance.landmarks[selected_group].labels.index(lbl)
+                line_colour.append(tmp1['line_colour'][lbl_idx])
+                marker_face_colour.append(tmp2['marker_face_colour'][lbl_idx])
+                marker_edge_colour.append(tmp2['marker_edge_colour'][lbl_idx])
+
+        # show image with selected options
+        renderer = render_image(
+            image=instance, renderer=save_figure_wid.renderer,
+            image_is_masked=image_is_masked,
+            render_lines=tmp1['render_lines'], line_style=tmp1['line_style'],
+            line_width=tmp1['line_width'], line_colour=line_colour,
+            render_markers=tmp2['render_markers'],
+            marker_style=tmp2['marker_style'],
+            marker_size=tmp2['marker_size'],
+            marker_edge_width=tmp2['marker_edge_width'],
+            marker_edge_colour=marker_edge_colour,
+            marker_face_colour=marker_face_colour,
+            figure_size=new_figure_size, legend_n_columns=None,
+            legend_border_axes_pad=None, legend_rounded_corners=None,
+            legend_title=None, legend_horizontal_spacing=None,
+            legend_shadow=None, legend_location=None, legend_font_name=None,
+            legend_bbox_to_anchor=None, legend_border=None,
+            legend_marker_scale=None, legend_vertical_spacing=None,
+            legend_font_weight=None, legend_font_size=None, render_legend=False,
+            legend_font_style=None, legend_border_padding=None, **options)
+
+        # Save the current figure id
+        save_figure_wid.renderer = renderer
+
+    # Define function that updates the info text
+    def update_info(aam, instance, level, group):
+        # features info
+        lvl_app_mod = aam.appearance_models[level]
+        lvl_shape_mod = aam.shape_models[level].model
+        aam_mean = lvl_app_mod.mean()
+        n_channels = aam_mean.n_channels
+        tmplt_inst = lvl_app_mod.template_instance
+        feat = aam.holistic_features[level]
+
+        # Feature string
+        tmp_feat = 'Feature is {} with {} channel{}'.format(
+            name_of_callable(feat), n_channels, 's' * (n_channels > 1))
+
+        # update info widgets
+        text_per_line = [
+            "> Warp using {} transform".format(aam.transform.__name__),
+            "> Level {}/{}".format(
+                level + 1, aam.n_scales),
+            "> {} landmark points".format(
+                instance.landmarks[group].lms.n_points),
+            "> {} shape components ({:.2f}% of variance)".format(
+                lvl_shape_mod.n_components,
+                lvl_shape_mod.variance_ratio() * 100),
+            "> {}".format(tmp_feat),
+            "> Reference frame of length {} ({} x {}C, {} x {}C)".format(
+                lvl_app_mod.n_features, tmplt_inst.n_true_pixels(), n_channels,
+                tmplt_inst._str_shape(), n_channels),
+            "> {} appearance components ({:.2f}% of variance)".format(
+                lvl_app_mod.n_components, lvl_app_mod.variance_ratio() * 100),
+            "> Instance: min={:.3f} , max={:.3f}".format(
+                instance.pixels.min(), instance.pixels.max())]
+        info_wid.set_widget_state(n_lines=len(text_per_line),
+                                  text_per_line=text_per_line)
+
+    # Plot shape variance function
+    def plot_shape_variance(name):
+        # Clear current figure, but wait until the generation of the new data
+        # that will be rendered
+        ipydisplay.clear_output(wait=True)
+
+        # Get selected level
+        level = 0
+        if n_levels > 1:
+            level = level_wid.value
+
+        # Render
+        new_figure_size = (
+            renderer_options_wid.selected_values['zoom_one'] * 10,
+            renderer_options_wid.selected_values['zoom_one'] * 3)
+        plt.subplot(121)
+        aam.shape_models[level].model.plot_eigenvalues_ratio(
+            figure_id=save_figure_wid.renderer.figure_id)
+        plt.subplot(122)
+        renderer = aam.shape_models[level].model.plot_eigenvalues_cumulative_ratio(
+            figure_id=save_figure_wid.renderer.figure_id,
+            figure_size=new_figure_size)
+        plt.show()
+
+        # Save the current figure id
+        save_figure_wid.renderer = renderer
+
+    # Plot appearance variance function
+    def plot_appearance_variance(name):
+        # Clear current figure, but wait until the generation of the new data
+        # that will be rendered
+        ipydisplay.clear_output(wait=True)
+
+        # Get selected level
+        level = 0
+        if n_levels > 1:
+            level = level_wid.value
+
+        # Render
+        new_figure_size = (
+            renderer_options_wid.selected_values['zoom_one'] * 10,
+            renderer_options_wid.selected_values['zoom_one'] * 3)
+        plt.subplot(121)
+        aam.appearance_models[level].plot_eigenvalues_ratio(
+            figure_id=save_figure_wid.renderer.figure_id)
+        plt.subplot(122)
+        renderer = aam.appearance_models[level]. \
+            plot_eigenvalues_cumulative_ratio(
+            figure_id=save_figure_wid.renderer.figure_id,
+            figure_size=new_figure_size)
+        plt.show()
+
+        # Save the current figure id
+        save_figure_wid.renderer = renderer
+
+    # Create widgets
+    shape_model_parameters_wid = LinearModelParametersWidget(
+        n_shape_parameters[0], render_function, params_str='param ',
+        mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+        plot_variance_visible=True, plot_variance_function=plot_shape_variance,
+        style=model_parameters_style)
+    appearance_model_parameters_wid = LinearModelParametersWidget(
+        n_appearance_parameters[0], render_function, params_str='param ',
+        mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+        plot_variance_visible=True,
+        plot_variance_function=plot_appearance_variance,
+        style=model_parameters_style)
+    groups_keys, labels_keys = extract_groups_labels_from_image(
+        aam.appearance_models[0].mean())
+    channel_options_wid = ChannelOptionsWidget(
+        n_channels=aam.appearance_models[0].mean().n_channels,
+        image_is_masked=isinstance(aam.appearance_models[0].mean(), MaskedImage),
+        render_function=render_function, style=channels_style)
+    renderer_options_wid = RendererOptionsWidget(
+        options_tabs=['markers', 'lines', 'image', 'numbering', 'zoom_one',
+                      'axes'], labels=labels_keys[0],
+        axes_x_limits=0., axes_y_limits=None,
+        render_function=render_function,  style=renderer_style,
+        tabs_style=renderer_tabs_style)
+    landmark_options_wid = LandmarkOptionsWidget(
+        group_keys=groups_keys, labels_keys=labels_keys,
+        render_function=render_function, style=landmarks_style,
+        renderer_widget=renderer_options_wid)
+    info_wid = TextPrintWidget(n_lines=11, text_per_line=[''] * 11,
+                               style=info_style)
+    save_figure_wid = SaveFigureOptionsWidget(renderer=None,
+                                              style=save_figure_style)
+
+    # Define function that updates options' widgets state
+    def update_widgets(name, value):
+        # Update shape model parameters
+        shape_model_parameters_wid.set_widget_state(
+            n_shape_parameters[value], params_str='param ',
+            allow_callback=False)
+
+        # Update appearance model parameters
+        appearance_model_parameters_wid.set_widget_state(
+            n_appearance_parameters[value], params_str='param ',
+            allow_callback=False)
+
+        # Update channel options
+        channel_options_wid.set_widget_state(
+            n_channels=aam.appearance_models[value].mean().n_channels,
+            image_is_masked=isinstance(aam.appearance_models[value].mean(),
+                                       MaskedImage),
+            allow_callback=True)
+
+    # Group widgets
+    model_parameters_wid = ipywidgets.Tab(
+        children=[shape_model_parameters_wid, appearance_model_parameters_wid])
+    model_parameters_wid.set_title(0, 'Shape')
+    model_parameters_wid.set_title(1, 'Appearance')
+    model_parameters_wid = ipywidgets.FlexBox(children=[model_parameters_wid],
+                                              margin='0.2cm', padding='0.1cm',
+                                              box_style=model_tab_style)
+    tmp_children = [model_parameters_wid]
+    if n_levels > 1:
+        radio_str = OrderedDict()
+        for l in range(n_levels):
+            if l == 0:
+                radio_str["Level {} (low)".format(l)] = l
+            elif l == n_levels - 1:
+                radio_str["Level {} (high)".format(l)] = l
+            else:
+                radio_str["Level {}".format(l)] = l
+        level_wid = ipywidgets.RadioButtons(
+            options=radio_str, description='Pyramid:', value=n_levels-1)
+        level_wid.on_trait_change(update_widgets, 'value')
+        level_wid.on_trait_change(render_function, 'value')
+        tmp_children.insert(0, level_wid)
+    tmp_wid = ipywidgets.HBox(children=tmp_children, align='center',
+                              box_style=model_style)
+    options_box = ipywidgets.Tab(children=[tmp_wid, channel_options_wid,
+                                           landmark_options_wid,
+                                           renderer_options_wid,
+                                           info_wid, save_figure_wid])
+    tab_titles = ['Model', 'Channels', 'Landmarks', 'Renderer', 'Info',
+                  'Export']
+    for (k, tl) in enumerate(tab_titles):
+        options_box.set_title(k, tl)
+    logo_wid = LogoWidget(style=logo_style)
+    logo_wid.margin = '0.1cm'
+    wid = ipywidgets.HBox(children=[logo_wid, options_box], align='start')
+
+    # Set widget's style
+    wid.box_style = widget_box_style
+    wid.border_radius = widget_border_radius
+    wid.border_width = widget_border_width
+    wid.border_color = map_styles_to_hex_colours(widget_box_style)
+    renderer_options_wid.margin = '0.2cm'
+
+    # Display final widget
+    ipydisplay.display(wid)
+
+    # Reset value to trigger initial visualization
+    renderer_options_wid.options_widgets[5].axes_limits_widget. \
+        axes_x_limits_toggles.value = 'auto'
