@@ -1,5 +1,8 @@
 from struct import pack as struct_pack
 import numpy as np
+import matplotlib.pyplot as plt
+
+from menpo.feature import glyph, sum_channels
 
 
 def lists_are_the_same(a, b):
@@ -665,10 +668,226 @@ def sample_colours_from_colourmap(n_colours, colour_map):
     return colours
 
 
-def extract_group_labels_landmarks(landmark_manager):
+def extract_group_labels_from_landmarks(landmark_manager):
     groups_keys = None
     labels_keys = None
     if landmark_manager.has_landmarks:
         groups_keys = landmark_manager.keys()
         labels_keys = [landmark_manager[g].keys() for g in groups_keys]
     return groups_keys, labels_keys
+
+
+def extract_groups_labels_from_image(image):
+    r"""
+    Function that extracts the groups and labels from an image's landmarks.
+
+    Parameters
+    ----------
+    image : :map:`Image` or subclass
+       The input image object.
+
+    Returns
+    -------
+    group_keys : `list` of `str`
+        The list of landmark groups found.
+
+    labels_keys : `list` of `str`
+        The list of lists of each landmark group's labels.
+    """
+    groups_keys, labels_keys = extract_group_labels_from_landmarks(image.landmarks)
+    return groups_keys, labels_keys
+
+
+def render_image(image, renderer, render_landmarks, image_is_masked,
+                 masked_enabled, channels, glyph_enabled, glyph_block_size,
+                 glyph_use_negative, sum_enabled, group, with_labels,
+                 render_lines, line_style, line_width, line_colour,
+                 render_markers, marker_style, marker_size,
+                 marker_edge_width, marker_edge_colour, marker_face_colour,
+                 render_numbering, numbers_font_name, numbers_font_size,
+                 numbers_font_style, numbers_font_weight,
+                 numbers_font_colour, numbers_horizontal_align,
+                 numbers_vertical_align, legend_n_columns,
+                 legend_border_axes_pad, legend_rounded_corners,
+                 legend_title, legend_horizontal_spacing, legend_shadow,
+                 legend_location, legend_font_name, legend_bbox_to_anchor,
+                 legend_border, legend_marker_scale,
+                 legend_vertical_spacing, legend_font_weight,
+                 legend_font_size, render_legend, legend_font_style,
+                 legend_border_padding, figure_size, render_axes,
+                 axes_font_name, axes_font_size, axes_font_style,
+                 axes_font_weight, axes_x_limits, axes_y_limits, axes_x_ticks,
+                 axes_y_ticks, interpolation, alpha, cmap_name):
+    # This makes the code shorter for dealing with masked images vs non-masked
+    # images
+    mask_arguments = ({'masked': masked_enabled} if image_is_masked else {})
+
+    # plot
+    if render_landmarks and group is not None:
+        # show image with landmarks
+        if glyph_enabled:
+            # image, landmarks, masked, glyph
+            renderer = glyph(image, vectors_block_size=glyph_block_size,
+                             use_negative=glyph_use_negative,
+                             channels=channels).view_landmarks(
+                group=group, with_labels=with_labels, without_labels=None,
+                figure_id=renderer.figure_id, new_figure=False,
+                render_lines=render_lines, line_colour=line_colour,
+                line_style=line_style, line_width=line_width,
+                render_markers=render_markers, marker_style=marker_style,
+                marker_size=marker_size, marker_face_colour=marker_face_colour,
+                marker_edge_colour=marker_edge_colour,
+                marker_edge_width=marker_edge_width,
+                render_numbering=render_numbering,
+                numbers_horizontal_align=numbers_horizontal_align,
+                numbers_vertical_align=numbers_vertical_align,
+                numbers_font_name=numbers_font_name,
+                numbers_font_size=numbers_font_size,
+                numbers_font_style=numbers_font_style,
+                numbers_font_weight=numbers_font_weight,
+                numbers_font_colour=numbers_font_colour,
+                render_legend=render_legend, legend_title=legend_title,
+                legend_font_name=legend_font_name,
+                legend_font_style=legend_font_style,
+                legend_font_size=legend_font_size,
+                legend_font_weight=legend_font_weight,
+                legend_marker_scale=legend_marker_scale,
+                legend_location=legend_location,
+                legend_bbox_to_anchor=legend_bbox_to_anchor,
+                legend_border_axes_pad=legend_border_axes_pad,
+                legend_n_columns=legend_n_columns,
+                legend_horizontal_spacing=legend_horizontal_spacing,
+                legend_vertical_spacing=legend_vertical_spacing,
+                legend_border=legend_border,
+                legend_border_padding=legend_border_padding,
+                legend_shadow=legend_shadow,
+                legend_rounded_corners=legend_rounded_corners,
+                render_axes=render_axes, axes_font_name=axes_font_name,
+                axes_font_size=axes_font_size, axes_font_style=axes_font_style,
+                axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
+                axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
+                axes_y_ticks=axes_y_ticks, figure_size=figure_size,
+                interpolation=interpolation, alpha=alpha, cmap_name=cmap_name,
+                **mask_arguments)
+        elif sum_enabled:
+            # image, landmarks, masked, sum
+            renderer = sum_channels(image, channels=channels).view_landmarks(
+                group=group, with_labels=with_labels, without_labels=None,
+                figure_id=renderer.figure_id, new_figure=False,
+                render_lines=render_lines, line_colour=line_colour,
+                line_style=line_style, line_width=line_width,
+                render_markers=render_markers, marker_style=marker_style,
+                marker_size=marker_size, marker_face_colour=marker_face_colour,
+                marker_edge_colour=marker_edge_colour,
+                marker_edge_width=marker_edge_width,
+                render_numbering=render_numbering,
+                numbers_horizontal_align=numbers_horizontal_align,
+                numbers_vertical_align=numbers_vertical_align,
+                numbers_font_name=numbers_font_name,
+                numbers_font_size=numbers_font_size,
+                numbers_font_style=numbers_font_style,
+                numbers_font_weight=numbers_font_weight,
+                numbers_font_colour=numbers_font_colour,
+                render_legend=render_legend, legend_title=legend_title,
+                legend_font_name=legend_font_name,
+                legend_font_style=legend_font_style,
+                legend_font_size=legend_font_size,
+                legend_font_weight=legend_font_weight,
+                legend_marker_scale=legend_marker_scale,
+                legend_location=legend_location,
+                legend_bbox_to_anchor=legend_bbox_to_anchor,
+                legend_border_axes_pad=legend_border_axes_pad,
+                legend_n_columns=legend_n_columns,
+                legend_horizontal_spacing=legend_horizontal_spacing,
+                legend_vertical_spacing=legend_vertical_spacing,
+                legend_border=legend_border,
+                legend_border_padding=legend_border_padding,
+                legend_shadow=legend_shadow,
+                legend_rounded_corners=legend_rounded_corners,
+                render_axes=render_axes, axes_font_name=axes_font_name,
+                axes_font_size=axes_font_size, axes_font_style=axes_font_style,
+                axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
+                axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
+                axes_y_ticks=axes_y_ticks, figure_size=figure_size,
+                interpolation=interpolation, alpha=alpha, cmap_name=cmap_name,
+                **mask_arguments)
+        else:
+            renderer = image.view_landmarks(
+                channels=channels, group=group, with_labels=with_labels,
+                without_labels=None, figure_id=renderer.figure_id,
+                new_figure=False, render_lines=render_lines,
+                line_colour=line_colour, line_style=line_style,
+                line_width=line_width, render_markers=render_markers,
+                marker_style=marker_style, marker_size=marker_size,
+                marker_face_colour=marker_face_colour,
+                marker_edge_colour=marker_edge_colour,
+                marker_edge_width=marker_edge_width,
+                render_numbering=render_numbering,
+                numbers_horizontal_align=numbers_horizontal_align,
+                numbers_vertical_align=numbers_vertical_align,
+                numbers_font_name=numbers_font_name,
+                numbers_font_size=numbers_font_size,
+                numbers_font_style=numbers_font_style,
+                numbers_font_weight=numbers_font_weight,
+                numbers_font_colour=numbers_font_colour,
+                render_legend=render_legend, legend_title=legend_title,
+                legend_font_name=legend_font_name,
+                legend_font_style=legend_font_style,
+                legend_font_size=legend_font_size,
+                legend_font_weight=legend_font_weight,
+                legend_marker_scale=legend_marker_scale,
+                legend_location=legend_location,
+                legend_bbox_to_anchor=legend_bbox_to_anchor,
+                legend_border_axes_pad=legend_border_axes_pad,
+                legend_n_columns=legend_n_columns,
+                legend_horizontal_spacing=legend_horizontal_spacing,
+                legend_vertical_spacing=legend_vertical_spacing,
+                legend_border=legend_border,
+                legend_border_padding=legend_border_padding,
+                legend_shadow=legend_shadow,
+                legend_rounded_corners=legend_rounded_corners,
+                render_axes=render_axes, axes_font_name=axes_font_name,
+                axes_font_size=axes_font_size, axes_font_style=axes_font_style,
+                axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
+                axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
+                axes_y_ticks=axes_y_ticks, figure_size=figure_size,
+                interpolation=interpolation, alpha=alpha, cmap_name=cmap_name,
+                **mask_arguments)
+    else:
+        # either there are not any landmark groups selected or they won't
+        # be displayed
+        if glyph_enabled:
+            # image, not landmarks, masked, glyph
+            renderer = glyph(image, vectors_block_size=glyph_block_size,
+                             use_negative=glyph_use_negative,
+                             channels=channels).view(
+                render_axes=render_axes, axes_font_name=axes_font_name,
+                axes_font_size=axes_font_size, axes_font_style=axes_font_style,
+                axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
+                axes_y_limits=axes_y_limits, figure_size=figure_size,
+                interpolation=interpolation, alpha=alpha, cmap_name=cmap_name,
+                **mask_arguments)
+        elif sum_enabled:
+            # image, not landmarks, masked, sum
+            renderer = sum_channels(image, channels=channels).view(
+                render_axes=render_axes, axes_font_name=axes_font_name,
+                axes_font_size=axes_font_size, axes_font_style=axes_font_style,
+                axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
+                axes_y_limits=axes_y_limits, figure_size=figure_size,
+                interpolation=interpolation, alpha=alpha, cmap_name=cmap_name,
+                **mask_arguments)
+        else:
+            # image, not landmarks, masked, not glyph/sum
+            renderer = image.view(
+                channels=channels, render_axes=render_axes,
+                axes_font_name=axes_font_name, axes_font_size=axes_font_size,
+                axes_font_style=axes_font_style,
+                axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
+                axes_y_limits=axes_y_limits, figure_size=figure_size,
+                interpolation=interpolation, alpha=alpha, cmap_name=cmap_name,
+                **mask_arguments)
+
+    # show plot
+    plt.show()
+
+    return renderer

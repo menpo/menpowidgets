@@ -2875,7 +2875,7 @@ class AxesLimitsWidget(MenpoWidget):
                 self.axes_y_limits_toggles.value = 'auto'
             elif isinstance(axes_y_limits, float):
                 self.axes_y_limits_toggles.value = 'percentage'
-                self.axes_x_limits_percentage.set_widget_state(
+                self.axes_y_limits_percentage.set_widget_state(
                     [axes_y_limits], allow_callback=False)
             else:
                 self.axes_y_limits_toggles.value = 'range'

@@ -1057,11 +1057,12 @@ class LandmarkOptionsWidget(MenpoWidget):
         >>> wid.set_widget_state(new_options, allow_callback=False)
     """
     def __init__(self, group_keys, labels_keys, render_function=None,
-                 style='minimal'):
+                 renderer_widget=None, style='minimal'):
         # Initialise default options dictionary
         self.default_options = {}
 
         # Assign properties
+        self.renderer_widget = renderer_widget
         self.style_option = style
         self.group_keys = []
         self.labels_keys = []
@@ -1158,6 +1159,10 @@ class LandmarkOptionsWidget(MenpoWidget):
     def _group_fun(self, name, value):
         # assign the correct children to the labels toggles
         self.labels_box.children = self.labels_toggles[value]
+        # if a renderer widget was provided, update it
+        if self.renderer_widget is not None:
+            self.renderer_widget.set_widget_state(self.labels_keys[value],
+                                                  allow_callback=False)
         # save options
         self._save_options('', None)
 
@@ -1417,6 +1422,10 @@ class LandmarkOptionsWidget(MenpoWidget):
                 self._set_labels_toggles_values(landmark_options['with_labels'])
                 self.render_landmarks_checkbox.value = \
                     landmark_options['render_landmarks']
+                # if a renderer widget was provided, update it
+                if self.renderer_widget is not None:
+                    self.renderer_widget.set_widget_state(
+                        self.labels_keys[group_idx], allow_callback=False)
 
             # Get values
             self._save_options('', None)
@@ -1856,7 +1865,8 @@ class RendererOptionsWidget(MenpoWidget):
         >>> # Update widget state
         >>> wid.set_widget_state(new_options, labels, allow_callback=True)
     """
-    def __init__(self, options_tabs, labels, render_function=None,
+    def __init__(self, options_tabs, labels, axes_x_limits=None,
+                 axes_y_limits=None, render_function=None,
                  style='minimal', tabs_style='minimal'):
         # Initialise default options dictionary
         self.default_options = {}
@@ -1867,7 +1877,7 @@ class RendererOptionsWidget(MenpoWidget):
         self.options_tabs = options_tabs
 
         # Get initial options
-        self.initialise_global_options(labels)
+        self.initialise_global_options(labels, axes_x_limits, axes_y_limits)
         renderer_options = self.get_default_options(labels)
 
         # Create children
@@ -1990,7 +2000,7 @@ class RendererOptionsWidget(MenpoWidget):
     def get_key(self, labels):
         return "{}".format(labels)
 
-    def initialise_global_options(self, labels):
+    def initialise_global_options(self, labels, axes_x_limits, axes_y_limits):
         self.global_options = {}
         for o in self.options_tabs:
             if o == 'image':
@@ -2015,7 +2025,8 @@ class RendererOptionsWidget(MenpoWidget):
                     'render_axes': False, 'axes_font_name': 'sans-serif',
                     'axes_font_size': 10, 'axes_font_style': 'normal',
                     'axes_font_weight': 'normal',
-                    'axes_x_limits': None, 'axes_y_limits': None,
+                    'axes_x_limits': axes_x_limits,
+                    'axes_y_limits': axes_y_limits,
                     'axes_x_ticks': None, 'axes_y_ticks': None}
             elif o == 'legend':
                 rl = True
@@ -2206,7 +2217,7 @@ class RendererOptionsWidget(MenpoWidget):
             tabs_padding = 0
         else:
             tabs_style = tabs_style
-            tabs_border_visible = True
+            tabs_border_visible = not style == tabs_style
             tabs_border_colour = map_styles_to_hex_colours(tabs_style)
             tabs_border_radius = 10
             tabs_padding = '0.3cm'
