@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from menpo.feature import glyph, sum_channels
+from menpo.visualize.viewmatplotlib import MatplotlibSubplots
 
 
 def lists_are_the_same(a, b):
@@ -886,6 +887,445 @@ def render_image(image, renderer, render_landmarks, image_is_masked,
                 axes_y_limits=axes_y_limits, figure_size=figure_size,
                 interpolation=interpolation, alpha=alpha, cmap_name=cmap_name,
                 **mask_arguments)
+
+    # show plot
+    plt.show()
+
+    return renderer
+
+
+def render_patches(patches, patch_centers, patches_indices, offset_index,
+                   renderer, background, render_patches, channels,
+                   glyph_enabled, glyph_block_size, glyph_use_negative,
+                   sum_enabled, interpolation, cmap_name, alpha,
+                   render_patches_bboxes, bboxes_line_colour,
+                   bboxes_line_style, bboxes_line_width, render_centers,
+                   render_lines, line_colour, line_style, line_width,
+                   render_markers, marker_style, marker_size,
+                   marker_face_colour, marker_edge_colour,
+                   marker_edge_width, render_numbering,
+                   numbers_horizontal_align, numbers_vertical_align,
+                   numbers_font_name, numbers_font_size, numbers_font_style,
+                   numbers_font_weight, numbers_font_colour, render_axes,
+                   axes_font_name, axes_font_size, axes_font_style,
+                   axes_font_weight, axes_x_limits, axes_y_limits,
+                   axes_x_ticks, axes_y_ticks, figure_size):
+    from menpo.transform import UniformScale
+    from menpo.visualize import view_patches
+
+    if glyph_enabled and render_patches:
+        # compute glyph size
+        glyph_patch0 = glyph(patches[0, offset_index, ...],
+                             vectors_block_size=glyph_block_size,
+                             use_negative=glyph_use_negative)
+        # compute glyph of each patch
+        glyph_patches = np.zeros((patches.shape[0], 1, 1, glyph_patch0.shape[1],
+                                  glyph_patch0.shape[2]))
+        glyph_patches[0, 0, ...] = glyph_patch0
+        for i in range(1, patches.shape[0]):
+            glyph_patches[i, 0, ...] = glyph(
+                patches[i, offset_index, ...],
+                vectors_block_size=glyph_block_size,
+                use_negative=glyph_use_negative)
+        # correct patch centers
+        glyph_patch_centers = UniformScale(glyph_block_size, 2).apply(
+            patch_centers)
+        # visualize glyph patches
+        renderer = view_patches(
+            glyph_patches, glyph_patch_centers, patches_indices=patches_indices,
+            offset_index=0, figure_id=renderer.figure_id, new_figure=False,
+            background=background, render_patches=render_patches, channels=0,
+            interpolation=interpolation, cmap_name=cmap_name, alpha=alpha,
+            render_patches_bboxes=render_patches_bboxes,
+            bboxes_line_colour=bboxes_line_colour,
+            bboxes_line_style=bboxes_line_style,
+            bboxes_line_width=bboxes_line_width,
+            render_centers=render_centers, render_lines=render_lines,
+            line_colour=line_colour, line_style=line_style,
+            line_width=line_width, render_markers=render_markers,
+            marker_style=marker_style, marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width,
+            render_numbering=render_numbering,
+            numbers_horizontal_align=numbers_horizontal_align,
+            numbers_vertical_align=numbers_vertical_align,
+            numbers_font_name=numbers_font_name,
+            numbers_font_size=numbers_font_size,
+            numbers_font_style=numbers_font_style,
+            numbers_font_weight=numbers_font_weight,
+            numbers_font_colour=numbers_font_colour,
+            render_axes=render_axes, axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+            axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks,
+            figure_size=figure_size)
+    elif sum_enabled and render_patches:
+        # compute sum of each patch
+        sum_patches = np.zeros((patches.shape[0], 1, 1, patches.shape[3],
+                                patches.shape[4]))
+        for i in patches_indices:
+            sum_patches[i, 0, ...] = sum_channels(
+                patches[i, offset_index, ...], channels=channels)
+        # visualize sum patches
+        renderer = view_patches(
+            sum_patches, patch_centers, patches_indices=patches_indices,
+            offset_index=0, figure_id=renderer.figure_id, new_figure=False,
+            background=background, render_patches=render_patches, channels=0,
+            interpolation=interpolation, cmap_name=cmap_name, alpha=alpha,
+            render_patches_bboxes=render_patches_bboxes,
+            bboxes_line_colour=bboxes_line_colour,
+            bboxes_line_style=bboxes_line_style,
+            bboxes_line_width=bboxes_line_width,
+            render_centers=render_centers, render_lines=render_lines,
+            line_colour=line_colour, line_style=line_style,
+            line_width=line_width, render_markers=render_markers,
+            marker_style=marker_style, marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width,
+            render_numbering=render_numbering,
+            numbers_horizontal_align=numbers_horizontal_align,
+            numbers_vertical_align=numbers_vertical_align,
+            numbers_font_name=numbers_font_name,
+            numbers_font_size=numbers_font_size,
+            numbers_font_style=numbers_font_style,
+            numbers_font_weight=numbers_font_weight,
+            numbers_font_colour=numbers_font_colour,
+            render_axes=render_axes, axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+            axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks,
+            figure_size=figure_size)
+    else:
+        renderer = view_patches(
+            patches, patch_centers, patches_indices=patches_indices,
+            offset_index=offset_index, figure_id=renderer.figure_id,
+            new_figure=False, background=background,
+            render_patches=render_patches, channels=channels,
+            interpolation=interpolation, cmap_name=cmap_name, alpha=alpha,
+            render_patches_bboxes=render_patches_bboxes,
+            bboxes_line_colour=bboxes_line_colour,
+            bboxes_line_style=bboxes_line_style,
+            bboxes_line_width=bboxes_line_width,
+            render_centers=render_centers, render_lines=render_lines,
+            line_colour=line_colour, line_style=line_style,
+            line_width=line_width, render_markers=render_markers,
+            marker_style=marker_style, marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width,
+            render_numbering=render_numbering,
+            numbers_horizontal_align=numbers_horizontal_align,
+            numbers_vertical_align=numbers_vertical_align,
+            numbers_font_name=numbers_font_name,
+            numbers_font_size=numbers_font_size,
+            numbers_font_style=numbers_font_style,
+            numbers_font_weight=numbers_font_weight,
+            numbers_font_colour=numbers_font_colour,
+            render_axes=render_axes, axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+            axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks,
+            figure_size=figure_size)
+
+    # show plot
+    plt.show()
+
+    return renderer
+
+
+def render_images(image, renderer, render_image, render_landmarks,
+                  image_is_masked, masked_enabled, channels,
+                  glyph_enabled, glyph_block_size, glyph_use_negative,
+                  sum_enabled, groups, with_labels, subplots_enabled,
+                  subplots_titles, image_axes_mode, render_lines,
+                  line_style, line_width, line_colour, render_markers,
+                  marker_style, marker_size, marker_edge_width,
+                  marker_edge_colour, marker_face_colour,
+                  render_numbering, numbers_horizontal_align,
+                  numbers_vertical_align, numbers_font_name,
+                  numbers_font_size, numbers_font_style,
+                  numbers_font_weight, numbers_font_colour,
+                  render_legend, legend_title, legend_font_name,
+                  legend_font_style, legend_font_size,
+                  legend_font_weight, legend_marker_scale,
+                  legend_location, legend_bbox_to_anchor,
+                  legend_border_axes_pad, legend_n_columns,
+                  legend_horizontal_spacing, legend_vertical_spacing,
+                  legend_border, legend_border_padding, legend_shadow,
+                  legend_rounded_corners, render_axes, axes_font_name,
+                  axes_font_size, axes_font_style, axes_font_weight,
+                  axes_x_limits, axes_y_limits, interpolation, alpha,
+                  figure_size):
+    # This makes the code shorter for dealing with masked images vs non-masked
+    # images
+    mask_arguments = ({'masked': masked_enabled}
+                      if image_is_masked else {})
+
+    # plot
+    if render_image:
+        # image will be displayed
+        if render_landmarks and len(groups) > 0:
+            # there are selected landmark groups and they will be displayed
+            if subplots_enabled:
+                # calculate subplots structure
+                subplots = MatplotlibSubplots()._subplot_layout(len(groups))
+            # show image with landmarks
+            for k, group in enumerate(groups):
+                if subplots_enabled:
+                    # create subplot
+                    plt.subplot(subplots[0], subplots[1], k + 1)
+                    if render_legend:
+                        # set subplot's title
+                        plt.title(subplots_titles[group],
+                                  fontname=legend_font_name,
+                                  fontstyle=legend_font_style,
+                                  fontweight=legend_font_weight,
+                                  fontsize=legend_font_size)
+                if glyph_enabled:
+                    # image, landmarks, masked, glyph
+                    renderer = glyph(image, vectors_block_size=glyph_block_size,
+                                     use_negative=glyph_use_negative,
+                                     channels=channels).view_landmarks(
+                        group=group, with_labels=with_labels[k],
+                        without_labels=None, figure_id=renderer.figure_id,
+                        new_figure=False, render_lines=render_lines[k],
+                        line_style=line_style[k], line_width=line_width[k],
+                        line_colour=line_colour[k],
+                        render_markers=render_markers[k],
+                        marker_style=marker_style[k],
+                        marker_size=marker_size[k],
+                        marker_edge_width=marker_edge_width[k],
+                        marker_edge_colour=marker_edge_colour[k],
+                        marker_face_colour=marker_face_colour[k],
+                        render_numbering=render_numbering,
+                        numbers_horizontal_align=numbers_horizontal_align,
+                        numbers_vertical_align=numbers_vertical_align,
+                        numbers_font_name=numbers_font_name,
+                        numbers_font_size=numbers_font_size,
+                        numbers_font_style=numbers_font_style,
+                        numbers_font_weight=numbers_font_weight,
+                        numbers_font_colour=numbers_font_colour,
+                        render_legend=render_legend and not subplots_enabled,
+                        legend_title=legend_title,
+                        legend_font_name=legend_font_name,
+                        legend_font_style=legend_font_style,
+                        legend_font_size=legend_font_size,
+                        legend_font_weight=legend_font_weight,
+                        legend_marker_scale=legend_marker_scale,
+                        legend_location=legend_location,
+                        legend_bbox_to_anchor=legend_bbox_to_anchor,
+                        legend_border_axes_pad=legend_border_axes_pad,
+                        legend_n_columns=legend_n_columns,
+                        legend_horizontal_spacing=legend_horizontal_spacing,
+                        legend_vertical_spacing=legend_vertical_spacing,
+                        legend_border=legend_border,
+                        legend_border_padding=legend_border_padding,
+                        legend_shadow=legend_shadow,
+                        legend_rounded_corners=legend_rounded_corners,
+                        render_axes=render_axes, axes_font_name=axes_font_name,
+                        axes_font_size=axes_font_size,
+                        axes_font_style=axes_font_style,
+                        axes_font_weight=axes_font_weight,
+                        axes_x_limits=axes_x_limits,
+                        axes_y_limits=axes_y_limits,
+                        interpolation=interpolation, alpha=alpha,
+                        figure_size=figure_size, **mask_arguments)
+                elif sum_enabled:
+                    # image, landmarks, masked, sum
+                    renderer = sum_channels(image,
+                                            channels=channels).view_landmarks(
+                        group=group, with_labels=with_labels[k],
+                        without_labels=None, figure_id=renderer.figure_id,
+                        new_figure=False, render_lines=render_lines[k],
+                        line_style=line_style[k], line_width=line_width[k],
+                        line_colour=line_colour[k],
+                        render_markers=render_markers[k],
+                        marker_style=marker_style[k],
+                        marker_size=marker_size[k],
+                        marker_edge_width=marker_edge_width[k],
+                        marker_edge_colour=marker_edge_colour[k],
+                        marker_face_colour=marker_face_colour[k],
+                        render_numbering=render_numbering,
+                        numbers_horizontal_align=numbers_horizontal_align,
+                        numbers_vertical_align=numbers_vertical_align,
+                        numbers_font_name=numbers_font_name,
+                        numbers_font_size=numbers_font_size,
+                        numbers_font_style=numbers_font_style,
+                        numbers_font_weight=numbers_font_weight,
+                        numbers_font_colour=numbers_font_colour,
+                        render_legend=render_legend and not subplots_enabled,
+                        legend_title=legend_title,
+                        legend_font_name=legend_font_name,
+                        legend_font_style=legend_font_style,
+                        legend_font_size=legend_font_size,
+                        legend_font_weight=legend_font_weight,
+                        legend_marker_scale=legend_marker_scale,
+                        legend_location=legend_location,
+                        legend_bbox_to_anchor=legend_bbox_to_anchor,
+                        legend_border_axes_pad=legend_border_axes_pad,
+                        legend_n_columns=legend_n_columns,
+                        legend_horizontal_spacing=legend_horizontal_spacing,
+                        legend_vertical_spacing=legend_vertical_spacing,
+                        legend_border=legend_border,
+                        legend_border_padding=legend_border_padding,
+                        legend_shadow=legend_shadow,
+                        legend_rounded_corners=legend_rounded_corners,
+                        render_axes=render_axes, axes_font_name=axes_font_name,
+                        axes_font_size=axes_font_size,
+                        axes_font_style=axes_font_style,
+                        axes_font_weight=axes_font_weight,
+                        axes_x_limits=axes_x_limits,
+                        axes_y_limits=axes_y_limits,
+                        interpolation=interpolation, alpha=alpha,
+                        figure_size=figure_size, **mask_arguments)
+                else:
+                    # image, landmarks, masked, not glyph/sum
+                    renderer = image.view_landmarks(
+                        channels=channels, group=group,
+                        with_labels=with_labels[k], without_labels=None,
+                        figure_id=renderer.figure_id, new_figure=False,
+                        render_lines=render_lines[k], line_style=line_style[k],
+                        line_width=line_width[k], line_colour=line_colour[k],
+                        render_markers=render_markers[k],
+                        marker_style=marker_style[k],
+                        marker_size=marker_size[k],
+                        marker_edge_width=marker_edge_width[k],
+                        marker_edge_colour=marker_edge_colour[k],
+                        marker_face_colour=marker_face_colour[k],
+                        render_numbering=render_numbering,
+                        numbers_horizontal_align=numbers_horizontal_align,
+                        numbers_vertical_align=numbers_vertical_align,
+                        numbers_font_name=numbers_font_name,
+                        numbers_font_size=numbers_font_size,
+                        numbers_font_style=numbers_font_style,
+                        numbers_font_weight=numbers_font_weight,
+                        numbers_font_colour=numbers_font_colour,
+                        render_legend=render_legend and not subplots_enabled,
+                        legend_title=legend_title,
+                        legend_font_name=legend_font_name,
+                        legend_font_style=legend_font_style,
+                        legend_font_size=legend_font_size,
+                        legend_font_weight=legend_font_weight,
+                        legend_marker_scale=legend_marker_scale,
+                        legend_location=legend_location,
+                        legend_bbox_to_anchor=legend_bbox_to_anchor,
+                        legend_border_axes_pad=legend_border_axes_pad,
+                        legend_n_columns=legend_n_columns,
+                        legend_horizontal_spacing=legend_horizontal_spacing,
+                        legend_vertical_spacing=legend_vertical_spacing,
+                        legend_border=legend_border,
+                        legend_border_padding=legend_border_padding,
+                        legend_shadow=legend_shadow,
+                        legend_rounded_corners=legend_rounded_corners,
+                        render_axes=render_axes, axes_font_name=axes_font_name,
+                        axes_font_size=axes_font_size,
+                        axes_font_style=axes_font_style,
+                        axes_font_weight=axes_font_weight,
+                        axes_x_limits=axes_x_limits,
+                        axes_y_limits=axes_y_limits,
+                        interpolation=interpolation, alpha=alpha,
+                        figure_size=figure_size, **mask_arguments)
+        else:
+            # either there are not any landmark groups selected or they won't
+            # be displayed
+            if glyph_enabled:
+                # image, not landmarks, masked, glyph
+                renderer = glyph(image, vectors_block_size=glyph_block_size,
+                                 use_negative=glyph_use_negative,
+                                 channels=channels).view(
+                    render_axes=render_axes, axes_font_name=axes_font_name,
+                    axes_font_size=axes_font_size,
+                    axes_font_style=axes_font_style,
+                    axes_font_weight=axes_font_weight,
+                    axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+                    figure_size=figure_size, interpolation=interpolation,
+                    alpha=alpha, **mask_arguments)
+            elif sum_enabled:
+                # image, not landmarks, masked, sum
+                renderer = sum_channels(image, channels=channels).view(
+                    render_axes=render_axes, axes_font_name=axes_font_name,
+                    axes_font_size=axes_font_size,
+                    axes_font_style=axes_font_style,
+                    axes_font_weight=axes_font_weight,
+                    axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+                    figure_size=figure_size, interpolation=interpolation,
+                    alpha=alpha, **mask_arguments)
+            else:
+                # image, not landmarks, masked, not glyph/sum
+                renderer = image.view(
+                    channels=channels, render_axes=render_axes,
+                    axes_font_name=axes_font_name,
+                    axes_font_size=axes_font_size,
+                    axes_font_style=axes_font_style,
+                    axes_font_weight=axes_font_weight,
+                    axes_x_limits=axes_x_limits,
+                    axes_y_limits=axes_y_limits, figure_size=figure_size,
+                    interpolation=interpolation, alpha=alpha, **mask_arguments)
+    else:
+        # image won't be displayed
+        if render_landmarks and len(groups) > 0:
+            # there are selected landmark groups and they will be displayed
+            if subplots_enabled:
+                # calculate subplots structure
+                subplots = MatplotlibSubplots()._subplot_layout(len(groups))
+            # not image, landmarks
+            for k, group in enumerate(groups):
+                if subplots_enabled:
+                    # create subplot
+                    plt.subplot(subplots[0], subplots[1], k + 1)
+                    if render_legend:
+                        # set subplot's title
+                        plt.title(subplots_titles[group],
+                                  fontname=legend_font_name,
+                                  fontstyle=legend_font_style,
+                                  fontweight=legend_font_weight,
+                                  fontsize=legend_font_size)
+                image.landmarks[group].lms.view(
+                    image_view=image_axes_mode, render_lines=render_lines[k],
+                    line_style=line_style[k], line_width=line_width[k],
+                    line_colour=line_colour[k],
+                    render_markers=render_markers[k],
+                    marker_style=marker_style[k], marker_size=marker_size[k],
+                    marker_edge_width=marker_edge_width[k],
+                    marker_edge_colour=marker_edge_colour[k],
+                    marker_face_colour=marker_face_colour[k],
+                    render_axes=render_axes, axes_font_name=axes_font_name,
+                    axes_font_size=axes_font_size,
+                    axes_font_style=axes_font_style,
+                    axes_font_weight=axes_font_weight,
+                    axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+                    figure_size=figure_size)
+            if not subplots_enabled:
+                if len(groups) % 2 == 0:
+                    plt.gca().invert_yaxis()
+                if render_legend:
+                    # Options related to legend's font
+                    prop = {'family': legend_font_name,
+                            'size': legend_font_size,
+                            'style': legend_font_style,
+                            'weight': legend_font_weight}
+
+                    # display legend on side
+                    plt.gca().legend(groups, title=legend_title, prop=prop,
+                                     loc=legend_location,
+                                     bbox_to_anchor=legend_bbox_to_anchor,
+                                     borderaxespad=legend_border_axes_pad,
+                                     ncol=legend_n_columns,
+                                     columnspacing=legend_horizontal_spacing,
+                                     labelspacing=legend_vertical_spacing,
+                                     frameon=legend_border,
+                                     borderpad=legend_border_padding,
+                                     shadow=legend_shadow,
+                                     fancybox=legend_rounded_corners,
+                                     markerscale=legend_marker_scale)
 
     # show plot
     plt.show()

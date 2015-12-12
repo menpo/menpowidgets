@@ -3362,14 +3362,27 @@ class PatchOptionsWidget(MenpoWidget):
             'render_patches_bboxes':
                 self.bboxes_line_options_wid.selected_values['render_lines'],
             'bboxes_line_colour':
-                self.bboxes_line_options_wid.selected_values['line_colour'],
+                self.bboxes_line_options_wid.selected_values['line_colour'][0],
             'bboxes_line_style':
                 self.bboxes_line_options_wid.selected_values['line_style'],
             'bboxes_line_width':
                 self.bboxes_line_options_wid.selected_values['line_width']}
         # update default values
         current_key = self.get_key(self.n_patches, self.n_offsets)
-        self.default_options[current_key] = self.selected_values
+        self.default_options[current_key] = {
+            'patches_indices': self.slicing_wid.selected_values,
+            'offset_index': int(self.offset_dropdown.value),
+            'background': description,
+            'render_patches': self.render_patches_checkbox.value,
+            'render_centers': self.render_centers_checkbox.value,
+            'render_patches_bboxes':
+                self.bboxes_line_options_wid.selected_values['render_lines'],
+            'bboxes_line_colour':
+                self.bboxes_line_options_wid.selected_values['line_colour'],
+            'bboxes_line_style':
+                self.bboxes_line_options_wid.selected_values['line_style'],
+            'bboxes_line_width':
+                self.bboxes_line_options_wid.selected_values['line_width']}
 
     def get_key(self, n_patches, n_offsets):
         return "{}_{}".format(n_patches, n_offsets)
@@ -4110,7 +4123,7 @@ class PlotOptionsWidget(MenpoWidget):
         line_width = [1] * self.n_curves
         render_markers = [True] * self.n_curves
         marker_style = ['s'] * self.n_curves
-        marker_size = [20] * self.n_curves
+        marker_size = [10] * self.n_curves
         marker_face_colour = ['white'] * self.n_curves
         marker_edge_width = [1.] * self.n_curves
         line_colour = ['red']
