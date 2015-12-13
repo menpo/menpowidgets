@@ -1062,8 +1062,8 @@ def render_images(image, renderer, render_image, render_landmarks,
                   legend_border, legend_border_padding, legend_shadow,
                   legend_rounded_corners, render_axes, axes_font_name,
                   axes_font_size, axes_font_style, axes_font_weight,
-                  axes_x_limits, axes_y_limits, interpolation, alpha,
-                  figure_size):
+                  axes_x_limits, axes_y_limits, axes_x_ticks, axes_y_ticks,
+                  interpolation, alpha, cmap_name, figure_size):
     # This makes the code shorter for dealing with masked images vs non-masked
     # images
     mask_arguments = ({'masked': masked_enabled}
@@ -1136,7 +1136,9 @@ def render_images(image, renderer, render_image, render_landmarks,
                         axes_font_weight=axes_font_weight,
                         axes_x_limits=axes_x_limits,
                         axes_y_limits=axes_y_limits,
+                        axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks,
                         interpolation=interpolation, alpha=alpha,
+                        cmap_name=cmap_name,
                         figure_size=figure_size, **mask_arguments)
                 elif sum_enabled:
                     # image, landmarks, masked, sum
@@ -1184,7 +1186,9 @@ def render_images(image, renderer, render_image, render_landmarks,
                         axes_font_weight=axes_font_weight,
                         axes_x_limits=axes_x_limits,
                         axes_y_limits=axes_y_limits,
+                        axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks,
                         interpolation=interpolation, alpha=alpha,
+                        cmap_name=cmap_name,
                         figure_size=figure_size, **mask_arguments)
                 else:
                     # image, landmarks, masked, not glyph/sum
@@ -1231,7 +1235,9 @@ def render_images(image, renderer, render_image, render_landmarks,
                         axes_font_weight=axes_font_weight,
                         axes_x_limits=axes_x_limits,
                         axes_y_limits=axes_y_limits,
+                        axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks,
                         interpolation=interpolation, alpha=alpha,
+                        cmap_name=cmap_name,
                         figure_size=figure_size, **mask_arguments)
         else:
             # either there are not any landmark groups selected or they won't
@@ -1246,8 +1252,9 @@ def render_images(image, renderer, render_image, render_landmarks,
                     axes_font_style=axes_font_style,
                     axes_font_weight=axes_font_weight,
                     axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+                    axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks,
                     figure_size=figure_size, interpolation=interpolation,
-                    alpha=alpha, **mask_arguments)
+                    alpha=alpha, cmap_name=cmap_name, **mask_arguments)
             elif sum_enabled:
                 # image, not landmarks, masked, sum
                 renderer = sum_channels(image, channels=channels).view(
@@ -1256,8 +1263,9 @@ def render_images(image, renderer, render_image, render_landmarks,
                     axes_font_style=axes_font_style,
                     axes_font_weight=axes_font_weight,
                     axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+                    axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks,
                     figure_size=figure_size, interpolation=interpolation,
-                    alpha=alpha, **mask_arguments)
+                    alpha=alpha, cmap_name=cmap_name, **mask_arguments)
             else:
                 # image, not landmarks, masked, not glyph/sum
                 renderer = image.view(
@@ -1267,8 +1275,11 @@ def render_images(image, renderer, render_image, render_landmarks,
                     axes_font_style=axes_font_style,
                     axes_font_weight=axes_font_weight,
                     axes_x_limits=axes_x_limits,
-                    axes_y_limits=axes_y_limits, figure_size=figure_size,
-                    interpolation=interpolation, alpha=alpha, **mask_arguments)
+                    axes_y_limits=axes_y_limits,
+                    axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks,
+                    figure_size=figure_size,
+                    interpolation=interpolation, alpha=alpha,
+                    cmap_name=cmap_name, **mask_arguments)
     else:
         # image won't be displayed
         if render_landmarks and len(groups) > 0:
@@ -1302,10 +1313,9 @@ def render_images(image, renderer, render_image, render_landmarks,
                     axes_font_style=axes_font_style,
                     axes_font_weight=axes_font_weight,
                     axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+                    axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks,
                     figure_size=figure_size)
             if not subplots_enabled:
-                if len(groups) % 2 == 0:
-                    plt.gca().invert_yaxis()
                 if render_legend:
                     # Options related to legend's font
                     prop = {'family': legend_font_name,
@@ -1331,3 +1341,19 @@ def render_images(image, renderer, render_image, render_landmarks,
     plt.show()
 
     return renderer
+
+
+def error_type_key_to_func(error_type):
+    from menpofit.result import (
+        compute_root_mean_square_error, compute_point_to_point_error,
+        compute_normalise_point_to_point_error)
+    if error_type is 'me_norm':
+        func = compute_normalise_point_to_point_error
+    elif error_type is 'me':
+        func = compute_point_to_point_error
+    elif error_type is 'rmse':
+        func = compute_root_mean_square_error
+    else:
+        raise ValueError('Unexpected error_type. '
+                         'Supported values are: {me_norm, me, rmse}')
+    return func

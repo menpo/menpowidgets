@@ -5127,7 +5127,7 @@ class FittingResultOptionsWidget(MenpoWidget):
             description='Errors', margin='0.1cm',
             visible=has_groundtruth and errors_function is not None)
         self.plot_displacements_button = ipywidgets.Button(
-            description='Displacements',
+            description='Displacements', margin='0.1cm',
             visible=displacements_function is not None)
         self.plot_costs_button = ipywidgets.Button(
             description='Costs', margin='0.1cm',
@@ -5186,7 +5186,7 @@ class FittingResultOptionsWidget(MenpoWidget):
             if self.shape_selection[2].value:
                 groups.append('final')
             if self.has_groundtruth and self.shape_selection[3].value:
-                groups.append('gt_shape')
+                groups.append('ground')
         else:
             mode = 'iterations'
             if self.iterations_mode.value == 'animation':

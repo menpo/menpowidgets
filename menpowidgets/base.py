@@ -14,12 +14,14 @@ from .options import (RendererOptionsWidget, TextPrintWidget,
                       SaveFigureOptionsWidget, AnimationOptionsWidget,
                       LandmarkOptionsWidget, ChannelOptionsWidget,
                       FeatureOptionsWidget, PlotOptionsWidget,
-                      PatchOptionsWidget, LinearModelParametersWidget)
+                      PatchOptionsWidget, LinearModelParametersWidget,
+                      FittingResultOptionsWidget)
 from .style import format_box, map_styles_to_hex_colours
 from .tools import LogoWidget
 from .utils import (extract_group_labels_from_landmarks,
                     extract_groups_labels_from_image, render_image,
-                    render_patches)
+                    render_patches, render_images, error_type_key_to_func,
+                    sample_colours_from_colourmap)
 from .checks import check_n_parameters
 
 
@@ -3527,3 +3529,428 @@ def plot_ced(errors, legend_entries=None, error_range=None,
     # return widget object if asked
     if return_widget:
         return wid
+
+
+def visualize_fitting_result(fitting_results, figure_size=(10, 8),
+                             style='coloured', browser_style='buttons'):
+    r"""
+    Widget that allows browsing through a `list` of fitting results.
+
+    Parameters
+    -----------
+    fitting_results : `list` of :map:`FittingResult` or subclass
+        The `list` of fitting results to be displayed. Note that the fitting
+        results can have different attributes between them, i.e. different
+        number of iterations, number of channels etc.
+    figure_size : (`int`, `int`), optional
+        The initial size of the plotted figures.
+    style : {``'coloured'``, ``'minimal'``}, optional
+        If ``'coloured'``, then the style of the widget will be coloured. If
+        ``minimal``, then the style is simple using black and white colours.
+    browser_style : {``'buttons'``, ``'slider'``}, optional
+        It defines whether the selector of the objects will have the form of
+        plus/minus buttons or a slider.
+    """
+    print('Initializing...')
+
+    # Make sure that fitting_results is a list even with one fitting_result
+    if not isinstance(fitting_results, list):
+        fitting_results = [fitting_results]
+
+    # Get the number of fitting_results
+    n_fitting_results = len(fitting_results)
+
+    # Define the styling options
+    if style == 'coloured':
+        logo_style = 'info'
+        widget_box_style = 'info'
+        widget_border_radius = 10
+        widget_border_width = 1
+        animation_style = 'info'
+        fitting_result_style = 'danger'
+        fitting_result_tabs_style = 'warning'
+        channels_style = 'danger'
+        info_style = 'danger'
+        renderer_style = 'danger'
+        renderer_tabs_style = 'info'
+        save_figure_style = 'danger'
+        plot_ced_but_style = 'primary'
+    else:
+        logo_style = 'minimal'
+        widget_box_style = ''
+        widget_border_radius = 0
+        widget_border_width = 0
+        fitting_result_style = 'minimal'
+        fitting_result_tabs_style = 'minimal'
+        channels_style = 'minimal'
+        animation_style = 'minimal'
+        info_style = 'minimal'
+        renderer_style = 'minimal'
+        renderer_tabs_style = 'minimal'
+        save_figure_style = 'minimal'
+        plot_ced_but_style = ''
+
+    # Check if all fitting_results have gt_shape in order to show the ced button
+    show_ced = all(f.gt_shape is not None for f in fitting_results)
+
+    # Define function that plots errors curve
+    def plot_errors_function(name):
+        # Clear current figure, but wait until the new data to be displayed are
+        # generated
+        ipydisplay.clear_output(wait=True)
+
+        # Get selected index
+        im = 0
+        if n_fitting_results > 1:
+            im = image_number_wid.selected_values
+
+        # Render
+        new_figure_size = (
+            renderer_options_wid.selected_values['zoom_one'] * 10,
+            renderer_options_wid.selected_values['zoom_one'] * 3)
+        renderer = fitting_results[im].plot_errors(
+            figure_id=save_figure_wid.renderer.figure_id,
+            figure_size=new_figure_size)
+
+        # Show figure
+        plt.show()
+
+        # Save the current figure id
+        save_figure_wid.renderer = renderer
+
+    # Define function that plots displacements curve
+    def plot_displacements_function(name):
+        # Clear current figure, but wait until the new data to be displayed are
+        # generated
+        ipydisplay.clear_output(wait=True)
+
+        # Get selected index
+        im = 0
+        if n_fitting_results > 1:
+            im = image_number_wid.selected_values
+
+        # Render
+        new_figure_size = (
+            renderer_options_wid.selected_values['zoom_one'] * 10,
+            renderer_options_wid.selected_values['zoom_one'] * 3)
+        renderer = fitting_results[im].plot_displacements(
+            figure_id=save_figure_wid.renderer.figure_id,
+            figure_size=new_figure_size, stat_type='mean')
+
+        # Show figure
+        plt.show()
+
+        # Save the current figure id
+        save_figure_wid.renderer = renderer
+
+    # Define function that plots errors curve
+    def plot_costs_function(name):
+        # Clear current figure, but wait until the new data to be displayed are
+        # generated
+        ipydisplay.clear_output(wait=True)
+
+        # Get selected index
+        im = 0
+        if n_fitting_results > 1:
+            im = image_number_wid.selected_values
+
+        # Render
+        from menpo.visualize import plot_curve
+        new_figure_size = (
+            renderer_options_wid.selected_values['zoom_one'] * 10,
+            renderer_options_wid.selected_values['zoom_one'] * 3)
+        renderer = plot_curve(
+            range(len(fitting_results[im].costs)), [fitting_results[im].costs],
+            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+            figure_size=new_figure_size, x_label='Iteration',
+            y_label='Cost Function', title='Cost Function per Iteration',
+            render_grid=True, grid_line_style='--', line_style='-', line_width=2,
+            render_markers=True, marker_style='o', marker_size=4,
+            marker_face_colour='b', marker_edge_colour='k',
+            marker_edge_width=1., render_lines=True, line_colour='b')
+
+        # Show figure
+        plt.show()
+
+        # Save the current figure id
+        save_figure_wid.renderer = renderer
+
+    # Define render function
+    def render_function(name, value):
+        # Clear current figure, but wait until the generation of the new data
+        # that will be rendered
+        ipydisplay.clear_output(wait=True)
+
+        # get selected image
+        im = 0
+        if n_fitting_results > 1:
+            im = image_number_wid.selected_values
+
+        # update info text widget
+        update_info('', error_type_wid.value)
+
+        # get selected options
+        render_image = fitting_result_wid.selected_values['render_image']
+        groups = fitting_result_wid.selected_values['groups']
+        subplots_enabled = fitting_result_wid.selected_values['subplots_enabled']
+        if fitting_result_wid.selected_values['mode'] == 'result':
+            # image object
+            image = fitting_results[im].fitted_image
+            # lines and markers options
+            subplots_titles = dict()
+            render_lines = [True] * len(groups)
+            line_colour = []
+            line_style = ['-'] * len(groups)
+            line_width = [1] * len(groups)
+            render_markers = [True] * len(groups)
+            marker_style = ['o'] * len(groups)
+            marker_size = [20] * len(groups)
+            marker_face_colour = []
+            marker_edge_colour = ['black'] * len(groups)
+            marker_edge_width = [1] * len(groups)
+            for g in groups:
+                if g == 'final':
+                    line_colour.append('red')
+                    marker_face_colour.append('red')
+                    subplots_titles[g] = 'Final'
+                elif g == 'initial':
+                    line_colour.append('blue')
+                    marker_face_colour.append('blue')
+                    subplots_titles[g] = 'Initial'
+                elif g == 'ground':
+                    line_colour.append('yellow')
+                    marker_face_colour.append('yellow')
+                    subplots_titles[g] = 'Groundtruth'
+        else:
+            # image object
+            image = fitting_results[im].iter_image
+            subplots_titles = dict()
+            for i, g in enumerate(groups):
+                subplots_titles[g] = "Iteration " + g.split('_')[1]
+            # lines and markers options
+            render_lines = [True] * len(groups)
+            line_style = ['-'] * len(groups)
+            line_width = [1] * len(groups)
+            render_markers = [True] * len(groups)
+            marker_style = ['o'] * len(groups)
+            marker_size = [20] * len(groups)
+            marker_edge_colour = ['black'] * len(groups)
+            marker_edge_width = [1] * len(groups)
+            if (subplots_enabled or
+                    fitting_result_wid.iterations_mode.value == 'animation'):
+                line_colour = ['red'] * len(groups)
+                marker_face_colour = ['red'] * len(groups)
+            else:
+                cols = sample_colours_from_colourmap(len(groups), 'jet')
+                line_colour = cols
+                marker_face_colour = cols
+
+        options = renderer_options_wid.selected_values['numbering']
+        options.update(renderer_options_wid.selected_values['legend'])
+        options.update(renderer_options_wid.selected_values['axes'])
+        options.update(renderer_options_wid.selected_values['image'])
+        new_figure_size = (
+            renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
+            renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
+
+        # call helper _visualize
+        renderer = render_images(
+            image=image, renderer=save_figure_wid.renderer,
+            render_image=render_image, render_landmarks=True,
+            image_is_masked=False, masked_enabled=False,
+            channels=channel_options_wid.selected_values['channels'],
+            glyph_enabled=channel_options_wid.selected_values['glyph_enabled'],
+            glyph_block_size=channel_options_wid.selected_values['glyph_block_size'],
+            glyph_use_negative=channel_options_wid.selected_values['glyph_use_negative'],
+            sum_enabled=channel_options_wid.selected_values['sum_enabled'],
+            groups=groups, with_labels=[None] * len(groups),
+            subplots_enabled=subplots_enabled, subplots_titles=subplots_titles,
+            image_axes_mode=True, render_lines=render_lines,
+            line_style=line_style, line_width=line_width,
+            line_colour=line_colour, render_markers=render_markers,
+            marker_style=marker_style, marker_size=marker_size,
+            marker_edge_width=marker_edge_width,
+            marker_edge_colour=marker_edge_colour,
+            marker_face_colour=marker_face_colour, figure_size=new_figure_size,
+            **options)
+
+        # Save the current figure id
+        save_figure_wid.renderer = renderer
+
+    # Define function that updates info text
+    def update_info(name, value):
+        # Get selected image
+        im = 0
+        if n_fitting_results > 1:
+            im = image_number_wid.selected_values
+
+        # Create output str
+        if fitting_results[im].gt_shape is not None:
+            func = error_type_key_to_func(value)
+            text_per_line = [
+                "> Initial error: {:.4f}".format(
+                    fitting_results[im].initial_error(compute_error=func)),
+                "> Final error: {:.4f}".format(
+                    fitting_results[im].final_error(compute_error=func)),
+                "> {} iterations".format(fitting_results[im].n_iters)]
+        else:
+            text_per_line = [
+                "> {} iterations".format(fitting_results[im].n_iters)]
+        if hasattr(fitting_results[im], 'n_scales'):  # Multilevel result
+            text_per_line.append("> {} scales".format(
+                fitting_results[im].n_scales))
+        info_wid.set_widget_state(n_lines=len(text_per_line),
+                                  text_per_line=text_per_line)
+
+    # Create options widgets
+    fitting_result_wid = FittingResultOptionsWidget(
+        has_groundtruth=fitting_results[0].gt_shape is not None,
+        n_iters=fitting_results[0].iter_image.landmarks.n_groups,
+        render_function=render_function,
+        displacements_function=plot_displacements_function,
+        errors_function=plot_errors_function, costs_function=plot_costs_function,
+        style=fitting_result_style, tabs_style=fitting_result_tabs_style)
+    channel_options_wid = ChannelOptionsWidget(
+        n_channels=fitting_results[0].fitted_image.n_channels,
+        image_is_masked=isinstance(fitting_results[0].fitted_image, MaskedImage),
+        render_function=render_function, style=channels_style)
+    renderer_options_wid = RendererOptionsWidget(
+        options_tabs=['zoom_one', 'axes', 'legend', 'numbering', 'image'],
+        labels=None, axes_x_limits=None, axes_y_limits=None,
+        render_function=render_function,
+        style=renderer_style, tabs_style=renderer_tabs_style)
+    info_wid = TextPrintWidget(n_lines=4, text_per_line=[''] * 4,
+                               style=info_style)
+    save_figure_wid = SaveFigureOptionsWidget(renderer=None,
+                                              style=save_figure_style)
+
+    # Create error type radio buttons
+    error_type_values = OrderedDict()
+    error_type_values['Point-to-point Normalized Mean Error'] = 'me_norm'
+    error_type_values['Point-to-point Mean Error'] = 'me'
+    error_type_values['RMS Error'] = 'rmse'
+    error_type_wid = ipywidgets.RadioButtons(
+        options=error_type_values, value='me_norm', description='Error type')
+    error_type_wid.on_trait_change(update_info, 'value')
+    plot_ced_but = ipywidgets.Button(description='Plot CED', visible=show_ced,
+                                     button_style=plot_ced_but_style)
+    error_wid = ipywidgets.VBox(children=[error_type_wid, plot_ced_but],
+                                align='center')
+
+    # Invoke plot_ced widget
+    def plot_ced_fun(name):
+        # Make button invisible, so that it cannot be pressed again until
+        # widget closes
+        plot_ced_but.visible = False
+
+        error_type = error_type_wid.value
+        func = error_type_key_to_func(error_type)
+
+        # Create errors list
+        fit_errors = [f.final_error(compute_error=func)
+                      for f in fitting_results]
+        initial_errors = [f.initial_error(compute_error=func)
+                          for f in fitting_results]
+        errors = [fit_errors, initial_errors]
+
+        # Call plot_ced
+        plot_ced_widget = plot_ced(
+            errors, figure_size=(9, 5), error_type=error_type,
+            error_range=None, legend_entries=['Final Fitting',
+                                              'Initialization'],
+            style=style, return_widget=True)
+
+        # If another tab is selected, then close the widget.
+        def close_plot_ced_fun(name, value):
+            if value != 3:
+                plot_ced_widget.close()
+                plot_ced_but.visible = True
+        options_box.on_trait_change(close_plot_ced_fun, 'selected_index')
+
+        # If another error type, then close the widget
+        def close_plot_ced_fun_2(name, value):
+            plot_ced_widget.close()
+            plot_ced_but.visible = True
+        error_type_wid.on_trait_change(close_plot_ced_fun_2, 'value')
+    plot_ced_but.on_click(plot_ced_fun)
+
+    # Group widgets
+    options_wid = ipywidgets.Tab(children=[channel_options_wid,
+                                           renderer_options_wid])
+    options_wid.set_title(0, 'Channels')
+    options_wid.set_title(1, 'Renderer')
+    if n_fitting_results > 1:
+        # Define function that updates options' widgets state
+        def update_widgets(name, value):
+            # stop iterations animation
+            fitting_result_wid.index_animation.play_stop_toggle.value = False
+
+            # get selected fitting result
+            im = image_number_wid.selected_values
+
+            # Update channels options
+            channel_options_wid.set_widget_state(
+                n_channels=fitting_results[im].fitted_image.n_channels,
+                image_is_masked=isinstance(fitting_results[im].fitted_image,
+                                           MaskedImage),
+                allow_callback=False)
+
+            # Update fitting result options
+            fitting_result_wid.set_widget_state(
+                has_groundtruth=fitting_results[im].gt_shape is not None,
+                n_iters=fitting_results[im].iter_image.landmarks.n_groups,
+                allow_callback=True)
+
+        # Image selection slider
+        index = {'min': 0, 'max': n_fitting_results - 1, 'step': 1, 'index': 0}
+        image_number_wid = AnimationOptionsWidget(
+            index, render_function=update_widgets, index_style=browser_style,
+            interval=0.2, description='Image', loop_enabled=True,
+            style=animation_style)
+
+        # Header widget
+        header_wid = ipywidgets.HBox(
+            children=[LogoWidget(style=logo_style), image_number_wid],
+            align='start')
+
+        # Widget titles
+        if show_ced:
+            tab_titles = ['Info', 'Result', 'Renderer', 'CED', 'Export']
+        else:
+            tab_titles = ['Info', 'Result', 'Renderer', 'Error type', 'Export']
+    else:
+        # Do not show the plot ced button
+        plot_ced_but.visible = False
+
+        # Header widget
+        header_wid = LogoWidget(style=logo_style)
+        tab_titles = ['Info', 'Result', 'Renderer', 'Error type', 'Export']
+    header_wid.margin = '0.2cm'
+    options_box = ipywidgets.Tab(
+        children=[info_wid, fitting_result_wid, options_wid, error_wid,
+                  save_figure_wid], margin='0.2cm')
+    for (k, tl) in enumerate(tab_titles):
+        options_box.set_title(k, tl)
+    if n_fitting_results > 1:
+        wid = ipywidgets.VBox(children=[header_wid, options_box], align='start')
+    else:
+        wid = ipywidgets.HBox(children=[header_wid, options_box], align='start')
+    if n_fitting_results > 1:
+        # If animation is activated and the user selects the save figure tab,
+        # then the animation stops.
+        def save_fig_tab_fun(name, value):
+            if value == 3 and image_number_wid.play_options_toggle.value:
+                image_number_wid.stop_options_toggle.value = True
+        options_box.on_trait_change(save_fig_tab_fun, 'selected_index')
+
+    # Set widget's style
+    wid.box_style = widget_box_style
+    wid.border_radius = widget_border_radius
+    wid.border_width = widget_border_width
+    wid.border_color = map_styles_to_hex_colours(widget_box_style)
+
+    # Display final widget
+    ipydisplay.display(wid)
+
+    # Reset value to trigger initial visualization
+    renderer_options_wid.options_widgets[2].render_legend_checkbox.value = True
