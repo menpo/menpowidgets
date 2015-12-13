@@ -218,7 +218,7 @@ class ListWidget(MenpoWidget):
                     selected_cmd += '{}, '.format(i)
             elif self.mode == 'float':
                 for i in selected_list:
-                    selected_cmd += '{:.1f}, '.format(i)
+                    selected_cmd += '{}, '.format(i)
 
             # temporarily remove render callback
             render_function = self._render_function
