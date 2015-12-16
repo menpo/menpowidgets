@@ -1,7 +1,4 @@
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
+from io import BytesIO
 
 
 def map_styles_to_hex_colours(style, background=False):
@@ -210,7 +207,7 @@ def convert_image_to_bytes(image):
     Function that given a :map:`Image` object, it converts it to the correct
     bytes format that can be used by IPython.html.widgets.Image().
     """
-    fp = StringIO()
+    fp = BytesIO()
     image.as_PILImage().save(fp, format='png')
     fp.seek(0)
     return fp.read()

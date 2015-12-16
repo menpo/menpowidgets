@@ -1547,7 +1547,8 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
             renderer_options_wid.selected_values['zoom_one'] * 10,
             renderer_options_wid.selected_values['zoom_one'] * 3)
         renderer = plot_curve(
-            range(len(fitting_results[im].costs)), [fitting_results[im].costs],
+            list(range(len(fitting_results[im].costs))),
+            [fitting_results[im].costs],
             figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
             figure_size=new_figure_size, x_label='Iteration',
             y_label='Cost Function', title='Cost Function per Iteration',

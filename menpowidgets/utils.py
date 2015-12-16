@@ -1,7 +1,9 @@
 from struct import pack as struct_pack
+import binascii
 import numpy as np
 import matplotlib.pyplot as plt
 
+from menpo.compatibility import unicode
 from menpo.feature import glyph, sum_channels
 from menpo.visualize.viewmatplotlib import MatplotlibSubplots
 
@@ -26,7 +28,7 @@ def lists_are_the_same(a, b):
 
 
 def rgb2hex(rgb):
-    return str('#' + struct_pack('BBB', *rgb).encode('hex'))
+    return '#' + binascii.hexlify(struct_pack('BBB', *rgb)).decode('ascii')
 
 
 def decode_colour(colour):
@@ -159,7 +161,7 @@ def parse_int_range_command(cmd):
     if cmd.startswith("range("):
         n_comma = cmd.count(",")
         if cmd.endswith(")") and (n_comma == 0 or n_comma == 1 or n_comma == 2):
-            return eval(cmd)
+            return eval("list({})".format(cmd))
         else:
             raise ValueError("Wrong range command.")
 
@@ -404,7 +406,7 @@ def parse_slicing_command_with_one_colon(cmd, length):
         Command must contain positive or negative integers.
     """
     # this is necessary in order to return ranges with negative slices
-    tmp_list = range(length)
+    tmp_list = list(range(length))
 
     if cmd.startswith(':'):
         # cmd has the form ":3" or ":"
@@ -493,7 +495,7 @@ def parse_slicing_command_with_two_colon(cmd, length):
         Command must contain positive or negative integers.
     """
     # this is necessary in order to return ranges with negative slices
-    tmp_list = range(length)
+    tmp_list = list(range(length))
 
     if cmd.startswith('::'):
         # cmd has the form "::3" or "::"
@@ -665,7 +667,7 @@ def sample_colours_from_colourmap(n_colours, colour_map):
     colours = []
     for i in range(n_colours):
         c = cm(1.*i/n_colours)[:3]
-        colours.append(decode_colour([i * 255. for i in c]))
+        colours.append(decode_colour([int(i * 255) for i in c]))
     return colours
 
 
@@ -673,8 +675,8 @@ def extract_group_labels_from_landmarks(landmark_manager):
     groups_keys = None
     labels_keys = None
     if landmark_manager.has_landmarks:
-        groups_keys = landmark_manager.keys()
-        labels_keys = [landmark_manager[g].keys() for g in groups_keys]
+        groups_keys = landmark_manager.group_labels
+        labels_keys = [landmark_manager[g].labels for g in groups_keys]
     return groups_keys, labels_keys
 
 

@@ -3,6 +3,8 @@ import ipywidgets
 from traitlets.traitlets import List, Int, Float, Dict
 from traitlets import link
 
+from menpo.compatibility import unicode
+
 from .abstract import MenpoWidget
 from .style import (map_styles_to_hex_colours, convert_image_to_bytes,
                     format_box, format_font, format_slider, format_text_box,
@@ -417,8 +419,8 @@ class SlicingCommandWidget(MenpoWidget):
         self.single_slider.on_trait_change(single_slider_value, 'value')
 
         def multiple_slider_value(name, value):
-            self.selected_values = range(value[0], value[1]+1,
-                                         self.multiple_slider.step)
+            self.selected_values = list(range(value[0], value[1]+1,
+                                              self.multiple_slider.step))
             self.cmd_text.value = "{}:{}:{}".format(value[0], value[1]+1,
                                                     self.multiple_slider.step)
         self.multiple_slider.on_trait_change(multiple_slider_value, 'value')

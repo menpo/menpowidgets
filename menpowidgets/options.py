@@ -4,6 +4,8 @@ from traitlets import link
 from collections import OrderedDict
 import numpy as np
 
+from menpo.compatibility import unicode
+
 from .abstract import MenpoWidget
 from .tools import (IndexSliderWidget, IndexButtonsWidget, SlicingCommandWidget,
                     LineOptionsWidget, MarkerOptionsWidget,
@@ -2815,7 +2817,7 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
         self.igo_options_widget = IGOOptionsWidget(igo_options_dict)
         self.igo_options_widget.style(box_style=None, border_visible=False,
                                       margin='0.2cm')
-        lbp_options_dict = {'radius': range(1, 5), 'samples': [8] * 4,
+        lbp_options_dict = {'radius': list(range(1, 5)), 'samples': [8] * 4,
                             'mapping_type': 'u2', 'window_step_vertical': 1,
                             'window_step_horizontal': 1,
                             'window_step_unit': 'pixels', 'padding': True}
@@ -3394,7 +3396,7 @@ class PatchOptionsWidget(MenpoWidget):
         if key not in self.default_options:
             # update default options dictionary
             self.default_options[key] = {
-                'patches_indices': range(n_patches), 'offset_index': 0,
+                'patches_indices': list(range(n_patches)), 'offset_index': 0,
                 'background': 'white', 'render_patches': True,
                 'render_patches_bboxes': True, 'bboxes_line_colour': ['red'],
                 'bboxes_line_style': '-', 'bboxes_line_width': 1,
