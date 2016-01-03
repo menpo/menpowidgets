@@ -564,13 +564,14 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
 
     # Create widgets
     groups_keys, labels_keys = extract_group_labels_from_landmarks(landmarks[0])
+    first_label = labels_keys[0] if labels_keys else None
     axes_mode_wid = ipywidgets.RadioButtons(
         options={'Image': 1, 'Point cloud': 2}, description='Axes mode:',
         value=1)
     axes_mode_wid.on_trait_change(render_function, 'value')
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['markers', 'lines', 'numbering', 'legend', 'zoom_one',
-                      'axes'], labels=labels_keys[0],
+                      'axes'], labels=first_label,
         axes_x_limits=0.1, axes_y_limits=0.1,
         render_function=render_function,  style=renderer_style,
         tabs_style=renderer_tabs_style)
@@ -788,13 +789,14 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
 
     # Create widgets
     groups_keys, labels_keys = extract_groups_labels_from_image(images[0])
+    first_label = labels_keys[0] if labels_keys else None
     channel_options_wid = ChannelOptionsWidget(
         n_channels=images[0].n_channels,
         image_is_masked=isinstance(images[0], MaskedImage),
         render_function=render_function, style=channels_style)
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['markers', 'lines', 'numbering', 'legend', 'zoom_one',
-                      'axes', 'image'], labels=labels_keys[0],
+                      'axes', 'image'], labels=first_label,
         axes_x_limits=None, axes_y_limits=None,
         render_function=render_function,  style=renderer_style,
         tabs_style=renderer_tabs_style)
@@ -1807,13 +1809,14 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
         style=model_parameters_style)
     groups_keys, labels_keys = extract_groups_labels_from_image(
         appearance_model[0].mean())
+    first_label = labels_keys[0] if labels_keys else None
     channel_options_wid = ChannelOptionsWidget(
         n_channels=appearance_model[0].mean().n_channels,
         image_is_masked=isinstance(appearance_model[0].mean(), MaskedImage),
         render_function=render_function, style=channels_style)
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['image', 'markers', 'lines', 'numbering', 'zoom_one',
-                      'axes'], labels=labels_keys[0],
+                      'axes'], labels=first_label,
         axes_x_limits=0., axes_y_limits=None,
         render_function=render_function,  style=renderer_style,
         tabs_style=renderer_tabs_style)
