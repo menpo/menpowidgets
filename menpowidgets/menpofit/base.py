@@ -15,7 +15,6 @@ import ipywidgets
 import IPython.display as ipydisplay
 
 import matplotlib.pyplot as plt
-from matplotlib import collections as mc
 
 from menpo.base import name_of_callable
 from menpo.image import MaskedImage
@@ -26,7 +25,7 @@ from ..options import (
     ChannelOptionsWidget, PatchOptionsWidget, LandmarkOptionsWidget,
     LinearModelParametersWidget, PlotOptionsWidget, AnimationOptionsWidget,
     TextPrintWidget)
-from ..style import map_styles_to_hex_colours, format_box
+from ..style import map_styles_to_hex_colours
 from ..tools import LogoWidget
 from ..utils import (
     render_patches, render_image, extract_groups_labels_from_image,
@@ -300,7 +299,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['markers', 'lines', 'image', 'numbering', 'zoom_one',
                       'axes'], labels=labels_keys[0],
-        axes_x_limits=0., axes_y_limits=None,
+        axes_x_limits=None, axes_y_limits=None,
         render_function=render_function,  style=renderer_style,
         tabs_style=renderer_tabs_style)
     landmark_options_wid = LandmarkOptionsWidget(
@@ -378,9 +377,8 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     # Display final widget
     ipydisplay.display(wid)
 
-    # Reset value to trigger initial visualization
-    renderer_options_wid.options_widgets[5].axes_limits_widget. \
-        axes_x_limits_toggles.value = 'auto'
+    # Trigger initial visualization
+    render_function('', True)
 
 
 def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
@@ -710,8 +708,8 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     # Display final widget
     ipydisplay.display(wid)
 
-    # Reset value to trigger initial visualization
-    renderer_options_wid.options_widgets[0].interpolation_checkbox.value = True
+    # Trigger initial visualization
+    render_function('', True)
 
 
 def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
@@ -926,7 +924,7 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['markers', 'lines', 'image', 'numbering', 'zoom_one',
                       'axes'], labels=labels_keys[0],
-        axes_x_limits=0., axes_y_limits=None,
+        axes_x_limits=None, axes_y_limits=None,
         render_function=render_function,  style=renderer_style,
         tabs_style=renderer_tabs_style)
     landmark_options_wid = LandmarkOptionsWidget(
@@ -991,9 +989,8 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
     # Display final widget
     ipydisplay.display(wid)
 
-    # Reset value to trigger initial visualization
-    renderer_options_wid.options_widgets[5].axes_limits_widget. \
-        axes_x_limits_toggles.value = 'auto'
+    # Trigger initial visualization
+    render_function('', True)
 
 
 def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
@@ -1257,8 +1254,8 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
     # Display final widget
     ipydisplay.display(wid)
 
-    # Reset value to trigger initial visualization
-    renderer_options_wid.options_widgets[0].interpolation_checkbox.value = True
+    # Trigger initial visualization
+    render_function('', True)
 
 
 def plot_ced(errors, legend_entries=None, error_range=None,
@@ -1389,6 +1386,7 @@ def plot_ced(errors, legend_entries=None, error_range=None,
         list(np.arange(0., 1.1, 0.1)), allow_callback=False)
     wid.x_label.value = x_label
     wid.y_label.value = 'Images Proportion'
+    wid.title.value = 'Cumulative error distribution'
     wid.add_render_function(render_function)
 
     # Group widgets
@@ -1410,8 +1408,8 @@ def plot_ced(errors, legend_entries=None, error_range=None,
     # Display final widget
     ipydisplay.display(wid)
 
-    # Reset value to trigger initial visualization
-    wid.title.value = 'Cumulative error distribution'
+    # Trigger initial visualization
+    render_function('', True)
 
     # return widget object if asked
     if return_widget:
@@ -1840,5 +1838,5 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
     # Display final widget
     ipydisplay.display(wid)
 
-    # Reset value to trigger initial visualization
+    # Set render legend to True to trigger initial visualization
     renderer_options_wid.options_widgets[2].render_legend_checkbox.value = True

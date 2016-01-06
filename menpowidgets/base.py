@@ -154,7 +154,7 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
     # Create widgets
     axes_mode_wid = ipywidgets.RadioButtons(
         options={'Image': 1, 'Point cloud': 2}, description='Axes mode:',
-        value=2)
+        value=1)
     axes_mode_wid.on_trait_change(render_function, 'value')
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['markers', 'lines', 'numbering', 'zoom_one', 'axes'],
@@ -207,8 +207,8 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
     # Display final widget
     ipydisplay.display(wid)
 
-    # Reset value to trigger initial visualization
-    axes_mode_wid.value = 1
+    # Trigger initial visualization
+    render_function('', True)
 
 
 def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
@@ -419,8 +419,8 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
     # Display final widget
     ipydisplay.display(wid)
 
-    # Reset value to trigger initial visualization
-    renderer_options_wid.options_widgets[3].render_legend_checkbox.value = False
+    # Trigger initial visualization
+    render_function('', True)
 
 
 def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
@@ -640,8 +640,8 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
     # Display final widget
     ipydisplay.display(wid)
 
-    # Reset value to trigger initial visualization
-    renderer_options_wid.options_widgets[3].render_legend_checkbox.value = False
+    # Trigger initial visualization
+    render_function('', True)
 
 
 def visualize_images(images, figure_size=(10, 8), style='coloured',
@@ -865,8 +865,8 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
     # Display final widget
     ipydisplay.display(wid)
 
-    # Reset value to trigger initial visualization
-    renderer_options_wid.options_widgets[3].render_legend_checkbox.value = False
+    # Trigger initial visualization
+    render_function('', True)
 
 
 def visualize_patches(patches, patch_centers, figure_size=(10, 8),
@@ -1021,7 +1021,7 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['markers', 'lines', 'numbering', 'zoom_one', 'axes',
                       'image'], labels=None,
-        axes_x_limits=0., axes_y_limits=None,
+        axes_x_limits=None, axes_y_limits=None,
         render_function=render_function,  style=renderer_style,
         tabs_style=renderer_tabs_style)
     info_wid = TextPrintWidget(n_lines=3, text_per_line=[''] * 3,
@@ -1083,9 +1083,8 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
     # Display final widget
     ipydisplay.display(wid)
 
-    # Reset value to trigger initial visualization
-    renderer_options_wid.options_widgets[4].axes_limits_widget.\
-        axes_x_limits_toggles.value = 'auto'
+    # Trigger initial visualization
+    render_function('', True)
 
 
 def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(10, 6),
@@ -1196,8 +1195,8 @@ def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(10, 6),
     # Display final widget
     ipydisplay.display(wid)
 
-    # Reset value to trigger initial visualization
-    wid.title.value = ' '
+    # Trigger initial visualization
+    render_function('', True)
 
 
 def save_matplotlib_figure(renderer, style='coloured'):
@@ -1548,7 +1547,7 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
         style=model_parameters_style, continuous_update=False)
     axes_mode_wid = ipywidgets.RadioButtons(
         options={'Image': 1, 'Point cloud': 2}, description='Axes mode:',
-        value=2)
+        value=1)
     axes_mode_wid.on_trait_change(render_function, 'value')
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['markers', 'lines', 'numbering', 'zoom_one', 'axes'],
@@ -1610,8 +1609,8 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
     # Display final widget
     ipydisplay.display(wid)
 
-    # Reset value to trigger initial visualization
-    axes_mode_wid.value = 1
+    # Trigger initial visualization
+    render_function('', True)
 
 
 def visualize_appearance_model(appearance_model, n_parameters=5,
@@ -1817,7 +1816,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['image', 'markers', 'lines', 'numbering', 'zoom_one',
                       'axes'], labels=first_label,
-        axes_x_limits=0., axes_y_limits=None,
+        axes_x_limits=None, axes_y_limits=None,
         render_function=render_function,  style=renderer_style,
         tabs_style=renderer_tabs_style)
     landmark_options_wid = LandmarkOptionsWidget(
@@ -1881,9 +1880,8 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
     # Display final widget
     ipydisplay.display(wid)
 
-    # Reset value to trigger initial visualization
-    renderer_options_wid.options_widgets[5].axes_limits_widget. \
-        axes_x_limits_toggles.value = 'auto'
+    # Trigger initial visualization
+    render_function('', True)
 
 
 def visualize_patch_appearance_model(appearance_model, centers,
@@ -2146,5 +2144,5 @@ def visualize_patch_appearance_model(appearance_model, centers,
     # Display final widget
     ipydisplay.display(wid)
 
-    # Reset value to trigger initial visualization
-    renderer_options_wid.options_widgets[0].interpolation_checkbox.value = True
+    # Trigger initial visualization
+    render_function('', True)
