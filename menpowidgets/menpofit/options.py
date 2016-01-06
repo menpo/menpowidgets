@@ -127,10 +127,8 @@ class FittingResultOptionsWidget(MenpoWidget):
         self.shape_selection = [
             ipywidgets.Latex(value='Shape:', margin='0.2cm'),
             ipywidgets.ToggleButton(description='Initial', value=False),
-            ipywidgets.ToggleButton(description='Final', value=True)]
-        if has_groundtruth:
-            self.shape_selection.append(ipywidgets.ToggleButton(
-                description='Groundtruth', value=False))
+            ipywidgets.ToggleButton(description='Final', value=True),
+            ipywidgets.ToggleButton(description='Groundtruth', value=False)]
         self.result_box = ipywidgets.HBox(children=self.shape_selection,
                                           align='center', margin='0.2cm',
                                           padding='0.2cm')

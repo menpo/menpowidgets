@@ -2031,11 +2031,8 @@ class RendererOptionsWidget(MenpoWidget):
                     'axes_y_limits': axes_y_limits,
                     'axes_x_ticks': None, 'axes_y_ticks': None}
             elif o == 'legend':
-                rl = True
-                if labels is None:
-                    rl = False
                 self.global_options[o] = {
-                    'render_legend': rl, 'legend_title': '',
+                    'render_legend': False, 'legend_title': '',
                     'legend_font_name': 'sans-serif',
                     'legend_font_style': 'normal', 'legend_font_size': 10,
                     'legend_font_weight': 'normal',
