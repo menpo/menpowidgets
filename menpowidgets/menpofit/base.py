@@ -569,10 +569,10 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             renderer_options_wid.selected_values['zoom_one'] * 10,
             renderer_options_wid.selected_values['zoom_one'] * 3)
         plt.subplot(121)
-        aam.shape_models[level].plot_eigenvalues_ratio(
+        aam.shape_models[level].model.plot_eigenvalues_ratio(
             figure_id=save_figure_wid.renderer.figure_id)
         plt.subplot(122)
-        renderer = aam.shape_models[level].plot_eigenvalues_cumulative_ratio(
+        renderer = aam.shape_models[level].model.plot_eigenvalues_cumulative_ratio(
             figure_id=save_figure_wid.renderer.figure_id,
             figure_size=new_figure_size)
         plt.show()
