@@ -57,16 +57,16 @@ class MenpoWidget(ipywidgets.FlexBox):
         """
         self._render_function = render_function
         if self._render_function is not None:
-            self.on_trait_change(self._render_function, 'selected_values')
+            self.observe(self._render_function, names='selected_values')
 
     def remove_render_function(self):
         r"""
         Method that removes the current `self._render_function()` from the
         widget and sets ``self._render_function = None``.
         """
-        self.on_trait_change(self._render_function, 'selected_values',
-                             remove=True)
-        self._render_function = None
+        if self._render_function is not None:
+            self.unobserve(self._render_function, names='selected_values')
+            self._render_function = None
 
     def replace_render_function(self, render_function):
         r"""

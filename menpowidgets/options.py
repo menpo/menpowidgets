@@ -1109,22 +1109,23 @@ class LandmarkOptionsWidget(MenpoWidget):
             orientation='horizontal', align='start')
 
         # Set values
+        # Ensure that callbacks are added before being removed!
+        self.add_callbacks()
         self.set_widget_state(group_keys, labels_keys, allow_callback=False)
 
         # Set style
         self.predefined_style(style)
 
     def add_callbacks(self):
-        self.render_landmarks_checkbox.on_trait_change(
-            self._render_landmarks_fun, 'value')
-        self.group_dropdown.on_trait_change(self._group_fun, 'value')
+        self.render_landmarks_checkbox.observe(
+            self._render_landmarks_fun, names='value')
+        self.group_dropdown.observe(self._group_fun, names='value')
         self._add_function_to_labels_toggles(self._labels_fun)
 
     def remove_callbacks(self):
-        self.render_landmarks_checkbox.on_trait_change(
-            self._render_landmarks_fun, 'value', remove=True)
-        self.group_dropdown.on_trait_change(self._group_fun, 'value',
-                                            remove=True)
+        self.render_landmarks_checkbox.unobserve(
+            self._render_landmarks_fun, names='value')
+        self.group_dropdown.unobserve(self._group_fun, names='value')
         self._remove_function_from_labels_toggles(self._labels_fun)
 
     def _save_options(self, name, value):
