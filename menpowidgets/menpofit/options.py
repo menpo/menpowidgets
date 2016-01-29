@@ -181,6 +181,7 @@ class FittingResultOptionsWidget(MenpoWidget):
             self.plot_costs_button.on_click(costs_function)
 
         # Set values
+        self.add_callbacks()
         self.set_widget_state(has_groundtruth, n_iters, allow_callback=False)
 
         # Set style
