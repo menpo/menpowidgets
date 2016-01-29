@@ -350,8 +350,8 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
             options=radio_str, description='Pyramid:', value=n_levels-1)
-        level_wid.on_trait_change(update_widgets, 'value')
-        level_wid.on_trait_change(render_function, 'value')
+        level_wid.observe(update_widgets, 'value')
+        level_wid.observe(render_function, names='value')
         tmp_children.insert(0, level_wid)
     tmp_wid = ipywidgets.HBox(children=tmp_children, align='center',
                               box_style=model_style)
@@ -682,8 +682,8 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
             options=radio_str, description='Pyramid:', value=n_levels-1)
-        level_wid.on_trait_change(update_widgets, 'value')
-        level_wid.on_trait_change(render_function, 'value')
+        level_wid.observe(update_widgets, names='value')
+        level_wid.observe(render_function, names='value')
         tmp_children.insert(0, level_wid)
     tmp_wid = ipywidgets.HBox(children=tmp_children, align='center',
                               box_style=model_style)
@@ -962,8 +962,8 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
             options=radio_str, description='Pyramid:', value=n_levels-1)
-        level_wid.on_trait_change(update_widgets, 'value')
-        level_wid.on_trait_change(render_function, 'value')
+        level_wid.observe(update_widgets, names='value')
+        level_wid.observe(render_function, names='value')
         tmp_children.insert(0, level_wid)
     tmp_wid = ipywidgets.HBox(children=tmp_children, align='center',
                               box_style=model_style)
@@ -1228,8 +1228,8 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
             options=radio_str, description='Pyramid:', value=n_levels-1)
-        level_wid.on_trait_change(update_widgets, 'value')
-        level_wid.on_trait_change(render_function, 'value')
+        level_wid.observe(update_widgets, names='value')
+        level_wid.observe(render_function, names='value')
         tmp_children.insert(0, level_wid)
     tmp_wid = ipywidgets.HBox(children=tmp_children, align='center',
                               box_style=model_style)
@@ -1717,7 +1717,7 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
     error_type_values['RMS Error'] = 'rmse'
     error_type_wid = ipywidgets.RadioButtons(
         options=error_type_values, value='me_norm', description='Error type')
-    error_type_wid.on_trait_change(update_info, 'value')
+    error_type_wid.observe(update_info, names='value')
     plot_ced_but = ipywidgets.Button(description='Plot CED', visible=show_ced,
                                      button_style=plot_ced_but_style)
     error_wid = ipywidgets.VBox(children=[error_type_wid, plot_ced_but],
@@ -1751,13 +1751,13 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
             if value != 3:
                 plot_ced_widget.close()
                 plot_ced_but.visible = True
-        options_box.on_trait_change(close_plot_ced_fun, 'selected_index')
+        options_box.observe(close_plot_ced_fun, 'selected_index')
 
         # If another error type, then close the widget
         def close_plot_ced_fun_2(name, value):
             plot_ced_widget.close()
             plot_ced_but.visible = True
-        error_type_wid.on_trait_change(close_plot_ced_fun_2, 'value')
+        error_type_wid.observe(close_plot_ced_fun_2, names='value')
     plot_ced_but.on_click(plot_ced_fun)
 
     # Group widgets
@@ -1827,7 +1827,7 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
         def save_fig_tab_fun(name, value):
             if value == 3 and image_number_wid.play_options_toggle.value:
                 image_number_wid.stop_options_toggle.value = True
-        options_box.on_trait_change(save_fig_tab_fun, 'selected_index')
+        options_box.observe(save_fig_tab_fun, 'selected_index')
 
     # Set widget's style
     wid.box_style = widget_box_style

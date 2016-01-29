@@ -205,12 +205,12 @@ class AnimationOptionsWidget(MenpoWidget):
                 # Change the description to Play
                 self.play_stop_toggle.icon = 'fa-play'
             self.play_options_toggle.disabled = value
-        self.play_stop_toggle.on_trait_change(play_stop_pressed, 'value')
+        self.play_stop_toggle.observe(play_stop_pressed, names='value')
 
         def play_options_visibility(name, value):
             self.loop_interval_box.visible = value
-        self.play_options_toggle.on_trait_change(play_options_visibility,
-                                                 'value')
+        self.play_options_toggle.observe(play_options_visibility,
+                                         names='value')
 
         def animate(name, value):
             if self.loop_checkbox.value:
@@ -264,11 +264,11 @@ class AnimationOptionsWidget(MenpoWidget):
                     sleep(self.interval_text.value)
                 if i > self.max:
                     self.play_stop_toggle.value = False
-        self.play_stop_toggle.on_trait_change(animate, 'value')
+        self.play_stop_toggle.observe(animate, names='value')
 
         def save_value(name, value):
             self.selected_values = self.index_wid.selected_values
-        self.index_wid.on_trait_change(save_value, 'selected_values')
+        self.index_wid.observe(save_value, names='selected_values')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -608,28 +608,26 @@ class ChannelOptionsWidget(MenpoWidget):
         self.predefined_style(style)
 
     def add_callbacks(self):
-        self.glyph_block_size_text.on_trait_change(self._save_options, 'value')
-        self.glyph_use_negative_checkbox.on_trait_change(self._save_options,
-                                                         'value')
-        self.masked_checkbox.on_trait_change(self._save_options, 'value')
-        self.channels_wid.on_trait_change(self._save_channels, 'selected_values')
-        self.rgb_checkbox.on_trait_change(self._save_rgb, 'value')
-        self.sum_checkbox.on_trait_change(self._save_sum, 'value')
-        self.glyph_checkbox.on_trait_change(self._save_glyph, 'value')
+        self.glyph_block_size_text.observe(self._save_options, names='value')
+        self.glyph_use_negative_checkbox.observe(self._save_options,
+                                                 names='value')
+        self.masked_checkbox.observe(self._save_options, names='value')
+        self.channels_wid.observe(self._save_channels, names='selected_values')
+        self.rgb_checkbox.observe(self._save_rgb, names='value')
+        self.sum_checkbox.observe(self._save_sum, names='value')
+        self.glyph_checkbox.observe(self._save_glyph, names='value')
 
     def remove_callbacks(self):
-        self.glyph_block_size_text.on_trait_change(self._save_options,
-                                                   'value', remove=True)
-        self.glyph_use_negative_checkbox.on_trait_change(self._save_options,
-                                                         'value', remove=True)
-        self.masked_checkbox.on_trait_change(self._save_options, 'value',
-                                             remove=True)
-        self.channels_wid.on_trait_change(self._save_channels, 'selected_values',
-                                          remove=True)
-        self.rgb_checkbox.on_trait_change(self._save_rgb, 'value', remove=True)
-        self.sum_checkbox.on_trait_change(self._save_sum, 'value', remove=True)
-        self.glyph_checkbox.on_trait_change(self._save_glyph, 'value',
-                                            remove=True)
+        self.glyph_block_size_text.unobserve(self._save_options,
+                                             names='value')
+        self.glyph_use_negative_checkbox.unobserve(self._save_options,
+                                                   names='value')
+        self.masked_checkbox.unobserve(self._save_options, names='value')
+        self.channels_wid.unobserve(self._save_channels,
+                                    names='selected_values')
+        self.rgb_checkbox.unobserve(self._save_rgb, names='value')
+        self.sum_checkbox.unobserve(self._save_sum, names='value')
+        self.glyph_checkbox.unobserve(self._save_glyph, names='value')
 
     def _save_options(self, name, value):
         # get channels value
@@ -651,53 +649,50 @@ class ChannelOptionsWidget(MenpoWidget):
     def _save_channels(self, name, value):
         if self.n_channels == 3:
             # temporarily remove rgb callback
-            self.rgb_checkbox.on_trait_change(self._save_rgb, 'value',
-                                              remove=True)
+            self.rgb_checkbox.unobserve(self._save_rgb, names='value')
             # set value
             self.rgb_checkbox.value = False
             # re-assign rgb callback
-            self.rgb_checkbox.on_trait_change(self._save_rgb, 'value')
+            self.rgb_checkbox.observe(self._save_rgb, names='value')
         self._save_options('', None)
 
     def _save_rgb(self, name, value):
         if value:
             # temporarily remove channels callback
-            self.channels_wid.on_trait_change(
-                self._save_channels, 'selected_values', remove=True)
+            self.channels_wid.unobserve(
+                self._save_channels, names='selected_values')
             # update channels widget
             self.channels_wid.set_widget_state(
                 {'command': '0, 1, 2', 'length': self.n_channels},
                 allow_callback=False)
             # re-assign channels callback
-            self.channels_wid.on_trait_change(self._save_channels,
-                                              'selected_values')
+            self.channels_wid.observe(self._save_channels,
+                                      names='selected_values')
         self._save_options('', None)
 
     def _save_sum(self, name, value):
         if value and self.glyph_checkbox.value:
             # temporarily remove glyph callback
-            self.glyph_checkbox.on_trait_change(self._save_glyph, 'value',
-                                                remove=True)
+            self.glyph_checkbox.unobserve(self._save_glyph, names='value')
 
             # set glyph to False
             self.glyph_checkbox.value = False
             self.glyph_options_box.visible = False
 
             # re-assign glyph callback
-            self.glyph_checkbox.on_trait_change(self._save_glyph, 'value')
+            self.glyph_checkbox.observe(self._save_glyph, names='value')
         self._save_options('', None)
 
     def _save_glyph(self, name, value):
         if value and self.sum_checkbox.value:
             # temporarily remove sum callback
-            self.sum_checkbox.on_trait_change(self._save_sum, 'value',
-                                              remove=True)
+            self.sum_checkbox.unobserve(self._save_sum, names='value')
 
             # set glyph to false
             self.sum_checkbox.value = False
 
             # re-assign sum callback
-            self.sum_checkbox.on_trait_change(self._save_sum, 'value')
+            self.sum_checkbox.observe(self._save_sum, names='value')
         # set visibility
         self.glyph_options_box.visible = value
         self._save_options('', None)
@@ -1109,22 +1104,23 @@ class LandmarkOptionsWidget(MenpoWidget):
             orientation='horizontal', align='start')
 
         # Set values
+        # Ensure that callbacks are added before being removed!
+        self.add_callbacks()
         self.set_widget_state(group_keys, labels_keys, allow_callback=False)
 
         # Set style
         self.predefined_style(style)
 
     def add_callbacks(self):
-        self.render_landmarks_checkbox.on_trait_change(
-            self._render_landmarks_fun, 'value')
-        self.group_dropdown.on_trait_change(self._group_fun, 'value')
+        self.render_landmarks_checkbox.observe(
+            self._render_landmarks_fun, names='value')
+        self.group_dropdown.observe(self._group_fun, names='value')
         self._add_function_to_labels_toggles(self._labels_fun)
 
     def remove_callbacks(self):
-        self.render_landmarks_checkbox.on_trait_change(
-            self._render_landmarks_fun, 'value', remove=True)
-        self.group_dropdown.on_trait_change(self._group_fun, 'value',
-                                            remove=True)
+        self.render_landmarks_checkbox.unobserve(
+            self._render_landmarks_fun, names='value')
+        self.group_dropdown.unobserve(self._group_fun, names='value')
         self._remove_function_from_labels_toggles(self._labels_fun)
 
     def _save_options(self, name, value):
@@ -1148,11 +1144,11 @@ class LandmarkOptionsWidget(MenpoWidget):
             if len(self._get_with_labels()) == 0:
                 for ww in self.labels_box.children:
                     # temporarily remove render function
-                    ww.on_trait_change(self._labels_fun, 'value', remove=True)
+                    ww.unobserve(self._labels_fun, names='value')
                     # set value
                     ww.value = True
                     # re-add render function
-                    ww.on_trait_change(self._labels_fun, 'value')
+                    ww.observe(self._labels_fun, names='value')
         # set visibility
         self.options_box.visible = value
         # save options
@@ -1173,15 +1169,15 @@ class LandmarkOptionsWidget(MenpoWidget):
         # False
         if len(self._get_with_labels()) == 0:
             # temporarily remove render function
-            self.render_landmarks_checkbox.on_trait_change(
-                self._render_landmarks_fun, 'value', remove=True)
+            self.render_landmarks_checkbox.unobserve(
+                self._render_landmarks_fun, names='value')
             # set value
             self.render_landmarks_checkbox.value = False
             # set visibility
             self.options_box.visible = False
             # re-add render function
-            self.render_landmarks_checkbox.on_trait_change(
-                self._render_landmarks_fun, 'value')
+            self.render_landmarks_checkbox.observe(
+                self._render_landmarks_fun, names='value')
         # save options
         self._save_options('', None)
 
@@ -1224,12 +1220,12 @@ class LandmarkOptionsWidget(MenpoWidget):
     def _add_function_to_labels_toggles(self, fun):
         for s_group in self.labels_toggles:
             for w in s_group:
-                w.on_trait_change(fun, 'value')
+                w.observe(fun, names='value')
 
     def _remove_function_from_labels_toggles(self, fun):
         for s_group in self.labels_toggles:
             for w in s_group:
-                w.on_trait_change(fun, 'value', remove=True)
+                w.unobserve(fun, names='value')
 
     def _set_labels_toggles_values(self, with_labels):
         for w in self.labels_box.children:
@@ -1992,12 +1988,11 @@ class RendererOptionsWidget(MenpoWidget):
 
     def add_callbacks(self):
         for wid in self.options_widgets:
-            wid.on_trait_change(self._save_options, 'selected_values')
+            wid.observe(self._save_options, names='selected_values')
 
     def remove_callbacks(self):
         for wid in self.options_widgets:
-            wid.on_trait_change(self._save_options, 'selected_values',
-                                remove=True)
+            wid.observe(self._save_options, names='selected_values')
 
     def get_key(self, labels):
         return "{}".format(labels)
@@ -2563,12 +2558,12 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
         # Set functionality
         def papertype_visibility(name, value):
             self.papertype_select.visible = value == 'ps'
-        self.file_format_select.on_trait_change(papertype_visibility, 'value')
+        self.file_format_select.observe(papertype_visibility, names='value')
 
         def set_extension(name, value):
             file_name, file_extension = splitext(self.filename_text.value)
             self.filename_text.value = file_name + '.' + value
-        self.file_format_select.on_trait_change(set_extension, 'value')
+        self.file_format_select.observe(set_extension, names='value')
 
         def save_function(name):
             # set save button state
@@ -2917,8 +2912,8 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
                     if f == value:
                         self.no_options_widget.value = \
                             "{}: No available options.".format(name)
-        self.feature_radiobuttons.on_trait_change(
-            per_feature_options_visibility, 'value')
+        self.feature_radiobuttons.observe(
+            per_feature_options_visibility, names='value')
         per_feature_options_visibility('', no_op)
 
         def get_function(name, value):
@@ -2941,8 +2936,8 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
             self.function = func
             self.features_function = value
             self.features_options = opts
-        self.feature_radiobuttons.on_trait_change(get_function, 'value')
-        self.options_box.on_trait_change(get_function, 'selected_index')
+        self.feature_radiobuttons.observe(get_function, names='value')
+        self.options_box.observe(get_function, 'selected_index')
 
         def preview_function(name, old_value, value):
             if value == 2:
@@ -2981,7 +2976,7 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
             if old_value == 2:
                 self.preview_input_latex.visible = False
                 self.preview_image.visible = False
-        self.options_box.on_trait_change(preview_function, 'selected_index')
+        self.options_box.observe(preview_function, 'selected_index')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -3279,8 +3274,8 @@ class PatchOptionsWidget(MenpoWidget):
                 self.background_toggle.description = 'black'
                 self.background_toggle.background_colour = '#000000'
                 self.background_toggle.color = '#FFFFFF'
-        self.background_toggle.on_trait_change(change_toggle_description,
-                                               'value')
+        self.background_toggle.observe(change_toggle_description,
+                                       names='value')
 
         self.background_title = ipywidgets.Latex(value='Background:',
                                                  margin='0.1cm')
@@ -3319,30 +3314,26 @@ class PatchOptionsWidget(MenpoWidget):
         self.predefined_style(style, subwidgets_style)
 
     def add_callbacks(self):
-        self.slicing_wid.on_trait_change(self._save_options, 'selected_values')
-        self.offset_dropdown.on_trait_change(self._save_options, 'value')
-        self.background_toggle.on_trait_change(self._save_options, 'value')
-        self.render_patches_checkbox.on_trait_change(self._save_options,
-                                                     'value')
-        self.render_centers_checkbox.on_trait_change(self._save_options,
-                                                     'value')
-        self.bboxes_line_options_wid.on_trait_change(self._save_options,
-                                                     'selected_values')
+        self.slicing_wid.observe(self._save_options, names='selected_values')
+        self.offset_dropdown.observe(self._save_options, names='value')
+        self.background_toggle.observe(self._save_options, names='value')
+        self.render_patches_checkbox.observe(self._save_options,
+                                             names='value')
+        self.render_centers_checkbox.observe(self._save_options,
+                                             names='value')
+        self.bboxes_line_options_wid.observe(self._save_options,
+                                             names='selected_values')
 
     def remove_callbacks(self):
-        self.slicing_wid.on_trait_change(self._save_options, 'selected_values',
-                                         remove=True)
-        self.offset_dropdown.on_trait_change(self._save_options, 'value',
-                                             remove=True)
-        self.background_toggle.on_trait_change(self._save_options, 'value',
-                                               remove=True)
-        self.render_patches_checkbox.on_trait_change(self._save_options,
-                                                     'value', remove=True)
-        self.render_centers_checkbox.on_trait_change(self._save_options,
-                                                     'value', remove=True)
-        self.bboxes_line_options_wid.on_trait_change(self._save_options,
-                                                     'selected_values',
-                                                     remove=True)
+        self.slicing_wid.observe(self._save_options, names='selected_values')
+        self.offset_dropdown.observe(self._save_options, names='value')
+        self.background_toggle.observe(self._save_options, names='value')
+        self.render_patches_checkbox.observe(self._save_options,
+                                             names='value')
+        self.render_centers_checkbox.observe(self._save_options,
+                                             names='value')
+        self.bboxes_line_options_wid.observe(self._save_options,
+                                             names='selected_values')
 
     def _save_options(self, name, value):
         # set background attributes
@@ -4007,7 +3998,7 @@ class PlotOptionsWidget(MenpoWidget):
             if self.curves_dropdown.value == 0 and self.n_curves > 1:
                 self.curves_dropdown.value = 1
             self.curves_dropdown.value = 0
-        self.legend_entries_text.on_trait_change(get_legend_entries, 'value')
+        self.legend_entries_text.observe(get_legend_entries, names='value')
 
         def save_options(name, value):
             # get lines and markers options
@@ -4074,25 +4065,23 @@ class PlotOptionsWidget(MenpoWidget):
                 'render_grid': self.grid_wid.selected_values['render_grid'],
                 'grid_line_style': self.grid_wid.selected_values['grid_line_style'],
                 'grid_line_width': self.grid_wid.selected_values['grid_line_width']}
-        self.title.on_trait_change(save_options, 'value')
-        self.x_label.on_trait_change(save_options, 'value')
-        self.y_label.on_trait_change(save_options, 'value')
-        self.legend_entries_text.on_trait_change(save_options, 'value')
-        self.lines_wid.on_trait_change(save_options, 'selected_values')
-        self.markers_wid.on_trait_change(save_options, 'selected_values')
-        self.axes_wid.on_trait_change(save_options, 'selected_values')
-        self.legend_wid.on_trait_change(save_options, 'selected_values')
-        self.grid_wid.on_trait_change(save_options, 'selected_values')
-        self.zoom_wid.on_trait_change(save_options, 'selected_values')
+        self.title.observe(save_options, names='value')
+        self.x_label.observe(save_options, names='value')
+        self.y_label.observe(save_options, names='value')
+        self.legend_entries_text.observe(save_options, names='value')
+        self.lines_wid.observe(save_options, names='selected_values')
+        self.markers_wid.observe(save_options, names='selected_values')
+        self.axes_wid.observe(save_options, names='selected_values')
+        self.legend_wid.observe(save_options, names='selected_values')
+        self.grid_wid.observe(save_options, names='selected_values')
+        self.zoom_wid.observe(save_options, names='selected_values')
 
         def update_lines_markers(name, value):
             k = self.curves_dropdown.value
 
             # remove save options callback
-            self.lines_wid.on_trait_change(save_options, 'selected_values',
-                                           remove=True)
-            self.markers_wid.on_trait_change(save_options, 'selected_values',
-                                             remove=True)
+            self.lines_wid.observe(save_options, names='selected_values')
+            self.markers_wid.observe(save_options, names='selected_values')
 
             # update lines
             self.lines_wid.set_widget_state(
@@ -4112,9 +4101,9 @@ class PlotOptionsWidget(MenpoWidget):
                 labels=None, allow_callback=False)
 
             # add save options callback
-            self.lines_wid.on_trait_change(save_options, 'selected_values')
-            self.markers_wid.on_trait_change(save_options, 'selected_values')
-        self.curves_dropdown.on_trait_change(update_lines_markers, 'value')
+            self.lines_wid.observe(save_options, names='selected_values')
+            self.markers_wid.observe(save_options, names='selected_values')
+        self.curves_dropdown.observe(update_lines_markers, names='value')
 
     def create_default_options(self):
         render_lines = [True] * self.n_curves
@@ -4604,7 +4593,7 @@ class LinearModelParametersWidget(MenpoWidget):
                 current_parameters = list(self.selected_values)
                 current_parameters[self.dropdown_params.value] = value
                 self.selected_values = current_parameters
-            self.slider.on_trait_change(save_slider_value, 'value')
+            self.slider.observe(save_slider_value, names='value')
 
             # Set correct value to slider when drop down menu value changes
             def set_slider_value(name, value):
@@ -4615,7 +4604,7 @@ class LinearModelParametersWidget(MenpoWidget):
                 self.slider.value = self.parameters[value]
                 # Re-assign render callback
                 self.add_render_function(render_function)
-            self.dropdown_params.on_trait_change(set_slider_value, 'value')
+            self.dropdown_params.observe(set_slider_value, names='value')
         else:
             # Assign slider value to parameters values list
             def save_slider_value_from_id(description, name, value):
@@ -4637,7 +4626,7 @@ class LinearModelParametersWidget(MenpoWidget):
                 # that creates a new lexical scoping so that we can ensure the
                 # value of w is maintained (as x) at each iteration.
                 # In JavaScript, we would just use the 'let' keyword...
-                w.on_trait_change(partial_widget(w.description), 'value')
+                w.observe(partial_widget(w.description), names='value')
 
         def reset_parameters(name):
             # Temporarily remove render callback
@@ -4949,7 +4938,7 @@ class LinearModelParametersWidget(MenpoWidget):
                     # ensure the value of w is maintained (as x) at each
                     # iteration. In JavaScript, we would just use the 'let'
                     # keyword...
-                    w.on_trait_change(partial_widget(w.description), 'value')
+                    w.observe(partial_widget(w.description), names='value')
 
                 # Set style
                 if self.box_style is None:
