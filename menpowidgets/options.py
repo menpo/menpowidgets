@@ -3314,6 +3314,7 @@ class PatchOptionsWidget(MenpoWidget):
             orientation='horizontal', align='start')
 
         # Set values
+        self.add_callbacks()
         self.set_widget_state(n_patches, n_offsets, allow_callback=False)
 
         # Set style
