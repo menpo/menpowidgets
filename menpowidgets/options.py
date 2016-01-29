@@ -1108,7 +1108,8 @@ class LandmarkOptionsWidget(MenpoWidget):
             children, Dict, {}, render_function=render_function,
             orientation='horizontal', align='start')
 
-        # Set values
+        # Set values, add callbacks before setting widget state
+        self.add_callbacks()
         self.set_widget_state(group_keys, labels_keys, allow_callback=False)
 
         # Set style
@@ -3313,6 +3314,7 @@ class PatchOptionsWidget(MenpoWidget):
             orientation='horizontal', align='start')
 
         # Set values
+        self.add_callbacks()
         self.set_widget_state(n_patches, n_offsets, allow_callback=False)
 
         # Set style
