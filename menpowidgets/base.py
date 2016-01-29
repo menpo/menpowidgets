@@ -1,12 +1,10 @@
 from collections import Sized, OrderedDict
 import matplotlib.pyplot as plt
 from matplotlib import collections as mc
-import numpy as np
 
 import ipywidgets
 import IPython.display as ipydisplay
 
-from menpo.base import name_of_callable
 from menpo.image import MaskedImage, Image
 from menpo.image.base import _convert_patches_list_to_single_array
 
@@ -19,8 +17,7 @@ from .style import format_box, map_styles_to_hex_colours
 from .tools import LogoWidget
 from .utils import (extract_group_labels_from_landmarks,
                     extract_groups_labels_from_image, render_image,
-                    render_patches, render_images,
-                    sample_colours_from_colourmap)
+                    render_patches)
 from .checks import check_n_parameters
 
 
@@ -155,7 +152,7 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
     axes_mode_wid = ipywidgets.RadioButtons(
         options={'Image': 1, 'Point cloud': 2}, description='Axes mode:',
         value=1)
-    axes_mode_wid.on_trait_change(render_function, 'value')
+    axes_mode_wid.observe(render_function, names='value')
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['markers', 'lines', 'numbering', 'zoom_one', 'axes'],
         labels=None, axes_x_limits=0.1, axes_y_limits=0.1,
@@ -351,7 +348,7 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
     axes_mode_wid = ipywidgets.RadioButtons(
         options={'Image': 1, 'Point cloud': 2}, description='Axes mode:',
         value=1)
-    axes_mode_wid.on_trait_change(render_function, 'value')
+    axes_mode_wid.observe(render_function, names='value')
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['lines', 'markers', 'numbering', 'legend', 'zoom_one',
                       'axes'], labels=landmarkgroups[0].labels,
@@ -568,7 +565,7 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
     axes_mode_wid = ipywidgets.RadioButtons(
         options={'Image': 1, 'Point cloud': 2}, description='Axes mode:',
         value=1)
-    axes_mode_wid.on_trait_change(render_function, 'value')
+    axes_mode_wid.observe(render_function, names='value')
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['markers', 'lines', 'numbering', 'legend', 'zoom_one',
                       'axes'], labels=first_label,
@@ -1527,10 +1524,10 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
     mode_dict['Vectors'] = 2
     mode_wid = ipywidgets.RadioButtons(options=mode_dict,
                                        description='Mode:', value=1)
-    mode_wid.on_trait_change(render_function, 'value')
+    mode_wid.observe(render_function, names='value')
     mean_wid = ipywidgets.Checkbox(value=False,
                                    description='Render mean shape')
-    mean_wid.on_trait_change(render_function, 'value')
+    mean_wid.observe(render_function, names='value')
 
     # Function that controls mean shape checkbox visibility
     def mean_visible(name, value):
@@ -1539,7 +1536,7 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
         else:
             mean_wid.disabled = True
             mean_wid.value = False
-    mode_wid.on_trait_change(mean_visible, 'value')
+    mode_wid.observe(mean_visible, names='value')
     model_parameters_wid = LinearModelParametersWidget(
         n_parameters[0], render_function, params_str='param ',
         mode=mode, params_bounds=parameters_bounds, params_step=0.1,
@@ -1548,7 +1545,7 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
     axes_mode_wid = ipywidgets.RadioButtons(
         options={'Image': 1, 'Point cloud': 2}, description='Axes mode:',
         value=1)
-    axes_mode_wid.on_trait_change(render_function, 'value')
+    axes_mode_wid.observe(render_function, names='value')
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['markers', 'lines', 'numbering', 'zoom_one', 'axes'],
         labels=None, axes_x_limits=0.1, axes_y_limits=0.1,
@@ -1580,8 +1577,8 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
             options=radio_str, description='Pyramid:', value=n_levels-1)
-        level_wid.on_trait_change(update_widgets, 'value')
-        level_wid.on_trait_change(render_function, 'value')
+        level_wid.observe(update_widgets, names='value')
+        level_wid.observe(render_function, names='value')
         radio_children = [level_wid, mode_wid, mean_wid]
     else:
         radio_children = [mode_wid, mean_wid]
@@ -1854,8 +1851,8 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
             options=radio_str, description='Pyramid:', value=n_levels-1)
-        level_wid.on_trait_change(update_widgets, 'value')
-        level_wid.on_trait_change(render_function, 'value')
+        level_wid.observe(update_widgets, names='value')
+        level_wid.observe(render_function, names='value')
         tmp_children.insert(0, level_wid)
     tmp_wid = ipywidgets.HBox(children=tmp_children)
     options_box = ipywidgets.Tab(children=[tmp_wid, channel_options_wid,
@@ -2119,8 +2116,8 @@ def visualize_patch_appearance_model(appearance_model, centers,
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
             options=radio_str, description='Pyramid:', value=n_levels-1)
-        level_wid.on_trait_change(update_widgets, 'value')
-        level_wid.on_trait_change(render_function, 'value')
+        level_wid.observe(update_widgets, names='value')
+        level_wid.observe(render_function, names='value')
         tmp_children.insert(0, level_wid)
     tmp_wid = ipywidgets.HBox(children=tmp_children)
     options_box = ipywidgets.Tab(children=[tmp_wid, patch_options_wid,

@@ -49,7 +49,7 @@ class MenpoWidget(ipywidgets.FlexBox):
         Method that adds a `render_function()` to the widget. The signature of
         the given function is also stored in `self._render_function`.
 
-        Parameters
+        Parameters#
         ----------
         render_function : `function` or ``None``, optional
             The render function that behaves as a callback of the

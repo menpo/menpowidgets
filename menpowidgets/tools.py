@@ -416,14 +416,14 @@ class SlicingCommandWidget(MenpoWidget):
         def single_slider_value(name, value):
             self.selected_values = [value]
             self.cmd_text.value = str(value)
-        self.single_slider.on_trait_change(single_slider_value, 'value')
+        self.single_slider.observe(single_slider_value, names='value')
 
-        def multiple_slider_value(name, value):
+        def multiple_slider_value(value):
             self.selected_values = list(range(value[0], value[1]+1,
                                               self.multiple_slider.step))
             self.cmd_text.value = "{}:{}:{}".format(value[0], value[1]+1,
                                                     self.multiple_slider.step)
-        self.multiple_slider.on_trait_change(multiple_slider_value, 'value')
+        self.multiple_slider.observe(multiple_slider_value, names='value')
 
     def _single_slider_visible(self, selected_values):
         return len(selected_values) == 1
@@ -613,7 +613,7 @@ class IndexSliderWidget(MenpoWidget):
         # Set functionality
         def save_index(name, value):
             self.selected_values = value
-        self.slider.on_trait_change(save_index, 'value')
+        self.slider.observe(save_index, names='value')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -810,7 +810,7 @@ class IndexButtonsWidget(MenpoWidget):
 
         def save_index(name, value):
             self.selected_values = int(value)
-        self.index_text.on_trait_change(save_index, 'value')
+        self.index_text.observe(save_index, names='value')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -1029,14 +1029,14 @@ class ColourSelectionWidget(MenpoWidget):
         def update_colour_wrt_label(name, value):
             self.colour_widget.value = decode_colour(
                 self.selected_values[value])
-        self.label_dropdown.on_trait_change(update_colour_wrt_label, 'value')
+        self.label_dropdown.observe(update_colour_wrt_label, names='value')
 
         def save_colour(name, value):
             idx = self.label_dropdown.value
             tmp = [v for v in self.selected_values]
             tmp[idx] = str(self.colour_widget.value)
             self.selected_values = tmp
-        self.colour_widget.on_trait_change(save_colour, 'value')
+        self.colour_widget.observe(save_colour, names='value')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -1293,7 +1293,7 @@ class ZoomOneScaleWidget(MenpoWidget):
 
         def save_zoom_slider(name, value):
             self.selected_values = value
-        self.zoom_slider.on_trait_change(save_zoom_slider, 'value')
+        self.zoom_slider.observe(save_zoom_slider, names='value')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -1549,8 +1549,8 @@ class ZoomTwoScalesWidget(MenpoWidget):
             else:
                 self.selected_values = [self.x_zoom_slider.value,
                                         self.y_zoom_slider.value]
-        self.x_zoom_slider.on_trait_change(save_zoom, 'value')
-        self.y_zoom_slider.on_trait_change(save_zoom, 'value')
+        self.x_zoom_slider.observe(save_zoom, names='value')
+        self.y_zoom_slider.observe(save_zoom, names='value')
 
         def link_button(name, value):
             self.lock_aspect_ratio = value
@@ -1563,7 +1563,7 @@ class ZoomTwoScalesWidget(MenpoWidget):
             else:
                 self.lock_aspect_button.icon = 'fa-unlink'
                 self.lock_link.unlink()
-        self.lock_aspect_button.on_trait_change(link_button, 'value')
+        self.lock_aspect_button.observe(link_button, names='value')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -1795,21 +1795,21 @@ class ImageOptionsWidget(MenpoWidget):
             self.selected_values = {'interpolation': interpolation,
                                     'alpha': tmp['alpha'],
                                     'cmap_name': tmp['cmap_name']}
-        self.interpolation_checkbox.on_trait_change(save_interpolation, 'value')
+        self.interpolation_checkbox.observe(save_interpolation, names='value')
 
         def save_alpha(name, value):
             tmp = self.selected_values
             self.selected_values = {'interpolation': tmp['interpolation'],
                                     'alpha': value,
                                     'cmap_name': tmp['cmap_name']}
-        self.alpha_slider.on_trait_change(save_alpha, 'value')
+        self.alpha_slider.observe(save_alpha, names='value')
 
         def save_cmap(name, value):
             tmp = self.selected_values
             self.selected_values = {'interpolation': tmp['interpolation'],
                                     'alpha': tmp['alpha'],
                                     'cmap_name': value}
-        self.cmap_select.on_trait_change(save_cmap, 'value')
+        self.cmap_select.observe(save_cmap, names='value')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -1972,8 +1972,8 @@ class LineOptionsWidget(MenpoWidget):
         def line_options_visible(name, value):
             self.line_options_box.visible = value
         line_options_visible('', line_options['render_lines'])
-        self.render_lines_checkbox.on_trait_change(line_options_visible,
-                                                   'value')
+        self.render_lines_checkbox.observe(line_options_visible,
+                                                   names='value')
 
         def save_options(name, value):
             self.selected_values = {
@@ -1981,10 +1981,10 @@ class LineOptionsWidget(MenpoWidget):
                 'line_width': float(self.line_width_text.value),
                 'line_colour': self.line_colour_widget.selected_values,
                 'line_style': self.line_style_dropdown.value}
-        self.render_lines_checkbox.on_trait_change(save_options, 'value')
-        self.line_width_text.on_trait_change(save_options, 'value')
-        self.line_colour_widget.on_trait_change(save_options, 'selected_values')
-        self.line_style_dropdown.on_trait_change(save_options, 'value')
+        self.render_lines_checkbox.observe(save_options, names='value')
+        self.line_width_text.observe(save_options, names='value')
+        self.line_colour_widget.observe(save_options, names='selected_values')
+        self.line_style_dropdown.observe(save_options, names='value')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -2189,8 +2189,8 @@ class MarkerOptionsWidget(MenpoWidget):
         def marker_options_visible(name, value):
             self.marker_options_box.visible = value
         marker_options_visible('', marker_options['render_markers'])
-        self.render_markers_checkbox.on_trait_change(marker_options_visible,
-                                                     'value')
+        self.render_markers_checkbox.observe(marker_options_visible,
+                                                     names='value')
 
         def save_options(name, value):
             self.selected_values = {
@@ -2202,14 +2202,14 @@ class MarkerOptionsWidget(MenpoWidget):
                     self.marker_edge_colour_widget.selected_values,
                 'marker_style': self.marker_style_dropdown.value,
                 'marker_edge_width': float(self.marker_edge_width_text.value)}
-        self.render_markers_checkbox.on_trait_change(save_options, 'value')
-        self.marker_size_text.on_trait_change(save_options, 'value')
-        self.marker_face_colour_widget.on_trait_change(save_options,
-                                                       'selected_values')
-        self.marker_edge_colour_widget.on_trait_change(save_options,
-                                                       'selected_values')
-        self.marker_style_dropdown.on_trait_change(save_options, 'value')
-        self.marker_edge_width_text.on_trait_change(save_options, 'value')
+        self.render_markers_checkbox.observe(save_options, names='value')
+        self.marker_size_text.observe(save_options, names='value')
+        self.marker_face_colour_widget.observe(save_options,
+                                                       names='selected_values')
+        self.marker_edge_colour_widget.observe(save_options,
+                                                       names='selected_values')
+        self.marker_style_dropdown.observe(save_options, names='value')
+        self.marker_edge_width_text.observe(save_options, names='value')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -2450,8 +2450,8 @@ class NumberingOptionsWidget(MenpoWidget):
         def numbering_options_visible(name, value):
             self.numbering_options_box.visible = value
         numbering_options_visible('', numbers_options['render_numbering'])
-        self.render_numbering_checkbox.on_trait_change(
-            numbering_options_visible, 'value')
+        self.render_numbering_checkbox.observe(
+            numbering_options_visible, names='value')
 
         def save_options(name, value):
             self.selected_values = {
@@ -2466,17 +2466,17 @@ class NumberingOptionsWidget(MenpoWidget):
                     self.numbers_horizontal_align_dropdown.value,
                 'numbers_vertical_align':
                     self.numbers_vertical_align_dropdown.value}
-        self.render_numbering_checkbox.on_trait_change(save_options, 'value')
-        self.numbers_font_name_dropdown.on_trait_change(save_options, 'value')
-        self.numbers_font_size_text.on_trait_change(save_options, 'value')
-        self.numbers_font_style_dropdown.on_trait_change(save_options, 'value')
-        self.numbers_font_weight_dropdown.on_trait_change(save_options, 'value')
-        self.numbers_font_colour_widget.on_trait_change(save_options,
-                                                        'selected_values')
-        self.numbers_horizontal_align_dropdown.on_trait_change(save_options,
-                                                               'value')
-        self.numbers_vertical_align_dropdown.on_trait_change(save_options,
-                                                             'value')
+        self.render_numbering_checkbox.observe(save_options, names='value')
+        self.numbers_font_name_dropdown.observe(save_options, names='value')
+        self.numbers_font_size_text.observe(save_options, names='value')
+        self.numbers_font_style_dropdown.observe(save_options, names='value')
+        self.numbers_font_weight_dropdown.observe(save_options, names='value')
+        self.numbers_font_colour_widget.observe(save_options,
+                                                        names='selected_values')
+        self.numbers_horizontal_align_dropdown.observe(save_options,
+                                                               names='value')
+        self.numbers_vertical_align_dropdown.observe(save_options,
+                                                             names='value')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -2716,7 +2716,7 @@ class AxesLimitsWidget(MenpoWidget):
             else:
                 self.axes_x_limits_percentage.visible = False
                 self.axes_x_limits_range.visible = True
-        self.axes_x_limits_toggles.on_trait_change(x_visibility, 'value')
+        self.axes_x_limits_toggles.observe(x_visibility, names='value')
 
         def y_visibility(name, value):
             if value == 'auto':
@@ -2728,7 +2728,7 @@ class AxesLimitsWidget(MenpoWidget):
             else:
                 self.axes_y_limits_percentage.visible = False
                 self.axes_y_limits_range.visible = True
-        self.axes_y_limits_toggles.on_trait_change(y_visibility, 'value')
+        self.axes_y_limits_toggles.observe(y_visibility, names='value')
 
         def save_options(name, value):
             if self.axes_x_limits_toggles.value == 'auto':
@@ -2744,16 +2744,16 @@ class AxesLimitsWidget(MenpoWidget):
             else:
                 y_val = self.axes_y_limits_range.selected_values
             self.selected_values = {'x': x_val, 'y': y_val}
-        self.axes_x_limits_toggles.on_trait_change(save_options, 'value')
-        self.axes_x_limits_percentage.on_trait_change(save_options,
-                                                      'selected_values')
-        self.axes_x_limits_range.on_trait_change(save_options,
-                                                 'selected_values')
-        self.axes_y_limits_toggles.on_trait_change(save_options, 'value')
-        self.axes_y_limits_percentage.on_trait_change(save_options,
-                                                      'selected_values')
-        self.axes_y_limits_range.on_trait_change(save_options,
-                                                 'selected_values')
+        self.axes_x_limits_toggles.observe(save_options, names='value')
+        self.axes_x_limits_percentage.observe(save_options,
+                                                      names='selected_values')
+        self.axes_x_limits_range.observe(save_options,
+                                                 names='selected_values')
+        self.axes_y_limits_toggles.observe(save_options, names='value')
+        self.axes_y_limits_percentage.observe(save_options,
+                                                      names='selected_values')
+        self.axes_y_limits_range.observe(save_options,
+                                                 names='selected_values')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -2965,11 +2965,11 @@ class AxesTicksWidget(MenpoWidget):
         # Set functionality
         def x_visibility(name, value):
             self.axes_x_ticks_list.visible = value == 'list'
-        self.axes_x_ticks_toggles.on_trait_change(x_visibility, 'value')
+        self.axes_x_ticks_toggles.observe(x_visibility, names='value')
 
         def y_visibility(name, value):
             self.axes_y_ticks_list.visible = value == 'list'
-        self.axes_y_ticks_toggles.on_trait_change(y_visibility, 'value')
+        self.axes_y_ticks_toggles.observe(y_visibility, names='value')
 
         def save_options(name, value):
             if self.axes_x_ticks_toggles.value == 'auto':
@@ -2981,10 +2981,10 @@ class AxesTicksWidget(MenpoWidget):
             else:
                 y_val = self.axes_y_ticks_list.selected_values
             self.selected_values = {'x': x_val, 'y': y_val}
-        self.axes_x_ticks_toggles.on_trait_change(save_options, 'value')
-        self.axes_x_ticks_list.on_trait_change(save_options, 'selected_values')
-        self.axes_y_ticks_toggles.on_trait_change(save_options, 'value')
-        self.axes_y_ticks_list.on_trait_change(save_options, 'selected_values')
+        self.axes_x_ticks_toggles.observe(save_options, names='value')
+        self.axes_x_ticks_list.observe(save_options, names='selected_values')
+        self.axes_y_ticks_toggles.observe(save_options, names='value')
+        self.axes_y_ticks_list.observe(save_options, names='selected_values')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -3221,8 +3221,8 @@ class AxesOptionsWidget(MenpoWidget):
         def axes_options_visible(name, value):
             self.axes_font_ticks_options.visible = value
         axes_options_visible('', axes_options['render_axes'])
-        self.render_axes_checkbox.on_trait_change(axes_options_visible,
-                                                  'value')
+        self.render_axes_checkbox.observe(axes_options_visible,
+                                                  names='value')
 
         def save_options(name, value):
             self.selected_values = {
@@ -3235,13 +3235,13 @@ class AxesOptionsWidget(MenpoWidget):
                 'axes_y_ticks': self.axes_ticks_widget.selected_values['y'],
                 'axes_x_limits': self.axes_limits_widget.selected_values['x'],
                 'axes_y_limits': self.axes_limits_widget.selected_values['y']}
-        self.render_axes_checkbox.on_trait_change(save_options, 'value')
-        self.axes_font_name_dropdown.on_trait_change(save_options, 'value')
-        self.axes_font_size_text.on_trait_change(save_options, 'value')
-        self.axes_font_style_dropdown.on_trait_change(save_options, 'value')
-        self.axes_font_weight_dropdown.on_trait_change(save_options, 'value')
-        self.axes_ticks_widget.on_trait_change(save_options, 'selected_values')
-        self.axes_limits_widget.on_trait_change(save_options, 'selected_values')
+        self.render_axes_checkbox.observe(save_options, names='value')
+        self.axes_font_name_dropdown.observe(save_options, names='value')
+        self.axes_font_size_text.observe(save_options, names='value')
+        self.axes_font_style_dropdown.observe(save_options, names='value')
+        self.axes_font_weight_dropdown.observe(save_options, names='value')
+        self.axes_ticks_widget.observe(save_options, names='selected_values')
+        self.axes_limits_widget.observe(save_options, names='selected_values')
 
     def set_widget_state(self, axes_options, allow_callback=True):
         r"""
@@ -3571,20 +3571,20 @@ class LegendOptionsWidget(MenpoWidget):
         def legend_options_visible(name, value):
             self.tab_box.visible = value
         legend_options_visible('', legend_options['render_legend'])
-        self.render_legend_checkbox.on_trait_change(legend_options_visible,
-                                                    'value')
+        self.render_legend_checkbox.observe(legend_options_visible,
+                                                    names='value')
 
         def border_pad_visible(name, value):
             self.legend_border_padding_text.visible = value
-        self.legend_border_checkbox.on_trait_change(border_pad_visible, 'value')
+        self.legend_border_checkbox.observe(border_pad_visible, names='value')
 
         def bbox_to_anchor_visible(name, value):
             self.bbox_to_anchor_x_text.visible = value
             self.bbox_to_anchor_y_text.visible = value
         bbox_to_anchor_visible('', not legend_options['legend_bbox_to_anchor']
                                is None)
-        self.bbox_to_anchor_enable_checkbox.on_trait_change(
-            bbox_to_anchor_visible, 'value')
+        self.bbox_to_anchor_enable_checkbox.observe(
+            bbox_to_anchor_visible, names='value')
 
         def save_options(name, value):
             legend_bbox_to_anchor = None
@@ -3615,28 +3615,28 @@ class LegendOptionsWidget(MenpoWidget):
                 'legend_shadow': self.legend_shadow_checkbox.value,
                 'legend_rounded_corners':
                     self.legend_rounded_corners_checkbox.value}
-        self.render_legend_checkbox.on_trait_change(save_options, 'value')
-        self.legend_title_text.on_trait_change(save_options, 'value')
-        self.legend_font_name_dropdown.on_trait_change(save_options, 'value')
-        self.legend_font_size_text.on_trait_change(save_options, 'value')
-        self.legend_font_style_dropdown.on_trait_change(save_options, 'value')
-        self.legend_font_weight_dropdown.on_trait_change(save_options, 'value')
-        self.legend_location_dropdown.on_trait_change(save_options, 'value')
-        self.bbox_to_anchor_enable_checkbox.on_trait_change(save_options,
-                                                            'value')
-        self.bbox_to_anchor_x_text.on_trait_change(save_options, 'value')
-        self.bbox_to_anchor_y_text.on_trait_change(save_options, 'value')
-        self.legend_border_axes_pad_text.on_trait_change(save_options, 'value')
-        self.legend_n_columns_text.on_trait_change(save_options, 'value')
-        self.legend_marker_scale_text.on_trait_change(save_options, 'value')
-        self.legend_horizontal_spacing_text.on_trait_change(save_options,
-                                                            'value')
-        self.legend_vertical_spacing_text.on_trait_change(save_options, 'value')
-        self.legend_border_checkbox.on_trait_change(save_options, 'value')
-        self.legend_border_padding_text.on_trait_change(save_options, 'value')
-        self.legend_shadow_checkbox.on_trait_change(save_options, 'value')
-        self.legend_rounded_corners_checkbox.on_trait_change(save_options,
-                                                             'value')
+        self.render_legend_checkbox.observe(save_options, names='value')
+        self.legend_title_text.observe(save_options, names='value')
+        self.legend_font_name_dropdown.observe(save_options, names='value')
+        self.legend_font_size_text.observe(save_options, names='value')
+        self.legend_font_style_dropdown.observe(save_options, names='value')
+        self.legend_font_weight_dropdown.observe(save_options, names='value')
+        self.legend_location_dropdown.observe(save_options, names='value')
+        self.bbox_to_anchor_enable_checkbox.observe(save_options,
+                                                            names='value')
+        self.bbox_to_anchor_x_text.observe(save_options, names='value')
+        self.bbox_to_anchor_y_text.observe(save_options, names='value')
+        self.legend_border_axes_pad_text.observe(save_options, names='value')
+        self.legend_n_columns_text.observe(save_options, names='value')
+        self.legend_marker_scale_text.observe(save_options, names='value')
+        self.legend_horizontal_spacing_text.observe(save_options,
+                                                            names='value')
+        self.legend_vertical_spacing_text.observe(save_options, names='value')
+        self.legend_border_checkbox.observe(save_options, names='value')
+        self.legend_border_padding_text.observe(save_options, names='value')
+        self.legend_shadow_checkbox.observe(save_options, names='value')
+        self.legend_rounded_corners_checkbox.observe(save_options,
+                                                             names='value')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -3900,16 +3900,16 @@ class GridOptionsWidget(MenpoWidget):
         def grid_options_visible(name, value):
             self.grid_options_box.visible = value
         grid_options_visible('', grid_options['render_grid'])
-        self.render_grid_checkbox.on_trait_change(grid_options_visible, 'value')
+        self.render_grid_checkbox.observe(grid_options_visible, names='value')
 
         def save_options(name, value):
             self.selected_values = {
                 'render_grid': self.render_grid_checkbox.value,
                 'grid_line_width': float(self.grid_line_width_text.value),
                 'grid_line_style': self.grid_line_style_dropdown.value}
-        self.render_grid_checkbox.on_trait_change(save_options, 'value')
-        self.grid_line_width_text.on_trait_change(save_options, 'value')
-        self.grid_line_style_dropdown.on_trait_change(save_options, 'value')
+        self.render_grid_checkbox.observe(save_options, names='value')
+        self.grid_line_width_text.observe(save_options, names='value')
+        self.grid_line_style_dropdown.observe(save_options, names='value')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -4139,7 +4139,7 @@ class HOGOptionsWidget(MenpoWidget):
             self.window_height_text.disabled = value == 'sparse'
             self.window_width_text.disabled = value == 'sparse'
             self.window_size_unit_radiobuttons.disabled = value == 'sparse'
-        self.mode_radiobuttons.on_trait_change(window_mode, 'value')
+        self.mode_radiobuttons.observe(window_mode, names='value')
 
         # algorithm function
         def algorithm_mode(name, value):
@@ -4147,7 +4147,7 @@ class HOGOptionsWidget(MenpoWidget):
             self.signed_gradient_checkbox.disabled = value == 'zhuramanan'
             self.block_size_text.disabled = value == 'zhuramanan'
             self.num_bins_text.disabled = value == 'zhuramanan'
-        self.algorithm_radiobuttons.on_trait_change(algorithm_mode, 'value')
+        self.algorithm_radiobuttons.observe(algorithm_mode, names='value')
 
         # get options
         def save_options(name, value):
@@ -4166,22 +4166,22 @@ class HOGOptionsWidget(MenpoWidget):
                 'window_step_horizontal': self.window_horizontal_text.value,
                 'window_step_unit': self.window_step_unit_radiobuttons.value,
                 'padding': self.padding_checkbox.value}
-        self.mode_radiobuttons.on_trait_change(save_options, 'value')
-        self.padding_checkbox.on_trait_change(save_options, 'value')
-        self.window_height_text.on_trait_change(save_options, 'value')
-        self.window_width_text.on_trait_change(save_options, 'value')
-        self.window_size_unit_radiobuttons.on_trait_change(save_options,
-                                                           'value')
-        self.window_vertical_text.on_trait_change(save_options, 'value')
-        self.window_horizontal_text.on_trait_change(save_options, 'value')
-        self.window_step_unit_radiobuttons.on_trait_change(save_options,
-                                                           'value')
-        self.algorithm_radiobuttons.on_trait_change(save_options, 'value')
-        self.num_bins_text.on_trait_change(save_options, 'value')
-        self.cell_size_text.on_trait_change(save_options, 'value')
-        self.block_size_text.on_trait_change(save_options, 'value')
-        self.signed_gradient_checkbox.on_trait_change(save_options, 'value')
-        self.l2_norm_clipping_text.on_trait_change(save_options, 'value')
+        self.mode_radiobuttons.observe(save_options, names='value')
+        self.padding_checkbox.observe(save_options, names='value')
+        self.window_height_text.observe(save_options, names='value')
+        self.window_width_text.observe(save_options, names='value')
+        self.window_size_unit_radiobuttons.observe(save_options,
+                                                           names='value')
+        self.window_vertical_text.observe(save_options, names='value')
+        self.window_horizontal_text.observe(save_options, names='value')
+        self.window_step_unit_radiobuttons.observe(save_options,
+                                                           names='value')
+        self.algorithm_radiobuttons.observe(save_options, names='value')
+        self.num_bins_text.observe(save_options, names='value')
+        self.cell_size_text.observe(save_options, names='value')
+        self.block_size_text.observe(save_options, names='value')
+        self.signed_gradient_checkbox.observe(save_options, names='value')
+        self.l2_norm_clipping_text.observe(save_options, names='value')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -4353,14 +4353,14 @@ class DSIFTOptionsWidget(MenpoWidget):
                 'cell_size_horizontal': self.cell_size_horizontal_text.value,
                 'cell_size_vertical': self.cell_size_vertical_text.value,
                 'fast': self.fast_checkbox.value}
-        self.window_vertical_text.on_trait_change(save_options, 'value')
-        self.window_horizontal_text.on_trait_change(save_options, 'value')
-        self.num_bins_vertical_text.on_trait_change(save_options, 'value')
-        self.num_bins_horizontal_text.on_trait_change(save_options, 'value')
-        self.num_or_bins_text.on_trait_change(save_options, 'value')
-        self.cell_size_vertical_text.on_trait_change(save_options, 'value')
-        self.cell_size_horizontal_text.on_trait_change(save_options, 'value')
-        self.fast_checkbox.on_trait_change(save_options, 'value')
+        self.window_vertical_text.observe(save_options, names='value')
+        self.window_horizontal_text.observe(save_options, names='value')
+        self.num_bins_vertical_text.observe(save_options, names='value')
+        self.num_bins_horizontal_text.observe(save_options, names='value')
+        self.num_or_bins_text.observe(save_options, names='value')
+        self.cell_size_vertical_text.observe(save_options, names='value')
+        self.cell_size_horizontal_text.observe(save_options, names='value')
+        self.fast_checkbox.observe(save_options, names='value')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -4529,14 +4529,14 @@ class DaisyOptionsWidget(MenpoWidget):
                 'normalization': self.normalization_dropdown.value,
                 'sigmas': sigmas_val,
                 'ring_radii': ring_radii_val}
-        self.step_text.on_trait_change(save_options, 'value')
-        self.radius_text.on_trait_change(save_options, 'value')
-        self.rings_text.on_trait_change(save_options, 'value')
-        self.histograms_text.on_trait_change(save_options, 'value')
-        self.orientations_text.on_trait_change(save_options, 'value')
-        self.normalization_dropdown.on_trait_change(save_options, 'value')
-        self.sigmas_wid.on_trait_change(save_options, 'selected_values')
-        self.ring_radii_wid.on_trait_change(save_options, 'selected_values')
+        self.step_text.observe(save_options, names='value')
+        self.radius_text.observe(save_options, names='value')
+        self.rings_text.observe(save_options, names='value')
+        self.histograms_text.observe(save_options, names='value')
+        self.orientations_text.observe(save_options, names='value')
+        self.normalization_dropdown.observe(save_options, names='value')
+        self.sigmas_wid.observe(save_options, names='selected_values')
+        self.ring_radii_wid.observe(save_options, names='selected_values')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -4692,14 +4692,14 @@ class LBPOptionsWidget(MenpoWidget):
                 'window_step_horizontal': self.window_horizontal_text.value,
                 'window_step_unit': self.window_step_unit_radiobuttons.value,
                 'padding': self.padding_checkbox.value}
-        self.mapping_type_dropdown.on_trait_change(save_options, 'value')
-        self.window_vertical_text.on_trait_change(save_options, 'value')
-        self.window_horizontal_text.on_trait_change(save_options, 'value')
-        self.window_step_unit_radiobuttons.on_trait_change(save_options,
-                                                           'value')
-        self.padding_checkbox.on_trait_change(save_options, 'value')
-        self.radius_wid.on_trait_change(save_options, 'selected_values')
-        self.samples_wid.on_trait_change(save_options, 'selected_values')
+        self.mapping_type_dropdown.observe(save_options, names='value')
+        self.window_vertical_text.observe(save_options, names='value')
+        self.window_horizontal_text.observe(save_options, names='value')
+        self.window_step_unit_radiobuttons.observe(save_options,
+                                                           names='value')
+        self.padding_checkbox.observe(save_options, names='value')
+        self.radius_wid.observe(save_options, names='selected_values')
+        self.samples_wid.observe(save_options, names='selected_values')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -4805,7 +4805,7 @@ class IGOOptionsWidget(MenpoWidget):
         # Set functionality
         def save_options(name, value):
             self.selected_values = {'double_angles': value}
-        self.double_angles_checkbox.on_trait_change(save_options, 'value')
+        self.double_angles_checkbox.observe(save_options, names='value')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
