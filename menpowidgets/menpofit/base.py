@@ -1590,7 +1590,7 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
             line_width = [1] * len(groups)
             render_markers = [True] * len(groups)
             marker_style = ['o'] * len(groups)
-            marker_size = [20] * len(groups)
+            marker_size = [5] * len(groups)
             marker_face_colour = []
             marker_edge_colour = ['black'] * len(groups)
             marker_edge_width = [1] * len(groups)
@@ -1619,7 +1619,7 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
             line_width = [1] * len(groups)
             render_markers = [True] * len(groups)
             marker_style = ['o'] * len(groups)
-            marker_size = [20] * len(groups)
+            marker_size = [5] * len(groups)
             marker_edge_colour = ['black'] * len(groups)
             marker_edge_width = [1] * len(groups)
             if (subplots_enabled or

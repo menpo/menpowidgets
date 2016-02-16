@@ -2069,7 +2069,7 @@ class RendererOptionsWidget(MenpoWidget):
                     fc = sample_colours_from_colourmap(len(labels), 'jet')
                     ec = sample_colours_from_colourmap(len(labels), 'jet')
                 self.default_options[key]['markers'] = {
-                    'render_markers': True, 'marker_size': 20,
+                    'render_markers': True, 'marker_size': 5,
                     'marker_face_colour': fc, 'marker_edge_colour': ec,
                     'marker_style': 'o', 'marker_edge_width': 1}
         return self.default_options[key]
