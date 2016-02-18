@@ -1758,6 +1758,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
     # Define function that updates the info text
     def update_info(image, level, group):
         lvl_app_mod = appearance_model[level]
+        lp = 0 if group is None else image.landmarks[group].lms.n_points
         text_per_line = [
             "> Level: {} out of {}.".format(level + 1, n_levels),
             "> {} components in total.".format(lvl_app_mod.n_components),
@@ -1768,7 +1769,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
                 image._str_shape(),
                 image.n_channels, 's' * (image.n_channels > 1)),
             "> {} features.".format(lvl_app_mod.n_features),
-            "> {} landmark points.".format(image.landmarks[group].lms.n_points),
+            "> {} landmark points.".format(lp),
             "> Instance: min={:.3f}, max={:.3f}".format(image.pixels.min(),
                                                         image.pixels.max())]
         info_wid.set_widget_state(n_lines=8, text_per_line=text_per_line)
