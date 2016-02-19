@@ -3,9 +3,11 @@
 :mod:`menpowidgets.abstract`
 ============================
 
-Abstract
---------
+Base Class
+----------
+Main class for defining a Menpo widget.
 
 .. toctree::
   :maxdepth: 1
 
+  MenpoWidget
