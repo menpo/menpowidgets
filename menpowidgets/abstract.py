@@ -35,9 +35,9 @@ class MenpoWidget(ipywidgets.FlexBox):
             * ``name`` : the name of the modified trait attribute.
 
         If ``None``, then nothing is added.
-    orientation : ``{'horizontal', 'vertical'}``, optional
+    orientation : {``'horizontal'``, ``'vertical'``}, optional
         The orientation of the `ipywidgets.FlexBox`.
-    align : ``{'start', 'center', 'end'}``, optional
+    align : {``'start'``, ``'center'``, ``'end'``}, optional
         The alignment of the children of the `ipywidgets.FlexBox`.
     """
     def __init__(self, children, trait, trait_initial_value,
@@ -51,6 +51,7 @@ class MenpoWidget(ipywidgets.FlexBox):
         selected_values = trait(default_value=trait_initial_value)
         selected_values_trait = {'selected_values': selected_values}
         self.add_traits(**selected_values_trait)
+        self.selected_values = trait_initial_value
 
         # Set render function
         self._render_function = None
@@ -119,3 +120,22 @@ class MenpoWidget(ipywidgets.FlexBox):
 
         # add new function
         self.add_render_function(render_function)
+
+    def call_render_function(self, old_value, new_value, type_value='change'):
+        r"""
+        Method that calls the existing `render_function()` callback handler.
+
+        Parameters
+        ----------
+        old_value : `int` or `float` or `dict` or `list` or `tuple`
+            The old `selected_values` value.
+        new_value : `int` or `float` or `dict` or `list` or `tuple`
+            The new `selected_values` value.
+        type_value : `str`, optional
+            The trait event type.
+        """
+        if self._render_function is not None:
+            change_dict = {'type': 'change', 'old': old_value,
+                           'name': type_value, 'new': new_value,
+                           'owner': self.__str__()}
+            self._render_function(change_dict)

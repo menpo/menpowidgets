@@ -130,13 +130,13 @@ class LogoWidget(ipywidgets.FlexBox):
 
 class ListWidget(MenpoWidget):
     r"""
-    Creates a widget for selecting a list with numbers. It supports both
-    integers and floats.
+    Creates a widget for selecting a `list` of numbers. It supports both
+    `int` and `float`.
 
     The selected values are stored in the `self.selected_values` `trait`. To
     set the styling of this widget please refer to the `style()` method. To
-    update the state and function of the widget, please refer to the
-    `set_widget_state()` and `replace_render_function()` methods.
+    update the state and handler callback function of the widget, please refer
+    to the `set_widget_state()` and `replace_render_function()` methods.
 
     Parameters
     ----------
@@ -175,14 +175,18 @@ class ListWidget(MenpoWidget):
             raise ValueError("mode must be either int or float.")
         self.cmd_text = ipywidgets.Text(value=selected_cmd[:-2],
                                         description=description)
+        self.valid = ipywidgets.Valid(value=True)
         self.error_msg = ipywidgets.Latex(value='', font_style='italic',
                                           color='#FF0000')
+        self.cmd_text_example_error = ipywidgets.FlexBox(
+                children=[self.cmd_text, self.example, self.error_msg],
+                orientation='vertical', align='end')
 
         # Create final widget
-        children = [self.cmd_text, self.example, self.error_msg]
+        children = [self.cmd_text_example_error, self.valid]
         super(ListWidget, self).__init__(
             children, List, selected_list, render_function=render_function,
-            orientation='vertical', align='end')
+            orientation='horizontal', align='start')
 
         # Assign properties
         self.mode = mode
@@ -197,7 +201,9 @@ class ListWidget(MenpoWidget):
                 else:
                     self.selected_values = parse_float_range_command(
                         str(self.cmd_text.value))
+                self.valid.value = True
             except ValueError as e:
+                self.valid.value = False
                 self.error_msg.value = str(e)
         self.cmd_text.on_submit(save_cmd)
 
@@ -208,11 +214,14 @@ class ListWidget(MenpoWidget):
         Parameters
         ----------
         selected_list : `list`
-            The selected list.
+            The selected list of numbers.
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
         if not lists_are_the_same(selected_list, self.selected_values):
+            # Keep old value
+            old_value = self.selected_values
+
             # Assign new options dict to selected_values
             selected_cmd = ''
             if self.mode == 'int':
@@ -235,7 +244,7 @@ class ListWidget(MenpoWidget):
 
             # trigger render function if allowed
             if allow_callback:
-                self._render_function('', 0)
+                self.call_render_function(old_value, self.selected_values)
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
