@@ -10,3 +10,8 @@ Tools
   :maxdepth: 1
 
   ListWidget
+  LogoWidget
+  SlicingCommandWidget
+  IndexSliderWidget
+  IndexButtonsWidget
+  ColourSelectionWidget

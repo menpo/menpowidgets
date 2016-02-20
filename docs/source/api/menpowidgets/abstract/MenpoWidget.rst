@@ -6,5 +6,4 @@ MenpoWidget
 ===========
 .. autoclass:: MenpoWidget
   :members:
-  :inherited-members:
   :show-inheritance:

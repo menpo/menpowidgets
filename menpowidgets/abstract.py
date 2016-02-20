@@ -7,8 +7,8 @@ class MenpoWidget(ipywidgets.FlexBox):
 
     The widget has a `selected_values` trait that can be used in order to
     inspect any changes that occur to its children. It also has functionality
-    for adding, removing or replacing the handler callback of the
-    `selected_values` trait.
+    for adding, removing, replacing or calling the handler callback function of
+    the `selected_values` trait.
 
     Parameters
     ----------
@@ -17,10 +17,8 @@ class MenpoWidget(ipywidgets.FlexBox):
         `ipywidgets.FlexBox`.
     trait : `traitlets.TraitType` subclass
         The type of the `selected_values` object that gets added as a trait
-        in the widget. Possible options for `traitlets` are:
-
-            {`Int`, `Float`, `Dict`, `List`, `Tuple`}
-
+        in the widget. Possible options from `traitlets` are {``Int``, ``Float``,
+        ``Dict``, ``List``, ``Tuple``}.
     trait_initial_value : `int` or `float` or `dict` or `list` or `tuple`
         The initial value of the `selected_values` trait.
     render_function : `function` or ``None``, optional
@@ -29,10 +27,11 @@ class MenpoWidget(ipywidgets.FlexBox):
         ``render_function()`` or ``render_function(change)``, where ``change``
         is a `dict` with the following keys:
 
-            * ``owner`` : the `HasTraits` instance
-            * ``old`` : the old value of the modified trait attribute
-            * ``new`` : the new value of the modified trait attribute
-            * ``name`` : the name of the modified trait attribute.
+        - ``owner`` : the `HasTraits` instance
+        - ``old`` : the old value of the modified trait attribute
+        - ``new`` : the new value of the modified trait attribute
+        - ``name`` : the name of the modified trait attribute.
+        - ``type``: ``'change'``
 
         If ``None``, then nothing is added.
     orientation : {``'horizontal'``, ``'vertical'``}, optional
@@ -67,14 +66,15 @@ class MenpoWidget(ipywidgets.FlexBox):
         ----------
         render_function : `function` or ``None``, optional
             The render function that behaves as a callback handler of the
-            `selected_values` trait for the `change` event. Its signature can
-            be ``render_function()`` or ``render_function(change)``, where
+            `selected_values` trait for the `change` event. Its signature can be
+            ``render_function()`` or ``render_function(change)``, where
             ``change`` is a `dict` with the following keys:
 
-            * ``owner`` : the `HasTraits` instance
-            * ``old`` : the old value of the modified trait attribute
-            * ``new`` : the new value of the modified trait attribute
-            * ``name`` : the name of the modified trait attribute.
+            - ``owner`` : the `HasTraits` instance
+            - ``old`` : the old value of the modified trait attribute
+            - ``new`` : the new value of the modified trait attribute
+            - ``name`` : the name of the modified trait attribute.
+            - ``type``: ``'change'``
 
             If ``None``, then nothing is added.
         """
@@ -104,14 +104,15 @@ class MenpoWidget(ipywidgets.FlexBox):
         ----------
         render_function : `function` or ``None``, optional
             The render function that behaves as a callback handler of the
-            `selected_values` trait for the `change` event. Its signature can
-            be ``render_function()`` or ``render_function(change)``, where
+            `selected_values` trait for the `change` event. Its signature can be
+            ``render_function()`` or ``render_function(change)``, where
             ``change`` is a `dict` with the following keys:
 
-            * ``owner`` : the `HasTraits` instance
-            * ``old`` : the old value of the modified trait attribute
-            * ``new`` : the new value of the modified trait attribute
-            * ``name`` : the name of the modified trait attribute.
+            - ``owner`` : the `HasTraits` instance
+            - ``old`` : the old value of the modified trait attribute
+            - ``new`` : the new value of the modified trait attribute
+            - ``name`` : the name of the modified trait attribute.
+            - ``type``: ``'change'``
 
             If ``None``, then nothing is added.
         """

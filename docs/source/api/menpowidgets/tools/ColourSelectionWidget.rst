@@ -1,9 +1,9 @@
-.. _menpowidgets-tools-ListWidget:
+.. _menpowidgets-tools-ColourSelectionWidget:
 
 .. currentmodule:: menpowidgets.tools
 
-ListWidget
-==========
-.. autoclass:: ListWidget
+ColourSelectionWidget
+=====================
+.. autoclass:: ColourSelectionWidget
   :members: add_render_function, remove_render_function, replace_render_function, call_render_function, set_widget_state, style
   :show-inheritance:
