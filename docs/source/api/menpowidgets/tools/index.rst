@@ -15,3 +15,8 @@ Tools
   IndexSliderWidget
   IndexButtonsWidget
   ColourSelectionWidget
+  ZoomOneScaleWidget
+  ZoomTwoScalesWidget
+  ImageOptionsWidget
+  LineOptionsWidget
+  MarkerOptionsWidget

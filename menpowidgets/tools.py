@@ -208,7 +208,8 @@ class ListWidget(MenpoWidget):
 
     def set_widget_state(self, selected_list, allow_callback=True):
         r"""
-        Method that updates the state of the widget with a new set of values.
+        Method that updates the state of the widget if the provided
+        `selected_list` value is different than `self.selected_values`.
 
         Parameters
         ----------
@@ -332,9 +333,10 @@ class SlicingCommandWidget(MenpoWidget):
     Parameters
     ----------
     slice_options : `dict`
-        The initial slicing options. Example ::
+        The initial slicing options. It must be a `dict` with:
 
-            {'command': ':3', 'length': 68}
+        * ``command`` : (`str`) The slicing command (e.g. ``':3'``).
+        * ``length`` : (`int`) The maximum length (e.g. ``68``).
 
     description : `str`, optional
         The description of the command text box.
@@ -449,14 +451,16 @@ class SlicingCommandWidget(MenpoWidget):
 
     def set_widget_state(self, slice_options, allow_callback=True):
         r"""
-        Method that updates the state of the widget with a new set of values.
+        Method that updates the state of the widget if the provided
+        `slice_options` value is different than `self.selected_values`.
 
         Parameters
         ----------
         slice_options : `dict`
-            The new slicing options. Example ::
+            The new slicing options. It must be a `dict` with:
 
-                {'command': '10', 'length': 30}
+            * ``command`` : (`str`) The slicing command (e.g. ``':3'``).
+            * ``length`` : (`int`) The maximum length (e.g. ``68``).
 
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
@@ -600,9 +604,12 @@ class IndexSliderWidget(MenpoWidget):
     Parameters
     ----------
     index : `dict`
-        The dictionary with the default options. For example ::
+        The `dict` with the default options:
 
-            {'min': 0, 'max': 100, 'step': 1, 'index': 10}
+        * ``min`` : (`int`) The minimum value (e.g. ``0``).
+        * ``max`` : (`int`) The maximum value (e.g. ``100``).
+        * ``step`` : (`int`) The index step (e.g. ``1``).
+        * ``index`` : (`int`) The index value (e.g. ``10``).
 
     description : `str`, optional
         The title of the widget.
@@ -703,14 +710,17 @@ class IndexSliderWidget(MenpoWidget):
     def set_widget_state(self, index, allow_callback=True):
         r"""
         Method that updates the state of the widget, if the provided `index`
-        values are different than `self.selected_values()`.
+        values are different than `self.selected_values`.
 
         Parameters
         ----------
         index : `dict`
-            The dictionary with the selected options. For example ::
+            The `dict` with the selected options:
 
-                {'min': 0, 'max': 100, 'step': 1, 'index': 10}
+            * ``min`` : (`int`) The minimum value (e.g. ``0``).
+            * ``max`` : (`int`) The maximum value (e.g. ``100``).
+            * ``step`` : (`int`) The index step (e.g. ``1``).
+            * ``index`` : (`int`) The index value (e.g. ``10``).
 
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
@@ -755,9 +765,12 @@ class IndexButtonsWidget(MenpoWidget):
     Parameters
     ----------
     index : `dict`
-        The dictionary with the default options. For example ::
+        The `dict` with the default options:
 
-            {'min': 0, 'max': 100, 'step': 1, 'index': 10}
+        * ``min`` : (`int`) The minimum value (e.g. ``0``).
+        * ``max`` : (`int`) The maximum value (e.g. ``100``).
+        * ``step`` : (`int`) The index step (e.g. ``1``).
+        * ``index`` : (`int`) The index value (e.g. ``10``).
 
     render_function : `function` or ``None``, optional
         The render function that is executed when the index value changes.
@@ -916,14 +929,17 @@ class IndexButtonsWidget(MenpoWidget):
                          allow_callback=True):
         r"""
         Method that updates the state of the widget, if the provided `index`
-        values are different than `self.selected_values()`.
+        value is different than `self.selected_values`.
 
         Parameters
         ----------
         index : `dict`
-            The dictionary with the selected options. For example ::
+            The `dict` with the selected options:
 
-                {'min': 0, 'max': 100, 'step': 1, 'index': 10}
+            * ``min`` : (`int`) The minimum value (e.g. ``0``).
+            * ``max`` : (`int`) The maximum value (e.g. ``100``).
+            * ``step`` : (`int`) The index step (e.g. ``1``).
+            * ``index`` : (`int`) The index value (e.g. ``10``).
 
         loop_enabled : `bool`, optional
             If ``True``, then if by pressing the buttons we reach the minimum
@@ -1146,7 +1162,7 @@ class ColourSelectionWidget(MenpoWidget):
         r"""
         Method that updates the state of the widget, if the provided
         `colours_list` and `labels` values are different than
-        ``self.selected_values``.
+        `self.selected_values` and `self.labels` respectively.
 
         Parameters
         ----------
@@ -1242,17 +1258,22 @@ class ZoomOneScaleWidget(MenpoWidget):
     r"""
     Creates a widget for selecting zoom options with a single scale.
 
-    The selected values are stored in `self.selected_values` `dict`. To set the
-    styling of this widget please refer to the `style()` method. To update the
-    state and functions of the widget, please refer to the `set_widget_state()`,
-    `replace_update_function()` and `replace_render_function()` methods.
+    * The selected values are stored in the ``self.selected_values`` `trait`.
+    * To set the styling of this widget please refer to the :meth:`style` method.
+    * To update the state of the widget, please refer to the
+      :meth:`set_widget_state` method.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
 
     Parameters
     ----------
     zoom_options : `dict`
-        The dictionary with the default options. For example ::
+        The `dict` with the default options. It must have the following keys:
 
-            zoom_options = {'min': 0.1, 'max': 4., 'step': 0.05, 'zoom': 1.}
+        * ``min`` : (`float`) The minimum value (e.g. ``0.1``).
+        * ``max`` : (`float`) The maximum value (e.g. ``4.``).
+        * ``step`` : (`float`) The zoom step (e.g. ``0.05``).
+        * ``index`` : (`float`) The zoom value (e.g. ``1.``).
 
     render_function : `function` or ``None``, optional
         The render function that is executed when the index value changes.
@@ -1318,9 +1339,9 @@ class ZoomOneScaleWidget(MenpoWidget):
                 self.zoom_text.value = "{:.2f}".format(tmp_val)
         self.button_minus.on_click(value_minus)
 
-        def save_zoom_slider(name, value):
-            self.selected_values = value
-        self.zoom_slider.on_trait_change(save_zoom_slider, 'value')
+        def save_zoom_slider(change):
+            self.selected_values = change['new']
+        self.zoom_slider.observe(save_zoom_slider, names='value', type='change')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -1332,11 +1353,9 @@ class ZoomOneScaleWidget(MenpoWidget):
         Parameters
         ----------
         box_style : `str` or ``None`` (see below), optional
-            Widget style options ::
+            Possible widget style options::
 
-                {'success', 'info', 'warning', 'danger', ''}
-                or
-                None
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -1347,29 +1366,30 @@ class ZoomOneScaleWidget(MenpoWidget):
         border_width : `float`, optional
             The line width of the border around the widget.
         border_radius : `float`, optional
-            The radius of the corners of the box.
+            The radius of the border around the widget.
         padding : `float`, optional
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy',
-                 'monospace', 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : ``{'normal', 'italic', 'oblique'}``, optional
-            The font style.
-        font_weight : See Below, optional
-            The font weight.
-            Example options ::
+        font_style : `str` (see below), optional
+            The font style. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book',
-                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
-                 'heavy', 'extra bold', 'black'}
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
 
         slider_width : `float`, optional
             The width of the slider
@@ -1397,15 +1417,19 @@ class ZoomOneScaleWidget(MenpoWidget):
 
     def set_widget_state(self, zoom_options, allow_callback=True):
         r"""
-        Method that updates the state of the widget, if the provided `index`
-        values are different than `self.selected_values()`.
+        Method that updates the state of the widget, if the provided
+        `zoom_options` value is different than `self.selected_values`.
 
         Parameters
         ----------
         zoom_options : `dict`
-            The dictionary with the selected options. For example ::
+            The `dict` with the selected options. It must have the following
+            keys:
 
-                zoom_options = {'min': 0.1, 'max': 4., 'step': 0.05, 'zoom': 1.}
+            * ``min`` : (`float`) The minimum value (e.g. ``0.1``).
+            * ``max`` : (`float`) The maximum value (e.g. ``4.``).
+            * ``step`` : (`float`) The zoom step (e.g. ``0.05``).
+            * ``index`` : (`float`) The zoom value (e.g. ``1.``).
 
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
@@ -1415,6 +1439,9 @@ class ZoomOneScaleWidget(MenpoWidget):
             zoom_options['min'] != self.zoom_slider.min or
             zoom_options['max'] != self.zoom_slider.max or
                 zoom_options['step'] != self.zoom_slider.step):
+            # keep old value
+            old_value = self.selected_values
+
             # temporarily remove render callback
             render_function = self._render_function
             self.remove_render_function()
@@ -1432,25 +1459,30 @@ class ZoomOneScaleWidget(MenpoWidget):
 
             # trigger render function if allowed
             if allow_callback:
-                self._render_function('', True)
+                self.call_render_function(old_value, self.selected_values)
 
 
 class ZoomTwoScalesWidget(MenpoWidget):
     r"""
     Creates a widget for selecting zoom options with a single scale.
 
-    The selected values are stored in `self.selected_values` `dict`. To set the
-    styling of this widget please refer to the `style()` method. To update the
-    state and functions of the widget, please refer to the `set_widget_state()`,
-    `replace_update_function()` and `replace_render_function()` methods.
+    * The selected values are stored in the ``self.selected_values`` `trait`.
+    * To set the styling of this widget please refer to the :meth:`style` method.
+    * To update the state of the widget, please refer to the
+      :meth:`set_widget_state` method.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
 
     Parameters
     ----------
     zoom_options : `dict`
-        The dictionary with the default options. For example ::
+        The `dict` with the default options. It must have the following keys:
 
-            zoom_options = {'zoom': [1., 1.], 'min': 0.1, 'max': 4.,
-                            'step': 0.05, 'lock_aspect_ratio': False}
+        * ``min`` : (`float`) The minimum value (e.g. ``0.1``).
+        * ``max`` : (`float`) The maximum value (e.g. ``4.``).
+        * ``step`` : (`float`) The zoom step (e.g. ``0.05``).
+        * ``index`` : (`float`) The zoom value (e.g. ``1.``).
+        * ``lock_aspect_ratio`` : (`bool`) Flag that locks the aspect ratio.
 
     render_function : `function` or ``None``, optional
         The render function that is executed when the index value changes.
@@ -1570,18 +1602,19 @@ class ZoomTwoScalesWidget(MenpoWidget):
                 self.y_zoom_text.value = "{:.2f}".format(tmp_val)
         self.y_button_minus.on_click(y_value_minus)
 
-        def save_zoom(name, value):
+        def save_zoom(change):
+            value = change['new']
             if self.lock_aspect_ratio:
                 self.selected_values = [value, value]
             else:
                 self.selected_values = [self.x_zoom_slider.value,
                                         self.y_zoom_slider.value]
-        self.x_zoom_slider.on_trait_change(save_zoom, 'value')
-        self.y_zoom_slider.on_trait_change(save_zoom, 'value')
+        self.x_zoom_slider.observe(save_zoom, names='value', type='change')
+        self.y_zoom_slider.observe(save_zoom, names='value', type='change')
 
-        def link_button(name, value):
-            self.lock_aspect_ratio = value
-            if value:
+        def link_button(change):
+            self.lock_aspect_ratio = change['new']
+            if change['new']:
                 self.lock_aspect_button.icon = 'fa-link'
                 self.lock_link = link((self.x_zoom_slider, 'value'),
                                       (self.y_zoom_slider, 'value'))
@@ -1590,7 +1623,8 @@ class ZoomTwoScalesWidget(MenpoWidget):
             else:
                 self.lock_aspect_button.icon = 'fa-unlink'
                 self.lock_link.unlink()
-        self.lock_aspect_button.on_trait_change(link_button, 'value')
+        self.lock_aspect_button.observe(link_button, names='value',
+                                        type='change')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -1602,11 +1636,9 @@ class ZoomTwoScalesWidget(MenpoWidget):
         Parameters
         ----------
         box_style : `str` or ``None`` (see below), optional
-            Widget style options ::
+            Possible widget style options::
 
-                {'success', 'info', 'warning', 'danger', ''}
-                or
-                None
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -1617,29 +1649,30 @@ class ZoomTwoScalesWidget(MenpoWidget):
         border_width : `float`, optional
             The line width of the border around the widget.
         border_radius : `float`, optional
-            The radius of the corners of the box.
+            The radius of the border around the widget.
         padding : `float`, optional
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy',
-                 'monospace', 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : ``{'normal', 'italic', 'oblique'}``, optional
-            The font style.
-        font_weight : See Below, optional
-            The font weight.
-            Example options ::
+        font_style : `str` (see below), optional
+            The font style. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book',
-                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
-                 'heavy', 'extra bold', 'black'}
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
 
         slider_width : `float`, optional
             The width of the slider
@@ -1687,16 +1720,20 @@ class ZoomTwoScalesWidget(MenpoWidget):
 
     def set_widget_state(self, zoom_options, allow_callback=True):
         r"""
-        Method that updates the state of the widget, if the provided `index`
-        values are different than `self.selected_values()`.
+        Method that updates the state of the widget, if the provided
+        `zoom_options` value is different than `self.selected_values`.
 
         Parameters
         ----------
         zoom_options : `dict`
-            The dictionary with the selected options. For example ::
+            The `dict` with the selected options. It must have the following
+            keys:
 
-            zoom_options = {'zoom_x': 1., 'zoom_y': 1.,
-                            'min': 0.1, 'max': 4., 'step': 0.05}
+            * ``min`` : (`float`) The minimum value (e.g. ``0.1``).
+            * ``max`` : (`float`) The maximum value (e.g. ``4.``).
+            * ``step`` : (`float`) The zoom step (e.g. ``0.05``).
+            * ``index`` : (`float`) The zoom value (e.g. ``1.``).
+            * ``lock_aspect_ratio`` : (`bool`) Flag that locks the aspect ratio.
 
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
@@ -1707,6 +1744,9 @@ class ZoomTwoScalesWidget(MenpoWidget):
                 zoom_options['min'] != self.x_zoom_slider.min or
                 zoom_options['max'] != self.x_zoom_slider.max or
                 zoom_options['step'] != self.x_zoom_slider.step):
+            # keep old value
+            old_value = self.selected_values
+
             # temporarily remove render and update functions
             render_function = self._render_function
             self.remove_render_function()
@@ -1730,26 +1770,28 @@ class ZoomTwoScalesWidget(MenpoWidget):
 
             # trigger render function if allowed
             if allow_callback:
-                self._render_function('', True)
+                self.call_render_function(old_value, self.selected_values)
 
 
 class ImageOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting image rendering options.
 
-    The selected values are stored in `self.selected_values` `dict`. To set the
-    styling of this widget please refer to the `style()` method. To update the
-    state and function of the widget, please refer to the `set_widget_state()`
-    and `replace_render_function()` methods.
+    * The selected values are stored in the ``self.selected_values`` `trait`.
+    * To set the styling of this widget please refer to the :meth:`style` method.
+    * To update the state of the widget, please refer to the
+      :meth:`set_widget_state` method.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
 
     Parameters
     ----------
     image_options : `dict`
-        The initial image options. Example ::
+        The initial image options. It must be a `dict` with the following keys:
 
-            image_options = {'alpha': 1.,
-                             'interpolation': 'bilinear',
-                             'cmap_name': 'gray'}
+        * ``alpha`` : (`float`) The alpha value (e.g. ``1.``).
+        * ``interpolation`` : (`str`) The interpolation (e.g. ``'bilinear'``).
+        * ``cmap_name`` : (`str`) The colourmap (e.g. ``'gray'``).
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
@@ -1813,8 +1855,8 @@ class ImageOptionsWidget(MenpoWidget):
             orientation='horizontal', align='start')
 
         # Set functionality
-        def save_interpolation(name, value):
-            if value:
+        def save_interpolation(change):
+            if change['new']:
                 interpolation = 'none'
             else:
                 interpolation = 'bilinear'
@@ -1822,21 +1864,22 @@ class ImageOptionsWidget(MenpoWidget):
             self.selected_values = {'interpolation': interpolation,
                                     'alpha': tmp['alpha'],
                                     'cmap_name': tmp['cmap_name']}
-        self.interpolation_checkbox.on_trait_change(save_interpolation, 'value')
+        self.interpolation_checkbox.observe(save_interpolation, names='value',
+                                            type='change')
 
-        def save_alpha(name, value):
+        def save_alpha(change):
             tmp = self.selected_values
             self.selected_values = {'interpolation': tmp['interpolation'],
-                                    'alpha': value,
+                                    'alpha': change['new'],
                                     'cmap_name': tmp['cmap_name']}
-        self.alpha_slider.on_trait_change(save_alpha, 'value')
+        self.alpha_slider.observe(save_alpha, names='value', type='change')
 
-        def save_cmap(name, value):
+        def save_cmap(change):
             tmp = self.selected_values
             self.selected_values = {'interpolation': tmp['interpolation'],
                                     'alpha': tmp['alpha'],
-                                    'cmap_name': value}
-        self.cmap_select.on_trait_change(save_cmap, 'value')
+                                    'cmap_name': change['new']}
+        self.cmap_select.observe(save_cmap, names='value', type='change')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -1848,11 +1891,9 @@ class ImageOptionsWidget(MenpoWidget):
         Parameters
         ----------
         box_style : `str` or ``None`` (see below), optional
-            Widget style options ::
+            Possible widget style options::
 
-                {'success', 'info', 'warning', 'danger', ''}
-                or
-                None
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -1868,24 +1909,25 @@ class ImageOptionsWidget(MenpoWidget):
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy',
-                 'monospace', 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : ``{'normal', 'italic', 'oblique'}``, optional
-            The font style.
-        font_weight : See Below, optional
-            The font weight.
-            Example options ::
+        font_style : `str` (see below), optional
+            The font style. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book',
-                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
-                 'heavy', 'extra bold', 'black'}
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
 
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
@@ -1904,21 +1946,26 @@ class ImageOptionsWidget(MenpoWidget):
 
     def set_widget_state(self, image_options, allow_callback=True):
         r"""
-        Method that updates the state of the widget with a new set of values.
+        Method that updates the state of the widget if the provided
+        `image_options` are different than `self.selected_values`.
 
         Parameters
         ----------
         image_options : `dict`
-            The image options. Example ::
+            The selected image options. It must be a `dict` with the following
+            keys:
 
-                image_options = {'alpha': 1.,
-                                 'interpolation': 'bilinear',
-                                 'cmap_name': 'gray'}
+            * ``alpha`` : (`float`) The alpha value (e.g. ``1.``).
+            * ``interpolation`` : (`str`) The interpolation (e.g. ``'bilinear'``)
+            * ``cmap_name`` : (`str`) The colourmap (e.g. ``'gray'``).
 
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
         if image_options != self.selected_values:
+            # keep old value
+            old_value = self.selected_values
+
             # temporarily remove render callback
             render_function = self._render_function
             self.remove_render_function()
@@ -1934,32 +1981,36 @@ class ImageOptionsWidget(MenpoWidget):
 
             # trigger render function if allowed
             if allow_callback:
-                self._render_function('', True)
+                self.call_render_function(old_value, self.selected_values)
 
 
 class LineOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting line rendering options.
 
-    The selected values are stored in `self.selected_values` `dict`. To set the
-    styling of this widget please refer to the `style()` method. To update the
-    state and function of the widget, please refer to the `set_widget_state()`
-    and `replace_render_function()` methods.
+    * The selected values are stored in the ``self.selected_values`` `trait`.
+    * To set the styling of this widget please refer to the :meth:`style` method.
+    * To update the state of the widget, please refer to the
+      :meth:`set_widget_state` method.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
 
     Parameters
     ----------
     line_options : `dict`
-        The initial line options. Example ::
+        The initial line options. It must be a `dict` with the following keys:
 
-            line_options = {'render_lines': True, 'line_width': 1,
-                            'line_colour': ['blue'], 'line_style': '-'}
+        * ``render_lines`` : (`bool`) Flag for rendering the lines.
+        * ``line_width`` : ('float`) The width of the lines (e.g. ``1.``)
+        * ``line_colour`` : (`str`) The colour of the lines (e.g. ``'blue'``).
+        * ``line_style`` : (`str`) The style of the lines (e.g. ``'-'``).
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
     render_checkbox_title : `str`, optional
         The description of the show line checkbox.
-    labels : `list` or ``None``, optional
+    labels : `list` of `str` or ``None``, optional
         A `list` with the labels' names that get passed in to the
         `ColourSelectionWidget`. If ``None``, then a `list` of the form
         ``label {}`` is automatically defined. Note that the labels are defined
@@ -1996,22 +2047,25 @@ class LineOptionsWidget(MenpoWidget):
             orientation='horizontal', align='start')
 
         # Set functionality
-        def line_options_visible(name, value):
-            self.line_options_box.visible = value
-        line_options_visible('', line_options['render_lines'])
-        self.render_lines_checkbox.on_trait_change(line_options_visible,
-                                                   'value')
+        def line_options_visible(change):
+            self.line_options_box.visible = change['new']
+        line_options_visible({'new': line_options['render_lines']})
+        self.render_lines_checkbox.observe(line_options_visible, names='value',
+                                           type='change')
 
-        def save_options(name, value):
+        def save_options(change):
             self.selected_values = {
                 'render_lines': self.render_lines_checkbox.value,
                 'line_width': float(self.line_width_text.value),
                 'line_colour': self.line_colour_widget.selected_values,
                 'line_style': self.line_style_dropdown.value}
-        self.render_lines_checkbox.on_trait_change(save_options, 'value')
-        self.line_width_text.on_trait_change(save_options, 'value')
-        self.line_colour_widget.on_trait_change(save_options, 'selected_values')
-        self.line_style_dropdown.on_trait_change(save_options, 'value')
+        self.render_lines_checkbox.observe(save_options, names='value',
+                                           type='change')
+        self.line_width_text.observe(save_options, names='value', type='change')
+        self.line_colour_widget.observe(save_options, names='selected_values',
+                                        type='change')
+        self.line_style_dropdown.observe(save_options, names='value',
+                                         type='change')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -2023,11 +2077,9 @@ class LineOptionsWidget(MenpoWidget):
         Parameters
         ----------
         box_style : `str` or ``None`` (see below), optional
-            Widget style options ::
+            Possible widget style options::
 
-                {'success', 'info', 'warning', 'danger', ''}
-                or
-                None
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -2043,24 +2095,25 @@ class LineOptionsWidget(MenpoWidget):
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy',
-                 'monospace', 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : ``{'normal', 'italic', 'oblique'}``, optional
-            The font style.
-        font_weight : See Below, optional
-            The font weight.
-            Example options ::
+        font_style : `str` (see below), optional
+            The font style. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book',
-                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
-                 'heavy', 'extra bold', 'black'}
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
 
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
@@ -2081,19 +2134,21 @@ class LineOptionsWidget(MenpoWidget):
 
     def set_widget_state(self, line_options, labels=None, allow_callback=True):
         r"""
-        Method that updates the state of the widget with a new set of values.
+        Method that updates the state of the widget if the provided
+        `line_options` are different than `self.selected_values`.
 
         Parameters
         ----------
         line_options : `dict`
-            The new set of options. For example ::
+            The selected line options. It must be a `dict` with the following
+            keys:
 
-                line_options = {'render_lines': True,
-                                'line_width': 2,
-                                'line_colour': ['red'],
-                                'line_style': '-'}
+            * ``render_lines`` : (`bool`) Flag for rendering the lines.
+            * ``line_width`` : ('float`) The width of the lines (e.g. ``1.``)
+            * ``line_colour`` : (`str`) The colour of the lines (e.g. ``'blue'``).
+            * ``line_style`` : (`str`) The style of the lines (e.g. ``'-'``).
 
-        labels : `list` or ``None``, optional
+        labels : `list` of `str` or ``None``, optional
             A `list` with the labels' names that get passed in to the
             `ColourSelectionWidget`. If ``None``, then a `list` of the form
             ``label {}`` is automatically defined.
@@ -2101,6 +2156,9 @@ class LineOptionsWidget(MenpoWidget):
             If ``True``, it allows triggering of any callback functions.
         """
         if self.selected_values != line_options:
+            # keep old value
+            old_value = self.selected_values
+
             # temporarily remove render callback
             render_function = self._render_function
             self.remove_render_function()
@@ -2118,36 +2176,41 @@ class LineOptionsWidget(MenpoWidget):
 
             # trigger render function if allowed
             if allow_callback:
-                self._render_function('', True)
+                self.call_render_function(old_value, self.selected_values)
 
 
 class MarkerOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting marker rendering options.
 
-    The selected values are stored in `self.selected_values` `dict`. To set the
-    styling of this widget please refer to the `style()` method. To update the
-    state and function of the widget, please refer to the `set_widget_state()`
-    and `replace_render_function()` methods.
+    * The selected values are stored in the ``self.selected_values`` `trait`.
+    * To set the styling of this widget please refer to the :meth:`style` method.
+    * To update the state of the widget, please refer to the
+      :meth:`set_widget_state` method.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
 
     Parameters
     ----------
     marker_options : `dict`
-        The initial marker options. Example ::
+        The initial marker options. It must be a `dict` with the following keys:
 
-            marker_options = {'render_markers': True,
-                              'marker_size': 20,
-                              'marker_face_colour': ['red'],
-                              'marker_edge_colour': ['black'],
-                              'marker_style': 'o',
-                              'marker_edge_width': 1}
+        * ``render_markers`` : (`bool`) Flag for rendering the markers.
+        * ``marker_size`` : (`int`) The size of the markers (e.g. ``20``).
+        * ``marker_face_colour`` : (`list`) The colours list.
+          (e.g. ``['red', 'blue']``).
+        * ``marker_edge_colour`` : (`list`) The edge colours list.
+          (e.g. ``['black', 'white']``).
+        * ``marker_style`` : (`str`) The size of the markers. (e.g. ``'o'``).
+        * ``marker_edge_width`` : (`int`) The esdge width of the markers.
+          (e.g. ``1``).
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
     render_checkbox_title : `str`, optional
         The description of the render marker checkbox.
-    labels : `list` or ``None``, optional
+    labels : `list` of `str` or ``None``, optional
         A `list` with the labels' names that get passed in to the
         `ColourSelectionWidget`. If ``None``, then a `list` of the form
         ``label {}`` is automatically defined. Note that the labels are defined
@@ -2213,13 +2276,13 @@ class MarkerOptionsWidget(MenpoWidget):
             orientation='horizontal', align='start')
 
         # Set functionality
-        def marker_options_visible(name, value):
-            self.marker_options_box.visible = value
-        marker_options_visible('', marker_options['render_markers'])
-        self.render_markers_checkbox.on_trait_change(marker_options_visible,
-                                                     'value')
+        def marker_options_visible(change):
+            self.marker_options_box.visible = change['new']
+        marker_options_visible({'new': marker_options['render_markers']})
+        self.render_markers_checkbox.observe(marker_options_visible,
+                                             names='value', type='change')
 
-        def save_options(name, value):
+        def save_options(change):
             self.selected_values = {
                 'render_markers': self.render_markers_checkbox.value,
                 'marker_size': int(self.marker_size_text.value),
@@ -2229,14 +2292,17 @@ class MarkerOptionsWidget(MenpoWidget):
                     self.marker_edge_colour_widget.selected_values,
                 'marker_style': self.marker_style_dropdown.value,
                 'marker_edge_width': float(self.marker_edge_width_text.value)}
-        self.render_markers_checkbox.on_trait_change(save_options, 'value')
-        self.marker_size_text.on_trait_change(save_options, 'value')
-        self.marker_face_colour_widget.on_trait_change(save_options,
-                                                       'selected_values')
-        self.marker_edge_colour_widget.on_trait_change(save_options,
-                                                       'selected_values')
-        self.marker_style_dropdown.on_trait_change(save_options, 'value')
-        self.marker_edge_width_text.on_trait_change(save_options, 'value')
+        self.render_markers_checkbox.observe(save_options, names='value',
+                                             type='change')
+        self.marker_size_text.observe(save_options, names='value', type='change')
+        self.marker_face_colour_widget.observe(
+                save_options, names='selected_values', type='change')
+        self.marker_edge_colour_widget.observe(
+                save_options, names='selected_values', type='change')
+        self.marker_style_dropdown.observe(save_options, names='value',
+                                           type='change')
+        self.marker_edge_width_text.observe(save_options, names='value',
+                                            type='change')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -2248,11 +2314,9 @@ class MarkerOptionsWidget(MenpoWidget):
         Parameters
         ----------
         box_style : `str` or ``None`` (see below), optional
-            Widget style options ::
+            Possible widget style options::
 
-                {'success', 'info', 'warning', 'danger', ''}
-                or
-                None
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -2268,24 +2332,25 @@ class MarkerOptionsWidget(MenpoWidget):
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy',
-                 'monospace', 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : ``{'normal', 'italic', 'oblique'}``, optional
-            The font style.
-        font_weight : See Below, optional
-            The font weight.
-            Example options ::
+        font_style : `str` (see below), optional
+            The font style. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book',
-                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
-                 'heavy', 'extra bold', 'black'}
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
 
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
@@ -2315,21 +2380,26 @@ class MarkerOptionsWidget(MenpoWidget):
     def set_widget_state(self, marker_options, labels=None,
                          allow_callback=True):
         r"""
-        Method that updates the state of the widget with a new set of values.
+        Method that updates the state of the widget if the provided
+        `marker_options` are different than `self.selected_values`.
 
         Parameters
         ----------
         marker_options : `dict`
-            The new set of options. For example ::
+            The seected marker options. It must be a `dict` with the following
+            keys:
 
-                marker_options = {'render_markers': True,
-                                  'marker_size': 20,
-                                  'marker_face_colour': ['red'],
-                                  'marker_edge_colour': ['black'],
-                                  'marker_style': 'o',
-                                  'marker_edge_width': 1}
+            * ``render_markers`` : (`bool`) Flag for rendering the markers.
+            * ``marker_size`` : (`int`) The size of the markers (e.g. ``20``).
+            * ``marker_face_colour`` : (`list`) The colours list.
+              (e.g. ``['red', 'blue']``).
+            * ``marker_edge_colour`` : (`list`) The edge colours list.
+              (e.g. ``['black', 'white']``).
+            * ``marker_style`` : (`str`) The size of the markers. (e.g. ``'o'``).
+            * ``marker_edge_width`` : (`int`) The esdge width of the markers.
+              (e.g. ``1``).
 
-        labels : `list` or ``None``, optional
+        labels : `list` of `str` or ``None``, optional
             A `list` with the labels' names that get passed in to the
             `ColourSelectionWidget`. If ``None``, then a `list` of the form
             ``label {}`` is automatically defined.
@@ -2337,6 +2407,9 @@ class MarkerOptionsWidget(MenpoWidget):
             If ``True``, it allows triggering of any callback functions.
         """
         if self.selected_values != marker_options:
+            # keep old value
+            old_value = self.selected_values
+
             # temporarily remove render callback
             render_function = self._render_function
             self.remove_render_function()
@@ -2359,7 +2432,7 @@ class MarkerOptionsWidget(MenpoWidget):
 
             # trigger render function if allowed
             if allow_callback:
-                self._render_function('', True)
+                self.call_render_function(old_value, self.selected_values)
 
 
 class NumberingOptionsWidget(MenpoWidget):
@@ -2515,11 +2588,9 @@ class NumberingOptionsWidget(MenpoWidget):
         Parameters
         ----------
         box_style : `str` or ``None`` (see below), optional
-            Widget style options ::
+            Possible widget style options::
 
-                {'success', 'info', 'warning', 'danger', ''}
-                or
-                None
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -2535,24 +2606,25 @@ class NumberingOptionsWidget(MenpoWidget):
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy',
-                 'monospace', 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : ``{'normal', 'italic', 'oblique'}``, optional
-            The font style.
-        font_weight : See Below, optional
-            The font weight.
-            Example options ::
+        font_style : `str` (see below), optional
+            The font style. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book',
-                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
-                 'heavy', 'extra bold', 'black'}
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
 
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
@@ -2792,11 +2864,9 @@ class AxesLimitsWidget(MenpoWidget):
         Parameters
         ----------
         box_style : `str` or ``None`` (see below), optional
-            Widget style options ::
+            Possible widget style options::
 
-                {'success', 'info', 'warning', 'danger', ''}
-                or
-                None
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -2807,36 +2877,35 @@ class AxesLimitsWidget(MenpoWidget):
         border_width : `float`, optional
             The line width of the border around the widget.
         border_radius : `float`, optional
-            The radius of the corners of the box.
+            The radius of the border around the widget.
         padding : `float`, optional
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy',
-                 'monospace', 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : ``{'normal', 'italic', 'oblique'}``, optional
-            The font style.
-        font_weight : See Below, optional
-            The font weight.
-            Example options ::
+        font_style : `str` (see below), optional
+            The font style. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book',
-                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
-                 'heavy', 'extra bold', 'black'}
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
 
         toggles_style : `str` or ``None`` (see below), optional
             Style options ::
 
-                {'success', 'info', 'warning', 'danger', 'primary', ''}
-                or
-                None
+                'success', 'info', 'warning', 'danger', 'primary', '', None
 
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
@@ -2872,7 +2941,7 @@ class AxesLimitsWidget(MenpoWidget):
                          allow_callback=True):
         r"""
         Method that updates the state of the widget, if the provided `index`
-        values are different than `self.selected_values()`.
+        values are different than `self.selected_values`.
 
         Parameters
         ----------
@@ -3023,11 +3092,9 @@ class AxesTicksWidget(MenpoWidget):
         Parameters
         ----------
         box_style : `str` or ``None`` (see below), optional
-            Widget style options ::
+            Possible widget style options::
 
-                {'success', 'info', 'warning', 'danger', ''}
-                or
-                None
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -3038,36 +3105,35 @@ class AxesTicksWidget(MenpoWidget):
         border_width : `float`, optional
             The line width of the border around the widget.
         border_radius : `float`, optional
-            The radius of the corners of the box.
+            The radius of the border around the widget.
         padding : `float`, optional
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy',
-                 'monospace', 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : ``{'normal', 'italic', 'oblique'}``, optional
-            The font style.
-        font_weight : See Below, optional
-            The font weight.
-            Example options ::
+        font_style : `str` (see below), optional
+            The font style. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book',
-                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
-                 'heavy', 'extra bold', 'black'}
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
 
         toggles_style : `str` or ``None`` (see below), optional
             Style options ::
 
-                {'success', 'info', 'warning', 'danger', 'primary', ''}
-                or
-                None
+                'success', 'info', 'warning', 'danger', 'primary', '', None
 
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
@@ -3092,7 +3158,7 @@ class AxesTicksWidget(MenpoWidget):
     def set_widget_state(self, axes_ticks, allow_callback=True):
         r"""
         Method that updates the state of the widget, if the provided `index`
-        values are different than `self.selected_values()`.
+        values are different than `self.selected_values`.
 
         Parameters
         ----------
@@ -3329,11 +3395,9 @@ class AxesOptionsWidget(MenpoWidget):
         Parameters
         ----------
         box_style : `str` or ``None`` (see below), optional
-            Widget style options ::
+            Possible widget style options::
 
-                {'success', 'info', 'warning', 'danger', ''}
-                or
-                None
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -3349,24 +3413,25 @@ class AxesOptionsWidget(MenpoWidget):
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy',
-                 'monospace', 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : ``{'normal', 'italic', 'oblique'}``, optional
-            The font style.
-        font_weight : See Below, optional
-            The font weight.
-            Example options ::
+        font_style : `str` (see below), optional
+            The font style. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book',
-                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
-                 'heavy', 'extra bold', 'black'}
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
 
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
@@ -3675,11 +3740,9 @@ class LegendOptionsWidget(MenpoWidget):
         Parameters
         ----------
         box_style : `str` or ``None`` (see below), optional
-            Widget style options ::
+            Possible widget style options::
 
-                {'success', 'info', 'warning', 'danger', ''}
-                or
-                None
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -3695,24 +3758,25 @@ class LegendOptionsWidget(MenpoWidget):
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy',
-                 'monospace', 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
-            The font style.
-        font_weight : See Below, optional
-            The font weight.
-            Example options ::
+        font_style : `str` (see below), optional
+            The font style. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book',
-                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
-                 'heavy', 'extra bold', 'black'}
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
 
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
@@ -3948,11 +4012,9 @@ class GridOptionsWidget(MenpoWidget):
         Parameters
         ----------
         box_style : `str` or ``None`` (see below), optional
-            Widget style options ::
+            Possible widget style options::
 
-                {'success', 'info', 'warning', 'danger', ''}
-                or
-                None
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -3968,24 +4030,25 @@ class GridOptionsWidget(MenpoWidget):
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy',
-                 'monospace', 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
-            The font style.
-        font_weight : See Below, optional
-            The font weight.
-            Example options ::
+        font_style : `str` (see below), optional
+            The font style. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book',
-                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
-                 'heavy', 'extra bold', 'black'}
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
 
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
@@ -4220,11 +4283,9 @@ class HOGOptionsWidget(MenpoWidget):
         Parameters
         ----------
         box_style : `str` or ``None`` (see below), optional
-            Widget style options ::
+            Possible widget style options::
 
-                {'success', 'info', 'warning', 'danger', ''}
-                or
-                None
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -4240,24 +4301,25 @@ class HOGOptionsWidget(MenpoWidget):
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy',
-                 'monospace', 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
-            The font style.
-        font_weight : See Below, optional
-            The font weight.
-            Example options ::
+        font_style : `str` (see below), optional
+            The font style. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book',
-                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
-                 'heavy', 'extra bold', 'black'}
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
 
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
@@ -4399,11 +4461,9 @@ class DSIFTOptionsWidget(MenpoWidget):
         Parameters
         ----------
         box_style : `str` or ``None`` (see below), optional
-            Widget style options ::
+            Possible widget style options::
 
-                {'success', 'info', 'warning', 'danger', ''}
-                or
-                None
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -4419,24 +4479,25 @@ class DSIFTOptionsWidget(MenpoWidget):
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy',
-                 'monospace', 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
-            The font style.
-        font_weight : See Below, optional
-            The font weight.
-            Example options ::
+        font_style : `str` (see below), optional
+            The font style. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book',
-                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
-                 'heavy', 'extra bold', 'black'}
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
 
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
@@ -4575,11 +4636,9 @@ class DaisyOptionsWidget(MenpoWidget):
         Parameters
         ----------
         box_style : `str` or ``None`` (see below), optional
-            Widget style options ::
+            Possible widget style options::
 
-                {'success', 'info', 'warning', 'danger', ''}
-                or
-                None
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -4595,24 +4654,25 @@ class DaisyOptionsWidget(MenpoWidget):
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy',
-                 'monospace', 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
-            The font style.
-        font_weight : See Below, optional
-            The font weight.
-            Example options ::
+        font_style : `str` (see below), optional
+            The font style. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book',
-                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
-                 'heavy', 'extra bold', 'black'}
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
 
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
@@ -4738,11 +4798,9 @@ class LBPOptionsWidget(MenpoWidget):
         Parameters
         ----------
         box_style : `str` or ``None`` (see below), optional
-            Widget style options ::
+            Possible widget style options::
 
-                {'success', 'info', 'warning', 'danger', ''}
-                or
-                None
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -4758,24 +4816,25 @@ class LBPOptionsWidget(MenpoWidget):
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy',
-                 'monospace', 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
-            The font style.
-        font_weight : See Below, optional
-            The font weight.
-            Example options ::
+        font_style : `str` (see below), optional
+            The font style. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book',
-                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
-                 'heavy', 'extra bold', 'black'}
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
 
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
@@ -4844,11 +4903,9 @@ class IGOOptionsWidget(MenpoWidget):
         Parameters
         ----------
         box_style : `str` or ``None`` (see below), optional
-            Widget style options ::
+            Possible widget style options::
 
-                {'success', 'info', 'warning', 'danger', ''}
-                or
-                None
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -4864,24 +4921,25 @@ class IGOOptionsWidget(MenpoWidget):
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy',
-                 'monospace', 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
-            The font style.
-        font_weight : See Below, optional
-            The font weight.
-            Example options ::
+        font_style : `str` (see below), optional
+            The font style. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book',
-                 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold',
-                 'heavy', 'extra bold', 'black'}
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
 
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
