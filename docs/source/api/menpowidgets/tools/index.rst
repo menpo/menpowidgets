@@ -20,3 +20,9 @@ Tools
   ImageOptionsWidget
   LineOptionsWidget
   MarkerOptionsWidget
+  NumberingOptionsWidget
+  AxesLimitsWidget
+  AxesTicksWidget
+  AxesOptionsWidget
+  LegendOptionsWidget
+  GridOptionsWidget
