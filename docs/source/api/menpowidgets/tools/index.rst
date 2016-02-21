@@ -26,3 +26,8 @@ Tools
   AxesOptionsWidget
   LegendOptionsWidget
   GridOptionsWidget
+  HOGOptionsWidget
+  DSIFTOptionsWidget
+  DaisyOptionsWidget
+  LBPOptionsWidget
+  IGOOptionsWidget

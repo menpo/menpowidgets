@@ -4210,30 +4210,32 @@ class HOGOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting HOG options.
 
-    The selected values are stored in `self.selected_values` `dict`. To set the
-    styling of this widget please refer to the `style()` method. To update the
-    state and function of the widget, please refer to the `set_widget_state()`
-    and `replace_render_function()` methods.
+    * The selected values are stored in the ``self.selected_values`` `trait`.
+    * To set the styling of this widget please refer to the :meth:`style` method.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
 
     Parameters
     ----------
     hog_options : `dict`
-        The initial options. Example ::
+        The initial options. It must be a `dict` with the following keys:
 
-            hog_options = {'mode': 'dense',
-                           'algorithm': 'dalaltriggs',
-                           'num_bins': 9,
-                           'cell_size': 8,
-                           'block_size': 2,
-                           'signed_gradient': True,
-                           'l2_norm_clip': 0.2,
-                           'window_height': 1,
-                           'window_width': 1,
-                           'window_unit': 'blocks',
-                           'window_step_vertical': 1,
-                           'window_step_horizontal': 1,
-                           'window_step_unit': 'pixels',
-                           'padding': True}
+        * ``mode`` : (`str`) ``'dense'`` or ``'sparse'``.
+        * ``algorithm`` : (`str`) ``'dalaltriggs'`` or ``'zhuramanan'``.
+        * ``num_bins`` : (`int`) The number of orientation bins (e.g. ``9``).
+        * ``cell_size`` : (`int`) The cell size in pixels (e.g. ``8``).
+        * ``block_size`` : (`int`) The block size in cells (e.g. ``2``).
+        * ``signed_gradient`` : (`bool`) Whether to use signed gradients.
+        * ``l2_norm_clip`` : (`float`) L2 norm clipping threshold (e.g ``0.2``).
+        * ``window_height`` : (`int`) The sliding window height (e.g. ``1``).
+        * ``window_width`` : (`int`) The sliding window width (e.g. ``1``).
+        * ``window_unit`` : (`str`) The window size unit (e.g. ``'blocks'``).
+        * ``window_step_vertical`` : (`int`) The vertical window step
+          (e.g. ``1``).
+        * ``window_step_horizontal`` : (`int`) The horizontal window step
+          (e.g. ``1``).
+        * ``window_step_unit`` : (`str`) The window step unit (e.g. ``'pixels'``)
+        * ``padding`` : (`bool`) Whether to pad the final image.
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
@@ -4331,25 +4333,28 @@ class HOGOptionsWidget(MenpoWidget):
             orientation='horizontal', align='start')
 
         # Set functionality
-        def window_mode(name, value):
+        def window_mode(change):
+            value = change['new']
             self.window_horizontal_text.disabled = value == 'sparse'
             self.window_vertical_text.disabled = value == 'sparse'
             self.window_step_unit_radiobuttons.disabled = value == 'sparse'
             self.window_height_text.disabled = value == 'sparse'
             self.window_width_text.disabled = value == 'sparse'
             self.window_size_unit_radiobuttons.disabled = value == 'sparse'
-        self.mode_radiobuttons.on_trait_change(window_mode, 'value')
+        self.mode_radiobuttons.observe(window_mode, names='value', type='change')
 
         # algorithm function
-        def algorithm_mode(name, value):
+        def algorithm_mode(change):
+            value = change['new']
             self.l2_norm_clipping_text.disabled = value == 'zhuramanan'
             self.signed_gradient_checkbox.disabled = value == 'zhuramanan'
             self.block_size_text.disabled = value == 'zhuramanan'
             self.num_bins_text.disabled = value == 'zhuramanan'
-        self.algorithm_radiobuttons.on_trait_change(algorithm_mode, 'value')
+        self.algorithm_radiobuttons.observe(algorithm_mode, names='value',
+                                            type='change')
 
         # get options
-        def save_options(name, value):
+        def save_options(change):
             self.selected_values = {
                 'mode': self.mode_radiobuttons.value,
                 'algorithm': self.algorithm_radiobuttons.value,
@@ -4365,22 +4370,30 @@ class HOGOptionsWidget(MenpoWidget):
                 'window_step_horizontal': self.window_horizontal_text.value,
                 'window_step_unit': self.window_step_unit_radiobuttons.value,
                 'padding': self.padding_checkbox.value}
-        self.mode_radiobuttons.on_trait_change(save_options, 'value')
-        self.padding_checkbox.on_trait_change(save_options, 'value')
-        self.window_height_text.on_trait_change(save_options, 'value')
-        self.window_width_text.on_trait_change(save_options, 'value')
-        self.window_size_unit_radiobuttons.on_trait_change(save_options,
-                                                           'value')
-        self.window_vertical_text.on_trait_change(save_options, 'value')
-        self.window_horizontal_text.on_trait_change(save_options, 'value')
-        self.window_step_unit_radiobuttons.on_trait_change(save_options,
-                                                           'value')
-        self.algorithm_radiobuttons.on_trait_change(save_options, 'value')
-        self.num_bins_text.on_trait_change(save_options, 'value')
-        self.cell_size_text.on_trait_change(save_options, 'value')
-        self.block_size_text.on_trait_change(save_options, 'value')
-        self.signed_gradient_checkbox.on_trait_change(save_options, 'value')
-        self.l2_norm_clipping_text.on_trait_change(save_options, 'value')
+        self.mode_radiobuttons.observe(save_options, names='value',
+                                       type='change')
+        self.padding_checkbox.observe(save_options, names='value', type='change')
+        self.window_height_text.observe(save_options, names='value',
+                                        type='change')
+        self.window_width_text.observe(save_options, names='value',
+                                       type='change')
+        self.window_size_unit_radiobuttons.observe(
+                save_options, names='value', type='change')
+        self.window_vertical_text.observe(save_options, names='value',
+                                          type='change')
+        self.window_horizontal_text.observe(save_options, names='value',
+                                            type='change')
+        self.window_step_unit_radiobuttons.observe(
+                save_options, names='value', type='change')
+        self.algorithm_radiobuttons.observe(save_options, names='value',
+                                            type='change')
+        self.num_bins_text.observe(save_options, names='value', type='change')
+        self.cell_size_text.observe(save_options, names='value', type='change')
+        self.block_size_text.observe(save_options, names='value', type='change')
+        self.signed_gradient_checkbox.observe(save_options, names='value',
+                                              type='change')
+        self.l2_norm_clipping_text.observe(save_options, names='value',
+                                           type='change')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -4470,24 +4483,30 @@ class DSIFTOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting desnse SIFT options.
 
-    The selected values are stored in `self.selected_values` `dict`. To set the
-    styling of this widget please refer to the `style()` method. To update the
-    state and function of the widget, please refer to the `set_widget_state()`
-    and `replace_render_function()` methods.
+    * The selected values are stored in the ``self.selected_values`` `trait`.
+    * To set the styling of this widget please refer to the :meth:`style` method.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
 
     Parameters
     ----------
     dsift_options : `dict`
-        The initial options. Example ::
+        The initial options. It must be a `dict` with the following keys:
 
-            dsift_options = {'window_step_horizontal': 1,
-                             'window_step_vertical': 1,
-                             'num_bins_horizontal': 2,
-                             'num_bins_vertical': 2,
-                             'num_or_bins': 9,
-                             'cell_size_horizontal': 6,
-                             'cell_size_vertical': 6,
-                             'fast': True}
+        * ``window_step_horizontal`` : (`int`) The horizontal window step
+          (e.g. ``1``).
+        * ``window_step_vertical`` : (`int`) The vertical window step
+          (e.g. ``1``).
+        * ``num_bins_horizontal`` : (`int`) The horizontal number of spatial bins
+          (e.g. ``2``).
+        * ``num_bins_vertical`` : (`int`) The vertical number of spatial bins
+          (e.g. ``2``).
+        * ``num_or_bins`` : (`int`) The number of orientation bins (e.g. ``9``).
+        * ``cell_size_horizontal`` : (`int`) The horizontal cell size in pixels
+          (e.g. ``6``).
+        * ``cell_size_vertical`` : (`int`) The vertical cell size in pixels
+          (e.g. ``6``).
+        * ``fast`` : (`bool`) Flag for fast approximation.
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
@@ -4541,7 +4560,7 @@ class DSIFTOptionsWidget(MenpoWidget):
             orientation='horizontal', align='start')
 
         # Get options
-        def save_options(name, value):
+        def save_options(change):
             self.selected_values = {
                 'window_step_horizontal': self.window_horizontal_text.value,
                 'window_step_vertical': self.window_vertical_text.value,
@@ -4551,14 +4570,20 @@ class DSIFTOptionsWidget(MenpoWidget):
                 'cell_size_horizontal': self.cell_size_horizontal_text.value,
                 'cell_size_vertical': self.cell_size_vertical_text.value,
                 'fast': self.fast_checkbox.value}
-        self.window_vertical_text.on_trait_change(save_options, 'value')
-        self.window_horizontal_text.on_trait_change(save_options, 'value')
-        self.num_bins_vertical_text.on_trait_change(save_options, 'value')
-        self.num_bins_horizontal_text.on_trait_change(save_options, 'value')
-        self.num_or_bins_text.on_trait_change(save_options, 'value')
-        self.cell_size_vertical_text.on_trait_change(save_options, 'value')
-        self.cell_size_horizontal_text.on_trait_change(save_options, 'value')
-        self.fast_checkbox.on_trait_change(save_options, 'value')
+        self.window_vertical_text.observe(save_options, names='value',
+                                          type='change')
+        self.window_horizontal_text.observe(save_options, names='value',
+                                            type='change')
+        self.num_bins_vertical_text.observe(save_options, names='value',
+                                            type='change')
+        self.num_bins_horizontal_text.observe(save_options, names='value',
+                                              type='change')
+        self.num_or_bins_text.observe(save_options, names='value', type='change')
+        self.cell_size_vertical_text.observe(save_options, names='value',
+                                             type='change')
+        self.cell_size_horizontal_text.observe(save_options, names='value',
+                                               type='change')
+        self.fast_checkbox.observe(save_options, names='value', type='change')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -4636,24 +4661,24 @@ class DaisyOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting Daisy options.
 
-    The selected values are stored in `self.selected_values` `dict`. To set the
-    styling of this widget please refer to the `style()` method. To update the
-    state and function of the widget, please refer to the `set_widget_state()`
-    and `replace_render_function()` methods.
+    * The selected values are stored in the ``self.selected_values`` `trait`.
+    * To set the styling of this widget please refer to the :meth:`style` method.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
 
     Parameters
     ----------
     daisy_options : `dict`
-        The initial options. Example ::
+        The initial options. It must be a `dict` with the following keys:
 
-            daisy_options = {'step': 1,
-                             'radius': 15,
-                             'rings': 2,
-                             'histograms': 2,
-                             'orientations': 8,
-                             'normalization': 'l1',
-                             'sigmas': None,
-                             'ring_radii': None}
+        * ``step`` : (`int`) The sampling step (e.g. ``1``).
+        * ``radius`` : (`int`) The radius value (e.g. ``15``).
+        * ``rings`` : (`int`) The number of rings (e.g. ``2``).
+        * ``histograms`` : (`int`) The number of histograms (e.g. ``2``).
+        * ``orientations`` : (`int`) The number of orientation bins (e.g. ``8``).
+        * ``normalization`` : (`str`) The normalisation method (e.g. ``'l1'``).
+        * ``sigmas`` : (`list` or ``None``)
+        * ``ring_radii`` : (`list` or ``None``)
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
@@ -4710,7 +4735,7 @@ class DaisyOptionsWidget(MenpoWidget):
             orientation='horizontal', align='start')
 
         # Set functionality
-        def save_options(name, value):
+        def save_options(change):
             sigmas_val = self.sigmas_wid.selected_values
             if len(sigmas_val) == 0:
                 sigmas_val = None
@@ -4726,14 +4751,18 @@ class DaisyOptionsWidget(MenpoWidget):
                 'normalization': self.normalization_dropdown.value,
                 'sigmas': sigmas_val,
                 'ring_radii': ring_radii_val}
-        self.step_text.on_trait_change(save_options, 'value')
-        self.radius_text.on_trait_change(save_options, 'value')
-        self.rings_text.on_trait_change(save_options, 'value')
-        self.histograms_text.on_trait_change(save_options, 'value')
-        self.orientations_text.on_trait_change(save_options, 'value')
-        self.normalization_dropdown.on_trait_change(save_options, 'value')
-        self.sigmas_wid.on_trait_change(save_options, 'selected_values')
-        self.ring_radii_wid.on_trait_change(save_options, 'selected_values')
+        self.step_text.observe(save_options, names='value', type='change')
+        self.radius_text.observe(save_options, names='value', type='change')
+        self.rings_text.observe(save_options, names='value', type='change')
+        self.histograms_text.observe(save_options, names='value', type='change')
+        self.orientations_text.observe(save_options, names='value',
+                                       type='change')
+        self.normalization_dropdown.observe(save_options, names='value',
+                                            type='change')
+        self.sigmas_wid.observe(save_options, names='selected_values',
+                                type='change')
+        self.ring_radii_wid.observe(save_options, names='selected_values',
+                                    type='change')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -4812,23 +4841,25 @@ class LBPOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting LBP options.
 
-    The selected values are stored in `self.selected_values` `dict`. To set the
-    styling of this widget please refer to the `style()` method. To update the
-    state and function of the widget, please refer to the `set_widget_state()`
-    and `replace_render_function()` methods.
+    * The selected values are stored in the ``self.selected_values`` `trait`.
+    * To set the styling of this widget please refer to the :meth:`style` method.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
 
     Parameters
     ----------
     lbp_options : `dict`
-        The initial options. Example ::
+        The initial options. It must be a `dict` with the following keys:
 
-        lbp_options = {'radius': range(1, 5),
-                       'samples': [8] * 4,
-                       'mapping_type': 'u2',
-                       'window_step_vertical': 1,
-                       'window_step_horizontal': 1,
-                       'window_step_unit': 'pixels',
-                       'padding': True}
+        * ``radius`` : (`list`) The radius values list (e.g. ``[0, 1, 2, 3]``).
+        * ``samples`` : (`list`) The sampling poitns list (e.g. ``[8] * 4``).
+        * ``mapping_type`` : (`str`) The mapping type (e.g. ``'u2'``).
+        * ``window_step_vertical`` : (`int`) The vertical window step
+          (e.g. ``1``),
+        * ``window_step_horizontal`` : (`int`) The horizontal window step
+          (e.g. ``1``)
+        * ``window_step_unit`` : (`str`) The window step unit (e.g. ``'pixels'``)
+        * ``padding`` : (`bool`) Whether to pad the final image.
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
@@ -4879,7 +4910,7 @@ class LBPOptionsWidget(MenpoWidget):
             orientation='horizontal', align='start')
 
         # Set functionality
-        def save_options(name, value):
+        def save_options(change):
             self.selected_values = {
                 'radius': self.radius_wid.selected_values,
                 'samples': self.samples_wid.selected_values,
@@ -4888,14 +4919,19 @@ class LBPOptionsWidget(MenpoWidget):
                 'window_step_horizontal': self.window_horizontal_text.value,
                 'window_step_unit': self.window_step_unit_radiobuttons.value,
                 'padding': self.padding_checkbox.value}
-        self.mapping_type_dropdown.on_trait_change(save_options, 'value')
-        self.window_vertical_text.on_trait_change(save_options, 'value')
-        self.window_horizontal_text.on_trait_change(save_options, 'value')
-        self.window_step_unit_radiobuttons.on_trait_change(save_options,
-                                                           'value')
-        self.padding_checkbox.on_trait_change(save_options, 'value')
-        self.radius_wid.on_trait_change(save_options, 'selected_values')
-        self.samples_wid.on_trait_change(save_options, 'selected_values')
+        self.mapping_type_dropdown.observe(save_options, names='value',
+                                           type='change')
+        self.window_vertical_text.observe(save_options, names='value',
+                                          type='change')
+        self.window_horizontal_text.observe(save_options, names='value',
+                                            type='change')
+        self.window_step_unit_radiobuttons.observe(
+                save_options, names='value', type='change')
+        self.padding_checkbox.observe(save_options, names='value', type='change')
+        self.radius_wid.observe(save_options, names='selected_values',
+                                type='change')
+        self.samples_wid.observe(save_options, names='selected_values',
+                                 type='change')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -4971,17 +5007,18 @@ class IGOOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting IGO options.
 
-    The selected values are stored in `self.selected_values` `dict`. To set the
-    styling of this widget please refer to the `style()` method. To update the
-    state and function of the widget, please refer to the `set_widget_state()`
-    and `replace_render_function()` methods.
+    * The selected values are stored in the ``self.selected_values`` `trait`.
+    * To set the styling of this widget please refer to the :meth:`style` method.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
 
     Parameters
     ----------
     igo_options : `dict`
-        The initial options. Example ::
+        The initial options. It must be a `dict` with the following keys:
 
-        igo_options = {'double_angles': True}
+        * ``double_angles`` : (`bool`) Whether to use the cos and sin of the
+          double angles as well.
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
@@ -4998,9 +5035,10 @@ class IGOOptionsWidget(MenpoWidget):
             orientation='horizontal', align='start')
 
         # Set functionality
-        def save_options(name, value):
-            self.selected_values = {'double_angles': value}
-        self.double_angles_checkbox.on_trait_change(save_options, 'value')
+        def save_options(change):
+            self.selected_values = {'double_angles': change['new']}
+        self.double_angles_checkbox.observe(save_options, names='value',
+                                            type='change')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
