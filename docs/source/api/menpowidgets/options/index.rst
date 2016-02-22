@@ -9,3 +9,6 @@ Options
 .. toctree::
   :maxdepth: 1
 
+  AnimationOptionsWidget
+  ChannelOptionsWidget
+

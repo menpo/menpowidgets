@@ -1,3 +1,6 @@
 xref_map = {
-'MenpoWidget': ('class', 'menpowidgets.abstract.MenpoWidget')
+'IndexButtonsWidget': ('class', 'menpowidgets.tools.IndexButtonsWidget'),
+'IndexSliderWidget': ('class', 'menpowidgets.tools.IndexSliderWidget'),
+'MenpoWidget': ('class', 'menpowidgets.abstract.MenpoWidget'),
+'SlicingCommandWidget': ('class', 'menpowidgets.tools.SlicingCommandWidget')
 }

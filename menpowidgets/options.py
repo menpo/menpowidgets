@@ -22,49 +22,50 @@ from .utils import sample_colours_from_colourmap
 class AnimationOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for animating through a list of objects. The widget
-    consists of the following parts from `ipywidgets` and `menpowidgets.tools`:
+    consists of the following objects from `ipywidgets` and
+    :ref:`api-tools-index`:
 
-    == ================== ===================== ====================
-    No Object             Variable (`self.`)    Description
-    == ================== ===================== ====================
-    1  ToggleButton       `play_stop_toggle`    The play/stop button
-    2  ToggleButton       `play_options_toggle` Button that toggles
+    == ========================= ===================== ====================
+    No Object                    Property (`self.`)    Description
+    == ========================= ===================== ====================
+    1  `ToggleButton`            `play_stop_toggle`    The play/stop button
+    2  `ToggleButton`            `play_options_toggle` Options menu
+    3  `Checkbox`                `loop_checkbox`       Repeat mode
+    4  `FloatText`               `interval_text`       Interval (secs)
+    5  `VBox`                    `loop_interval_box`   Contains 3, 4
+    6  `HBox`                    `play_options_box`    Contains 2, 5
+    7  `HBox`                    `animation_box`       Contains 1, 6
+    8  :map:`IndexButtonsWidget` `index_wid`           The index selector
 
-                                                the options menu
-    3  Checkbox           `loop_checkbox`       Repeat mode
-    4  FloatText          `interval_text`       Interval (secs)
-    5  VBox               `loop_interval_box`   Contains 3, 4
-    6  VBox               `play_options_box`    Contains 2, 5
-    7  HBox               `animation_box`       Contains 1, 6
-    8  IndexButtonsWidget `index_wid`           The index selector
-
-       IndexSliderWidget                        widget
-    == ================== ===================== ====================
+       :map:`IndexSliderWidget`
+    == ========================= ===================== ====================
 
     Note that:
 
-    * The selected values are stored in the ``self.selected_values`` `dict`.
-    * To set the styling please refer to the ``style()`` and
-      ``predefined_style()`` methods.
+    * The selected values are stored in the ``self.selected_values`` `trait`.
+    * To set the styling of this widget please refer to the :meth:`style` and
+      :meth:`predefined_style` methods.
     * To update the state of the widget, please refer to the
-      ``set_widget_state()`` method.
-    * To update the callback function please refer to the
-      ``replace_render_function()`` and ``replace_update_function()`` methods.
+      :meth:`set_widget_state` method.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
 
     Parameters
     ----------
     index : `dict`
-        The dictionary with the initial options. For example
-        ::
+        The initial options. It must be a `dict` with the following keys:
 
-            index = {'min': 0, 'max': 100, 'step': 1, 'index': 10}
+        * ``min`` : (`int`) The minimum value (e.g. ``0``).
+        * ``max`` : (`int`) The maximum value (e.g. ``100``).
+        * ``step`` : (`int`) The index step (e.g. ``1``).
+        * ``index`` : (`int`) The index value (e.g. ``10``).
 
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
     index_style : ``{'buttons', 'slider'}``, optional
-        If ``'buttons'``, then `IndexButtonsWidget()` class is called. If
-        ``'slider'``, then 'IndexSliderWidget()' class is called.
+        If ``'buttons'``, then :map:`IndexButtonsWidget` class is called. If
+        ``'slider'``, then :map:`IndexSliderWidget` class is called.
     interval : `float`, optional
         The interval between the animation progress.
     description : `str`, optional
@@ -73,19 +74,19 @@ class AnimationOptionsWidget(MenpoWidget):
         If ``True``, then after reach the minimum (maximum) index values, the
         counting will continue from the end (beginning). If ``False``, the
         counting will stop at the minimum (maximum) value.
-    style : See Below, optional
-        Sets a predefined style at the widget. Possible options are
+    style : `str` (see below), optional
+        Sets a predefined style at the widget. Possible options are:
 
-            ========= ============================
-            Style     Description
-            ========= ============================
-            'minimal' Simple black and white style
-            'success' Green-based style
-            'info'    Blue-based style
-            'warning' Yellow-based style
-            'danger'  Red-based style
-            ''        No style
-            ========= ============================
+            ============= ============================
+            Style         Description
+            ============= ============================
+            ``'minimal'`` Simple black and white style
+            ``'success'`` Green-based style
+            ``'info'``    Blue-based style
+            ``'warning'`` Yellow-based style
+            ``'danger'``  Red-based style
+            ``''``        No style
+            ============= ============================
 
     continuous_update : `bool`, optional
         If ``True`` and `index_style` is set to ``'slider'``, then the render
@@ -104,7 +105,7 @@ class AnimationOptionsWidget(MenpoWidget):
     change and will dynamically print the selected index:
 
         >>> from menpo.visualize import print_dynamic
-        >>> def render_function(name, value):
+        >>> def render_function(change):
         >>>     s = "Selected index: {}".format(wid.selected_values)
         >>>     print_dynamic(s)
 
@@ -189,7 +190,8 @@ class AnimationOptionsWidget(MenpoWidget):
         self.predefined_style(style)
 
         # Set functionality
-        def play_stop_pressed(name, value):
+        def play_stop_pressed(change):
+            value = change['new']
             if value:
                 # Animation was not playing, so Play was pressed.
                 # Change the button style
@@ -205,14 +207,15 @@ class AnimationOptionsWidget(MenpoWidget):
                 # Change the description to Play
                 self.play_stop_toggle.icon = 'fa-play'
             self.play_options_toggle.disabled = value
-        self.play_stop_toggle.on_trait_change(play_stop_pressed, 'value')
+        self.play_stop_toggle.observe(play_stop_pressed, names='value',
+                                      type='change')
 
-        def play_options_visibility(name, value):
-            self.loop_interval_box.visible = value
-        self.play_options_toggle.on_trait_change(play_options_visibility,
-                                                 'value')
+        def play_options_visibility(change):
+            self.loop_interval_box.visible = change['new']
+        self.play_options_toggle.observe(
+                play_options_visibility, names='value', type='change')
 
-        def animate(name, value):
+        def animate(change):
             if self.loop_checkbox.value:
                 # loop is enabled
                 i = self.selected_values
@@ -264,11 +267,12 @@ class AnimationOptionsWidget(MenpoWidget):
                     sleep(self.interval_text.value)
                 if i > self.max:
                     self.play_stop_toggle.value = False
-        self.play_stop_toggle.on_trait_change(animate, 'value')
+        self.play_stop_toggle.observe(animate, names='value', type='change')
 
-        def save_value(name, value):
+        def save_value(change):
             self.selected_values = self.index_wid.selected_values
-        self.index_wid.on_trait_change(save_value, 'selected_values')
+        self.index_wid.observe(save_value, names='selected_values',
+                               type='change')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -279,19 +283,10 @@ class AnimationOptionsWidget(MenpoWidget):
 
         Parameters
         ----------
-        box_style : See Below, optional
-            Style options
+        box_style : `str` or ``None`` (see below), optional
+            Possible widget style options::
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        Default style
-                None      No style
-                ========= ============================
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -302,29 +297,30 @@ class AnimationOptionsWidget(MenpoWidget):
         border_width : `float`, optional
             The line width of the border around the widget.
         border_radius : `float`, optional
-            The radius of the corners of the box.
+            The radius of the border around the widget.
         padding : `float`, optional
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
-                 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
-            The font style.
-        font_weight : See Below, optional
-            The font weight.
-            Example options ::
+        font_style : `str` (see below), optional
+            The font style. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
-                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
-                 'extra bold', 'black'}
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
@@ -355,18 +351,18 @@ class AnimationOptionsWidget(MenpoWidget):
         Parameters
         ----------
         style : `str` (see below)
-            Style options
+            Style options:
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'minimal' Simple black and white style
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        No style
-                ========= ============================
+                ============= ============================
+                Style         Description
+                ============= ============================
+                ``'minimal'`` Simple black and white style
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ============================
         """
         if style == 'minimal':
             self.style(box_style='', border_visible=False)
@@ -415,102 +411,144 @@ class AnimationOptionsWidget(MenpoWidget):
 
     def set_widget_state(self, index, allow_callback=True):
         r"""
-        Method that updates the state of the widget with a new set of values.
+        Method that updates the state of the widget, if the provided `index`
+        values are different than `self.selected_values`.
 
         Parameters
         ----------
         index : `dict`
-            The dictionary with the new options to be used. For example
-            ::
+            The selected options. It must be a `dict` with the following keys:
 
-                index = {'min': 0, 'max': 100, 'step': 1, 'index': 10}
+            * ``min`` : (`int`) The minimum value (e.g. ``0``).
+            * ``max`` : (`int`) The maximum value (e.g. ``100``).
+            * ``step`` : (`int`) The index step (e.g. ``1``).
+            * ``index`` : (`int`) The index value (e.g. ``10``).
 
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
-        # temporarily remove render callback
-        render_function = self._render_function
-        self.remove_render_function()
+        # Check if update is required
+        if (index['index'] != self.selected_values or
+                    index['min'] != self.min or
+                    index['max'] != self.max or
+                    index['step'] != self.step):
+            # Keep old value
+            old_value = self.selected_values
 
-        # update
-        if self.play_stop_toggle.value:
-            self.play_stop_toggle.value = False
-        if self.index_style == 'slider':
-            self.index_wid.set_widget_state(
-                index, allow_callback=False)
-        else:
-            self.index_wid.set_widget_state(
-                index, loop_enabled=self.loop_checkbox.value,
-                text_editable=True, allow_callback=False)
-        self.selected_values = index['index']
-        self.min = index['min']
-        self.max = index['max']
-        self.step = index['step']
+            # temporarily remove render callback
+            render_function = self._render_function
+            self.remove_render_function()
 
-        # re-assign render callback
-        self.add_render_function(render_function)
+            # update
+            if self.play_stop_toggle.value:
+                self.play_stop_toggle.value = False
+            if self.index_style == 'slider':
+                self.index_wid.set_widget_state(index, allow_callback=False)
+            else:
+                self.index_wid.set_widget_state(
+                    index, loop_enabled=self.loop_checkbox.value,
+                    text_editable=True, allow_callback=False)
+            self.selected_values = index['index']
+            self.min = index['min']
+            self.max = index['max']
+            self.step = index['step']
 
-        # trigger render function if allowed
-        if allow_callback:
-            self._render_function('', 0)
+            # re-assign render callback
+            self.add_render_function(render_function)
+
+            # trigger render function if allowed
+            if allow_callback:
+                self.call_render_function(old_value, self.selected_values)
+
+    def stop_animation(self):
+        r"""
+        Method that stops an active annotation by setting
+        ``self.play_stop_toggle.value = False``.
+        """
+        self.play_stop_toggle.value = False
 
 
 class ChannelOptionsWidget(MenpoWidget):
     r"""
-    Creates a widget for selecting channel options when rendering an image. The
-    widget consists of the following parts from `ipywidgets` and
-    `menpowidgets.tools`:
+    Creates a widget for selecting channel options for rendering an image. The
+    widget consists of the following objects from `ipywidgets` and
+    :ref:`api-tools-index`:
 
-    == ==================== ============================= =====================
-    No Object               Variable (`self.`)            Description
-    == ==================== ============================= =====================
-    1  SlicingCommandWidget `channels_wid`                The channels selector
-    2  Checkbox             `masked_checkbox`             Controls masked mode
-    3  Checkbox             `rgb_checkbox`                View as RGB
-    4  Checkbox             `sum_checkbox`                View sum of channels
-    5  Checkbox             `glyph_checkbox`              View glyph
-    6  BoundedIntText       `glyph_block_size_text`       Glyph block size
-    7  Checkbox             `glyph_use_negative_checkbox` Use negative values
-    8  VBox                 `glyph_options_box`           Contains 6, 7
-    9  VBox                 `glyph_box`                   Contains 5, 8
-    10 HBox                 `rgb_masked_options_box`      Contains 2, 3
-    11 HBox                 `glyph_sum_options_box`       Contains 4, 9
-    12 VBox                 `checkboxes_box`              Contains 10, 11
-    13 Latex                `no_options_latex`            No options available
-    == ==================== ============================= =====================
+    == =========================== ======================== =====================
+    No Object                      Property (`self.`)       Description
+    == =========================== ======================== =====================
+    1  :map:`SlicingCommandWidget` `channels_wid`           The channels selector
+    2  `Checkbox`                  `masked_checkbox`        Controls masked mode
+    3  `Checkbox`                  `rgb_checkbox`           View as RGB
+    4  `Checkbox`                  `sum_checkbox`           View sum of channels
+    5  `Checkbox`                  `glyph_checkbox`         View glyph
+    6  `BoundedIntText`            `glyph_block_size_text`  Glyph block size
+    7  `Checkbox`                  `glyph_use_neg_checkbox` Use negative values
+    8  `Latex`                     `no_options_latex`       No options message
+    9  `VBox`                      `glyph_options_box`      Contains 6, 7
+    10 `HBox`                      `glyph_box`              Contains 5, 9
+    11 `HBox`                      `rgb_masked_options_box` Contains 3, 2
+    12 `HBox`                      `glyph_sum_options_box`  Contains 4, 10
+    13 `VBox`                      `checkboxes_box`         Contains 11, 12
+    == =========================== ======================== =====================
 
     Note that:
 
-    * The selected values are stored in the ``self.selected_values`` `dict`.
-    * To set the styling please refer to the ``style()`` and
-      ``predefined_style()`` methods.
     * To update the state of the widget, please refer to the
-      ``set_widget_state()`` method.
-    * To update the callback function please refer to the
-      ``replace_render_function()`` method.
+      :meth:`set_widget_state` method.
+    * The widget has **memory** about the properties of the objects that are
+      passed into it through :meth:`set_widget_state`. Each image object has a
+      unique key id assigned through :meth:`get_key`. Then, the options that
+      correspond to each key are stored in the ``self.default_options`` `dict`.
+    * The selected values of the current image object are stored in the
+      ``self.selected_values`` `trait`. It is a `dict` with the following keys:
+
+      * ``channels`` : (`list`) The selected channels.
+      * ``glyph_enabled`` : (`bool`) Whether to render as glyph.
+      * ``glyph_block_size`` : (`int`) The glyph's block size.
+      * ``glyph_use_negative`` : (`bool`) Whether to use negative values in glyph
+      * ``sum_enabled`` : (`bool`) Whether to render as sum of channels.
+      * ``masked_enabled`` : (`bool`) Whether to render as masked.
+
+    * When an unseen image object is passed in (i.e. a key that is not included
+      in the ``self.default_options`` `dict`), it gets the following initial
+      options by default:
+
+      * ``channels = [0] if n_channels == 3 else None``
+      * ``glyph_enabled = False``
+      * ``glyph_block_size = 3``
+      * ``glyph_use_negative = False``
+      * ``sum_enabled = False``
+      * ``masked_enabled = image_is_masked``
+
+    * To set the styling of this widget please refer to the :meth:`style` and
+      :meth:`predefined_style` methods.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
 
     Parameters
     ----------
     n_channels : `int`
         The number of channels of the initial image object.
     image_is_masked : `bool`
-        Whether the initial image object is masked or not.
+        Whether the initial image object is masked or not. If ``True``, then the
+        image is assumed to be a `menpo.image.MaskedImage` object.
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
-    style : See Below, optional
-        Sets a predefined style at the widget. Possible options are
+    style : `str` (see below), optional
+        Sets a predefined style at the widget. Possible options are:
 
-            ========= ============================
-            Style     Description
-            ========= ============================
-            'minimal' Simple black and white style
-            'success' Green-based style
-            'info'    Blue-based style
-            'warning' Yellow-based style
-            'danger'  Red-based style
-            ''        No style
-            ========= ============================
+            ============= ============================
+            Style         Description
+            ============= ============================
+            ``'minimal'`` Simple black and white style
+            ``'success'`` Green-based style
+            ``'info'``    Blue-based style
+            ``'warning'`` Yellow-based style
+            ``'danger'``  Red-based style
+            ``''``        No style
+            ============= ============================
 
     Example
     -------
@@ -523,32 +561,32 @@ class ChannelOptionsWidget(MenpoWidget):
     change and will dynamically print the selected channels and masked flag:
 
         >>> from menpo.visualize import print_dynamic
-        >>> def render_function(name, value):
-        >>>     s = "Channels: {}, Masked: {}".format(
+        >>> def render_function(change):
+        >>>     s = "Channels: {}, Masked: {}, Glyph: {}, Sum: {}".format(
         >>>         wid.selected_values['channels'],
-        >>>         wid.selected_values['masked_enabled'])
+        >>>         wid.selected_values['masked_enabled'],
+        >>>         wid.selected_values['glyph_enabled'],
+        >>>         wid.selected_values['sum_enabled'])
         >>>     print_dynamic(s)
 
     Create the widget with some initial options and display it:
 
-        >>> channel_options = {'n_channels': 30,
-        >>>                    'image_is_masked': True,
-        >>>                    'channels': [0, 10],
-        >>>                    'glyph_enabled': False,
-        >>>                    'glyph_block_size': 3,
-        >>>                    'glyph_use_negative': False,
-        >>>                    'sum_enabled': True,
-        >>>                    'masked_enabled': True}
         >>> wid = ChannelOptionsWidget(n_channels=30, image_is_masked=True,
         >>>                            render_function=render_function,
         >>>                            style='warning')
         >>> wid
 
     By playing around with the widget, printed message gets updated. Finally,
-    let's change the widget status with a object:
+    let's change the widget status with a new object:
 
         >>> wid.set_widget_state(n_channels=10, image_is_masked=False,
         >>>                      allow_callback=False)
+
+    Remember that the widget is **mnemonic**, i.e. it remembers the objects it
+    has seen and their corresponding options. These can be retrieved as:
+
+        >>> wid.default_options
+
     """
     def __init__(self, n_channels, image_is_masked, render_function=None,
                  style='minimal'):
@@ -608,30 +646,41 @@ class ChannelOptionsWidget(MenpoWidget):
         self.predefined_style(style)
 
     def add_callbacks(self):
-        self.glyph_block_size_text.on_trait_change(self._save_options, 'value')
-        self.glyph_use_negative_checkbox.on_trait_change(self._save_options,
-                                                         'value')
-        self.masked_checkbox.on_trait_change(self._save_options, 'value')
-        self.channels_wid.on_trait_change(self._save_channels, 'selected_values')
-        self.rgb_checkbox.on_trait_change(self._save_rgb, 'value')
-        self.sum_checkbox.on_trait_change(self._save_sum, 'value')
-        self.glyph_checkbox.on_trait_change(self._save_glyph, 'value')
+        r"""
+        Function that adds the handler callback functions in all the widget
+        components, which are necessary for the internal functionality.
+        """
+        self.glyph_block_size_text.observe(self._save_options, names='value',
+                                           type='change')
+        self.glyph_use_negative_checkbox.observe(
+                self._save_options, names='value', type='change')
+        self.masked_checkbox.observe(self._save_options, names='value',
+                                     type='change')
+        self.channels_wid.observe(self._save_channels, names='selected_values',
+                                  type='change')
+        self.rgb_checkbox.observe(self._save_rgb, names='value', type='change')
+        self.sum_checkbox.observe(self._save_sum, names='value', type='change')
+        self.glyph_checkbox.observe(self._save_glyph, names='value',
+                                    type='change')
 
     def remove_callbacks(self):
-        self.glyph_block_size_text.on_trait_change(self._save_options,
-                                                   'value', remove=True)
-        self.glyph_use_negative_checkbox.on_trait_change(self._save_options,
-                                                         'value', remove=True)
-        self.masked_checkbox.on_trait_change(self._save_options, 'value',
-                                             remove=True)
-        self.channels_wid.on_trait_change(self._save_channels, 'selected_values',
-                                          remove=True)
-        self.rgb_checkbox.on_trait_change(self._save_rgb, 'value', remove=True)
-        self.sum_checkbox.on_trait_change(self._save_sum, 'value', remove=True)
-        self.glyph_checkbox.on_trait_change(self._save_glyph, 'value',
-                                            remove=True)
+        r"""
+        Function that removes all the internal handler callback functions.
+        """
+        self.glyph_block_size_text.unobserve(self._save_options, names='value',
+                                             type='change')
+        self.glyph_use_negative_checkbox.unobserve(
+                self._save_options, names='value', type='change')
+        self.masked_checkbox.unobserve(self._save_options, names='value',
+                                       type='change')
+        self.channels_wid.unobserve(self._save_channels, names='selected_values',
+                                    type='change')
+        self.rgb_checkbox.unobserve(self._save_rgb, names='value', type='change')
+        self.sum_checkbox.unobserve(self._save_sum, names='value', type='change')
+        self.glyph_checkbox.unobserve(self._save_glyph, names='value',
+                                      type='change')
 
-    def _save_options(self, name, value):
+    def _save_options(self, change):
         # get channels value
         channels_val = self.channels_wid.selected_values
         if self.rgb_checkbox.value:
@@ -648,81 +697,143 @@ class ChannelOptionsWidget(MenpoWidget):
         current_key = self.get_key(self.n_channels, self.image_is_masked)
         self.default_options[current_key] = self.selected_values
 
-    def _save_channels(self, name, value):
+    def _save_channels(self, change):
         if self.n_channels == 3:
             # temporarily remove rgb callback
-            self.rgb_checkbox.on_trait_change(self._save_rgb, 'value',
-                                              remove=True)
+            self.rgb_checkbox.unobserve(self._save_rgb, names='value',
+                                        type='change')
             # set value
             self.rgb_checkbox.value = False
             # re-assign rgb callback
-            self.rgb_checkbox.on_trait_change(self._save_rgb, 'value')
-        self._save_options('', None)
+            self.rgb_checkbox.observe(self._save_rgb, names='value',
+                                      type='change')
+        self._save_options({})
 
-    def _save_rgb(self, name, value):
-        if value:
+    def _save_rgb(self, change):
+        if change['new']:
             # temporarily remove channels callback
-            self.channels_wid.on_trait_change(
-                self._save_channels, 'selected_values', remove=True)
+            self.channels_wid.unobserve(
+                self._save_channels, names='selected_values', type='change')
             # update channels widget
             self.channels_wid.set_widget_state(
                 {'command': '0, 1, 2', 'length': self.n_channels},
                 allow_callback=False)
             # re-assign channels callback
-            self.channels_wid.on_trait_change(self._save_channels,
-                                              'selected_values')
-        self._save_options('', None)
+            self.channels_wid.observe(
+                    self._save_channels, names='selected_values', type='change')
+        self._save_options({})
 
-    def _save_sum(self, name, value):
-        if value and self.glyph_checkbox.value:
+    def _save_sum(self, change):
+        if change['new'] and self.glyph_checkbox.value:
             # temporarily remove glyph callback
-            self.glyph_checkbox.on_trait_change(self._save_glyph, 'value',
-                                                remove=True)
+            self.glyph_checkbox.unobserve(self._save_glyph, names='value',
+                                          type='change')
 
             # set glyph to False
             self.glyph_checkbox.value = False
             self.glyph_options_box.visible = False
 
             # re-assign glyph callback
-            self.glyph_checkbox.on_trait_change(self._save_glyph, 'value')
-        self._save_options('', None)
+            self.glyph_checkbox.observe(self._save_glyph, names='value',
+                                        type='change')
+        self._save_options({})
 
-    def _save_glyph(self, name, value):
-        if value and self.sum_checkbox.value:
+    def _save_glyph(self, change):
+        if change['new'] and self.sum_checkbox.value:
             # temporarily remove sum callback
-            self.sum_checkbox.on_trait_change(self._save_sum, 'value',
-                                              remove=True)
+            self.sum_checkbox.unobserve(self._save_sum, names='value',
+                                        type='change')
 
             # set glyph to false
             self.sum_checkbox.value = False
 
             # re-assign sum callback
-            self.sum_checkbox.on_trait_change(self._save_sum, 'value')
+            self.sum_checkbox.observe(self._save_sum, names='value',
+                                      type='change')
         # set visibility
-        self.glyph_options_box.visible = value
-        self._save_options('', None)
+        self.glyph_options_box.visible = change['new']
+        self._save_options({})
 
     def set_visibility(self):
+        r"""
+        Function that sets the visibility of the various components of the
+        widget, depending on the properties of the current image object, i.e.
+        ``self.n_channels`` and ``self.image_is_masked``.
+        """
         self.channels_wid.visible = self.n_channels > 1
         self.glyph_sum_options_box.visible = self.n_channels > 1
         self.rgb_checkbox.visible = self.n_channels == 3
         self.masked_checkbox.visible = self.image_is_masked
         self.no_options_latex.visible = (self.n_channels == 1 and
                                          not self.image_is_masked)
+        self.glyph_options_box.visible = self.glyph_checkbox.value
 
     def get_key(self, n_channels, image_is_masked):
+        r"""
+        Function that returns a unique key based on the properties of the
+        provided image object, i.e. ``self.n_channels`` and
+        ``self.image_is_masked``.
+
+        Parameters
+        ----------
+        n_channels : `int`
+            The number of channels.
+        image_is_masked : `bool`
+            Whether the image object is masked or not. If ``True``, then the
+            image is assumed to be a `menpo.image.MaskedImage` object.
+
+        Returns
+        -------
+        key : `str`
+            The key that has the format ``'{n_channels}_{image_is_masked}'``.
+        """
         return "{}_{}".format(n_channels, image_is_masked)
 
     def get_default_options(self, n_channels, image_is_masked):
+        r"""
+        Function that returns a `dict` with default options given the properties
+        of an image object, i.e. `n_channels` and `image_is_masked`. The function
+        returns the `dict` of options but also updates the
+        ``self.default_options`` `dict`.
+
+        Parameters
+        ----------
+        n_channels : `int`
+            The number of channels.
+        image_is_masked : `bool`
+            Whether the image object is masked or not. If ``True``, then the
+            image is assumed to be a `menpo.image.MaskedImage` object.
+
+        Returns
+        -------
+        default_options : `dict`
+            A `dict` with the default options. It contains:
+
+            * ``channels`` : (`list`) The selected channels.
+            * ``glyph_enabled`` : (`bool`) Whether to render as glyph.
+            * ``glyph_block_size`` : (`int`) The glyph's block size.
+            * ``glyph_use_negative`` : (`bool`) Whether to use negative values.
+            * ``sum_enabled`` : (`bool`) Whether to render as sum of channels.
+            * ``masked_enabled`` : (`bool`) Whether to render as masked.
+
+            If the object is not seen before by the widget, then it automatically
+            gets the following default options:
+
+            * ``channels = [0] if n_channels == 3 else None``
+            * ``glyph_enabled = False``
+            * ``glyph_block_size = 3``
+            * ``glyph_use_negative = False``
+            * ``sum_enabled = False``
+            * ``masked_enabled = image_is_masked``
+
+        """
         # create key
         key = self.get_key(n_channels, image_is_masked)
         # if the key does not exist in the default options dict, then add it
         if key not in self.default_options:
             # if image has 3 channels, visualise it as RGB, else render only the
             # first channel
-            channels = [0]
-            if n_channels == 3:
-                channels = None
+            channels = None if n_channels == 3 else [0]
             # if image is masked, render it as masked
             masked_enabled = image_is_masked
             # update default options dictionary
@@ -751,19 +862,10 @@ class ChannelOptionsWidget(MenpoWidget):
 
         Parameters
         ----------
-        box_style : See Below, optional
-            Style options
+        box_style : `str` or ``None`` (see below), optional
+            Possible widget style options::
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        Default style
-                None      No style
-                ========= ============================
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
@@ -774,34 +876,33 @@ class ChannelOptionsWidget(MenpoWidget):
         border_width : `float`, optional
             The line width of the border around the widget.
         border_radius : `float`, optional
-            The radius of the corners of the box.
+            The radius of the border around the widget.
         padding : `float`, optional
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
-                 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
-            The font style.
-        font_weight : See Below, optional
-            The font weight.
-            Example options ::
+        font_style : `str` (see below), optional
+            The font style. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
-                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
-                 'extra bold', 'black'}
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
 
         slider_width : `str`, optional
             The width of the slider.
-        slider_colour : `str`, optional
-            The colour of the sliders.
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
@@ -835,18 +936,18 @@ class ChannelOptionsWidget(MenpoWidget):
         Parameters
         ----------
         style : `str` (see below)
-            Style options
+            Style options:
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'minimal' Simple black and white style
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        No style
-                ========= ============================
+                ============= ============================
+                Style         Description
+                ============= ============================
+                ``'minimal'`` Simple black and white style
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ============================
         """
         if style == 'minimal':
             self.style(box_style=None, border_visible=True,
@@ -875,26 +976,20 @@ class ChannelOptionsWidget(MenpoWidget):
             raise ValueError('style must be minimal or info or success or '
                              'danger or warning')
 
-    def set_widget_state(self, n_channels, image_is_masked,
-                         allow_callback=True):
+    def set_widget_state(self, n_channels, image_is_masked, allow_callback=True):
         r"""
-        Method that updates the state of the widget with a new set of values.
+        Method that updates the state of the widget, if the key generated with
+        :meth:`get_key` based on the provided `n_channels` and `image_is_masked`
+        is different than the current key based on ``self.n_channels`` and
+        ``self.image_is_masked``.
 
         Parameters
         ----------
-        channel_options : `dict`
-            The dictionary with the new options to be used. For example
-            ::
-
-                channel_options = {'n_channels': 10,
-                                   'image_is_masked': True,
-                                   'channels': 0,
-                                   'glyph_enabled': False,
-                                   'glyph_block_size': 3,
-                                   'glyph_use_negative': False,
-                                   'sum_enabled': False,
-                                   'masked_enabled': True}
-
+        n_channels : `int`
+            The number of channels of the initial image object.
+        image_is_masked : `bool`
+            Whether the initial image object is masked or not. If ``True``, then
+            the image is assumed to be a `menpo.image.MaskedImage` object.
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
@@ -902,6 +997,9 @@ class ChannelOptionsWidget(MenpoWidget):
         if (not self.default_options or
                 self.get_key(self.n_channels, self.image_is_masked) !=
                 self.get_key(n_channels, image_is_masked)):
+            # keep old value
+            old_value = self.selected_values
+
             # temporarily remove callbacks
             render_function = self._render_function
             self.remove_render_function()
@@ -941,24 +1039,24 @@ class ChannelOptionsWidget(MenpoWidget):
             self.set_visibility()
 
             # Get values
-            self._save_options('', None)
+            self._save_options({})
 
             # Re-assign callbacks
             self.add_callbacks()
             self.add_render_function(render_function)
 
-        # trigger render function if allowed
-        if allow_callback:
-            self._render_function('', True)
+            # trigger render function if allowed
+            if allow_callback:
+                self.call_render_function(old_value, self.selected_values)
 
 
 class LandmarkOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for animating through a list of objects. The widget
-    consists of the following parts from `ipywidgets`:
+    consists of the following objects from `ipywidgets`:
 
     == ============= =========================== =========================
-    No Object        Variable (`self.`)               Description
+    No Object        Property (`self.`)               Description
     == ============= =========================== =========================
     1  Latex         `no_landmarks_msg`          Message in case there are
 
@@ -1003,19 +1101,19 @@ class LandmarkOptionsWidget(MenpoWidget):
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
-    style : `str` (see below)
-        Sets a predefined style at the widget. Possible options are
+    style : `str` (see below), optional
+        Sets a predefined style at the widget. Possible options are:
 
-            ========= ============================
-            Style     Description
-            ========= ============================
-            'minimal' Simple black and white style
-            'success' Green-based style
-            'info'    Blue-based style
-            'warning' Yellow-based style
-            'danger'  Red-based style
-            ''        No style
-            ========= ============================
+            ============= ============================
+            Style         Description
+            ============= ============================
+            ``'minimal'`` Simple black and white style
+            ``'success'`` Green-based style
+            ``'info'``    Blue-based style
+            ``'warning'`` Yellow-based style
+            ``'danger'``  Red-based style
+            ``''``        No style
+            ============= ============================
 
     Example
     -------
@@ -1334,18 +1432,19 @@ class LandmarkOptionsWidget(MenpoWidget):
         Parameters
         ----------
         style : `str` (see below)
-            Style options
+            Style options:
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'minimal' Simple black and white style
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        No style
-                ========= ============================
+                ============= ============================
+                Style         Description
+                ============= ============================
+                ``'minimal'`` Simple black and white style
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ============================
+
         """
         if style == 'minimal':
             self.style(box_style=None, border_visible=True,
@@ -1466,19 +1565,19 @@ class TextPrintWidget(ipywidgets.FlexBox):
         The number of lines of the text to be printed.
     text_per_line : `list` of length `n_lines`
         The text to be printed per line.
-    style : See Below, optional
-        Sets a predefined style at the widget. Possible options are
+    style : `str` (see below), optional
+        Sets a predefined style at the widget. Possible options are:
 
-            ========= ============================
-            Style     Description
-            ========= ============================
-            'minimal' Simple black and white style
-            'success' Green-based style
-            'info'    Blue-based style
-            'warning' Yellow-based style
-            'danger'  Red-based style
-            ''        No style
-            ========= ============================
+            ============= ============================
+            Style         Description
+            ============= ============================
+            ``'minimal'`` Simple black and white style
+            ``'success'`` Green-based style
+            ``'info'``    Blue-based style
+            ``'warning'`` Yellow-based style
+            ``'danger'``  Red-based style
+            ``''``        No style
+            ============= ============================
 
     Example
     -------
@@ -1586,18 +1685,18 @@ class TextPrintWidget(ipywidgets.FlexBox):
         Parameters
         ----------
         style : `str` (see below)
-            Style options
+            Style options:
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'minimal' Simple black and white style
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        No style
-                ========= ============================
+                ============= ============================
+                Style         Description
+                ============= ============================
+                ``'minimal'`` Simple black and white style
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ============================
         """
         if style == 'minimal':
             self.style(box_style=None, border_visible=True,
@@ -1642,10 +1741,10 @@ class TextPrintWidget(ipywidgets.FlexBox):
 class RendererOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting rendering options. The widget consists of the
-    following parts from `ipywidgets` and `menpowidgets.tools`:
+    following objects from `ipywidgets` and :ref:`api-tools-index`:
 
     == ====================== =========================== ===================
-    No Object                 Variable (`self.`)          Description
+    No Object                 Property (`self.`)          Description
     == ====================== =========================== ===================
     1  Dropdown               `object_selection_dropdown` The object selector
     2  LineOptionsWidget      `options_widgets`           `list` with the
@@ -1772,34 +1871,33 @@ class RendererOptionsWidget(MenpoWidget):
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
-    style : See Below, optional
-        Sets a predefined style at the widget. Possible options are
+    style : `str` (see below), optional
+        Sets a predefined style at the widget. Possible options are:
 
-            ========= ============================
-            Style     Description
-            ========= ============================
-            'minimal' Simple black and white style
-            'success' Green-based style
-            'info'    Blue-based style
-            'warning' Yellow-based style
-            'danger'  Red-based style
-            ''        No style
-            ========= ============================
+            ============= ============================
+            Style         Description
+            ============= ============================
+            ``'minimal'`` Simple black and white style
+            ``'success'`` Green-based style
+            ``'info'``    Blue-based style
+            ``'warning'`` Yellow-based style
+            ``'danger'``  Red-based style
+            ``''``        No style
+            ============= ============================
 
-    tabs_style : See Below, optional
-        Sets a predefined style at the tabs of the widget. Possible options
-        are
+    tabs_style : `str` (see below), optional
+        Sets a predefined style at the tabs of the widget. Possible options are:
 
-            ========= ============================
-            Style     Description
-            ========= ============================
-            'minimal' Simple black and white style
-            'success' Green-based style
-            'info'    Blue-based style
-            'warning' Yellow-based style
-            'danger'  Red-based style
-            ''        No style
-            ========= ============================
+            ============= ============================
+            Style         Description
+            ============= ============================
+            ``'minimal'`` Simple black and white style
+            ``'success'`` Green-based style
+            ``'info'``    Blue-based style
+            ``'warning'`` Yellow-based style
+            ``'danger'``  Red-based style
+            ``''``        No style
+            ============= ============================
 
     Example
     -------
@@ -2182,32 +2280,32 @@ class RendererOptionsWidget(MenpoWidget):
         Parameters
         ----------
         style : `str` (see below)
-            Style options
+            Style options:
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'minimal' Simple black and white style
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        No style
-                ========= ============================
+                ============= ============================
+                Style         Description
+                ============= ============================
+                ``'minimal'`` Simple black and white style
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ============================
 
-        tabs_style : `str` (see below), optional
-            Style options
+        tabs_style : `str` (see below)
+            Tabs style options:
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'minimal' Simple black and white style
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        No style
-                ========= ============================
+                ============= ============================
+                Style         Description
+                ============= ============================
+                ``'minimal'`` Simple black and white style
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ============================
         """
         if tabs_style == 'minimal' or tabs_style=='':
             tabs_style = ''
@@ -2376,11 +2474,11 @@ class RendererOptionsWidget(MenpoWidget):
 class SaveFigureOptionsWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for saving a figure to file. The widget consists of the
-    following parts from `IPython.html.widgets` and
-    `menpowidgets.tools`:
+    following objects from `IPython.html.widgets` and
+    :ref:`api-tools-index`:
 
     == ===================== ====================== ==========================
-    No Object                Variable (`self.`)     Description
+    No Object                Property (`self.`)     Description
     == ===================== ====================== ==========================
     1  Select                `file_format_select`   Image format selector
     2  FloatText             `dpi_text`             DPI selector
@@ -2433,19 +2531,19 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
         The initial value of the figure padding in inches.
     overwrite : `bool`, optional
         The initial value of the overwrite flag.
-    style : See Below, optional
-        Sets a predefined style at the widget. Possible options are
+    style : `str` (see below), optional
+        Sets a predefined style at the widget. Possible options are:
 
-            ========= ============================
-            Style     Description
-            ========= ============================
-            'minimal' Simple black and white style
-            'success' Green-based style
-            'info'    Blue-based style
-            'warning' Yellow-based style
-            'danger'  Red-based style
-            ''        No style
-            ========= ============================
+            ============= ============================
+            Style         Description
+            ============= ============================
+            ``'minimal'`` Simple black and white style
+            ``'success'`` Green-based style
+            ``'info'``    Blue-based style
+            ``'warning'`` Yellow-based style
+            ``'danger'``  Red-based style
+            ``''``        No style
+            ============= ============================
     """
     def __init__(self, renderer=None, file_format='png', dpi=None,
                  orientation='portrait', papertype='letter', transparent=False,
@@ -2700,18 +2798,18 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
         Parameters
         ----------
         style : `str` (see below)
-            Style options
+            Style options:
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'minimal' Simple black and white style
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        No style
-                ========= ============================
+                ============= ============================
+                Style         Description
+                ============= ============================
+                ``'minimal'`` Simple black and white style
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ============================
         """
         if style == 'minimal':
             self.style(box_style='', border_visible=True, border_colour='black',
@@ -2763,11 +2861,19 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
 
     Parameters
     ----------
-    style : `str` (see below)
-        Sets a predefined style at the widget. Possible options are ::
+    style : `str` (see below), optional
+        Sets a predefined style at the widget. Possible options are:
 
-            {``'minimal'``, ``'success'``, ``'info'``, ``'warning'``,
-             ``'danger'``, ``''``}
+            ============= ============================
+            Style         Description
+            ============= ============================
+            ``'minimal'`` Simple black and white style
+            ``'success'`` Green-based style
+            ``'info'``    Blue-based style
+            ``'warning'`` Yellow-based style
+            ``'danger'``  Red-based style
+            ``''``        No style
+            ============= ============================
 
     """
     def __init__(self, style='minimal'):
@@ -3082,18 +3188,18 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
         Parameters
         ----------
         style : `str` (see below)
-            Style options
+            Style options:
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'minimal' Simple black and white style
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        No style
-                ========= ============================
+                ============= ============================
+                Style         Description
+                ============= ============================
+                ``'minimal'`` Simple black and white style
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ============================
         """
         if style == 'minimal':
             self.style(box_style='', border_visible=True, border_colour='black',
@@ -3115,11 +3221,11 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
 class PatchOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting patches options when rendering a patch-based
-    image. The widget consists of the following parts from
+    image. The widget consists of the following objects from
     `IPython.html.widgets`:
 
     == ==================== ========================= ======================
-    No Object               Variable (`self.`)        Description
+    No Object               Property (`self.`)        Description
     == ==================== ========================= ======================
     1  Dropdown             `offset_dropdown`         Offset index selection
     2  SlicingCommandWidget `slicing_wid`             Patch index selection
@@ -3167,34 +3273,34 @@ class PatchOptionsWidget(MenpoWidget):
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
-    style : See Below, optional
-        Sets a predefined style at the widget's background. Possible options are
+    style : `str` (see below), optional
+        Sets a predefined style at the widget. Possible options are:
 
-            ========= ============================
-            Style     Description
-            ========= ============================
-            'minimal' Simple black and white style
-            'success' Green-based style
-            'info'    Blue-based style
-            'warning' Yellow-based style
-            'danger'  Red-based style
-            ''        No style
-            ========= ============================
+            ============= ============================
+            Style         Description
+            ============= ============================
+            ``'minimal'`` Simple black and white style
+            ``'success'`` Green-based style
+            ``'info'``    Blue-based style
+            ``'warning'`` Yellow-based style
+            ``'danger'``  Red-based style
+            ``''``        No style
+            ============= ============================
 
-    substyle : See Below, optional
+    substyle : `str` (see below), optional
         Sets a predefined style at the widget's patches and bboxes options.
-        Possible options are
+        Possible options are:
 
-            ========= ============================
-            Style     Description
-            ========= ============================
-            'minimal' Simple black and white style
-            'success' Green-based style
-            'info'    Blue-based style
-            'warning' Yellow-based style
-            'danger'  Red-based style
-            ''        No style
-            ========= ============================
+            ============= ============================
+            Style         Description
+            ============= ============================
+            ``'minimal'`` Simple black and white style
+            ``'success'`` Green-based style
+            ``'info'``    Blue-based style
+            ``'warning'`` Yellow-based style
+            ``'danger'``  Red-based style
+            ``''``        No style
+            ============= ============================
 
     Example
     -------
@@ -3585,32 +3691,32 @@ class PatchOptionsWidget(MenpoWidget):
         Parameters
         ----------
         style : `str` (see below)
-            Main widget (background) style options
+            Style options:
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'minimal' Simple black and white style
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        No style
-                ========= ============================
+                ============= ============================
+                Style         Description
+                ============= ============================
+                ``'minimal'`` Simple black and white style
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ============================
 
         subwidgets_style : `str` (see below)
-            Sub-widgets (patches and bounding boxes) style options
+            Sub-widgets (patches and bounding boxes) style options:
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'minimal' Simple black and white style
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        No style
-                ========= ============================
+                ============= ============================
+                Style         Description
+                ============= ============================
+                ``'minimal'`` Simple black and white style
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ============================
 
         """
         if style == 'minimal':
@@ -3752,11 +3858,11 @@ class PatchOptionsWidget(MenpoWidget):
 class PlotOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting options for rendering various curves in a
-    graph. The widget consists of the following parts from
-    `IPython.html.widgets` and `menpowidgets.tools`:
+    graph. The widget consists of the following objects from
+    `IPython.html.widgets` and :ref:`api-tools-index`:
 
     == ===================== ======================= =======================
-    No Object                Variable (`self.`)      Description
+    No Object                Property (`self.`)      Description
     == ===================== ======================= =======================
     1  RendererOptionsWidget `renderer_widget`       The rendering widget
     2  FloatRangeSlider      `x_limit`               Sets the x limit
@@ -3835,49 +3941,33 @@ class PlotOptionsWidget(MenpoWidget):
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
-    style : See Below, optional
-        Sets a predefined style at the widget. Possible options are
+    style : `str` (see below), optional
+        Sets a predefined style at the widget. Possible options are:
 
-            ========= ============================
-            Style     Description
-            ========= ============================
-            'minimal' Simple black and white style
-            'success' Green-based style
-            'info'    Blue-based style
-            'warning' Yellow-based style
-            'danger'  Red-based style
-            ''        No style
-            ========= ============================
+            ============= ============================
+            Style         Description
+            ============= ============================
+            ``'minimal'`` Simple black and white style
+            ``'success'`` Green-based style
+            ``'info'``    Blue-based style
+            ``'warning'`` Yellow-based style
+            ``'danger'``  Red-based style
+            ``''``        No style
+            ============= ============================
 
-    tabs_style : See Below, optional
-        Sets a predefined style at the tabs of the widget. Possible options
-        are
+    tabs_style : `str` (see below), optional
+        Sets a predefined style at the tabs of the widget. Possible options are:
 
-            ========= ============================
-            Style     Description
-            ========= ============================
-            'minimal' Simple black and white style
-            'success' Green-based style
-            'info'    Blue-based style
-            'warning' Yellow-based style
-            'danger'  Red-based style
-            ''        No style
-            ========= ============================
-
-    renderer_tabs_style : See Below, optional
-        Sets a predefined style at the tabs of the renderer widget. Possible
-        options are
-
-            ========= ============================
-            Style     Description
-            ========= ============================
-            'minimal' Simple black and white style
-            'success' Green-based style
-            'info'    Blue-based style
-            'warning' Yellow-based style
-            'danger'  Red-based style
-            ''        No style
-            ========= ============================
+            ============= ============================
+            Style         Description
+            ============= ============================
+            ``'minimal'`` Simple black and white style
+            ``'success'`` Green-based style
+            ``'info'``    Blue-based style
+            ``'warning'`` Yellow-based style
+            ``'danger'``  Red-based style
+            ``''``        No style
+            ============= ============================
 
     """
     def __init__(self, legend_entries, render_function=None, style='minimal',
@@ -4352,46 +4442,32 @@ class PlotOptionsWidget(MenpoWidget):
         Parameters
         ----------
         style : `str` (see below)
-            Style options
+            Style options:
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'minimal' Simple black and white style
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        No style
-                ========= ============================
+                ============= ============================
+                Style         Description
+                ============= ============================
+                ``'minimal'`` Simple black and white style
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ============================
 
-        tabs_style : `str` (see below), optional
-            Style options
+        tabs_style : `str` (see below)
+            Tabs style options:
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'minimal' Simple black and white style
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        No style
-                ========= ============================
-
-        renderer_tabs_style : `str` (see below), optional
-            Style options
-
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'minimal' Simple black and white style
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        No style
-                ========= ============================
+                ============= ============================
+                Style         Description
+                ============= ============================
+                ``'minimal'`` Simple black and white style
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ============================
         """
         if tabs_style == 'minimal' or tabs_style == '':
             tabs_style = ''
@@ -4438,11 +4514,11 @@ class PlotOptionsWidget(MenpoWidget):
 class LinearModelParametersWidget(MenpoWidget):
     r"""
     Creates a widget for selecting parameters values when visualizing a linear
-    model (e.g. PCA model). The widget consists of the following parts from
+    model (e.g. PCA model). The widget consists of the following objects from
     `IPython.html.widgets`:
 
     == =========== ================== ==========================
-    No Object      Variable (`self.`) Description
+    No Object      Property (`self.`) Description
     == =========== ================== ==========================
     1  Button      `plot_button`      The plot variance button
     2  Button      `reset_button`     The reset button
@@ -4494,19 +4570,19 @@ class LinearModelParametersWidget(MenpoWidget):
     plot_variance_function : `function` or ``None``, optional
         The plot function that is executed when the plot variance button is
         clicked. If ``None``, then nothing is assigned.
-    style : See Below, optional
-        Sets a predefined style at the widget. Possible options are
+    style : `str` (see below), optional
+        Sets a predefined style at the widget. Possible options are:
 
-            ========= ============================
-            Style     Description
-            ========= ============================
-            'minimal' Simple black and white style
-            'success' Green-based style
-            'info'    Blue-based style
-            'warning' Yellow-based style
-            'danger'  Red-based style
-            ''        No style
-            ========= ============================
+            ============= ============================
+            Style         Description
+            ============= ============================
+            ``'minimal'`` Simple black and white style
+            ``'success'`` Green-based style
+            ``'info'``    Blue-based style
+            ``'warning'`` Yellow-based style
+            ``'danger'``  Red-based style
+            ``''``        No style
+            ============= ============================
 
     Example
     -------
@@ -4777,18 +4853,18 @@ class LinearModelParametersWidget(MenpoWidget):
         Parameters
         ----------
         style : `str` (see below)
-            Style options
+            Style options:
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'minimal' Simple black and white style
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        No style
-                ========= ============================
+                ============= ============================
+                Style         Description
+                ============= ============================
+                ``'minimal'`` Simple black and white style
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ============================
         """
         if style == 'minimal':
             self.style(box_style=None, border_visible=True,

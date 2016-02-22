@@ -21,7 +21,7 @@ class MenpoWidget(ipywidgets.FlexBox):
         ``Dict``, ``List``, ``Tuple``}.
     trait_initial_value : `int` or `float` or `dict` or `list` or `tuple`
         The initial value of the `selected_values` trait.
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that behaves as a callback handler of the
         `selected_values` trait for the `change` event. Its signature can be
         ``render_function()`` or ``render_function(change)``, where ``change``
@@ -64,7 +64,7 @@ class MenpoWidget(ipywidgets.FlexBox):
 
         Parameters
         ----------
-        render_function : `function` or ``None``, optional
+        render_function : `callable` or ``None``, optional
             The render function that behaves as a callback handler of the
             `selected_values` trait for the `change` event. Its signature can be
             ``render_function()`` or ``render_function(change)``, where
@@ -102,7 +102,7 @@ class MenpoWidget(ipywidgets.FlexBox):
 
         Parameters
         ----------
-        render_function : `function` or ``None``, optional
+        render_function : `callable` or ``None``, optional
             The render function that behaves as a callback handler of the
             `selected_values` trait for the `change` event. Its signature can be
             ``render_function()`` or ``render_function(change)``, where

@@ -145,7 +145,7 @@ class ListWidget(MenpoWidget):
         Defines the data type of the list members.
     description : `str`, optional
         The description of the command text box.
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
     example_visible : `bool`, optional
@@ -340,7 +340,7 @@ class SlicingCommandWidget(MenpoWidget):
 
     description : `str`, optional
         The description of the command text box.
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
     example_visible : `bool`, optional
@@ -617,7 +617,7 @@ class IndexSliderWidget(MenpoWidget):
         If ``True``, then the render and update functions are called while moving
         the slider's handle. If ``False``, then the the functions are called only
         when the handle (mouse click) is released.
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when the index value changes.
         If ``None``, then nothing is assigned.
     """
@@ -772,7 +772,7 @@ class IndexButtonsWidget(MenpoWidget):
         * ``step`` : (`int`) The index step (e.g. ``1``).
         * ``index`` : (`int`) The index value (e.g. ``10``).
 
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when the index value changes.
         If ``None``, then nothing is assigned.
     description : `str`, optional
@@ -1005,7 +1005,7 @@ class ColourSelectionWidget(MenpoWidget):
 
         If a colour has the form [`float`, `float`, `float`], then it defines an
         RGB value and must have length 3.
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
     description : `str`, optional
@@ -1275,7 +1275,7 @@ class ZoomOneScaleWidget(MenpoWidget):
         * ``step`` : (`float`) The zoom step (e.g. ``0.05``).
         * ``index`` : (`float`) The zoom value (e.g. ``1.``).
 
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when the index value changes.
         If ``None``, then nothing is assigned.
     description : `str`, optional
@@ -1484,7 +1484,7 @@ class ZoomTwoScalesWidget(MenpoWidget):
         * ``index`` : (`float`) The zoom value (e.g. ``1.``).
         * ``lock_aspect_ratio`` : (`bool`) Flag that locks the aspect ratio.
 
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when the index value changes.
         If ``None``, then nothing is assigned.
     description : `str`, optional
@@ -1793,7 +1793,7 @@ class ImageOptionsWidget(MenpoWidget):
         * ``interpolation`` : (`str`) The interpolation (e.g. ``'bilinear'``).
         * ``cmap_name`` : (`str`) The colourmap (e.g. ``'gray'``).
 
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
     """
@@ -2005,7 +2005,7 @@ class LineOptionsWidget(MenpoWidget):
         * ``line_colour`` : (`str`) The colour of the lines (e.g. ``'blue'``).
         * ``line_style`` : (`str`) The style of the lines (e.g. ``'-'``).
 
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
     render_checkbox_title : `str`, optional
@@ -2205,7 +2205,7 @@ class MarkerOptionsWidget(MenpoWidget):
         * ``marker_edge_width`` : (`int`) The esdge width of the markers.
           (e.g. ``1``).
 
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
     render_checkbox_title : `str`, optional
@@ -2463,7 +2463,7 @@ class NumberingOptionsWidget(MenpoWidget):
         * ``numbers_vertical_align`` : (`str`) The vertical alignment
           (e.g. ``'bottom'``).
 
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
     render_checkbox_title : `str`, optional
@@ -2739,7 +2739,7 @@ class AxesLimitsWidget(MenpoWidget):
         The limits of the x axis.
     axes_y_limits : `float` or [`float`, `float`] or ``None``
         The limits of the y axis.
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when the index value changes.
         If ``None``, then nothing is assigned.
     """
@@ -3035,7 +3035,7 @@ class AxesTicksWidget(MenpoWidget):
             * ``x`` : (`list` or ``None``) The x ticks (e.g. ``[10, 20]``).
             * ``y`` : (`list` or ``None``) The y ticks (e.g. ``None``).
 
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when the index value changes.
         If ``None``, then nothing is assigned.
     """
@@ -3267,7 +3267,7 @@ class AxesOptionsWidget(MenpoWidget):
         * ``axes_y_limits`` : (`float` or [`float`, `float`] or ``None``)
           The y limits (e.g. ``1.``).
 
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
     render_checkbox_title : `str`, optional
@@ -3560,7 +3560,7 @@ class LegendOptionsWidget(MenpoWidget):
         * ``legend_rounded_corners`` : (`bool`) Flag for adding rounded
           corners to the legend.
 
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
     render_checkbox_title : `str`, optional
@@ -4056,7 +4056,7 @@ class GridOptionsWidget(MenpoWidget):
         * ``grid_line_width`` : (`int`) The line width (e.g. ``1``).
         * ``grid_line_style`` : (`str`) The line style (e.g. ``'-'``).
 
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
     render_checkbox_title : `str`, optional
@@ -4237,7 +4237,7 @@ class HOGOptionsWidget(MenpoWidget):
         * ``window_step_unit`` : (`str`) The window step unit (e.g. ``'pixels'``)
         * ``padding`` : (`bool`) Whether to pad the final image.
 
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
     """
@@ -4508,7 +4508,7 @@ class DSIFTOptionsWidget(MenpoWidget):
           (e.g. ``6``).
         * ``fast`` : (`bool`) Flag for fast approximation.
 
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
     """
@@ -4680,7 +4680,7 @@ class DaisyOptionsWidget(MenpoWidget):
         * ``sigmas`` : (`list` or ``None``)
         * ``ring_radii`` : (`list` or ``None``)
 
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
     """
@@ -4861,7 +4861,7 @@ class LBPOptionsWidget(MenpoWidget):
         * ``window_step_unit`` : (`str`) The window step unit (e.g. ``'pixels'``)
         * ``padding`` : (`bool`) Whether to pad the final image.
 
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
     """
@@ -5020,7 +5020,7 @@ class IGOOptionsWidget(MenpoWidget):
         * ``double_angles`` : (`bool`) Whether to use the cos and sin of the
           double angles as well.
 
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
     """
