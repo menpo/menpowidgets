@@ -11,4 +11,5 @@ Options
 
   AnimationOptionsWidget
   ChannelOptionsWidget
+  LandmarkOptionsWidget
 

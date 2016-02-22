@@ -771,8 +771,7 @@ class ChannelOptionsWidget(MenpoWidget):
     def get_key(self, n_channels, image_is_masked):
         r"""
         Function that returns a unique key based on the properties of the
-        provided image object, i.e. ``self.n_channels`` and
-        ``self.image_is_masked``.
+        provided image object.
 
         Parameters
         ----------
@@ -1052,55 +1051,69 @@ class ChannelOptionsWidget(MenpoWidget):
 
 class LandmarkOptionsWidget(MenpoWidget):
     r"""
-    Creates a widget for animating through a list of objects. The widget
-    consists of the following objects from `ipywidgets`:
+    Creates a widget for selecting landmark options. The widget consists of the
+    following objects from `ipywidgets`:
 
-    == ============= =========================== =========================
-    No Object        Property (`self.`)               Description
-    == ============= =========================== =========================
-    1  Latex         `no_landmarks_msg`          Message in case there are
-
-                                                 no landmarks available.
-    2  Checkbox      `render_landmarks_checkbox` Render landmarks
-    3  Latex         `group_description`         Landmark group title
-    4  IntSlider     `group_slider`              Landmark group selector
-    5  Dropdown      `group_dropdown`            Landmark group selector
-    6  Latex         `labels_text`               Labels title
-    7  ToggleButtons `labels_toggles`            `list` of `lists` with
-
-                                                 the labels per group
-    8  HBox          `group_selection_box`       Contains 3, 4, 5
-    9  HBox          `labels_and_text_box`       Contains 6 and all 7
-    10 VBox          `options_box`               Contains 8, 9
-    11 HBox          `render_and_options_box`    Contains 2, 10
-    == ============= =========================== =========================
+    == =============== =========================== ==============================
+    No Object          Property (`self.`)          Description
+    == =============== =========================== ==============================
+    1  `Latex`         `no_landmarks_msg`          No landmarks available msg.
+    2  `Checkbox`      `render_landmarks_checkbox` Render landmarks checkbox
+    3  `Latex`         `group_description`         Landmark group title
+    4  `IntSlider`     `group_slider`              Landmark group selector
+    5  `Dropdown`      `group_dropdown`            Landmark group selector
+    6  `Latex`         `group_latex`               Landmark group text
+    7  `HBox`          `group_selection_box`       Contains 3, 4, 5, 6
+    8  `Latex`         `labels_text`               Labels title
+    9  `ToggleButtons` `labels_toggles`            list with the labels per group
+    10 `HBox`          `labels_box`                Contains all 9
+    11 `HBox`          `labels_and_text_box`       Contains 8 and 10
+    12 `VBox`          `options_box`               Contains 7, 11
+    13 `HBox`          `render_and_options_box`    Contains 2, 12
+    == =============== =========================== ==============================
 
     Note that:
 
-    * The selected values are stored in the ``self.selected_values`` `dict`.
-    * To set the styling please refer to the ``style()`` and
-      ``predefined_style()`` methods.
     * To update the state of the widget, please refer to the
-      ``set_widget_state()`` method.
-    * To update the callback function please refer to the
-      ``replace_render_function()`` and ``replace_update_function()`` methods.
+      :meth:`set_widget_state` method.
+    * The widget has **memory** about the properties of the objects that are
+      passed into it through :meth:`set_widget_state`. Each landmarks object has
+      a unique key id assigned through :meth:`get_key`. Then, the options that
+      correspond to each key are stored in the ``self.default_options`` `dict`.
+    * The selected values of the current landmarks object are stored in the
+      ``self.selected_values`` `trait`. It is a `dict` with the following keys:
+
+      * ``group`` : (`str` or ``None``) The selected group.
+      * ``with_labels`` : (`list` or ``None``) The selected labels.
+      * ``render_landmarks`` : (`bool`) Whether to render the landmarks.
+
+    * When an unseen landmarks object is passed in (i.e. a key that is not
+      included in the ``self.default_options`` `dict`), it gets the following
+      initial options by default:
+
+      * ``group = None if group_keys is None else group_keys[0]``
+      * ``with_labels = None if group_keys is None else labels_keys[0]``
+      * ``render_landmarks = False if group_keys is None else True``
+
+    * To set the styling of this widget please refer to the :meth:`style` and
+      :meth:`predefined_style` methods.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
 
     Parameters
     ----------
-    landmark_options : `dict`
-        The dictionary with the initial options. For example
-        ::
-
-            landmark_options = {'has_landmarks': True,
-                                'render_landmarks': True,
-                                'group_keys': ['PTS', 'ibug_face_68'],
-                                'labels_keys': [['all'], ['jaw', 'eye']],
-                                'group': 'PTS',
-                                'with_labels': ['all']}
-
+    group_keys : `list` of `str` or ``None``
+        The `list` of landmark groups. If ``None``, then no landmark groups are
+        available.
+    labels_keys : `list` of `list` of `str` or ``None``
+        The `list` of labels per landmark group. If ``None``, then no labels are
+        available.
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
+    renderer_widget : :map:`RendererOptionsWidget` or ``None``, optional
+        The :map:`RendererOptionsWidget` that is created and needs to be linked
+        with this widget. If ``None``, then nothing is assigned.
     style : `str` (see below), optional
         Sets a predefined style at the widget. Possible options are:
 
@@ -1126,7 +1139,7 @@ class LandmarkOptionsWidget(MenpoWidget):
     change and will dynamically print the selected index:
 
         >>> from menpo.visualize import print_dynamic
-        >>> def render_function(name, value):
+        >>> def render_function(change):
         >>>     s = "Group: {}, Labels: {}".format(
         >>>         wid.selected_values['group'],
         >>>         wid.selected_values['with_labels'])
@@ -1134,27 +1147,24 @@ class LandmarkOptionsWidget(MenpoWidget):
 
     Create the widget with some initial options and display it:
 
-        >>> landmark_options = {'has_landmarks': True,
-        >>>                     'render_landmarks': True,
-        >>>                     'group_keys': ['PTS', 'ibug_face_68'],
-        >>>                     'labels_keys': [['all'], ['jaw', 'eye', 'mouth']],
-        >>>                     'group': 'ibug_face_68',
-        >>>                     'with_labels': ['eye', 'jaw', 'mouth']}
-        >>> wid = LandmarkOptionsWidget(landmark_options,
-        >>>                             render_function=render_function,
-        >>>                             style='danger')
+        >>> wid = LandmarkOptionsWidget(
+        >>>             group_keys=['PTS', 'ibug_face_68'],
+        >>>             labels_keys=[['all'], ['jaw', 'eye', 'mouth']],
+        >>>             render_function=render_function, style='danger')
         >>> wid
 
     By playing around with the widget, the printed message gets updated.
-    Finally, let's change the widget status with a new dictionary of options:
+    Finally, let's change the widget status with a new set of options:
 
-        >>> new_options = {'has_landmarks': True,
-        >>>                'render_landmarks': True,
-        >>>                'group_keys': ['new_group'],
-        >>>                'labels_keys': [['1', '2', '3']],
-        >>>                'group': 'new_group',
-        >>>                'with_labels': None}
-        >>> wid.set_widget_state(new_options, allow_callback=False)
+        >>> wid.set_widget_state(group_keys=['new_group'],
+        >>>                      labels_keys=[['1', '2', '3']],
+        >>>                      allow_callback=False)
+
+    Remember that the widget is **mnemonic**, i.e. it remembers the objects it
+    has seen and their corresponding options. These can be retrieved as:
+
+        >>> wid.default_options
+
     """
     def __init__(self, group_keys, labels_keys, render_function=None,
                  renderer_widget=None, style='minimal'):
@@ -1214,19 +1224,27 @@ class LandmarkOptionsWidget(MenpoWidget):
         self.predefined_style(style)
 
     def add_callbacks(self):
-        self.render_landmarks_checkbox.on_trait_change(
-            self._render_landmarks_fun, 'value')
-        self.group_dropdown.on_trait_change(self._group_fun, 'value')
+        r"""
+        Function that adds the handler callback functions in all the widget
+        components, which are necessary for the internal functionality.
+        """
+        self.render_landmarks_checkbox.observe(
+            self._render_landmarks_fun, names='value', type='change')
+        self.group_dropdown.observe(self._group_fun, names='value',
+                                    type='change')
         self._add_function_to_labels_toggles(self._labels_fun)
 
     def remove_callbacks(self):
-        self.render_landmarks_checkbox.on_trait_change(
-            self._render_landmarks_fun, 'value', remove=True)
-        self.group_dropdown.on_trait_change(self._group_fun, 'value',
-                                            remove=True)
+        r"""
+        Function that removes all the internal handler callback functions.
+        """
+        self.render_landmarks_checkbox.unobserve(
+            self._render_landmarks_fun, names='value', type='change')
+        self.group_dropdown.unobserve(self._group_fun, names='value',
+                                      type='change')
         self._remove_function_from_labels_toggles(self._labels_fun)
 
-    def _save_options(self, name, value):
+    def _save_options(self, change):
         if self.group_keys is None:
             self.selected_values = {
                 'group': None, 'render_landmarks': False, 'with_labels': None}
@@ -1240,24 +1258,25 @@ class LandmarkOptionsWidget(MenpoWidget):
             current_key = self.get_key(self.group_keys, self.labels_keys)
             self.default_options[current_key] = self.selected_values
 
-    def _render_landmarks_fun(self, name, value):
+    def _render_landmarks_fun(self, change):
         # If render is True, then check whether all the labels are disabled.
         # If they are, then enable all of them
-        if value:
+        if change['new']:
             if len(self._get_with_labels()) == 0:
                 for ww in self.labels_box.children:
                     # temporarily remove render function
-                    ww.on_trait_change(self._labels_fun, 'value', remove=True)
+                    ww.unobserve(self._labels_fun, names='value', type='change')
                     # set value
                     ww.value = True
                     # re-add render function
-                    ww.on_trait_change(self._labels_fun, 'value')
+                    ww.observe(self._labels_fun, names='value', type='change')
         # set visibility
-        self.options_box.visible = value
+        self.options_box.visible = change['new']
         # save options
-        self._save_options('', None)
+        self._save_options({})
 
-    def _group_fun(self, name, value):
+    def _group_fun(self, change):
+        value = change['new']
         # assign the correct children to the labels toggles
         self.labels_box.children = self.labels_toggles[value]
         # if a renderer widget was provided, update it
@@ -1265,26 +1284,31 @@ class LandmarkOptionsWidget(MenpoWidget):
             self.renderer_widget.set_widget_state(self.labels_keys[value],
                                                   allow_callback=False)
         # save options
-        self._save_options('', None)
+        self._save_options({})
 
-    def _labels_fun(self, name, value):
+    def _labels_fun(self, change):
         # if all labels toggles are False, set render landmarks checkbox to
         # False
         if len(self._get_with_labels()) == 0:
             # temporarily remove render function
-            self.render_landmarks_checkbox.on_trait_change(
-                self._render_landmarks_fun, 'value', remove=True)
+            self.render_landmarks_checkbox.unobserve(
+                self._render_landmarks_fun, names='value', type='change')
             # set value
             self.render_landmarks_checkbox.value = False
             # set visibility
             self.options_box.visible = False
             # re-add render function
-            self.render_landmarks_checkbox.on_trait_change(
-                self._render_landmarks_fun, 'value')
+            self.render_landmarks_checkbox.observe(
+                self._render_landmarks_fun, names='value', type='change')
         # save options
-        self._save_options('', None)
+        self._save_options({})
 
     def set_visibility(self):
+        r"""
+        Function that sets the visibility of the various components of the
+        widget, depending on the properties of the current landmarks, i.e.
+        ``self.group_keys``.
+        """
         self.no_landmarks_msg.visible = self.group_keys is None
         self.render_and_options_box.visible = self.group_keys is not None
         if self.group_keys is not None:
@@ -1296,9 +1320,58 @@ class LandmarkOptionsWidget(MenpoWidget):
             self.options_box.visible = self.selected_values['render_landmarks']
 
     def get_key(self, group_keys, labels_keys):
+        r"""
+        Function that returns a unique key based on the properties of the
+        provided landmarks.
+
+        Parameters
+        ----------
+        group_keys : `list` of `str` or ``None``
+            The `list` of landmark groups. If ``None``, then no landmark groups
+            are available.
+        labels_keys : `list` of `list` of `str` or ``None``
+            The `list` of labels per landmark group. If ``None``, then no labels
+            are available.
+
+        Returns
+        -------
+        key : `str`
+            The key that has the format ``'{group_keys}_{labels_keys}'``.
+        """
         return "{}_{}".format(group_keys, labels_keys)
 
     def get_default_options(self, group_keys, labels_keys):
+        r"""
+        Function that returns a `dict` with default options based on the
+        properties of the provided landmarks. The function returns the `dict` of
+        options but also updates the ``self.default_options`` `dict`.
+
+        Parameters
+        ----------
+        group_keys : `list` of `str` or ``None``
+            The `list` of landmark groups. If ``None``, then no landmark groups
+            are available.
+        labels_keys : `list` of `list` of `str` or ``None``
+            The `list` of labels per landmark group. If ``None``, then no labels
+            are available.
+
+        Returns
+        -------
+        default_options : `dict`
+            A `dict` with the default options. It contains:
+
+            * ``group`` : (`str` or ``None``) The selected group.
+            * ``with_labels`` : (`list` or ``None``) The selected labels.
+            * ``render_landmarks`` : (`bool`) Whether to render the landmarks.
+
+            If the object is not seen before by the widget, then it automatically
+            gets the following default options:
+
+            * ``group = None if group_keys is None else group_keys[0]``
+            * ``with_labels = None if group_keys is None else labels_keys[0]``
+            * ``render_landmarks = False if group_keys is None else True``
+
+        """
         # create key
         key = self.get_key(group_keys, labels_keys)
         # if the key does not exist in the default options dict, then add it
@@ -1323,12 +1396,12 @@ class LandmarkOptionsWidget(MenpoWidget):
     def _add_function_to_labels_toggles(self, fun):
         for s_group in self.labels_toggles:
             for w in s_group:
-                w.on_trait_change(fun, 'value')
+                w.observe(fun, names='value', type='change')
 
     def _remove_function_from_labels_toggles(self, fun):
         for s_group in self.labels_toggles:
             for w in s_group:
-                w.on_trait_change(fun, 'value', remove=True)
+                w.unobserve(fun, names='value', type='change')
 
     def _set_labels_toggles_values(self, with_labels):
         for w in self.labels_box.children:
@@ -1343,67 +1416,49 @@ class LandmarkOptionsWidget(MenpoWidget):
 
         Parameters
         ----------
-        box_style : See Below, optional
-            Style options
+        box_style : `str` or ``None`` (see below), optional
+            Possible widget style options::
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        Default style
-                None      No style
-                ========= ============================
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
         border_colour : `str`, optional
-            The color of the border around the widget.
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
             The line width of the border around the widget.
         border_radius : `float`, optional
-            The radius of the corners of the box.
+            The radius of the border around the widget.
         padding : `float`, optional
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
-                 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
-            The font style.
+        font_style : `str` (see below), optional
+            The font style. Example options::
+
+                'normal', 'italic', 'oblique'
+
         font_weight : See Below, optional
-            The font weight.
-            Example options ::
+            The font weight. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
-                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
-                 'extra bold', 'black'}
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
 
-        labels_buttons_style : See Below, optional
-            Style options
+        labels_buttons_style : `str` or ``None`` (see below), optional
+            Style options:
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'primary' Blue-based style
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        Default style
-                None      No style
-                ========= ============================
+                'success', 'info', 'warning', 'danger', 'primary', '', None
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
@@ -1466,21 +1521,19 @@ class LandmarkOptionsWidget(MenpoWidget):
 
     def set_widget_state(self, group_keys, labels_keys, allow_callback=True):
         r"""
-        Method that updates the state of the widget with a new set of values.
+        Method that updates the state of the widget, if the key generated with
+        :meth:`get_key` based on the provided `group_keys` and `labels_keys`
+        is different than the current key based on ``self.group_keys`` and
+        ``self.labels_keys``.
 
         Parameters
         ----------
-        landmark_options : `dict`
-            The dictionary with the new options to be used. For example
-            ::
-
-                landmark_options = {'has_landmarks': True,
-                                    'render_landmarks': True,
-                                    'group_keys': ['PTS', 'ibug_face_68'],
-                                    'labels_keys': [['all'], ['jaw', 'eye']],
-                                    'group': 'PTS',
-                                    'with_labels': ['all']}
-
+        group_keys : `list` of `str` or ``None``
+            The `list` of landmark groups. If ``None``, then no landmark groups
+            are available.
+        labels_keys : `list` of `list` of `str` or ``None``
+            The `list` of labels per landmark group. If ``None``, then no labels
+            are available.
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
@@ -1488,6 +1541,9 @@ class LandmarkOptionsWidget(MenpoWidget):
         if (not self.default_options or
                 self.get_key(self.group_keys, self.labels_keys) !=
                 self.get_key(group_keys, labels_keys)):
+            # keep old value
+            old_value = self.selected_values
+
             # temporarily remove callbacks
             render_function = self._render_function
             self.remove_render_function()
@@ -1530,7 +1586,7 @@ class LandmarkOptionsWidget(MenpoWidget):
                         self.labels_keys[group_idx], allow_callback=False)
 
             # Get values
-            self._save_options('', None)
+            self._save_options({})
 
             # Set widget's visibility
             self.set_visibility()
@@ -1542,9 +1598,9 @@ class LandmarkOptionsWidget(MenpoWidget):
             self.add_callbacks()
             self.add_render_function(render_function)
 
-        # trigger render function if allowed
-        if allow_callback:
-            self._render_function('', True)
+            # trigger render function if allowed
+            if allow_callback:
+                self.call_render_function(old_value, self.selected_values)
 
 
 class TextPrintWidget(ipywidgets.FlexBox):
