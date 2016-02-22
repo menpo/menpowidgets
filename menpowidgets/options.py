@@ -3332,55 +3332,73 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
 class PatchOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting patches options when rendering a patch-based
-    image. The widget consists of the following objects from
-    `IPython.html.widgets`:
+    image. The widget consists of the following objects from `ipywidgets` and
+    :ref:`api-tools-index`:
 
-    == ==================== ========================= ======================
-    No Object               Property (`self.`)        Description
-    == ==================== ========================= ======================
-    1  Dropdown             `offset_dropdown`         Offset index selection
-    2  SlicingCommandWidget `slicing_wid`             Patch index selection
-    3  LineOptionsWidget    `bboxes_line_options_wid` Bboxes options
-    4  Checkbox             `render_centers`          Render centers flag
-    5  Checkbox             `render_patches`          Render patches flag
-    6  ToggleButton         `background_toggle`       Background colour button
-    7  Latex                `background_title`        Background colour title
-    8  HBox                 `background_box`          Contains 7, 6
-    9  VBox                 `render_checkboxes_box`   Contains 4, 5
-    10 HBox                 `render_box`              Contains 8, 9
-    11 VBox                 `offset_patches_box`      Contains 1, 2, 10
-    == ==================== ========================= ======================
+    == =========================== ========================= ====================
+    No Object                      Property (`self.`)        Description
+    == =========================== ========================= ====================
+    1  `Dropdown`                  `offset_dropdown`         Offset index
+    2  `Checkbox`                  `render_centers_checkbox` Render centers flag
+    3  `Checkbox`                  `render_patches_checkbox` Render patches flag
+    4  `ToggleButton`              `background_toggle`       Background colour
+    5  `Latex`                     `background_title`        Background title
+    6  :map:`SlicingCommandWidget` `slicing_wid`             Patch index selector
+    7  :map:`LineOptionsWidget`    `bboxes_line_options_wid` Bboxes options
+    8  `HBox`                      `background_box`          Contains 5, 4
+    9  `Box`                       `render_checkboxes_box`   Contains 2, 3
+    10 `HBox`                      `render_box`              Contains 8, 9
+    11 `VBox`                      `offset_patches_box`      Contains 6, 1, 10
+    == =========================== ========================= ====================
 
     Note that:
 
-    * The selected values are stored in the ``self.selected_values`` `dict`.
-    * To set the styling please refer to the ``style()`` and
-      ``predefined_style()`` methods.
     * To update the state of the widget, please refer to the
-      ``set_widget_state()`` method.
-    * To update the callback function please refer to the
-      ``replace_render_function()`` method.
+      :meth:`set_widget_state` method.
+    * The widget has **memory** about the properties of the objects that are
+      passed into it through :meth:`set_widget_state`. Each patches object has a
+      unique key id assigned through :meth:`get_key`. Then, the options that
+      correspond to each key are stored in the ``self.default_options`` `dict`.
+    * The selected values of the current patches object are stored in the
+      ``self.selected_values`` `trait`. It is a `dict` with the following keys:
+
+      * ``patches_indices`` : (`list` or `int`) The selected patches
+        (e.g. ``list(range(n_patches))``).
+      * ``offset_index`` : (`int`) The selected offset
+      * ``background`` : (`str`) The background colour (e.g. ``'white'``).
+      * ``render_patches`` : (`bool`) Whether to render the patches.
+      * ``render_patches_bboxes`` : (`bool`) Whether to render boxes around the
+        patches.
+      * ``bboxes_line_colour`` : (`list`) The boxes line colour (e.g. ``['red']``)
+      * ``bboxes_line_style`` : (`str`) The boxes line style (e.g. ``'-'``).
+      * ``bboxes_line_width`` : (`float`) The boxes line width (e.g. ``1``).
+      * ``render_centers`` : (`bool`) Whether to render the patches' centers.
+
+    * When an unseen patches object is passed in (i.e. a key that is not included
+      in the ``self.default_options`` `dict`), it gets the following initial
+      options by default:
+
+      * ``patches_indices = list(range(n_patches))``
+      * ``offset_index = 0``
+      * ``background = 'white'``
+      * ``render_patches = True``
+      * ``render_patches_bboxes = True``
+      * ``bboxes_line_colour = ['red']``
+      * ``bboxes_line_style = '-'``
+      * ``bboxes_line_width = 1``
+      * ``render_centers = True``
+
+    * To set the styling of this widget please refer to the :meth:`style` and
+      :meth:`predefined_style` methods.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
 
     Parameters
     ----------
-    patch_options : `dict`
-        The dictionary with the initial options. For example
-        ::
-
-            patch_options = {'patches': {'command': '',
-                                         'indices': [],
-                                         'length': 68},
-                             'offset_index': 0,
-                             'n_offsets': 5,
-                             'render_centers': True,
-                             'render_centers': True,
-                             'background': 'white',
-                             'bboxes': {'render_lines': True,
-                                        'line_colour': ['r'],
-                                        'line_style': '-',
-                                        'line_width': 1}
-                            }
-
+    n_patches : `int`
+        The number of patches of the initial object.
+    n_offsets : `int`
+        The number of offsets of the initial object.
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
@@ -3398,7 +3416,7 @@ class PatchOptionsWidget(MenpoWidget):
             ``''``        No style
             ============= ============================
 
-    substyle : `str` (see below), optional
+    subwidgets_style : `str` (see below), optional
         Sets a predefined style at the widget's patches and bboxes options.
         Possible options are:
 
@@ -3424,7 +3442,7 @@ class PatchOptionsWidget(MenpoWidget):
     change and will dynamically print the selected patches and bboxes flag:
 
         >>> from menpo.visualize import print_dynamic
-        >>> def render_function(name, value):
+        >>> def render_function(change):
         >>>     s = "Patches: {}, BBoxes: {}".format(
         >>>         wid.selected_values['patches']['indices'],
         >>>         wid.selected_values['bboxes']['render_lines'])
@@ -3432,41 +3450,21 @@ class PatchOptionsWidget(MenpoWidget):
 
     Create the widget with some initial options and display it:
 
-        >>> patch_options = {'patches': {'command': '',
-        >>>                              'indices': [],
-        >>>                              'length': 68},
-        >>>                  'offset_index': 0,
-        >>>                  'n_offsets': 5,
-        >>>                  'render_centers': True,
-        >>>                  'render_patches': True,
-        >>>                  'background': 'white',
-        >>>                  'bboxes': {'render_lines': True,
-        >>>                             'line_colour': ['r'],
-        >>>                             'line_style': '-',
-        >>>                             'line_width': 1}
-        >>>                 }
-        >>> wid = PatchOptionsWidget(patch_options,
+        >>> wid = PatchOptionsWidget(n_patches=68, n_offsets=5,
         >>>                          render_function=render_function,
-        >>>                          style='info', substyle='danger')
+        >>>                          style='info', subwidgets_style='danger')
         >>> wid
 
     By playing around with the widget, printed message gets updated. Finally,
-    let's change the widget status with a new dictionary of options:
+    let's change the widget status with a new set of options:
 
-        >>> new_options = {'patches': {'command': '',
-        >>>                            'indices': [],
-        >>>                            'length':  68},
-        >>>                'offset_index': 0,
-        >>>                'n_offsets': 5,
-        >>>                'render_centers': False,
-        >>>                'render_patches': False,
-        >>>                'background': 'black',
-        >>>                'bboxes': {'render_lines': True,
-        >>>                           'line_colour': ['r'],
-        >>>                           'line_style': '-',
-        >>>                           'line_width': 1}
-        >>>                }
-        >>> wid.set_widget_state(new_options, allow_callback=False)
+        >>> wid.set_widget_state(n_patches=49, n_offsets=1, allow_callback=False)
+
+    Remember that the widget is **mnemonic**, i.e. it remembers the objects it
+    has seen and their corresponding options. These can be retrieved as:
+
+        >>> wid.default_options
+
     """
     def __init__(self, n_patches, n_offsets, render_function=None,
                  style='minimal', subwidgets_style='minimal'):
@@ -3488,8 +3486,8 @@ class PatchOptionsWidget(MenpoWidget):
             description='white', color='#000000', value=True,
             background_color='#FFFFFF')
 
-        def change_toggle_description(name, value):
-            if value:
+        def change_toggle_description(change):
+            if change['new']:
                 self.background_toggle.description = 'white'
                 self.background_toggle.background_colour = '#FFFFFF'
                 self.background_toggle.color = '#000000'
@@ -3497,8 +3495,8 @@ class PatchOptionsWidget(MenpoWidget):
                 self.background_toggle.description = 'black'
                 self.background_toggle.background_colour = '#000000'
                 self.background_toggle.color = '#FFFFFF'
-        self.background_toggle.on_trait_change(change_toggle_description,
-                                               'value')
+        self.background_toggle.observe(change_toggle_description, names='value',
+                                       type='change')
 
         self.background_title = ipywidgets.Latex(value='Background:',
                                                  margin='0.1cm')
@@ -3538,32 +3536,42 @@ class PatchOptionsWidget(MenpoWidget):
         self.predefined_style(style, subwidgets_style)
 
     def add_callbacks(self):
-        self.slicing_wid.on_trait_change(self._save_options, 'selected_values')
-        self.offset_dropdown.on_trait_change(self._save_options, 'value')
-        self.background_toggle.on_trait_change(self._save_options, 'value')
-        self.render_patches_checkbox.on_trait_change(self._save_options,
-                                                     'value')
-        self.render_centers_checkbox.on_trait_change(self._save_options,
-                                                     'value')
-        self.bboxes_line_options_wid.on_trait_change(self._save_options,
-                                                     'selected_values')
+        r"""
+        Function that adds the handler callback functions in all the widget
+        components, which are necessary for the internal functionality.
+        """
+        self.slicing_wid.observe(self._save_options, names='selected_values',
+                                 type='change')
+        self.offset_dropdown.observe(self._save_options, names='value',
+                                     type='change')
+        self.background_toggle.observe(self._save_options, names='value',
+                                       type='change')
+        self.render_patches_checkbox.observe(self._save_options, names='value',
+                                             type='change')
+        self.render_centers_checkbox.observe(self._save_options, names='value',
+                                             type='change')
+        self.bboxes_line_options_wid.observe(
+                self._save_options, names='selected_values', type='change')
 
     def remove_callbacks(self):
-        self.slicing_wid.on_trait_change(self._save_options, 'selected_values',
-                                         remove=True)
-        self.offset_dropdown.on_trait_change(self._save_options, 'value',
-                                             remove=True)
-        self.background_toggle.on_trait_change(self._save_options, 'value',
-                                               remove=True)
-        self.render_patches_checkbox.on_trait_change(self._save_options,
-                                                     'value', remove=True)
-        self.render_centers_checkbox.on_trait_change(self._save_options,
-                                                     'value', remove=True)
-        self.bboxes_line_options_wid.on_trait_change(self._save_options,
-                                                     'selected_values',
-                                                     remove=True)
+        r"""
+        Function that removes all the internal handler callback functions.
+        """
+        self.slicing_wid.unobserve(self._save_options, names='selected_values',
+                                   type='change')
+        self.offset_dropdown.unobserve(self._save_options, names='value',
+                                       type='change')
+        self.background_toggle.unobserve(self._save_options, names='value',
+                                         type='change')
+        self.render_patches_checkbox.unobserve(self._save_options,
+                                               names='value', type='change')
+        self.render_centers_checkbox.unobserve(self._save_options,
+                                               names='value', type='change')
+        self.bboxes_line_options_wid.unobserve(self._save_options,
+                                               names='selected_values',
+                                               type='change')
 
-    def _save_options(self, name, value):
+    def _save_options(self, change):
         # set background attributes
         bc, c, description = self._background_args_wrt_value(
             self.background_toggle.value)
@@ -3603,9 +3611,68 @@ class PatchOptionsWidget(MenpoWidget):
                 self.bboxes_line_options_wid.selected_values['line_width']}
 
     def get_key(self, n_patches, n_offsets):
+        r"""
+        Function that returns a unique key based on the properties of the
+        provided patches object.
+
+        Parameters
+        ----------
+        n_patches : `int`
+            The number of patches.
+        n_offsets : `int`
+            The number of offsets.
+
+        Returns
+        -------
+        key : `str`
+            The key that has the format ``'{n_patches}_{n_offsets}'``.
+        """
         return "{}_{}".format(n_patches, n_offsets)
 
     def get_default_options(self, n_patches, n_offsets):
+        r"""
+        Function that returns a `dict` with default options given the properties
+        of a patches object, i.e. `n_patches` and `n_offsets`. The function
+        returns the `dict` of options but also updates the
+        ``self.default_options`` `dict`.
+
+        Parameters
+        ----------
+        n_patches : `int`
+            The number of patches.
+        n_offsets : `int`
+            The number of offsets.
+
+        Returns
+        -------
+        default_options : `dict`
+            A `dict` with the default options. It contains:
+
+            * ``patches_indices`` : (`list` or `int`) The selected patches.
+            * ``offset_index`` : (`int`) The selected offset.
+            * ``background`` : (`str`) The background colour.
+            * ``render_patches`` : (`bool`) Whether to render the patches.
+            * ``render_patches_bboxes`` : (`bool`) Whether to render boxes around the
+              patches.
+            * ``bboxes_line_colour`` : (`list`) The boxes line colour.
+            * ``bboxes_line_style`` : (`str`) The boxes line style.
+            * ``bboxes_line_width`` : (`float`) The boxes line width.
+            * ``render_centers`` : (`bool`) Whether to render the patches centers
+
+            If the object is not seen before by the widget, then it automatically
+            gets the following default options:
+
+            * ``patches_indices = list(range(n_patches))``
+            * ``offset_index = 0``
+            * ``background = 'white'``
+            * ``render_patches = True``
+            * ``render_patches_bboxes = True``
+            * ``bboxes_line_colour = ['red']``
+            * ``bboxes_line_style = '-'``
+            * ``bboxes_line_width = 1``
+            * ``render_centers = True``
+
+        """
         # create key
         key = self.get_key(n_patches, n_offsets)
         # if the key does not exist in the default options dict, then add it
@@ -3655,66 +3722,49 @@ class PatchOptionsWidget(MenpoWidget):
 
         Parameters
         ----------
-        box_style : See Below, optional
-            Style options
+        box_style : `str` or ``None`` (see below), optional
+            Possible widget style options::
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        Default style
-                None      No style
-                ========= ============================
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
         border_colour : `str`, optional
-            The color of the border around the widget.
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
             The line width of the border around the widget.
         border_radius : `float`, optional
-            The radius of the corners of the box.
+            The radius of the border around the widget.
         padding : `float`, optional
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
-                 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
-            The font style.
+        font_style : `str` (see below), optional
+            The font style. Example options::
+
+                'normal', 'italic', 'oblique'
+
         font_weight : See Below, optional
-            The font weight.
-            Example options ::
+            The font weight. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
-                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
-                 'extra bold', 'black'}
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
 
-        bboxes_box_style : See Below, optional
-            Style options for the bounding boxes
+        bboxes_box_style : `str` or ``None`` (see below), optional
+            Style options for the bounding boxes:
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        Default style
-                None      No style
-                ========= ============================
+                'success', 'info', 'warning', 'danger', '', None
 
         bboxes_border_visible : `bool`, optional
             Defines whether to draw the border line around the bounding boxes
@@ -3731,19 +3781,10 @@ class PatchOptionsWidget(MenpoWidget):
             The padding around the bounding boxes options.
         bboxes_margin : `float`, optional
             The margin around the bounding boxes options.
-        patches_box_style : See Below, optional
-            Style options of the patches and offset options
+        patches_box_style : `str` or ``None`` (see below), optional
+            Style options of the patches and offset options:
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        Default style
-                None      No style
-                ========= ============================
+                'success', 'info', 'warning', 'danger', '', None
 
         patches_border_visible : `bool`, optional
             Defines whether to draw the border line around the patches and
@@ -3882,35 +3923,27 @@ class PatchOptionsWidget(MenpoWidget):
 
     def set_widget_state(self, n_patches, n_offsets, allow_callback=True):
         r"""
-        Method that updates the state of the widget with a new set of values.
+        Method that updates the state of the widget, if the key generated with
+        :meth:`get_key` based on the provided `n_patches` and `n_offsets`
+        is different than the current key based on ``self.n_patches`` and
+        ``self.n_offsets``.
 
         Parameters
         ----------
-        patch_options : `dict`
-            The dictionary with the new options to be used. For example
-            ::
-
-                patch_options = {'patches': {'command': '',
-                                             'indices': [],
-                                             'length': 68},
-                                 'offset_index': 0,
-                                 'n_offsets': 5,
-                                 'render_centers': True,
-                                 'render_centers': True,
-                                 'background': 'white',
-                                 'bboxes': {'render_lines': True,
-                                            'line_colour': ['r'],
-                                            'line_style': '-',
-                                            'line_width': 1}
-                                }
-
+        n_patches : `int`
+            The number of patches.
+        n_offsets : `int`
+            The number of offsets.
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
         # check if updates are required
         if (not self.default_options or
-                    self.get_key(self.n_patches, self.n_offsets) !=
-                    self.get_key(n_patches, n_offsets)):
+                self.get_key(self.n_patches, self.n_offsets) !=
+                self.get_key(n_patches, n_offsets)):
+            # keep old value
+            old_value = self.selected_values
+
             # temporarily remove callbacks
             render_function = self._render_function
             self.remove_render_function()
@@ -3955,15 +3988,15 @@ class PatchOptionsWidget(MenpoWidget):
                 line_opts, labels=None, allow_callback=False)
 
             # Get values
-            self._save_options('', None)
+            self._save_options({})
 
             # Re-assign callbacks
             self.add_callbacks()
             self.add_render_function(render_function)
 
-        # trigger render function if allowed
-        if allow_callback:
-            self._render_function('', True)
+            # trigger render function if allowed
+            if allow_callback:
+                self.call_render_function(old_value, self.selected_values)
 
 
 class PlotOptionsWidget(MenpoWidget):

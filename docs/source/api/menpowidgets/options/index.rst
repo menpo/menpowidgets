@@ -13,4 +13,5 @@ Options
   ChannelOptionsWidget
   LandmarkOptionsWidget
   RendererOptionsWidget
+  PatchOptionsWidget
 
