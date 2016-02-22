@@ -1799,131 +1799,79 @@ class RendererOptionsWidget(MenpoWidget):
     Creates a widget for selecting rendering options. The widget consists of the
     following objects from `ipywidgets` and :ref:`api-tools-index`:
 
-    == ====================== =========================== ===================
-    No Object                 Property (`self.`)          Description
-    == ====================== =========================== ===================
-    1  Dropdown               `object_selection_dropdown` The object selector
-    2  LineOptionsWidget      `options_widgets`           `list` with the
+    == ============================= =========================== ================
+    No Object                        Property (`self.`)          Description
+    == ============================= =========================== ================
+    1  :map:`LineOptionsWidget`      `options_widgets`           `list` that
 
-       MarkerOptionsWidget                                various rendering
+       :map:`MarkerOptionsWidget`                                contains the
 
-       ImageOptionsWidget                                 sub-options widgets
+       :map:`ImageOptionsWidget`                                 rendering
 
-       NumberingOptionsWidget
+       :map:`NumberingOptionsWidget`                             sub-options
 
-       FigureOptionsWidget
+       :map:`ZoomOneScaleWidget`                                 widgets
 
-       LegendOptionsWidget
+       :map:`ZoomTwoScalesWidget`
 
-       GridOptionsWidget
-    3  Tab                    `suboptions_tab`            Contains all 2
-    == ====================== =========================== ===================
+       :map:`AxesOptionsWidget`
+
+       :map:`LegendOptionsWidget`
+
+       :map:`GridOptionsWidget`
+    2  Tab                           `suboptions_tab`            Contains all 2
+    == ============================= =========================== ================
 
     Note that:
 
-    * The selected values are stored in the ``self.selected_values`` `dict`.
-    * To set the styling please refer to the ``style()`` and
-      ``predefined_style()`` methods.
     * To update the state of the widget, please refer to the
-      ``set_widget_state()`` method.
-    * To update the callback function please refer to the
-      ``replace_render_function()`` methods.
+      :meth:`set_widget_state` method.
+    * The widget has **memory** about the properties of the objects that are
+      passed into it through :meth:`set_widget_state`. Each object has a unique
+      key id assigned through :meth:`get_key`. Then, the options that correspond
+      to each key are stored in the ``self.default_options`` `dict`.
+    * The selected values of the current object object are stored in the
+      ``self.selected_values`` `trait`.
+    * When an unseen image object is passed in (i.e. a key that is not included
+      in the ``self.default_options`` `dict`), it gets the following initial
+      options by default:
+    * To set the styling of this widget please refer to the :meth:`style` and
+      :meth:`predefined_style` methods.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
 
     Parameters
     ----------
-    renderer_options : `dict`
-        The initial rendering options. For example
-        ::
-
-            lines_options = {'render_lines': True,
-                             'line_width': 1,
-                             'line_colour': ['b', 'r'],
-                             'line_style': '-'}
-            markers_options = {'render_markers': True,
-                               'marker_size': 20,
-                               'marker_face_colour': ['white', 'white'],
-                               'marker_edge_colour': ['blue', 'red'],
-                               'marker_style': 'o',
-                               'marker_edge_width': 1}
-            numbering_options = {'render_numbering': True,
-                                 'numbers_font_name': 'serif',
-                                 'numbers_font_size': 10,
-                                 'numbers_font_style': 'normal',
-                                 'numbers_font_weight': 'normal',
-                                 'numbers_font_colour': ['black'],
-                                 'numbers_horizontal_align': 'center',
-                                 'numbers_vertical_align': 'bottom'}
-            legend_options = {'render_legend': True,
-                              'legend_title': '',
-                              'legend_font_name': 'serif',
-                              'legend_font_style': 'normal',
-                              'legend_font_size': 10,
-                              'legend_font_weight': 'normal',
-                              'legend_marker_scale': 1.,
-                              'legend_location': 2,
-                              'legend_bbox_to_anchor': (1.05, 1.),
-                              'legend_border_axes_pad': 1.,
-                              'legend_n_columns': 1,
-                              'legend_horizontal_spacing': 1.,
-                              'legend_vertical_spacing': 1.,
-                              'legend_border': True,
-                              'legend_border_padding': 0.5,
-                              'legend_shadow': False,
-                              'legend_rounded_corners': True}
-            zoom_options = {'min': 0.1,
-                            'max': 4.,
-                            'step': 0.05,
-                            'zoom': 1.}
-            axes_options = {'render_axes': True,
-                            'axes_font_name': 'serif',
-                            'axes_font_size': 10,
-                            'axes_font_style': 'normal',
-                            'axes_font_weight': 'normal',
-                            'axes_x_ticks': [0, 100],
-                            'axes_y_ticks': None,
-                            'axes_limits': {'x': None,
-                                            'y': 0.1,
-                                            'x_min': 0,
-                                            'x_max': 100,
-                                            'x_step': 1,
-                                            'y_min': 0,
-                                            'y_max': 100,
-                                            'y_step': 1}}
-            grid_options = {'render_grid': True,
-                            'grid_line_style': '--',
-                            'grid_line_width': 0.5}
-            image_options = {'alpha': 1.,
-                             'interpolation': 'bilinear',
-                             'cmap_name': 'gray'}
-            renderer_options = {'lines': lines_options,
-                                'markers': markers_options,
-                                'numbering': numbering_options,
-                                'legend': legend_options,
-                                'zoom': zoom_options,
-                                'axes': axes_options,
-                                'grid': grid_options,
-                                'image': image_options}
-
     options_tabs : `list` of `str`
         `List` that defines the ordering of the options tabs. Possible values
-        are
+        are:
 
-            ============= ========================
-            Value         Returned class
-            ============= ========================
-            'lines'       `LineOptionsWidget`
-            'markers'     `MarkerOptionsWidget`
-            'numbering'   `NumberingOptionsWidget`
-            'zoom_one'    `ZoomOneScaleWidget`
-            'zoom_two'    `ZoomTwoScalesWidget`
-            'legend'      `LegendOptionsWidget`
-            'grid'        `GridOptionsWidget`
-            'image'       `ImageOptionsWidget`
-            'axes'        `AxesOptionsWidget`
-            ============= ========================
+            =============== ========================
+            Value           Returned object
+            =============== ========================
+            ``'lines'``     :map:`LineOptionsWidget`
+            ``'markers'``   :map:`MarkerOptionsWidget`
+            ``'numbering'`` :map:`NumberingOptionsWidget`
+            ``'zoom_one'``  :map:`ZoomOneScaleWidget`
+            ``'zoom_two'``  :map:`ZoomTwoScalesWidget`
+            ``'legend'``    :map:`LegendOptionsWidget`
+            ``'grid'``      :map:`GridOptionsWidget`
+            ``'image'``     :map:`ImageOptionsWidget`
+            ``'axes'``      :map:`AxesOptionsWidget`
+            =============== ========================
 
     labels : `list` or ``None``, optional
-        The `list` of labels employed by the `ColourSelectionWidget`.
+        The `list` of labels used in all :map:`ColourSelectionWidget` objects.
+    axes_x_limits : `float` or (`float`, `float`) or ``None``, optional
+        The limits of the x axis. If `float`, then it sets padding on the right
+        and left as a percentage of the rendered object's width. If `tuple` or
+        `list`, then it defines the axis limits. If ``None``, then the limits
+        are set automatically.
+    axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
+        The limits of the y axis. If `float`, then it sets padding on the
+        top and bottom as a percentage of the rendered object's height. If
+        `tuple` or `list`, then it defines the axis limits. If ``None``, then
+        the limits are set automatically.
     render_function : `function` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
@@ -1972,28 +1920,15 @@ class RendererOptionsWidget(MenpoWidget):
     width:
 
         >>> from menpo.visualize import print_dynamic
-        >>> def render_function(name, value):
+        >>> def render_function(change):
         >>>     s = "Marker face colour: {}, Line width: {}".format(
         >>>         wid.selected_values['markers']['marker_face_colour'],
         >>>         wid.selected_values['lines']['line_width'])
         >>>     print_dynamic(s)
 
-    Create the widget with some initial options and display it:
+    Create the widget with the initial options and display it:
 
-        >>> markers_options = {'render_markers': True, 'marker_size': 20,
-        >>>                    'marker_face_colour': ['w', 'w'],
-        >>>                    'marker_edge_colour': ['b', 'r'],
-        >>>                    'marker_style': 'o', 'marker_edge_width': 1}
-        >>> lines_options = {'render_lines': True, 'line_width': 1,
-        >>>                  'line_colour': ['b', 'r'], 'line_style': '-'}
-        >>> grid_options = {'render_grid': True, 'grid_line_style': '--',
-        >>>                 'grid_line_width': 0.5}
-        >>> rendering_options = {'lines': lines_options, 'grid': grid_options,
-        >>>                      'markers': markers_options}
-        >>>
-        >>> # Create and display widget
-        >>> wid = RendererOptionsWidget(rendering_options, options_tabs,
-        >>>                             labels=labels,
+        >>> wid = RendererOptionsWidget(options_tabs, labels=labels,
         >>>                             render_function=render_function,
         >>>                             style='info')
         >>> wid
@@ -2003,28 +1938,19 @@ class RendererOptionsWidget(MenpoWidget):
 
         >>> wid.predefined_style('minimal', 'info')
 
-    Finally, let's change the widget status with a new dictionary of options:
+    Finally, let's change the widget status with a new set of labels:
 
-        >>> markers_options = {'render_markers': False, 'marker_size': 20,
-        >>>                    'marker_face_colour': ['k'],
-        >>>                    'marker_edge_colour': ['c'],
-        >>>                    'marker_style': 'o', 'marker_edge_width': 1}
-        >>> lines_options = {'render_lines': False, 'line_width': 1,
-        >>>                  'line_colour': ['r'], 'line_style': '-'}
-        >>> grid_options = {'render_grid': True, 'grid_line_style': '--',
-        >>>                 'grid_line_width': 0.5}
-        >>> new_options = {'lines': lines_options, 'grid': grid_options,
-        >>>                'markers': markers_options}
-        >>>
-        >>> # Set new labels
-        >>> labels = ['1']
-        >>>
-        >>> # Update widget state
-        >>> wid.set_widget_state(new_options, labels, allow_callback=True)
+        >>> wid.set_widget_state(labels=['1'], allow_callback=True)
+
+    Remember that the widget is **mnemonic**, i.e. it remembers the objects it
+    has seen and their corresponding options. These can be retrieved as:
+
+        >>> wid.default_options
+
     """
     def __init__(self, options_tabs, labels, axes_x_limits=None,
-                 axes_y_limits=None, render_function=None,
-                 style='minimal', tabs_style='minimal'):
+                 axes_y_limits=None, render_function=None, style='minimal',
+                 tabs_style='minimal'):
         # Initialise default options dictionary
         self.default_options = {}
         self.global_options = {}
@@ -2034,7 +1960,7 @@ class RendererOptionsWidget(MenpoWidget):
         self.options_tabs = options_tabs
 
         # Get initial options
-        self.initialise_global_options(labels, axes_x_limits, axes_y_limits)
+        self.initialise_global_options(axes_x_limits, axes_y_limits)
         renderer_options = self.get_default_options(labels)
 
         # Create children
@@ -2117,7 +2043,7 @@ class RendererOptionsWidget(MenpoWidget):
         # Add callbacks
         self.add_callbacks()
 
-    def _save_options(self, name, value):
+    def _save_options(self, change):
         # update selected values
         self.selected_values = {o: self.options_widgets[i].selected_values
                                 for i, o in enumerate(self.options_tabs)}
@@ -2146,18 +2072,181 @@ class RendererOptionsWidget(MenpoWidget):
             self.global_options['axes'] = self.selected_values['axes']
 
     def add_callbacks(self):
+        r"""
+        Function that adds the handler callback functions in all the widget
+        components, which are necessary for the internal functionality.
+        """
         for wid in self.options_widgets:
-            wid.on_trait_change(self._save_options, 'selected_values')
+            wid.observe(self._save_options, names='selected_values',
+                        type='change')
 
     def remove_callbacks(self):
+        r"""
+        Function that removes all the internal handler callback functions.
+        """
         for wid in self.options_widgets:
-            wid.on_trait_change(self._save_options, 'selected_values',
-                                remove=True)
+            wid.unobserve(self._save_options, names='selected_values',
+                          type='change')
 
     def get_key(self, labels):
+        r"""
+        Function that returns a unique key based on the provided labels.
+
+        Parameters
+        ----------
+        labels : `list` or ``None``, optional
+            The `list` of labels used in all :map:`ColourSelectionWidget` objects
+
+        Returns
+        -------
+        key : `str`
+            The key that has the format ``'{labels}'``.
+        """
         return "{}".format(labels)
 
-    def initialise_global_options(self, labels, axes_x_limits, axes_y_limits):
+    def initialise_global_options(self, axes_x_limits, axes_y_limits):
+        r"""
+        Function that returns a `dict` with global options, i.e. options that do
+        not depend on `labels`.  The functions updates ``self.global_options``
+        `dict` with:
+
+        * ``image`` : (`dict`) It has the following keys:
+
+          - ``interpolation`` : (`str`) The interpolation method.
+          - ``cmap_name`` : (`str`) The colourmap.
+          - ``alpha`` : (`float`) The alpha transparency value.
+
+        * ``numbering`` : (`dict`) It has the following keys:
+
+          - ``render_numbering`` : (`bool`) Flag for rendering the numbers.
+          - ``numbers_font_name`` : (`str`) The font name.
+          - ``numbers_font_size`` : (`int`) The font size.
+          - ``numbers_font_style`` : (`str`) The font style.
+          - ``numbers_font_weight`` : (`str`) The font weight.
+          - ``numbers_font_colour`` : (`list`) The font colour.
+          - ``numbers_horizontal_align`` : (`str`) The horizontal alignment.
+          - ``numbers_vertical_align`` : (`str`) The vertical alignment.
+
+        * ``zoom_one`` : (`float`) The zoom value.
+
+        * ``zoom_two`` : (`list` of `float`) The zoom values.
+
+        * ``axes`` : (`dict`) It has the following keys:
+
+          - ``render_axes`` : (`bool`) Flag for rendering the axes.
+          - ``axes_font_name`` : (`str`) The axes font name.
+          - ``axes_font_size`` : (`int`) The axes font size.
+          - ``axes_font_style`` : (`str`) The axes font style
+          - ``axes_font_weight`` : (`str`) The font weight.
+          - ``axes_x_ticks`` : (`list` or ``None``) The x ticks.
+          - ``axes_y_ticks`` : (`list` or ``None``) The y ticks.
+          - ``axes_x_limits`` : (`float` or [`float`, `float`] or ``None``)
+            The x limits.
+          - ``axes_y_limits`` : (`float` or [`float`, `float`] or ``None``)
+            The y limits.
+
+        * ``legend`` : (`dict`) It has the following keys:
+
+          - ``render_legend`` : (`bool`) Flag for rendering the legend.
+          - ``legend_title`` : (`str`) The legend title.
+          - ``legend_font_name`` : (`str`) The font name.
+          - ``legend_font_style`` : (`str`) The font style.
+          - ``legend_font_size`` : (`str`) The font size.
+          - ``legend_font_weight`` : (`str`) The font weight.
+          - ``legend_marker_scale`` : (`float`) The marker scale.
+          - ``legend_location`` : (`int`) The legend location.
+          - ``legend_bbox_to_anchor`` : (`tuple`) Bbox to anchor.
+          - ``legend_border_axes_pad`` : (`float`) Border axes pad.
+          - ``legend_n_columns`` : (`int`) The number of columns.
+          - ``legend_horizontal_spacing`` : (`float`) Horizontal spacing.
+          - ``legend_vertical_spacing`` : (`float`) Vetical spacing.
+          - ``legend_border`` : (`bool`) Flag for adding border to the legend
+          - ``legend_border_padding`` : (`float`) The border padding
+          - ``legend_shadow`` : (`bool`) Flag for adding shadow to the legend
+          - ``legend_rounded_corners`` : (`bool`) Flag for adding rounded
+            corners to the legend.
+
+        * ``gird`` : (`dict`) It has the following keys:
+
+          - ``render_grid`` : (`bool`) Flag for rendering the grid.
+          - ``grid_line_width`` : (`int`) The line width.
+          - ``grid_line_style`` : (`str`) The line style.
+
+        If the object is not seen before by the widget, then it automatically
+        gets the following default options:
+
+        * ``image``
+
+          - ``interpolation = 'bilinear'``
+          - ``cmap_name = None``
+          - ``alpha = 1.``
+
+        * ``numbering``
+
+          - ``render_numbering = False``
+          - ``numbers_font_name = 'sans-serif'``
+          - ``numbers_font_size = 10``
+          - ``numbers_font_style = 'normal'``
+          - ``numbers_font_weight = 'normal'``
+          - ``numbers_font_colour = ['black']``
+          - ``numbers_horizontal_align = 'center'``
+          - ``numbers_vertical_align = 'bottom'``
+
+        * ``zoom_one = 1.``
+
+        * ``zoom_two = [1., 1.]``
+
+        * ``axes``
+
+          - ``render_axes = False``
+          - ``axes_font_name = 'sans-serif'``
+          - ``axes_font_size = 10``
+          - ``axes_font_style = 'normal'``
+          - ``axes_font_weight = 'normal'``
+          - ``axes_x_ticks = None``
+          - ``axes_y_ticks = None``
+          - ``axes_x_limits = axes_x_limits``
+          - ``axes_y_limits = axes_y_limits``
+
+        * ``legend``
+
+          - ``render_legend = False``
+          - ``legend_title = ''``
+          - ``legend_font_name = 'sans-serif'``
+          - ``legend_font_style = 'normal'``
+          - ``legend_font_size = 10``
+          - ``legend_font_weight = 'normal'``
+          - ``legend_marker_scale = 1.``
+          - ``legend_location = 2``
+          - ``legend_bbox_to_anchor = (1.05, 1.)``
+          - ``legend_border_axes_pad = 1.``
+          - ``legend_n_columns = 1``
+          - ``legend_horizontal_spacing = 1.``
+          - ``legend_vertical_spacing = 1.``
+          - ``legend_border = True``
+          - ``legend_border_padding = 0.5``
+          - ``legend_shadow = False``
+          - ``legend_rounded_corners = False``
+
+        * ``grid``
+
+          - ``render_grid = False``
+          - ``grid_line_width = 0.5``
+          - ``grid_line_style = '--'``
+
+        Parameters
+        ----------
+        axes_x_limits : `float` or (`float`, `float`) or ``None``, optional
+            The limits of the x axis. If `float`, then it sets padding on the
+            right and left as a percentage of the rendered object's width. If
+            `tuple` or `list`, then it defines the axis limits. If ``None``,
+            then the limits are set automatically.
+        axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
+            The limits of the y axis. If `float`, then it sets padding on the
+            top and bottom as a percentage of the rendered object's height. If
+            `tuple` or `list`, then it defines the axis limits. If ``None``, then
+            the limits are set automatically.
+        """
         self.global_options = {}
         for o in self.options_tabs:
             if o == 'image':
@@ -2204,6 +2293,58 @@ class RendererOptionsWidget(MenpoWidget):
                     'grid_line_width': 0.5}
 
     def get_default_options(self, labels):
+        r"""
+        Function that returns a `dict` with default options given a `list` of
+        labels. The function returns the `dict` of options but also updates the
+        ``self.default_options`` `dict`.
+
+        Parameters
+        ----------
+        labels : `list` or ``None``, optional
+            The `list` of labels used in all :map:`ColourSelectionWidget` objects
+
+        Returns
+        -------
+        default_options : `dict`
+            A `dict` with the default options. It contains:
+
+            * ``lines`` : (`dict`) It has the following keys:
+
+              - ``render_lines`` : (`bool`) Whether to render the lines.
+              - ``line_width`` : (`float`) The width of the lines.
+              - ``line_style`` : (`str`) The style of the lines.
+              - ``line_colour`` : (`list`) The colour per label.
+
+            * ``markers`` : (`dict`) It has the following keys:
+
+              - ``render_markers`` : (`bool`) Whether to render the markers.
+              - ``marker_size`` : (`int`) The size of the markers.
+              - ``marker_style`` : (`str`) The style of the markers.
+              - ``marker_face_colour`` : (`list`) The face colour per label.
+              - ``marker_edge_colour`` : (`list`) The edge colour per label.
+              - ``marker_edge_width`` : (`float`) The edge width of the markers.
+
+            If the object is not seen before by the widget, then it automatically
+            gets the following default options:
+
+            * ``lines``
+
+              - ``render_lines = True``
+              - ``line_width = 1``
+              - ``line_style = '-``
+              - ``line_colour = ['red'] if labels is None else colours``
+
+            * ``markers``
+
+              - ``render_markers = True``
+              - ``marker_size = 5``
+              - ``marker_style = 'o'``
+              - ``marker_face_colour = ['red'] if labels is None else colours``
+              - ``marker_edge_colour = ['black'] if labels is None else colours``
+              - ``marker_edge_width = 1``
+
+            where ``colours = sample_colours_from_colourmap(len(labels), 'jet')``
+        """
         # create key
         key = self.get_key(labels)
         # if the key does not exist in the default options dict, then add it
@@ -2240,47 +2381,29 @@ class RendererOptionsWidget(MenpoWidget):
 
         Parameters
         ----------
-        box_style : See Below, optional
-            Style options
+        box_style : `str` or ``None`` (see below), optional
+            Possible widget style options::
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        Default style
-                None      No style
-                ========= ============================
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
         border_colour : `str`, optional
-            The color of the border around the widget.
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
             The line width of the border around the widget.
         border_radius : `float`, optional
-            The radius of the corners of the box.
+            The radius of the border around the widget.
         padding : `float`, optional
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        tabs_box_style : See Below, optional
-            Style options
+        tabs_box_style : `str` or ``None`` (see below), optional
+            Possible tab widgets style options::
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        Default style
-                None      No style
-                ========= ============================
+                'success', 'info', 'warning', 'danger', '', None
 
         tabs_border_visible : `bool`, optional
             Defines whether to draw the border line around the tab widgets.
@@ -2296,24 +2419,26 @@ class RendererOptionsWidget(MenpoWidget):
             The padding around the tab widgets.
         tabs_margin : `float`, optional
             The margin around the tab widgets.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
-                 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
-            The font style.
-        font_weight : See Below, optional
-            The font weight.
-            Example options ::
+        font_style : `str` (see below), optional
+            The font style. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
-                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
-                 'extra bold', 'black'}
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
+
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
@@ -2406,92 +2531,22 @@ class RendererOptionsWidget(MenpoWidget):
 
     def set_widget_state(self, labels, allow_callback=True):
         r"""
-        Method that updates the state of the widget with a new set of values.
-        Note that the number of objects should not change.
+        Method that updates the state of the widget, if the provided `labels`
+        are different than ``self.labels``.
 
         Parameters
         ----------
-        renderer_options : `dict`
-            The initial rendering options. For example
-            ::
-
-                lines_options = {'render_lines': True,
-                                 'line_width': 1,
-                                 'line_colour': ['b', 'r'],
-                                 'line_style': '-'}
-                markers_options = {'render_markers': True,
-                                   'marker_size': 20,
-                                   'marker_face_colour': ['white', 'white'],
-                                   'marker_edge_colour': ['blue', 'red'],
-                                   'marker_style': 'o',
-                                   'marker_edge_width': 1}
-                numbering_options = {'render_numbering': True,
-                                     'numbers_font_name': 'serif',
-                                     'numbers_font_size': 10,
-                                     'numbers_font_style': 'normal',
-                                     'numbers_font_weight': 'normal',
-                                     'numbers_font_colour': ['black'],
-                                     'numbers_horizontal_align': 'center',
-                                     'numbers_vertical_align': 'bottom'}
-                legend_options = {'render_legend': True,
-                                  'legend_title': '',
-                                  'legend_font_name': 'serif',
-                                  'legend_font_style': 'normal',
-                                  'legend_font_size': 10,
-                                  'legend_font_weight': 'normal',
-                                  'legend_marker_scale': 1.,
-                                  'legend_location': 2,
-                                  'legend_bbox_to_anchor': (1.05, 1.),
-                                  'legend_border_axes_pad': 1.,
-                                  'legend_n_columns': 1,
-                                  'legend_horizontal_spacing': 1.,
-                                  'legend_vertical_spacing': 1.,
-                                  'legend_border': True,
-                                  'legend_border_padding': 0.5,
-                                  'legend_shadow': False,
-                                  'legend_rounded_corners': True}
-                zoom_options = {'min': 0.1,
-                                'max': 4.,
-                                'step': 0.05,
-                                'zoom': 1.}
-                axes_options = {'render_axes': True,
-                                'axes_font_name': 'serif',
-                                'axes_font_size': 10,
-                                'axes_font_style': 'normal',
-                                'axes_font_weight': 'normal',
-                                'axes_x_ticks': [0, 100],
-                                'axes_y_ticks': None,
-                                'axes_limits': {'x': None,
-                                                'y': 0.1,
-                                                'x_min': 0,
-                                                'x_max': 100,
-                                                'x_step': 1,
-                                                'y_min': 0,
-                                                'y_max': 100,
-                                                'y_step': 1}}
-                grid_options = {'render_grid': True,
-                                'grid_line_style': '--',
-                                'grid_line_width': 0.5}
-                image_options = {'alpha': 1.,
-                                 'interpolation': 'bilinear',
-                                 'cmap_name': 'gray'}
-                renderer_options = {'lines': lines_options,
-                                    'markers': markers_options,
-                                    'numbering': numbering_options,
-                                    'legend': legend_options,
-                                    'zoom': zoom_options,
-                                    'axes': axes_options,
-                                    'grid': grid_options,
-                                    'image': image_options}
-
         labels : `list` or ``None``, optional
-            The `list` of labels employed by the `ColourSelectionWidget`.
+            The `list` of labels used in all :map:`ColourSelectionWidget` objects
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
         # check if updates are required
         if (not self.default_options or
                 self.get_key(self.labels) != self.get_key(labels)):
+            # keep old value
+            old_value = self.selected_values
+
             # Temporarily remove callbacks
             render_function = self._render_function
             self.remove_render_function()
@@ -2516,15 +2571,15 @@ class RendererOptionsWidget(MenpoWidget):
                     allow_callback=False)
 
             # Get values
-            self._save_options('', None)
+            self._save_options({})
 
             # Add callbacks
             self.add_callbacks()
             self.add_render_function(render_function)
 
-        # trigger render function if allowed
-        if allow_callback:
-            self._render_function('', True)
+            # trigger render function if allowed
+            if allow_callback:
+                self.call_render_function(old_value, self.selected_values)
 
 
 class SaveFigureOptionsWidget(ipywidgets.FlexBox):
