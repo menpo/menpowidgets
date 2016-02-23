@@ -14,4 +14,7 @@ Options
   LandmarkOptionsWidget
   RendererOptionsWidget
   PatchOptionsWidget
+  TextPrintWidget
+  FeatureOptionsWidget
+  SaveFigureOptionsWidget
 

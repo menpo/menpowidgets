@@ -1499,7 +1499,6 @@ class LandmarkOptionsWidget(MenpoWidget):
                 ``'danger'``  Red-based style
                 ``''``        No style
                 ============= ============================
-
         """
         if style == 'minimal':
             self.style(box_style=None, border_visible=True,
@@ -1606,20 +1605,18 @@ class LandmarkOptionsWidget(MenpoWidget):
 class TextPrintWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for printing text. Specifically, it consists of a `list`
-    of `IPython.html.widgets.Latex` objects, i.e. one per text line.
+    of `ipywidgets.Latex` objects, i.e. one per text line.
 
     Note that:
 
-    * To set the styling please refer to the ``style()`` and
-      ``predefined_style()`` methods.
+    * To set the styling please refer to the :meth:`style` and
+      :meth:`predefined_style` methods.
     * To update the state of the widget, please refer to the
-      ``set_widget_state()`` method.
+      :meth:`set_widget_state` method.
 
     Parameters
     ----------
-    n_lines : `int`
-        The number of lines of the text to be printed.
-    text_per_line : `list` of length `n_lines`
+    text_per_line : `list` of `str`
         The text to be printed per line.
     style : `str` (see below), optional
         Sets a predefined style at the widget. Possible options are:
@@ -1644,9 +1641,8 @@ class TextPrintWidget(ipywidgets.FlexBox):
 
     Create the widget with some initial options and display it:
 
-        >>> n_lines = 3
         >>> text_per_line = ['> The', '> Menpo', '> Team']
-        >>> wid = TextPrintWidget(n_lines, text_per_line, style='success')
+        >>> wid = TextPrintWidget(text_per_line, style='success')
         >>> wid
 
     The style of the widget can be changed as:
@@ -1655,9 +1651,10 @@ class TextPrintWidget(ipywidgets.FlexBox):
 
     Update the widget state as:
 
-        >>> wid.set_widget_state(5, ['M', 'E', 'N', 'P', 'O'])
+        >>> wid.set_widget_state(['M', 'E', 'N', 'P', 'O'])
     """
-    def __init__(self, n_lines, text_per_line, style='minimal'):
+    def __init__(self, text_per_line, style='minimal'):
+        n_lines = len(text_per_line)
         self.latex_texts = [ipywidgets.Latex(value=text_per_line[i])
                             for i in range(n_lines)]
         super(TextPrintWidget, self).__init__(children=self.latex_texts)
@@ -1679,53 +1676,44 @@ class TextPrintWidget(ipywidgets.FlexBox):
 
         Parameters
         ----------
-        box_style : See Below, optional
-            Style options
+        box_style : `str` or ``None`` (see below), optional
+            Possible widget style options::
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        Default style
-                None      No style
-                ========= ============================
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
         border_colour : `str`, optional
-            The color of the border around the widget.
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
             The line width of the border around the widget.
         border_radius : `float`, optional
-            The radius of the corners of the box.
+            The radius of the border around the widget.
         padding : `float`, optional
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
-                 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
-            The font style.
+        font_style : `str` (see below), optional
+            The font style. Example options::
+
+                'normal', 'italic', 'oblique'
+
         font_weight : See Below, optional
-            The font weight.
-            Example options ::
+            The font weight. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
-                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
-                 'extra bold', 'black'}
-
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
@@ -1771,18 +1759,17 @@ class TextPrintWidget(ipywidgets.FlexBox):
             raise ValueError('style must be minimal or info or success or '
                              'danger or warning')
 
-    def set_widget_state(self, n_lines, text_per_line):
+    def set_widget_state(self, text_per_line):
         r"""
-        Method that updates the state of the widget with a new set of values.
+        Method that updates the state of the widget with a new `list` of lines.
 
         Parameters
         ----------
-        n_lines : `int`
-            The number of lines of the text to be printed.
-        text_per_line : `list` of length `n_lines`
+        text_per_line : `list` of `str`
             The text to be printed per line.
         """
         # Check if n_lines has changed
+        n_lines = len(text_per_line)
         if n_lines != self.n_lines:
             self.latex_texts = [ipywidgets.Latex(value=text_per_line[i])
                                 for i in range(n_lines)]
@@ -2438,7 +2425,6 @@ class RendererOptionsWidget(MenpoWidget):
                 'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
                 'extra bold', 'black'
-
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
@@ -2585,58 +2571,56 @@ class RendererOptionsWidget(MenpoWidget):
 class SaveFigureOptionsWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for saving a figure to file. The widget consists of the
-    following objects from `IPython.html.widgets` and
-    :ref:`api-tools-index`:
+    following objects from `ipywidgets` and :ref:`api-tools-index`:
 
-    == ===================== ====================== ==========================
-    No Object                Property (`self.`)     Description
-    == ===================== ====================== ==========================
-    1  Select                `file_format_select`   Image format selector
-    2  FloatText             `dpi_text`             DPI selector
-    3  Dropdown              `orientation_dropdown` Paper orientation selector
-    4  Select                `papertype_select`     Paper type selector
-    5  Checkbox              `transparent_checkbox` Transparency setter
-    6  ColourSelectionWidget `facecolour_widget`    Face colour selector
-    7  ColourSelectionWidget `edgecolour_widget`    Edge colour selector
-    8  FloatText             `pad_inches_text`      Padding in inches setter
-    9  Text                  `filename_text`        Path and filename
-    10 Checkbox              `overwrite_checkbox`   Overwrite flag
-    11 Latex                 `error_latex`          Error message area
-    12 Button                `save_button`          Save button
-    13 VBox                  `path_box`             Contains 9, 1, 10, 4
-    14 VBox                  `page_box`             Contains 3, 2, 8
-    15 VBox                  `colour_box`           Contains 6, 7, 5
-    16 Tab                   `options_tabs`         Contains 13, 14, 15
-    17 HBox                  `save_box`             Contains 12, 11
-    18 VBox                  `options_box`          Contains 16, 17
-    == ===================== ====================== ==========================
+    == ============================ ====================== =====================
+    No Object                       Property (`self.`)     Description
+    == ============================ ====================== =====================
+    1  `Select`                     `file_format_select`   Image format selector
+    2  `FloatText`                  `dpi_text`             DPI selector
+    3  `Dropdown`                   `orientation_dropdown` Paper orientation
+    4  `Select`                     `papertype_select`     Paper type selector
+    5  `Checkbox`                   `transparent_checkbox` Transparency setter
+    6  :map:`ColourSelectionWidget` `facecolour_widget`    Face colour selector
+    7  :map:`ColourSelectionWidget` `edgecolour_widget`    Edge colour selector
+    8  `FloatText`                  `pad_inches_text`      Padding in inches
+    9  `Text`                       `filename_text`        Path and filename
+    10 `Checkbox`                   `overwrite_checkbox`   Overwrite flag
+    11 `Latex`                      `error_latex`          Error message area
+    12 `Button`                     `save_button`          Save button
+    13 `VBox`                       `path_box`             Contains 9, 1, 10, 4
+    14 `VBox`                       `page_box`             Contains 3, 2, 8
+    15 `VBox`                       `colour_box`           Contains 6, 7, 5
+    16 `Tab`                        `options_tabs`         Contains 13, 14, 15
+    17 `HBox`                       `save_box`             Contains 12, 11
+    18 `VBox`                       `options_box`          Contains 16, 17
+    == ============================ ====================== =====================
 
-    To set the styling please refer to the ``style()`` and
-    ``predefined_style()`` methods.
+    To set the styling of this widget please refer to the :meth:`style` and
+    :meth:`predefined_style` methods.
 
     Parameters
     ----------
-    renderer : :map:`Renderer` class or subclass
+    renderer : `menpo.visualize.Renderer` or subclass or ``None``
         The renderer object that was used to render the figure.
     file_format : `str`, optional
         The initial value of the file format.
     dpi : `float` or ``None``, optional
         The initial value of the dpi. If ``None``, then dpi is set to ``0``.
-    orientation : {``'portrait'``, ``'landscape'``}, optional
-        The initial value of the orientation.
-    papertype : `str`, optional
-        The initial value of the paper type.
-        Possible options are ::
+    orientation : ``{'portrait', 'landscape'}``, optional
+        The initial value of the paper orientation.
+    paper_type : `str`, optional
+        The initial value of the paper type. Possible options are::
 
-            {'letter', 'legal', 'executive', 'ledger', 'a0', 'a1', 'a2', 'a3',
-             'a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'a10', 'b0', 'b1', 'b2', 'b3',
-             'b4', 'b5', 'b6', 'b7', 'b8', 'b9', 'b10'}
+            'letter', 'legal', 'executive', 'ledger', 'a0', 'a1', 'a2', 'a3',
+            'a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'a10', 'b0', 'b1', 'b2', 'b3',
+            'b4', 'b5', 'b6', 'b7', 'b8', 'b9', 'b10'
 
     transparent : `bool`, optional
         The initial value of the transparency flag.
-    facecolour : `str` or `list` of `float`, optional
+    face_colour : `str` or `list` of `float`, optional
         The initial value of the face colour.
-    edgecolour : `str` or `list` of `float`, optional
+    edge_colour : `str` or `list` of `float`, optional
         The initial value of the edge colour.
     pad_inches : `float`, optional
         The initial value of the figure padding in inches.
@@ -2657,8 +2641,8 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
             ============= ============================
     """
     def __init__(self, renderer=None, file_format='png', dpi=None,
-                 orientation='portrait', papertype='letter', transparent=False,
-                 facecolour='white', edgecolour='white', pad_inches=0.,
+                 orientation='portrait', paper_type='letter', transparent=False,
+                 face_colour='white', edge_colour='white', pad_inches=0.,
                  overwrite=False, style='minimal'):
         from os import getcwd
         from os.path import join, splitext
@@ -2712,14 +2696,14 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
         papertype_dict['b9'] = 'b9'
         papertype_dict['b10'] = 'b10'
         self.papertype_select = ipywidgets.Select(
-            options=papertype_dict, value=papertype, description='Paper type',
+            options=papertype_dict, value=paper_type, description='Paper type',
             visible=file_format == 'ps', width='3cm')
         self.transparent_checkbox = ipywidgets.Checkbox(
             description='Transparent', value=transparent)
         self.facecolour_widget = ColourSelectionWidget(
-            [facecolour], render_function=None, description='Face colour')
+            [face_colour], render_function=None, description='Face colour')
         self.edgecolour_widget = ColourSelectionWidget(
-            [edgecolour], render_function=None, description='Edge colour')
+            [edge_colour], render_function=None, description='Edge colour')
         self.pad_inches_text = ipywidgets.FloatText(description='Pad (inch)',
                                                     value=pad_inches)
         self.filename_text = ipywidgets.Text(
@@ -2771,14 +2755,16 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
         self.predefined_style(style)
 
         # Set functionality
-        def papertype_visibility(name, value):
-            self.papertype_select.visible = value == 'ps'
-        self.file_format_select.on_trait_change(papertype_visibility, 'value')
+        def paper_type_visibility(change):
+            self.papertype_select.visible = change['new'] == 'ps'
+        self.file_format_select.observe(paper_type_visibility, names='value',
+                                        type='change')
 
-        def set_extension(name, value):
+        def set_extension(change):
             file_name, file_extension = splitext(self.filename_text.value)
-            self.filename_text.value = file_name + '.' + value
-        self.file_format_select.on_trait_change(set_extension, 'value')
+            self.filename_text.value = file_name + '.' + change['new']
+        self.file_format_select.observe(set_extension, names='value',
+                                        type='change')
 
         def save_function(name):
             # set save button state
@@ -2805,13 +2791,13 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
                     overwrite=self.overwrite_checkbox.value)
                 self.error_latex.value = ''
             except ValueError as e:
-                if (e.message == 'File already exists. Please set the '
-                                 'overwrite kwarg if you wish to overwrite '
-                                 'the file.'):
+                e = str(e)
+                if (e == 'File already exists. Please set the overwrite kwarg '
+                         'if you wish to overwrite the file.'):
                     self.error_latex.value = 'File exists! ' \
                                              'Tick overwrite to replace it.'
                 else:
-                    self.error_latex.value = e.message
+                    self.error_latex.value = e
 
             # set save button state
             self.save_button.description = '  Save'
@@ -2827,52 +2813,44 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
 
         Parameters
         ----------
-        box_style : See Below, optional
-            Style options
+        box_style : `str` or ``None`` (see below), optional
+            Possible widget style options::
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        Default style
-                None      No style
-                ========= ============================
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
         border_colour : `str`, optional
-            The color of the border around the widget.
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
             The line width of the border around the widget.
         border_radius : `float`, optional
-            The radius of the corners of the box.
+            The radius of the border around the widget.
         padding : `float`, optional
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
-                 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
-            The font style.
-        font_weight : See Below, optional
-            The font weight.
-            Example options ::
+        font_style : `str` (see below), optional
+            The font style. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
-                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
-                 'extra bold', 'black'}
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
@@ -2945,30 +2923,35 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
 
 class FeatureOptionsWidget(ipywidgets.FlexBox):
     r"""
-    Creates a widget for selecting feature options. Specifically, it consists
-    of:
+    Creates a widget for selecting feature options. The widget consists of the
+    following objects from `ipywidgets` and :ref:`api-tools-index`:
 
-        1) RadioButtons [`self.feature_radiobuttons`]: select feature type
-        2) DSIFTOptionsWidget [`self.dsift_options_widget`]: dsift options widget
-        3) HOGOptionsWidget [`self.hog_options_widget`]: hog options widget
-        4) IGOOptionsWidget [`self.igo_options_widget`]: igo options widget
-        5) LBPOptionsWidget [`self.lbp_options_widget`]: lbp options widget
-        6) DaisyOptionsWidget [`self.daisy_options_widget`]: daisy options
-           widget
-        7) Latex [`self.no_options_widget`]: message for no options available
-        8) Box [`self.per_feature_options_box`]: box that contains (2), (3),
-           (4), (5), (6) and (7)
-        9) Image [`self.preview_image`]: lenna image
-        10) Latex [`self.preview_input_latex`]: the initial image information
-        11) Latex [`self.preview_output_latex`]: the output image information
-        12) Latex [`self.preview_time_latex`]: the timing information
-        13) VBox [`self.preview_box`]: box that contains (9), (10), (11), (12)
-        14) Tab [`self.options_box`]: box that contains (1), (8) and (13)
+    == ========================= ========================= =====================
+    No Object                    Property (`self.`)        Description
+    == ========================= ========================= =====================
+    1  `RadioButtons`            `feature_radiobuttons`    Feature type selector
+    2  :map:`DSIFTOptionsWidget` `dsift_options_widget`    DSIFT options
+    3  :map:`HOGOptionsWidget`   `hog_options_widget`      HOG options
+    4  :map:`IGOOptionsWidget`   `igo_options_widget`      IGO options
+    5  :map:`LBPOptionsWidget`   `lbp_options_widget`      LBP options
+    6  :map:`DaisyOptionsWidget` `daisy_options_widget`    Daisy options
+    7  `Latex`                   `no_options_widget`       No options available
+    8  `Box`                     `per_feature_options_box` Contains 2 - 7
+    9  `Image`                   `preview_image`           Contains 6, 7
+    10 `Latex`                   `preview_input_latex`     Contains 5, 9
+    11 `Latex`                   `preview_output_latex`    Contains 3, 2
+    12 `Latex`                   `preview_time_latex`      Contains 4, 10
+    13 `VBox`                    `preview_box`             Contains 9 - 12
+    14 `Tab`                     `options_box`             Contains 1, 8, 13
+    == ========================= ========================= =====================
 
-    To set the styling of this widget please refer to the `style()` method. The
-    widget stores the features `function` to `self.features_function`, the
-    features options `dict` in `self.features_options` and the `partial`
-    function with the options as `self.function`.
+    Note that:
+
+    * To set the styling please refer to the :meth:`style` and
+      :meth:`predefined_style` methods.
+    * The widget stores the features `function` to ``self.features_function``,
+      the features options `dict` in ``self.features_options`` and the `partial`
+      function with the options as ``self.function``.
 
     Parameters
     ----------
@@ -3088,7 +3071,8 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
         self.predefined_style(style)
 
         # Set functionality
-        def per_feature_options_visibility(name, value):
+        def per_feature_options_visibility(change):
+            value = change['new']
             if value == dsift:
                 self.igo_options_widget.visible = False
                 self.lbp_options_widget.visible = False
@@ -3135,11 +3119,11 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
                     if f == value:
                         self.no_options_widget.value = \
                             "{}: No available options.".format(name)
-        self.feature_radiobuttons.on_trait_change(
-            per_feature_options_visibility, 'value')
-        per_feature_options_visibility('', no_op)
+        self.feature_radiobuttons.observe(per_feature_options_visibility,
+                                          names='value', type='change')
+        per_feature_options_visibility({'new': no_op})
 
-        def get_function(name, value):
+        def get_function(change):
             # get options
             if self.feature_radiobuttons.value == dsift:
                 opts = self.dsift_options_widget.selected_values
@@ -3157,13 +3141,15 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
             func = partial(self.feature_radiobuttons.value, **opts)
             # store function
             self.function = func
-            self.features_function = value
+            self.features_function = self.feature_radiobuttons.value
             self.features_options = opts
-        self.feature_radiobuttons.on_trait_change(get_function, 'value')
-        self.options_box.on_trait_change(get_function, 'selected_index')
+        self.feature_radiobuttons.observe(get_function, names='value',
+                                          type='change')
+        self.options_box.observe(get_function, names='selected_index',
+                                 type='change')
 
-        def preview_function(name, old_value, value):
-            if value == 2:
+        def preview_function(change):
+            if change['new'] == 2:
                 # extracting features message
                 val1 = ''
                 for name, f in tmp.items():
@@ -3196,10 +3182,11 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
                 self.preview_output_latex.value = \
                     "{}: {}W x {}H x {}C".format(val1, val2, val3, val4)
                 self.preview_time_latex.value = "{0:.2f} secs elapsed".format(t)
-            if old_value == 2:
+            if change['old'] == 2:
                 self.preview_input_latex.visible = False
                 self.preview_image.visible = False
-        self.options_box.on_trait_change(preview_function, 'selected_index')
+        self.options_box.observe(preview_function, names='selected_index',
+                                 type='change')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -3210,52 +3197,44 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
 
         Parameters
         ----------
-        box_style : See Below, optional
-            Style options
+        box_style : `str` or ``None`` (see below), optional
+            Possible widget style options::
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        Default style
-                None      No style
-                ========= ============================
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
         border_colour : `str`, optional
-            The color of the border around the widget.
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
             The line width of the border around the widget.
         border_radius : `float`, optional
-            The radius of the corners of the box.
+            The radius of the border around the widget.
         padding : `float`, optional
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
-                 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
-            The font style.
-        font_weight : See Below, optional
-            The font weight.
-            Example options ::
+        font_style : `str` (see below), optional
+            The font style. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
-                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
-                 'extra bold', 'black'}
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
         """
         format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
@@ -3869,7 +3848,6 @@ class PatchOptionsWidget(MenpoWidget):
                 ``'danger'``  Red-based style
                 ``''``        No style
                 ============= ============================
-
         """
         if style == 'minimal':
             box_style = None
