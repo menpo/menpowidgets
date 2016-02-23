@@ -31,7 +31,7 @@ class MenpoWidget(ipywidgets.FlexBox):
         - ``old`` : the old value of the modified trait attribute
         - ``new`` : the new value of the modified trait attribute
         - ``name`` : the name of the modified trait attribute.
-        - ``type``: ``'change'``
+        - ``type`` : ``'change'``
 
         If ``None``, then nothing is added.
     orientation : {``'horizontal'``, ``'vertical'``}, optional
@@ -74,7 +74,7 @@ class MenpoWidget(ipywidgets.FlexBox):
             - ``old`` : the old value of the modified trait attribute
             - ``new`` : the new value of the modified trait attribute
             - ``name`` : the name of the modified trait attribute.
-            - ``type``: ``'change'``
+            - ``type`` : ``'change'``
 
             If ``None``, then nothing is added.
         """
@@ -112,7 +112,7 @@ class MenpoWidget(ipywidgets.FlexBox):
             - ``old`` : the old value of the modified trait attribute
             - ``new`` : the new value of the modified trait attribute
             - ``name`` : the name of the modified trait attribute.
-            - ``type``: ``'change'``
+            - ``type`` : ``'change'``
 
             If ``None``, then nothing is added.
         """

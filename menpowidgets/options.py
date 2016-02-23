@@ -60,8 +60,17 @@ class AnimationOptionsWidget(MenpoWidget):
         * ``step`` : (`int`) The index step (e.g. ``1``).
         * ``index`` : (`int`) The index value (e.g. ``10``).
 
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
+        It must have signature ``render_function(change)`` where ``change`` is
+        a `dict` with the following keys:
+
+        * ``type`` : The type of notification (normally ``'change'``).
+        * ``owner`` : the `HasTraits` instance
+        * ``old`` : the old value of the modified trait attribute
+        * ``new`` : the new value of the modified trait attribute
+        * ``name`` : the name of the modified trait attribute.
+
         If ``None``, then nothing is assigned.
     index_style : ``{'buttons', 'slider'}``, optional
         If ``'buttons'``, then :map:`IndexButtonsWidget` class is called. If
@@ -533,8 +542,17 @@ class ChannelOptionsWidget(MenpoWidget):
     image_is_masked : `bool`
         Whether the initial image object is masked or not. If ``True``, then the
         image is assumed to be a `menpo.image.MaskedImage` object.
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
+        It must have signature ``render_function(change)`` where ``change`` is
+        a `dict` with the following keys:
+
+        * ``type`` : The type of notification (normally ``'change'``).
+        * ``owner`` : the `HasTraits` instance
+        * ``old`` : the old value of the modified trait attribute
+        * ``new`` : the new value of the modified trait attribute
+        * ``name`` : the name of the modified trait attribute.
+
         If ``None``, then nothing is assigned.
     style : `str` (see below), optional
         Sets a predefined style at the widget. Possible options are:
@@ -1108,8 +1126,17 @@ class LandmarkOptionsWidget(MenpoWidget):
     labels_keys : `list` of `list` of `str` or ``None``
         The `list` of labels per landmark group. If ``None``, then no labels are
         available.
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
+        It must have signature ``render_function(change)`` where ``change`` is
+        a `dict` with the following keys:
+
+        * ``type`` : The type of notification (normally ``'change'``).
+        * ``owner`` : the `HasTraits` instance
+        * ``old`` : the old value of the modified trait attribute
+        * ``new`` : the new value of the modified trait attribute
+        * ``name`` : the name of the modified trait attribute.
+
         If ``None``, then nothing is assigned.
     renderer_widget : :map:`RendererOptionsWidget` or ``None``, optional
         The :map:`RendererOptionsWidget` that is created and needs to be linked
@@ -1822,6 +1849,84 @@ class RendererOptionsWidget(MenpoWidget):
     * When an unseen image object is passed in (i.e. a key that is not included
       in the ``self.default_options`` `dict`), it gets the following initial
       options by default:
+
+      * ``lines``
+
+        - ``render_lines = True``
+        - ``line_width = 1``
+        - ``line_style = '-``
+        - ``line_colour = ['red'] if labels is None else colours``
+
+      * ``markers``
+
+        - ``render_markers = True``
+        - ``marker_size = 5``
+        - ``marker_style = 'o'``
+        - ``marker_face_colour = ['red'] if labels is None else colours``
+        - ``marker_edge_colour = ['black'] if labels is None else colours``
+        - ``marker_edge_width = 1``
+
+      where ``colours = sample_colours_from_colourmap(len(labels), 'jet')``
+
+      * ``image``
+
+        - ``interpolation = 'bilinear'``
+        - ``cmap_name = None``
+        - ``alpha = 1.``
+
+      * ``numbering``
+
+        - ``render_numbering = False``
+        - ``numbers_font_name = 'sans-serif'``
+        - ``numbers_font_size = 10``
+        - ``numbers_font_style = 'normal'``
+        - ``numbers_font_weight = 'normal'``
+        - ``numbers_font_colour = ['black']``
+        - ``numbers_horizontal_align = 'center'``
+        - ``numbers_vertical_align = 'bottom'``
+
+      * ``zoom_one = 1.``
+
+      * ``zoom_two = [1., 1.]``
+
+      * ``axes``
+
+        - ``render_axes = False``
+        - ``axes_font_name = 'sans-serif'``
+        - ``axes_font_size = 10``
+        - ``axes_font_style = 'normal'``
+        - ``axes_font_weight = 'normal'``
+        - ``axes_x_ticks = None``
+        - ``axes_y_ticks = None``
+        - ``axes_x_limits = axes_x_limits``
+        - ``axes_y_limits = axes_y_limits``
+
+      * ``legend``
+
+        - ``render_legend = False``
+        - ``legend_title = ''``
+        - ``legend_font_name = 'sans-serif'``
+        - ``legend_font_style = 'normal'``
+        - ``legend_font_size = 10``
+        - ``legend_font_weight = 'normal'``
+        - ``legend_marker_scale = 1.``
+        - ``legend_location = 2``
+        - ``legend_bbox_to_anchor = (1.05, 1.)``
+        - ``legend_border_axes_pad = 1.``
+        - ``legend_n_columns = 1``
+        - ``legend_horizontal_spacing = 1.``
+        - ``legend_vertical_spacing = 1.``
+        - ``legend_border = True``
+        - ``legend_border_padding = 0.5``
+        - ``legend_shadow = False``
+        - ``legend_rounded_corners = False``
+
+      * ``grid``
+
+        - ``render_grid = False``
+        - ``grid_line_width = 0.5``
+        - ``grid_line_style = '--'``
+
     * To set the styling of this widget please refer to the :meth:`style` and
       :meth:`predefined_style` methods.
     * To update the handler callback function of the widget, please refer to the
@@ -1859,8 +1964,17 @@ class RendererOptionsWidget(MenpoWidget):
         top and bottom as a percentage of the rendered object's height. If
         `tuple` or `list`, then it defines the axis limits. If ``None``, then
         the limits are set automatically.
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
+        It must have signature ``render_function(change)`` where ``change`` is
+        a `dict` with the following keys:
+
+        * ``type`` : The type of notification (normally ``'change'``).
+        * ``owner`` : the `HasTraits` instance
+        * ``old`` : the old value of the modified trait attribute
+        * ``new`` : the new value of the modified trait attribute
+        * ``name`` : the name of the modified trait attribute.
+
         If ``None``, then nothing is assigned.
     style : `str` (see below), optional
         Sets a predefined style at the widget. Possible options are:
@@ -3378,8 +3492,17 @@ class PatchOptionsWidget(MenpoWidget):
         The number of patches of the initial object.
     n_offsets : `int`
         The number of offsets of the initial object.
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
+        It must have signature ``render_function(change)`` where ``change`` is
+        a `dict` with the following keys:
+
+        * ``type`` : The type of notification (normally ``'change'``).
+        * ``owner`` : the `HasTraits` instance
+        * ``old`` : the old value of the modified trait attribute
+        * ``new`` : the new value of the modified trait attribute
+        * ``name`` : the name of the modified trait attribute.
+
         If ``None``, then nothing is assigned.
     style : `str` (see below), optional
         Sets a predefined style at the widget. Possible options are:
@@ -3980,88 +4103,55 @@ class PatchOptionsWidget(MenpoWidget):
 class PlotOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting options for rendering various curves in a
-    graph. The widget consists of the following objects from
-    `IPython.html.widgets` and :ref:`api-tools-index`:
+    graph. The widget consists of the following objects from `ipywidgets` and
+    :ref:`api-tools-index`:
 
-    == ===================== ======================= =======================
-    No Object                Property (`self.`)      Description
-    == ===================== ======================= =======================
-    1  RendererOptionsWidget `renderer_widget`       The rendering widget
-    2  FloatRangeSlider      `x_limit`               Sets the x limit
-    3  FloatRangeSlider      `y_limit`               Sets the y limit
-    4  Text                  `x_label`               Sets the x label
-    5  Text                  `y_label`               Sets the y label
-    6  Text                  `title`                 Sets the title
-    7  Textarea              `legend_entries`        Sets the legend entries
-    8  VBox                  `graph_related_options` Contains 2 - 7
-    9  Tab                   `options_tab`           Contains 8, 1
-    == ===================== ======================= =======================
+    == ========================== ====================== =====================
+    No Object                     Property (`self.`)     Description
+    == ========================== ====================== =====================
+    1  :map:`LineOptionsWidget`   `lines_wid`            Line options widget
+    2  :map:`MarkerOptionsWidget` `markers_wid`          Marker options widget
+    3  `Dropdown`                 `curves_dropdown`      Curve selector
+    4  `Tab`                      `lines_markers_tab`    Contains 1, 2
+    5  `VBox`                     `lines_markers_box`    Contains 3, 4
+    6  :map:`LegendOptionsWidget` `legend_wid`           Legend options widget
+    7  :map:`AxesOptionsWidget`   `axes_wid`             Axes options widget
+    8  :map:`ZoomTwoScalesWidget` `zoom_wid`             Zoom options widget
+    9  :map:`GridOptionsWidget`   `grid_wid`             Grid options widget
+    10 `Text`                     `x_label`              X label text
+    11 `Text`                     `y_label`              Y label text
+    12 `Text`                     `title`                Title text
+    13 `Textarea`                 `legend_entries_text`  Legend entries text
+    14 `VBox`                     `plot_related_options` Contains 10 - 13
+    15 `Tab`                      `options_tab`          Contains 14, 5 - 9
+    == ========================== ====================== =====================
 
     Note that:
 
-    * The selected values are stored in the ``self.selected_values`` `dict`.
-    * To set the styling please refer to the ``style()`` and
-      ``predefined_style()`` methods.
-    * To update the state of the widget, please refer to the
-      ``set_widget_state()`` method.
-    * To update the callback function please refer to the
-      ``replace_render_function()`` methods.
+    * The widget has **memory** about the properties of the objects that are
+      passed into it through `legend_entries`.
+    * The selected values of the current object object are stored in the
+      ``self.selected_values`` `trait`.
+    * To set the styling of this widget please refer to the :meth:`style` and
+      :meth:`predefined_style` methods.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
 
     Parameters
     ----------
-    graph_options : `list` of `str`
-        The initial options. For example, in case we had two curves to render
-        ::
-
-            graph_options = {'legend_entries': ['Nontas', 'Leda'],
-                             'x_label': 'X',
-                             'y_label': 'Y',
-                             'title': 'TITLE',
-                             'x_axis_limits': (2, 7),
-                             'y_axis_limits': (-0.2, 0.2),
-                             'render_lines': [True, True],
-                             'line_colour': ['r', 'b'],
-                             'line_style': ['--', '-'],
-                             'line_width': [1, 3],
-                             'render_markers': [True, False],
-                             'marker_style': ['o', 's'],
-                             'marker_size': [6, 12],
-                             'marker_face_colour': ['k', 'm'],
-                             'marker_edge_colour': ['w', 'c'],
-                             'marker_edge_width': [1, 4],
-                             'render_legend': True,
-                             'legend_title': '',
-                             'legend_font_name': 'sans-serif',
-                             'legend_font_style': 'normal',
-                             'legend_font_size': 10,
-                             'legend_font_weight': 'normal',
-                             'legend_marker_scale': 1.,
-                             'legend_location': 2,
-                             'legend_bbox_to_anchor': (1.05, 1.),
-                             'legend_border_axes_pad': 0.,
-                             'legend_n_columns': 1,
-                             'legend_horizontal_spacing': 0,
-                             'legend_vertical_spacing': 0,
-                             'legend_border': True,
-                             'legend_border_padding': 0,
-                             'legend_shadow': False,
-                             'legend_rounded_corners': False,
-                             'render_axes': True,
-                             'axes_font_name': 'sans-serif',
-                             'axes_font_size': 10,
-                             'axes_font_style': 'normal',
-                             'axes_font_weight': 'normal',
-                             'figure_size': (10, 8),
-                             'render_grid': True,
-                             'grid_line_style': '--',
-                             'grid_line_width': 1}
-
-    x_slider_options : (`float`, `float`, `float`)
-        The attributes of the x limit slider in the form (`min`, `max`, `step`).
-    y_slider_options : (`float`, `float`, `float`)
-        The attributes of the y limit slider in the form (`min`, `max`, `step`).
-    render_function : `function` or ``None``, optional
+    legend_entries : `list` of `str`
+        The `list` of legend entries per curve.
+    render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
+        It must have signature ``render_function(change)`` where ``change`` is
+        a `dict` with the following keys:
+
+        * ``type`` : The type of notification (normally ``'change'``).
+        * ``owner`` : the `HasTraits` instance
+        * ``old`` : the old value of the modified trait attribute
+        * ``new`` : the new value of the modified trait attribute
+        * ``name`` : the name of the modified trait attribute.
+
         If ``None``, then nothing is assigned.
     style : `str` (see below), optional
         Sets a predefined style at the widget. Possible options are:
@@ -4090,6 +4180,39 @@ class PlotOptionsWidget(MenpoWidget):
             ``'danger'``  Red-based style
             ``''``        No style
             ============= ============================
+
+    Example
+    -------
+    Let's create a plot options widget. Firstly, we need to import it:
+
+        >>> from menpowidgets.options import PlotOptionsWidget
+
+    Let's set some legend entries:
+
+        >>> legend_entries = ['method_1', 'method_2']
+
+    Now let's define a render function that will get called on every widget
+    change and will dynamically print the selected marker face colour and line
+    width:
+
+        >>> from menpo.visualize import print_dynamic
+        >>> def render_function(change):
+        >>>     s = "Marker edge colours: {}, Line widths: {}".format(
+        >>>         wid.selected_values['marker_edge_colour'],
+        >>>         wid.selected_values['line_width'])
+        >>>     print_dynamic(s)
+
+    Create the widget with the initial options and display it:
+
+        >>> wid = PlotOptionsWidget(legend_entries,
+        >>>                         render_function=render_function,
+        >>>                         style='danger', tabs_style='info')
+        >>> wid
+
+    By playing around, the printed message gets updated. The style of the widget
+    can be changed as:
+
+        >>> wid.predefined_style('minimal', 'info')
 
     """
     def __init__(self, legend_entries, render_function=None, style='minimal',
@@ -4204,7 +4327,7 @@ class PlotOptionsWidget(MenpoWidget):
         self.predefined_style(style, tabs_style)
 
         # Set functionality
-        def get_legend_entries(name, value):
+        def get_legend_entries(change):
             # get legend entries
             tmp_entries = str(self.legend_entries_text.value).splitlines()
             if len(tmp_entries) < self.n_curves:
@@ -4221,9 +4344,10 @@ class PlotOptionsWidget(MenpoWidget):
             if self.curves_dropdown.value == 0 and self.n_curves > 1:
                 self.curves_dropdown.value = 1
             self.curves_dropdown.value = 0
-        self.legend_entries_text.on_trait_change(get_legend_entries, 'value')
+        self.legend_entries_text.observe(get_legend_entries, names='value',
+                                         type='change')
 
-        def save_options(name, value):
+        def save_options(change):
             # get lines and markers options
             k = self.curves_dropdown.value
             render_lines = list(self.selected_values['render_lines'])
@@ -4288,25 +4412,32 @@ class PlotOptionsWidget(MenpoWidget):
                 'render_grid': self.grid_wid.selected_values['render_grid'],
                 'grid_line_style': self.grid_wid.selected_values['grid_line_style'],
                 'grid_line_width': self.grid_wid.selected_values['grid_line_width']}
-        self.title.on_trait_change(save_options, 'value')
-        self.x_label.on_trait_change(save_options, 'value')
-        self.y_label.on_trait_change(save_options, 'value')
-        self.legend_entries_text.on_trait_change(save_options, 'value')
-        self.lines_wid.on_trait_change(save_options, 'selected_values')
-        self.markers_wid.on_trait_change(save_options, 'selected_values')
-        self.axes_wid.on_trait_change(save_options, 'selected_values')
-        self.legend_wid.on_trait_change(save_options, 'selected_values')
-        self.grid_wid.on_trait_change(save_options, 'selected_values')
-        self.zoom_wid.on_trait_change(save_options, 'selected_values')
+        self.title.observe(save_options, names='value', type='change')
+        self.x_label.observe(save_options, names='value', type='change')
+        self.y_label.observe(save_options, names='value', type='change')
+        self.legend_entries_text.observe(save_options, names='value',
+                                         type='change')
+        self.lines_wid.observe(save_options, names='selected_values',
+                               type='change')
+        self.markers_wid.observe(save_options, names='selected_values',
+                                 type='change')
+        self.axes_wid.observe(save_options, names='selected_values',
+                              type='change')
+        self.legend_wid.observe(save_options, names='selected_values',
+                                type='change')
+        self.grid_wid.observe(save_options, names='selected_values',
+                              type='change')
+        self.zoom_wid.observe(save_options, names='selected_values',
+                              type='change')
 
-        def update_lines_markers(name, value):
+        def update_lines_markers(change):
             k = self.curves_dropdown.value
 
             # remove save options callback
-            self.lines_wid.on_trait_change(save_options, 'selected_values',
-                                           remove=True)
-            self.markers_wid.on_trait_change(save_options, 'selected_values',
-                                             remove=True)
+            self.lines_wid.unobserve(save_options, names='selected_values',
+                                     type='change')
+            self.markers_wid.unobserve(save_options, names='selected_values',
+                                       type='change')
 
             # update lines
             self.lines_wid.set_widget_state(
@@ -4326,19 +4457,72 @@ class PlotOptionsWidget(MenpoWidget):
                 labels=None, allow_callback=False)
 
             # add save options callback
-            self.lines_wid.on_trait_change(save_options, 'selected_values')
-            self.markers_wid.on_trait_change(save_options, 'selected_values')
-        self.curves_dropdown.on_trait_change(update_lines_markers, 'value')
+            self.lines_wid.observe(save_options, names='selected_values',
+                                   type='change')
+            self.markers_wid.observe(save_options, names='selected_values',
+                                     type='change')
+        self.curves_dropdown.observe(update_lines_markers, names='value',
+                                     type='change')
 
     def create_default_options(self):
+        r"""
+        Function that returns a `dict` with default options. The returned
+        `dict` has the following default keys and values:
+
+        * ``title = ''``
+        * ``x_label = ''``
+        * ``y_label = ''``
+        * ``render_legend = True``
+        * ``legend_title = ''``
+        * ``legend_font_name = 'sans-serif'``
+        * ``legend_font_style = 'normal'``
+        * ``legend_font_size = 10``
+        * ``legend_font_weight = 'normal'``
+        * ``legend_marker_scale = 1.``
+        * ``legend_location = 2``
+        * ``legend_bbox_to_anchor = (1.05, 1.)``
+        * ``legend_border_axes_pad = 1.``
+        * ``legend_n_columns = 1``
+        * ``legend_horizontal_spacing = 1.``
+        * ``legend_vertical_spacing = 1.``
+        * ``legend_border = True``
+        * ``legend_border_padding = 0.5``
+        * ``legend_shadow = False``
+        * ``legend_rounded_corners = False``
+        * ``render_axes = True``
+        * ``axes_font_name = 'sans-serif'``
+        * ``axes_font_size = 10``
+        * ``axes_font_style = 'normal'``
+        * ``axes_font_weight = 'normal'``
+        * ``axes_x_limits = None``
+        * ``axes_y_limits = None``
+        * ``axes_x_ticks = None``
+        * ``axes_y_ticks = None``
+        * ``render_grid = True``
+        * ``grid_line_style = '--'``
+        * ``grid_line_width = 0.5``
+        * ``render_lines = [True] * self.n_curves``
+        * ``line_width = [1] * self.n_curves``
+        * ``line_colour = colours if self.n_curves > 1 else ['red']``
+        * ``line_style = ['-'] * self.n_curves``
+        * ``render_markers = [True] * self.n_curves``
+        * ``marker_size = [7] * self.n_curves``
+        * ``marker_face_colour = ['white'] * self.n_curves``
+        * ``marker_edge_colour = colours if self.n_curves > 1 else ['red']``
+        * ``marker_style = ['s'] * self.n_curves``
+        * ``marker_edge_width = [2.] * self.n_curves``
+        * ``zoom = [1., 1.]``
+
+        where ``colours = sample_colours_from_colourmap(self.n_curves, 'jet')``.
+        """
         render_lines = [True] * self.n_curves
         line_style = ['-'] * self.n_curves
         line_width = [1] * self.n_curves
         render_markers = [True] * self.n_curves
         marker_style = ['s'] * self.n_curves
-        marker_size = [10] * self.n_curves
+        marker_size = [7] * self.n_curves
         marker_face_colour = ['white'] * self.n_curves
-        marker_edge_width = [1.] * self.n_curves
+        marker_edge_width = [2.] * self.n_curves
         line_colour = ['red']
         marker_edge_colour = ['red']
         if self.n_curves > 1:
@@ -4376,7 +4560,7 @@ class PlotOptionsWidget(MenpoWidget):
         tmp_lines = tmp_lines[:-1]
         return unicode().join(tmp_lines)
 
-    def style(self, box_style=None, border_visible=False, border_color='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0,
               padding='0.2cm', margin=0, tabs_box_style=None,
               tabs_border_visible=True, tabs_border_colour='black',
@@ -4388,52 +4572,34 @@ class PlotOptionsWidget(MenpoWidget):
 
         Parameters
         ----------
-        box_style : See Below, optional
-            Style options
+        box_style : `str` or ``None`` (see below), optional
+            Possible widget style options::
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        Default style
-                None      No style
-                ========= ============================
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
-        border_color : `str`, optional
-            The color of the border around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
             The line width of the border around the widget.
         border_radius : `float`, optional
-            The radius of the corners of the box.
+            The radius of the border around the widget.
         padding : `float`, optional
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
         tabs_box_style : See Below, optional
-            Style options
+            Possible tab widgets style options::
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        Default style
-                None      No style
-                ========= ============================
+                'success', 'info', 'warning', 'danger', '', None
 
         tabs_border_visible : `bool`, optional
             Defines whether to draw the border line around the tab widgets.
-        tabs_border_color : `str`, optional
-            The color of the border around the tab widgets.
+        tabs_border_colour : `str`, optional
+            The colour of the border around the tab widgets.
         tabs_border_style : `str`, optional
             The line style of the border around the tab widgets.
         tabs_border_width : `float`, optional
@@ -4444,60 +4610,27 @@ class PlotOptionsWidget(MenpoWidget):
             The padding around the tab widgets.
         tabs_margin : `float`, optional
             The margin around the tab widgets.
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-        renderer_tabs_box_style : See Below, optional
-            Style options
-
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        Default style
-                None      No style
-                ========= ============================
-
-        renderer_tabs_border_visible : `bool`, optional
-            Defines whether to draw the border line around the tab widgets of
-            the renderer widget.
-        renderer_tabs_border_color : `str`, optional
-            The color of the border around the tab widgets of the renderer
-            widget.
-        renderer_tabs_border_style : `str`, optional
-            The line style of the border around the tab widgets of the renderer
-            widget.
-        renderer_tabs_border_width : `float`, optional
-            The line width of the border around the tab widgets of the renderer
-            widget.
-        renderer_tabs_border_radius : `float`, optional
-            The radius of the corners of the box of the tab widgets of the
-            renderer widget.
-        renderer_tabs_padding : `float`, optional
-            The padding around the tab widgets of the renderer widget.
-        renderer_tabs_margin : `float`, optional
-            The margin around the tab widgets of the renderer widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
-
-                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
-                 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
-            The font style.
-        font_weight : See Below, optional
-            The font weight.
-            Example options ::
+        font_style : `str` (see below), optional
+            The font style. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
-                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
-                 'extra bold', 'black'}
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
         """
-        format_box(self, box_style, border_visible, border_color, border_style,
+        format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
         format_box(self.lines_markers_box, box_style=tabs_box_style,
                    border_visible=tabs_border_style,
@@ -4605,7 +4738,7 @@ class PlotOptionsWidget(MenpoWidget):
             tabs_padding = '0.2cm'
 
         if style == 'minimal':
-            self.style(box_style='', border_visible=True, border_color='black',
+            self.style(box_style='', border_visible=True, border_colour='black',
                        border_style='solid', border_width=1, border_radius=0,
                        padding='0.2cm', margin='0.5cm', font_family='',
                        font_size=None, font_style='', font_weight='',
@@ -4618,7 +4751,7 @@ class PlotOptionsWidget(MenpoWidget):
         elif (style == 'info' or style == 'success' or style == 'danger' or
                       style == 'warning'):
             self.style(box_style=style, border_visible=True,
-                       border_color=map_styles_to_hex_colours(style),
+                       border_colour=map_styles_to_hex_colours(style),
                        border_style='solid', border_width=1, border_radius=10,
                        padding='0.2cm', margin='0.5cm', font_family='',
                        font_size=None, font_style='', font_weight='',
@@ -4637,51 +4770,71 @@ class LinearModelParametersWidget(MenpoWidget):
     r"""
     Creates a widget for selecting parameters values when visualizing a linear
     model (e.g. PCA model). The widget consists of the following objects from
-    `IPython.html.widgets`:
+    `ipywidgets`:
 
-    == =========== ================== ==========================
-    No Object      Property (`self.`) Description
-    == =========== ================== ==========================
-    1  Button      `plot_button`      The plot variance button
-    2  Button      `reset_button`     The reset button
-    3  HBox        `plot_and_reset`   Contains 1, 2
-                         If mode is 'single'
-    ------------------------------------------------------------
-    4  FloatSlider `slider`           The parameter value slider
-    5  Dropdown    `dropdown_params`  The parameter selector
-    6  HBox        `parameters_wid`   Contains 4, 5
-                         If mode is 'multiple'
-    ------------------------------------------------------------
-    7  FloatSlider `sliders`          `list` of all sliders
-    8  VBox        `parameters_wid`   Contains all 7
-    == =========== ================== ==========================
+    == ============= ================== ==========================
+    No Object        Property (`self.`) Description
+    == ============= ================== ==========================
+    1  `Button`      `plot_button`      The plot variance button
+    2  `Button`      `reset_button`     The reset button
+    3  `HBox`        `plot_and_reset`   Contains 1, 2
+    == ============= ================== ==========================
+
+    If ``mode = 'single'``, then:
+
+    == ============= ================== ==========================
+    No Object        Property (`self.`) Description
+    == ============= ================== ==========================
+    4  `FloatSlider` `slider`           The parameter value slider
+    5  `Dropdown`    `dropdown_params`  The parameter selector
+    6  `HBox`        `parameters_wid`   Contains 4, 5
+    == ============= ================== ==========================
+
+    If ``mode = 'multiple'``, then:
+
+    == ============= ================== ==========================
+    No Object        Property (`self.`) Description
+    == ============= ================== ==========================
+    7  `FloatSlider` `sliders`          `list` of all sliders
+    8  `VBox`        `parameters_wid`   Contains all 7
+    == ============= ================== ==========================
 
     Note that:
 
-    * The selected parameters are stored in the ``self.parameters`` `list`.
-    * To set the styling please refer to the ``style()`` and
-      ``predefined_style()`` methods.
     * To update the state of the widget, please refer to the
-      ``set_widget_state()`` method.
-    * To update the callback function please refer to the
-      ``replace_render_function()`` and ``replace_variance_function()``
+      :meth:`set_widget_state` method.
+    * The selected values are stored in the ``self.selected_values`` `trait`
+      which is a `list`.
+    * To set the styling of this widget please refer to the :meth:`style` and
+      :meth:`predefined_style` methods.
+    * To update the handler callback functions of the widget, please refer to
+      the :meth:`replace_render_function` and :meth:`replace_variance_function`
       methods.
 
     Parameters
     ----------
-    parameters : `list`
+    n_parameters : `int`
         The `list` of initial parameters values.
-    render_function : `function` or ``None``, optional
+    render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
+        It must have signature ``render_function(change)`` where ``change`` is
+        a `dict` with the following keys:
+
+        * ``type`` : The type of notification (normally ``'change'``).
+        * ``owner`` : the `HasTraits` instance
+        * ``old`` : the old value of the modified trait attribute
+        * ``new`` : the new value of the modified trait attribute
+        * ``name`` : the name of the modified trait attribute.
+
         If ``None``, then nothing is assigned.
-    mode : {``'single'``, ``'multiple'``}, optional
+    mode : ``{'single', 'multiple'}``, optional
         If ``'single'``, only a single slider is constructed along with a
         dropdown menu that allows the parameter selection.
         If ``'multiple'``, a slider is constructed for each parameter.
     params_str : `str`, optional
         The string that will be used as description of the slider(s). The final
-        description has the form `"{}{}".format(params_str, p)`, where `p` is
-        the parameter number.
+        description has the form ``"{}{}".format(params_str, p)``, where ``p``
+        is the parameter number.
     params_bounds : (`float`, `float`), optional
         The minimum and maximum bounds, in std units, for the sliders.
     params_step : `float`, optional
@@ -4689,7 +4842,7 @@ class LinearModelParametersWidget(MenpoWidget):
     plot_variance_visible : `bool`, optional
         Defines whether the button for plotting the variance will be visible
         upon construction.
-    plot_variance_function : `function` or ``None``, optional
+    plot_variance_function : `callable` or ``None``, optional
         The plot function that is executed when the plot variance button is
         clicked. If ``None``, then nothing is assigned.
     style : `str` (see below), optional
@@ -4711,20 +4864,19 @@ class LinearModelParametersWidget(MenpoWidget):
     Let's create a linear model parameters values widget and then update its
     state. Firstly, we need to import it:
 
-        >>> from menpowidgets.options_old import LinearModelParametersWidget
+        >>> from menpowidgets.options import LinearModelParametersWidget
 
     Now let's define a render function that will get called on every widget
     change and will dynamically print the selected parameters:
 
         >>> from menpo.visualize import print_dynamic
-        >>> def render_function(name, value):
-        >>>     s = "Selected parameters: {}".format(wid.parameters)
+        >>> def render_function(change):
+        >>>     s = "Selected parameters: {}".format(wid.selected_values)
         >>>     print_dynamic(s)
 
     Create the widget with some initial options and display it:
 
-        >>> parameters = [-3., -2., -1., 0., 1., 2., 3.]
-        >>> wid = LinearModelParametersWidget(parameters,
+        >>> wid = LinearModelParametersWidget(n_parameters=5,
         >>>                                   render_function=render_function,
         >>>                                   params_str='Parameter ',
         >>>                                   mode='multiple',
@@ -4736,7 +4888,7 @@ class LinearModelParametersWidget(MenpoWidget):
     By moving the sliders, the printed message gets updated. Finally, let's
     change the widget status with a new set of options:
 
-        >>> wid.set_widget_state(parameters=[-7.] * 3, params_str='',
+        >>> wid.set_widget_state(n_parameters=10, params_str='',
         >>>                      params_step=0.1, params_bounds=(-10, 10),
         >>>                      plot_variance_visible=False,
         >>>                      allow_callback=True)
@@ -4779,12 +4931,15 @@ class LinearModelParametersWidget(MenpoWidget):
                                               margin='0.05cm')
         self.plot_and_reset = ipywidgets.HBox(children=[self.plot_button,
                                                         self.reset_button])
+        self.options_box = ipywidgets.VBox(
+                children=[self.parameters_wid, self.plot_and_reset],
+                align='end')
 
         # Create final widget
-        children = [self.parameters_wid, self.plot_and_reset]
+        children = [self.options_box]
         super(LinearModelParametersWidget, self).__init__(
-            children, List, [0.] * n_parameters, render_function=render_function,
-            orientation='vertical', align='end')
+                children, List, [0.] * n_parameters,
+                render_function=render_function)
 
         # Assign output
         self.n_parameters = n_parameters
@@ -4800,48 +4955,35 @@ class LinearModelParametersWidget(MenpoWidget):
         # Set functionality
         if mode == 'single':
             # Assign slider value to parameters values list
-            def save_slider_value(name, value):
+            def save_slider_value(change):
                 current_parameters = list(self.selected_values)
-                current_parameters[self.dropdown_params.value] = value
+                current_parameters[self.dropdown_params.value] = change['new']
                 self.selected_values = current_parameters
-            self.slider.on_trait_change(save_slider_value, 'value')
+            self.slider.observe(save_slider_value, names='value', type='change')
 
             # Set correct value to slider when drop down menu value changes
-            def set_slider_value(name, value):
+            def set_slider_value(change):
                 # Temporarily remove render callback
-                render_function = self._render_function
+                render_fun = self._render_function
                 self.remove_render_function()
                 # Set slider value
-                self.slider.value = self.parameters[value]
+                self.slider.value = self.parameters[change['new']]
                 # Re-assign render callback
-                self.add_render_function(render_function)
-            self.dropdown_params.on_trait_change(set_slider_value, 'value')
+                self.add_render_function(render_fun)
+            self.dropdown_params.observe(set_slider_value, names='value',
+                                         type='change')
         else:
-            # Assign slider value to parameters values list
-            def save_slider_value_from_id(description, name, value):
-                current_parameters = list(self.selected_values)
-                i = int(description[len(params_str)::])
-                current_parameters[i] = value
-                self.selected_values = current_parameters
-
-            # Partial function that helps get the widget's description str
-            def partial_widget(description):
-                return lambda name, value: save_slider_value_from_id(
-                    description, name, value)
-
             # Assign saving values and main plotting function to all sliders
             for w in self.sliders:
-                # The widget (w) is lexically scoped and so we need a way of
-                # ensuring that we don't just receive the final value of w at
-                # every iteration. Therefore we create another lambda function
-                # that creates a new lexical scoping so that we can ensure the
-                # value of w is maintained (as x) at each iteration.
-                # In JavaScript, we would just use the 'let' keyword...
-                w.on_trait_change(partial_widget(w.description), 'value')
+                w.observe(self._save_slider_value_from_id, names='value',
+                          type='change')
 
         def reset_parameters(name):
+            # Keep old value
+            old_value = self.selected_values
+
             # Temporarily remove render callback
-            render_function = self._render_function
+            render_fun = self._render_function
             self.remove_render_function()
 
             # Set parameters to 0
@@ -4854,16 +4996,22 @@ class LinearModelParametersWidget(MenpoWidget):
                 self.parameters_wid.children[1].value = 0.
 
             # Re-assign render callback and trigger it
-            self.add_render_function(render_function)
-            if self._render_function is not None:
-                self._render_function('', True)
+            self.add_render_function(render_fun)
+            self.call_render_function(old_value, self.selected_values)
         self.reset_button.on_click(reset_parameters)
 
         # Set plot variance function
         self._variance_function = None
         self.add_variance_function(plot_variance_function)
 
-    def style(self, box_style=None, border_visible=False, border_color='black',
+    def _save_slider_value_from_id(self, change):
+        current_parameters = list(self.selected_values)
+        description = change['owner'].description
+        i = int(description[len(self.params_str)::])
+        current_parameters[i] = change['new']
+        self.selected_values = current_parameters
+
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight='', slider_width='', slider_handle_colour=None,
@@ -4873,75 +5021,57 @@ class LinearModelParametersWidget(MenpoWidget):
 
         Parameters
         ----------
-        box_style : See Below, optional
-            Style options
+        box_style : `str` or ``None`` (see below), optional
+            Possible widget style options::
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        Default style
-                None      No style
-                ========= ============================
+                'success', 'info', 'warning', 'danger', '', None
 
         border_visible : `bool`, optional
             Defines whether to draw the border line around the widget.
-        border_color : `str`, optional
-            The color of the border around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
         border_style : `str`, optional
             The line style of the border around the widget.
         border_width : `float`, optional
             The line width of the border around the widget.
         border_radius : `float`, optional
-            The radius of the corners of the box.
+            The radius of the border around the widget.
         padding : `float`, optional
             The padding around the widget.
         margin : `float`, optional
             The margin around the widget.
-        font_family : See Below, optional
-            The font family to be used.
-            Example options ::
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
 
-                {'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
-                 'helvetica'}
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
 
         font_size : `int`, optional
             The font size.
-        font_style : {``'normal'``, ``'italic'``, ``'oblique'``}, optional
-            The font style.
-        font_weight : See Below, optional
-            The font weight.
-            Example options ::
+        font_style : `str` (see below), optional
+            The font style. Example options::
 
-                {'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
-                 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
-                 'extra bold', 'black'}
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
 
         slider_width : `str`, optional
             The width of the slider(s).
         slider_handle_colour : `str`, optional
             The colour of the handle(s) of the slider(s).
-        slider_background_colour : `str`, optional
-            The background colour of the slider(s).
-        buttons_style : See Below, optional
-            Style options
+        slider_bar_colour : `str`, optional
+            The bar colour of the slider(s).
+        buttons_style : `str` or ``None`` (see below), optional
+            Style options:
 
-                ========= ============================
-                Style     Description
-                ========= ============================
-                'primary' Blue-based style
-                'success' Green-based style
-                'info'    Blue-based style
-                'warning' Yellow-based style
-                'danger'  Red-based style
-                ''        Default style
-                None      No style
-                ========= ============================
+                'success', 'info', 'warning', 'danger', 'primary', '', None
         """
-        format_box(self, box_style, border_visible, border_color, border_style,
+        format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
         format_font(self, font_family, font_size, font_style, font_weight)
         format_font(self.reset_button, font_family, font_size, font_style,
@@ -4990,7 +5120,7 @@ class LinearModelParametersWidget(MenpoWidget):
         """
         if style == 'minimal':
             self.style(box_style=None, border_visible=True,
-                       border_color='black', border_style='solid',
+                       border_colour='black', border_style='solid',
                        border_width=1, border_radius=0, padding='0.2cm',
                        margin='0.3cm', font_family='', font_size=None,
                        font_style='', font_weight='', slider_width='',
@@ -4999,7 +5129,7 @@ class LinearModelParametersWidget(MenpoWidget):
         elif (style == 'info' or style == 'success' or style == 'danger' or
                     style == 'warning'):
             self.style(box_style=style, border_visible=True,
-                       border_color=map_styles_to_hex_colours(style),
+                       border_colour=map_styles_to_hex_colours(style),
                        border_style='solid', border_width=1, border_radius=10,
                        padding='0.2cm', margin='0.3cm', font_family='',
                        font_size=None, font_style='', font_weight='',
@@ -5013,12 +5143,11 @@ class LinearModelParametersWidget(MenpoWidget):
     def add_variance_function(self, variance_function):
         r"""
         Method that adds a `variance_function()` to the `Variance` button of the
-        widget. The signature of the given function is also stored in
-        `self._variance_function`.
+        widget. The given function is also stored in `self._variance_function`.
 
         Parameters
         ----------
-        variance_function : `function` or ``None``, optional
+        variance_function : `callable` or ``None``, optional
             The variance function that behaves as a callback. If ``None``,
             then nothing is added.
         """
@@ -5042,7 +5171,7 @@ class LinearModelParametersWidget(MenpoWidget):
 
         Parameters
         ----------
-        variance_function : `function` or ``None``, optional
+        variance_function : `callable` or ``None``, optional
             The variance function that behaves as a callback. If ``None``,
             then nothing happens.
         """
@@ -5060,25 +5189,25 @@ class LinearModelParametersWidget(MenpoWidget):
 
         Parameters
         ----------
-        parameters : `list` or ``None``, optional
-            The `list` of new parameters' values. If ``None``, then nothing
-            changes.
-        params_str : `str` or ``None``, optional
+        n_parameters : `int`
+            The `list` of initial parameters values.
+        params_str : `str`, optional
             The string that will be used as description of the slider(s). The
-            final description has the form `"{}{}".format(params_str, p)`, where
-            `p` is the parameter number. If ``None``, then nothing changes.
-        params_bounds : (`float`, `float`) or ``None``, optional
-            The minimum and maximum bounds, in std units, for the sliders. If
-            ``None``, then nothing changes.
-        params_step : `float` or ``None``, optional
-            The step, in std units, of the sliders. If ``None``, then nothing
-            changes.
+            final description has the form ``"{}{}".format(params_str, p)``,
+            where ``p`` is the parameter number.
+        params_bounds : (`float`, `float`), optional
+            The minimum and maximum bounds, in std units, for the sliders.
+        params_step : `float`, optional
+            The step, in std units, of the sliders.
         plot_variance_visible : `bool`, optional
-            Defines whether the button for plotting the variance will be
-            visible.
+            Defines whether the button for plotting the variance will be visible
+            upon construction.
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
+        # Keep old value
+        old_value = self.selected_values
+
         # Temporarily remove render callback
         render_function = self._render_function
         self.remove_render_function()
@@ -5128,28 +5257,10 @@ class LinearModelParametersWidget(MenpoWidget):
                 # Set sliders as the children of the container
                 self.parameters_wid.children = self.sliders
 
-                # Assign slider value to parameters values list
-                def save_slider_value_from_id(description, name, value):
-                    current_parameters = list(self.selected_values)
-                    i = int(description[len(params_str)::])
-                    current_parameters[i] = value
-                    self.selected_values = current_parameters
-
-                # Partial function that helps get the widget's description str
-                def partial_widget(description):
-                    return lambda name, value: save_slider_value_from_id(
-                        description, name, value)
-
                 # Assign saving values and main plotting function to all sliders
                 for w in self.sliders:
-                    # The widget (w) is lexically scoped and so we need a way of
-                    # ensuring that we don't just receive the final value of w
-                    # at every iteration. Therefore we create another lambda
-                    # function that creates a new lexical scoping so that we can
-                    # ensure the value of w is maintained (as x) at each
-                    # iteration. In JavaScript, we would just use the 'let'
-                    # keyword...
-                    w.on_trait_change(partial_widget(w.description), 'value')
+                    w.observe(self._save_slider_value_from_id, names='value',
+                              type='change')
 
                 # Set style
                 if self.box_style is None:
@@ -5181,4 +5292,4 @@ class LinearModelParametersWidget(MenpoWidget):
 
         # trigger render function if allowed
         if allow_callback:
-            self._render_function('', True)
+            self.call_render_function(old_value, self.selected_values)

@@ -17,4 +17,6 @@ Options
   TextPrintWidget
   FeatureOptionsWidget
   SaveFigureOptionsWidget
+  PlotOptionsWidget
+  LinearModelParametersWidget
 
