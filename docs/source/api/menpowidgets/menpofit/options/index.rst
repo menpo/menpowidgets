@@ -9,3 +9,5 @@ Options
 .. toctree::
   :maxdepth: 1
 
+  ResultOptionsWidget
+  IterativeResultOptionsWidget

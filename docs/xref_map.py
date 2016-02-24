@@ -1,4 +1,5 @@
 xref_map = {
+'AnimationOptionsWidget': ('class', 'menpowidgets.options.AnimationOptionsWidget'),
 'AxesOptionsWidget': ('class', 'menpowidgets.tools.AxesOptionsWidget'),
 'ColourSelectionWidget': ('class', 'menpowidgets.tools.ColourSelectionWidget'),
 'DaisyOptionsWidget': ('class', 'menpowidgets.tools.DaisyOptionsWidget'),

@@ -31,7 +31,7 @@ from ..utils import (
     render_patches, render_image, extract_groups_labels_from_image,
     render_images, sample_colours_from_colourmap)
 
-from .options import FittingResultOptionsWidget
+from .options import IterativeResultOptionsWidget
 from .utils import error_type_key_to_func
 
 
@@ -1689,7 +1689,7 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
                                   text_per_line=text_per_line)
 
     # Create options widgets
-    fitting_result_wid = FittingResultOptionsWidget(
+    fitting_result_wid = IterativeResultOptionsWidget(
         has_groundtruth=fitting_results[0].gt_shape is not None,
         n_iters=fitting_results[0].iter_image.landmarks.n_groups,
         render_function=render_function,
