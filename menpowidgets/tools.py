@@ -1181,6 +1181,8 @@ class ColourSelectionWidget(MenpoWidget):
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
+        if isinstance(colours_list, str) or isinstance(colours_list, unicode):
+            colours_list = [colours_list]
         if labels is None:
             labels = ["label {}".format(k) for k in range(len(colours_list))]
 
@@ -2054,10 +2056,13 @@ class LineOptionsWidget(MenpoWidget):
                                            type='change')
 
         def save_options(change):
+            line_colour = self.line_colour_widget.selected_values
+            if len(line_colour) == 1:
+                line_colour = self.line_colour_widget.selected_values[0]
             self.selected_values = {
                 'render_lines': self.render_lines_checkbox.value,
                 'line_width': float(self.line_width_text.value),
-                'line_colour': self.line_colour_widget.selected_values,
+                'line_colour': line_colour,
                 'line_style': self.line_style_dropdown.value}
         self.render_lines_checkbox.observe(save_options, names='value',
                                            type='change')
@@ -2283,13 +2288,19 @@ class MarkerOptionsWidget(MenpoWidget):
                                              names='value', type='change')
 
         def save_options(change):
+            marker_face_colour = self.marker_face_colour_widget.selected_values
+            if len(marker_face_colour) == 1:
+                marker_face_colour = \
+                    self.marker_face_colour_widget.selected_values[0]
+            marker_edge_colour = self.marker_edge_colour_widget.selected_values
+            if len(marker_edge_colour) == 1:
+                marker_edge_colour = \
+                    self.marker_edge_colour_widget.selected_values[0]
             self.selected_values = {
                 'render_markers': self.render_markers_checkbox.value,
                 'marker_size': int(self.marker_size_text.value),
-                'marker_face_colour':
-                    self.marker_face_colour_widget.selected_values,
-                'marker_edge_colour':
-                    self.marker_edge_colour_widget.selected_values,
+                'marker_face_colour': marker_face_colour,
+                'marker_edge_colour': marker_edge_colour,
                 'marker_style': self.marker_style_dropdown.value,
                 'marker_edge_width': float(self.marker_edge_width_text.value)}
         self.render_markers_checkbox.observe(save_options, names='value',

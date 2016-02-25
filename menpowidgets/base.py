@@ -45,10 +45,10 @@ def menpowidgets_src_dir_path():
 def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
                           browser_style='buttons'):
     r"""
-    Widget that allows browsing through a `list` of :map:`PointCloud`,
-    :map:`PointUndirectedGraph`, :map:`PointDirectedGraph`, :map:`PointTree`,
-    :map:`TriMesh` or subclasses. Any instance of the above can be combined in
-    the `list`.
+    Widget that allows browsing through a `list` of `menpo.shape.PointCloud`,
+    `menpo.shape.PointUndirectedGraph`, `menpo.shape.PointDirectedGraph`,
+    `menpo.shape.PointTree`, `menpo.shape.TriMesh` or any subclass of those.
+    Any instance of the above can be combined in the `list`.
 
     The widget has options tabs regarding the renderer (lines, markers,
     numbering, zoom, axes) and saving the figure to file.
@@ -57,15 +57,15 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
     ----------
     pointclouds : `list`
         The `list` of objects to be visualized. It can contain a combination of
-        :map:`PointCloud`, :map:`PointUndirectedGraph`,
-        :map:`PointDirectedGraph`, :map:`PointTree`, :map:`TriMesh` or
-        subclasses of those.
+        `menpo.shape.PointCloud`, `menpo.shape.PointUndirectedGraph`,
+        `menpo.shape.PointDirectedGraph`, `menpo.shape.PointTree`,
+        `menpo.shape.TriMesh` or subclasses of those.
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
-    browser_style : {``'buttons'``, ``'slider'``}, optional
+    browser_style : ``{'buttons', 'slider'}``, optional
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
     """
@@ -107,15 +107,13 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
         save_figure_style = 'minimal'
 
     # Define render function
-    def render_function(name, value):
+    def render_function(change):
         # Clear current figure, but wait until the generation of the new data
         # that will be rendered
         ipydisplay.clear_output(wait=True)
 
         # Get selected pointcloud index
-        im = 0
-        if n_pointclouds > 1:
-            im = pointcloud_number_wid.selected_values
+        im = pointcloud_number_wid.selected_values if n_pointclouds > 1 else 0
 
         # Update info text widget
         update_info(pointclouds[im])
@@ -149,13 +147,13 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
             "> Range: {0:.1f}W, {1:.1f}H".format(rang[0], rang[1]),
             "> Centre of mass: ({0:.1f}, {1:.1f})".format(cm[0], cm[1]),
             "> Norm: {0:.2f}".format(pointcloud.norm())]
-        info_wid.set_widget_state(n_lines=5, text_per_line=text_per_line)
+        info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Create widgets
     axes_mode_wid = ipywidgets.RadioButtons(
         options={'Image': 1, 'Point cloud': 2}, description='Axes mode:',
         value=1)
-    axes_mode_wid.on_trait_change(render_function, 'value')
+    axes_mode_wid.observe(render_function, names='value', type='change')
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['markers', 'lines', 'numbering', 'zoom_one', 'axes'],
         labels=None, axes_x_limits=0.1, axes_y_limits=0.1,
@@ -164,8 +162,7 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
     renderer_options_box = ipywidgets.VBox(
         children=[axes_mode_wid, renderer_options_wid], align='center',
         margin='0.1cm')
-    info_wid = TextPrintWidget(n_lines=5, text_per_line=[''] * 5,
-                               style=info_style)
+    info_wid = TextPrintWidget(text_per_line=[''] * 5, style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(style=save_figure_style)
 
     # Group widgets
@@ -208,7 +205,7 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
     ipydisplay.display(wid)
 
     # Trigger initial visualization
-    render_function('', True)
+    render_function({})
 
 
 def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
@@ -228,10 +225,10 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
         The `list` of landmark groups to be visualized.
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
-    browser_style : {``'buttons'``, ``'slider'``}, optional
+    browser_style : ``{'buttons', 'slider'}``, optional
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
     """
@@ -440,7 +437,7 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
         The `list` of landmark managers to be visualized.
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     browser_style : {``'buttons'``, ``'slider'``}, optional
@@ -662,7 +659,7 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
         The `list` of images to be visualized.
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     browser_style : {``'buttons'``, ``'slider'``}, optional
@@ -901,7 +898,7 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
         Otherwise, it needs to have the same length as patches.
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     browser_style : {``'buttons'``, ``'slider'``}, optional
@@ -1120,7 +1117,7 @@ def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(10, 6),
         on the min and max values of `y_axis`.
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
@@ -1208,7 +1205,7 @@ def save_matplotlib_figure(renderer, style='coloured'):
     ----------
     renderer : :map:`MatplotlibRenderer`
         The Matplotlib renderer object.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
@@ -1234,7 +1231,7 @@ def features_selection(style='coloured'):
 
     Parameters
     ----------
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
 
@@ -1322,7 +1319,7 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
         The minimum and maximum bounds, in std units, for the sliders.
     figure_size : (`int`, `int`), optional
         The size of the plotted figures.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
@@ -1639,7 +1636,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
         The minimum and maximum bounds, in std units, for the sliders.
     figure_size : (`int`, `int`), optional
         The size of the plotted figures.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
@@ -1917,7 +1914,7 @@ def visualize_patch_appearance_model(appearance_model, centers,
         The minimum and maximum bounds, in std units, for the sliders.
     figure_size : (`int`, `int`), optional
         The size of the plotted figures.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """

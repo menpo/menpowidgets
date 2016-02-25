@@ -134,8 +134,8 @@ class AnimationOptionsWidget(MenpoWidget):
         >>> wid.set_widget_state(new_options, allow_callback=False)
     """
     def __init__(self, index, render_function=None, index_style='buttons',
-                 interval=0.2, description='Index: ', loop_enabled=True,
-                 style='minimal', continuous_update=False):
+                 interval=0.2, interval_step=0.05, description='Index: ',
+                 loop_enabled=True, style='minimal', continuous_update=False):
         from time import sleep
         from IPython import get_ipython
 
@@ -161,25 +161,19 @@ class AnimationOptionsWidget(MenpoWidget):
         # Create other widgets
         self.play_stop_toggle = ipywidgets.ToggleButton(
             icon='fa-play', description='', value=False, margin='0.1cm')
-        self._toggle_play_style = 'success'
-        self._toggle_stop_style = 'danger'
-        if style == 'minimal':
-            self._toggle_play_style = ''
-            self._toggle_stop_style = ''
-        self.play_options_toggle = ipywidgets.ToggleButton(
-            icon='fa-wrench', description='', value=False, margin='0.1cm')
-        self.loop_checkbox = ipywidgets.Checkbox(
-            description='Loop', value=loop_enabled)
-        self.interval_text = ipywidgets.FloatText(description='Interval (sec)',
-                                                  value=interval, width='1.4cm')
-        self.loop_interval_box = ipywidgets.VBox(
-            children=[self.interval_text, self.loop_checkbox], visible=False,
-            margin='0.1cm', padding='0.1cm', border_color='black',
-            border_style='solid', border_width=1)
-        self.play_options_box = ipywidgets.HBox(
-            children=[self.play_options_toggle, self.loop_interval_box])
+        self._toggle_play_style = '' if style == 'minimal' else 'success'
+        self._toggle_stop_style = '' if style == 'minimal' else 'danger'
+        self.fast_forward_button = ipywidgets.Button(
+                icon='fa-fast-forward', description='', margin='0.1cm')
+        self.fast_backward_button = ipywidgets.Button(
+                icon='fa-fast-backward', description='', margin='0.1cm')
+        loop_icon = 'fa-repeat' if loop_enabled else 'fa-long-arrow-right'
+        self.loop_toggle = ipywidgets.ToggleButton(
+                icon=loop_icon, description='', value=loop_enabled,
+                margin='0.1cm')
         self.animation_box = ipywidgets.HBox(
-            children=[self.play_stop_toggle, self.play_options_box])
+            children=[self.play_stop_toggle, self.loop_toggle,
+                      self.fast_backward_button, self.fast_forward_button])
 
         # Create final widget
         children = [self.index_wid, self.animation_box]
@@ -194,6 +188,7 @@ class AnimationOptionsWidget(MenpoWidget):
         self.loop_enabled = loop_enabled
         self.index_style = index_style
         self.continuous_update = continuous_update
+        self.interval = interval
 
         # Set style
         self.predefined_style(style)
@@ -207,75 +202,65 @@ class AnimationOptionsWidget(MenpoWidget):
                 self.play_stop_toggle.button_style = self._toggle_stop_style
                 # Change the description to Stop
                 self.play_stop_toggle.icon = 'fa-stop'
-                # Make sure that play options are off
-                self.play_options_toggle.value = False
             else:
                 # Animation was playing, so Stop was pressed.
                 # Change the button style
                 self.play_stop_toggle.button_style = self._toggle_play_style
                 # Change the description to Play
                 self.play_stop_toggle.icon = 'fa-play'
-            self.play_options_toggle.disabled = value
         self.play_stop_toggle.observe(play_stop_pressed, names='value',
                                       type='change')
 
-        def play_options_visibility(change):
-            self.loop_interval_box.visible = change['new']
-        self.play_options_toggle.observe(
-                play_options_visibility, names='value', type='change')
+        def loop_pressed(change):
+            if change['new']:
+                self.loop_toggle.icon = 'fa-repeat'
+            else:
+                self.loop_toggle.icon = 'fa-long-arrow-right'
+        self.loop_toggle.observe(loop_pressed, names='value', type='change')
+
+        def fast_forward_pressed(name):
+            interval = self.interval
+            interval -= 0.02
+            if interval < 0:
+                interval = 0
+            self.interval = interval
+        self.fast_forward_button.on_click(fast_forward_pressed)
+
+        def fast_backward_pressed(name):
+            self.interval += 0.02
+        self.fast_backward_button.on_click(fast_backward_pressed)
 
         def animate(change):
-            if self.loop_checkbox.value:
-                # loop is enabled
-                i = self.selected_values
-                if i < self.max:
-                    i += self.step
-                else:
-                    i = self.min
+            i = self.selected_values
 
-                while i <= self.max and self.play_stop_toggle.value:
-                    # update index value
-                    if index_style == 'slider':
-                        self.index_wid.slider.value = i
-                    else:
-                        self.index_wid.index_text.value = i
-
-                    # Run IPython iteration.
-                    # This is the code that makes this operation non-blocking.
-                    # This allows widget messages and callbacks to be processed.
-                    kernel.do_one_iteration()
-
-                    # update counter
-                    if i < self.max:
-                        i += self.step
-                    else:
-                        i = self.min
-
-                    # wait
-                    sleep(self.interval_text.value)
+            if self.loop_toggle.value and i >= self.max:
+                i = self.min
             else:
-                # loop is disabled
-                i = self.selected_values
                 i += self.step
-                while i <= self.max and self.play_stop_toggle.value:
-                    # update index value
-                    if index_style == 'slider':
-                        self.index_wid.slider.value = i
-                    else:
-                        self.index_wid.index_text.value = i
 
-                    # Run IPython iteration.
-                    # This is the code that makes this operation non-blocking.
-                    # This allows widget messages and callbacks to be processed.
-                    kernel.do_one_iteration()
+            while i <= self.max and self.play_stop_toggle.value:
+                # update index value
+                if index_style == 'slider':
+                    self.index_wid.slider.value = i
+                else:
+                    self.index_wid.index_text.value = i
 
-                    # update counter
+                # Run IPython iteration.
+                # This is the code that makes this operation non-blocking.
+                # This allows widget messages and callbacks to be processed.
+                kernel.do_one_iteration()
+
+                # update counter
+                if self.loop_toggle.value and i >= self.max:
+                    i = self.min
+                else:
                     i += self.step
 
-                    # wait
-                    sleep(self.interval_text.value)
-                if i > self.max:
-                    self.play_stop_toggle.value = False
+                # wait
+                sleep(self.interval)
+
+            if not self.loop_toggle.value and i > self.max:
+                self.stop_animation()
         self.play_stop_toggle.observe(animate, names='value', type='change')
 
         def save_value(change):
@@ -334,14 +319,6 @@ class AnimationOptionsWidget(MenpoWidget):
         format_box(self, box_style, border_visible, border_colour, border_style,
                    border_width, border_radius, padding, margin)
         format_font(self, font_family, font_size, font_style, font_weight)
-        format_font(self.play_stop_toggle, font_family, font_size, font_style,
-                    font_weight)
-        format_font(self.play_options_toggle, font_family, font_size,
-                    font_style, font_weight)
-        format_font(self.loop_checkbox, font_family, font_size, font_style,
-                    font_weight)
-        format_font(self.interval_text, font_family, font_size, font_style,
-                    font_weight)
         if self.index_style == 'buttons':
             self.index_wid.style(
                 box_style=None, border_visible=False, padding=0,
@@ -376,10 +353,9 @@ class AnimationOptionsWidget(MenpoWidget):
         if style == 'minimal':
             self.style(box_style='', border_visible=False)
             self.play_stop_toggle.button_style = ''
-            self.play_stop_toggle.font_weight = 'normal'
-            self.play_options_toggle.button_style = ''
-            format_box(self.loop_interval_box, '', False, 'black', 'solid', 1,
-                       10, '0.1cm', '0.1cm')
+            self.fast_forward_button.button_style = ''
+            self.fast_backward_button.button_style = ''
+            self.loop_toggle.button_style = ''
             if self.index_style == 'buttons':
                 self.index_wid.button_plus.button_style = ''
                 self.index_wid.button_plus.font_weight = 'normal'
@@ -395,11 +371,9 @@ class AnimationOptionsWidget(MenpoWidget):
               style == 'warning'):
             self.style(box_style=style, border_visible=False)
             self.play_stop_toggle.button_style = 'success'
-            self.play_stop_toggle.font_weight = 'bold'
-            self.play_options_toggle.button_style = 'info'
-            format_box(self.loop_interval_box, 'info', True,
-                       map_styles_to_hex_colours('info'), 'solid', 1, 10,
-                       '0.1cm', '0.1cm')
+            self.fast_forward_button.button_style = 'info'
+            self.fast_backward_button.button_style = 'info'
+            self.loop_toggle.button_style = 'info'
             if self.index_style == 'buttons':
                 self.index_wid.button_plus.button_style = 'primary'
                 self.index_wid.button_plus.font_weight = 'bold'
@@ -450,7 +424,7 @@ class AnimationOptionsWidget(MenpoWidget):
 
             # update
             if self.play_stop_toggle.value:
-                self.play_stop_toggle.value = False
+                self.stop_animation()
             if self.index_style == 'slider':
                 self.index_wid.set_widget_state(index, allow_callback=False)
             else:
@@ -2360,7 +2334,7 @@ class RendererOptionsWidget(MenpoWidget):
                     'numbers_font_name': 'sans-serif',
                     'numbers_font_size': 10, 'numbers_font_style': 'normal',
                     'numbers_font_weight': 'normal',
-                    'numbers_font_colour': ['black'],
+                    'numbers_font_colour': 'black',
                     'numbers_horizontal_align': 'center',
                     'numbers_vertical_align': 'bottom'}
             elif o == 'zoom_one':
@@ -2452,15 +2426,15 @@ class RendererOptionsWidget(MenpoWidget):
         if key not in self.default_options:
             self.default_options[key] = {}
             if 'lines' in self.options_tabs:
-                lc = ['red']
+                lc = 'red'
                 if labels is not None:
                     lc = sample_colours_from_colourmap(len(labels), 'jet')
                 self.default_options[key]['lines'] = {
                     'render_lines': True, 'line_width': 1,
                     'line_colour': lc, 'line_style': '-'}
             if 'markers' in self.options_tabs:
-                fc = ['red']
-                ec = ['black']
+                fc = 'red'
+                ec = 'black'
                 if labels is not None and len(labels) > 1:
                     fc = sample_colours_from_colourmap(len(labels), 'jet')
                     ec = sample_colours_from_colourmap(len(labels), 'jet')
