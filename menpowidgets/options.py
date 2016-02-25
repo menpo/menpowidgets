@@ -25,20 +25,18 @@ class AnimationOptionsWidget(MenpoWidget):
     consists of the following objects from `ipywidgets` and
     :ref:`api-tools-index`:
 
-    == ========================= ===================== ====================
-    No Object                    Property (`self.`)    Description
-    == ========================= ===================== ====================
-    1  `ToggleButton`            `play_stop_toggle`    The play/stop button
-    2  `ToggleButton`            `play_options_toggle` Options menu
-    3  `Checkbox`                `loop_checkbox`       Repeat mode
-    4  `FloatText`               `interval_text`       Interval (secs)
-    5  `VBox`                    `loop_interval_box`   Contains 3, 4
-    6  `HBox`                    `play_options_box`    Contains 2, 5
-    7  `HBox`                    `animation_box`       Contains 1, 6
-    8  :map:`IndexButtonsWidget` `index_wid`           The index selector
+    == ========================= ====================== ====================
+    No Object                    Property (`self.`)     Description
+    == ========================= ====================== ====================
+    1  `ToggleButton`            `play_stop_toggle`     The play/stop button
+    2  `Button`                  `fast_forward_button`  Increase speed
+    3  `Button`                  `fast_backward_button` Decrease speed
+    4  `ToggleButton`            `loop_toggle`          Repeat mode
+    5  `HBox`                    `animation_box`        Contains 1, 2, 3, 4
+    8  :map:`IndexButtonsWidget` `index_wid`            The index selector
 
        :map:`IndexSliderWidget`
-    == ========================= ===================== ====================
+    == ========================= ====================== ====================
 
     Note that:
 
@@ -76,7 +74,10 @@ class AnimationOptionsWidget(MenpoWidget):
         If ``'buttons'``, then :map:`IndexButtonsWidget` class is called. If
         ``'slider'``, then :map:`IndexSliderWidget` class is called.
     interval : `float`, optional
-        The interval between the animation progress.
+        The interval between the animation progress in seconds.
+    interval_step : `float`, optional
+        The interval step (in seconds) that is applied when fast
+        forward/backward buttons are pressed.
     description : `str`, optional
         The title of the widget.
     loop_enabled : `bool`, optional
@@ -160,17 +161,20 @@ class AnimationOptionsWidget(MenpoWidget):
 
         # Create other widgets
         self.play_stop_toggle = ipywidgets.ToggleButton(
-            icon='fa-play', description='', value=False, margin='0.1cm')
+                icon='fa-play', description='', value=False, margin='0.1cm',
+                tooltip='Play animation')
         self._toggle_play_style = '' if style == 'minimal' else 'success'
         self._toggle_stop_style = '' if style == 'minimal' else 'danger'
         self.fast_forward_button = ipywidgets.Button(
-                icon='fa-fast-forward', description='', margin='0.1cm')
+                icon='fa-fast-forward', description='', margin='0.1cm',
+                tooltip='Increase animation speed')
         self.fast_backward_button = ipywidgets.Button(
-                icon='fa-fast-backward', description='', margin='0.1cm')
+                icon='fa-fast-backward', description='', margin='0.1cm',
+                tooltip='Decrease animation speed')
         loop_icon = 'fa-repeat' if loop_enabled else 'fa-long-arrow-right'
         self.loop_toggle = ipywidgets.ToggleButton(
                 icon=loop_icon, description='', value=loop_enabled,
-                margin='0.1cm')
+                margin='0.1cm', tooltip='Repeat animation')
         self.animation_box = ipywidgets.HBox(
             children=[self.play_stop_toggle, self.loop_toggle,
                       self.fast_backward_button, self.fast_forward_button])
@@ -201,14 +205,16 @@ class AnimationOptionsWidget(MenpoWidget):
                 # Animation was not playing, so Play was pressed.
                 # Change the button style
                 self.play_stop_toggle.button_style = self._toggle_stop_style
-                # Change the description to Stop
+                # Change the icon and tooltip to Stop
                 self.play_stop_toggle.icon = 'fa-stop'
+                self.play_stop_toggle.tooltip = 'Stop animation'
             else:
                 # Animation was playing, so Stop was pressed.
                 # Change the button style
                 self.play_stop_toggle.button_style = self._toggle_play_style
-                # Change the description to Play
+                # Change the icon and tooltip to Play
                 self.play_stop_toggle.icon = 'fa-play'
+                self.play_stop_toggle.tooltip = 'Play animation'
         self.play_stop_toggle.observe(play_stop_pressed, names='value',
                                       type='change')
 
@@ -257,10 +263,8 @@ class AnimationOptionsWidget(MenpoWidget):
                     i = self.min
                 else:
                     i += self.step
-
                 # wait
                 sleep(self.interval)
-
             if not self.loop_toggle.value and i > self.max:
                 self.stop_animation()
         self.play_stop_toggle.observe(animate, names='value', type='change')
@@ -412,14 +416,14 @@ class AnimationOptionsWidget(MenpoWidget):
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
+        # Keep old value
+        old_value = self.selected_values
+
         # Check if update is required
         if (index['index'] != self.selected_values or
                     index['min'] != self.min or
                     index['max'] != self.max or
                     index['step'] != self.step):
-            # Keep old value
-            old_value = self.selected_values
-
             # temporarily remove render callback
             render_function = self._render_function
             self.remove_render_function()
@@ -441,9 +445,9 @@ class AnimationOptionsWidget(MenpoWidget):
             # re-assign render callback
             self.add_render_function(render_function)
 
-            # trigger render function if allowed
-            if allow_callback:
-                self.call_render_function(old_value, self.selected_values)
+        # trigger render function if allowed
+        if allow_callback:
+            self.call_render_function(old_value, self.selected_values)
 
     def stop_animation(self):
         r"""
@@ -986,13 +990,13 @@ class ChannelOptionsWidget(MenpoWidget):
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
+        # keep old value
+        old_value = self.selected_values
+
         # check if updates are required
         if (not self.default_options or
                 self.get_key(self.n_channels, self.image_is_masked) !=
                 self.get_key(n_channels, image_is_masked)):
-            # keep old value
-            old_value = self.selected_values
-
             # temporarily remove callbacks
             render_function = self._render_function
             self.remove_render_function()
@@ -1038,9 +1042,9 @@ class ChannelOptionsWidget(MenpoWidget):
             self.add_callbacks()
             self.add_render_function(render_function)
 
-            # trigger render function if allowed
-            if allow_callback:
-                self.call_render_function(old_value, self.selected_values)
+        # trigger render function if allowed
+        if allow_callback:
+            self.call_render_function(old_value, self.selected_values)
 
 
 class LandmarkOptionsWidget(MenpoWidget):
@@ -1539,13 +1543,13 @@ class LandmarkOptionsWidget(MenpoWidget):
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
+        # keep old value
+        old_value = self.selected_values
+
         # check if updates are required
         if (not self.default_options or
                 self.get_key(self.group_keys, self.labels_keys) !=
                 self.get_key(group_keys, labels_keys)):
-            # keep old value
-            old_value = self.selected_values
-
             # temporarily remove callbacks
             render_function = self._render_function
             self.remove_render_function()
@@ -1600,9 +1604,9 @@ class LandmarkOptionsWidget(MenpoWidget):
             self.add_callbacks()
             self.add_render_function(render_function)
 
-            # trigger render function if allowed
-            if allow_callback:
-                self.call_render_function(old_value, self.selected_values)
+        # trigger render function if allowed
+        if allow_callback:
+            self.call_render_function(old_value, self.selected_values)
 
 
 class TextPrintWidget(ipywidgets.FlexBox):
@@ -2428,15 +2432,15 @@ class RendererOptionsWidget(MenpoWidget):
         if key not in self.default_options:
             self.default_options[key] = {}
             if 'lines' in self.options_tabs:
-                lc = 'red'
+                lc = ['red']
                 if labels is not None:
                     lc = sample_colours_from_colourmap(len(labels), 'jet')
                 self.default_options[key]['lines'] = {
                     'render_lines': True, 'line_width': 1,
                     'line_colour': lc, 'line_style': '-'}
             if 'markers' in self.options_tabs:
-                fc = 'red'
-                ec = 'black'
+                fc = ['red']
+                ec = ['black']
                 if labels is not None and len(labels) > 1:
                     fc = sample_colours_from_colourmap(len(labels), 'jet')
                     ec = sample_colours_from_colourmap(len(labels), 'jet')
@@ -2617,12 +2621,12 @@ class RendererOptionsWidget(MenpoWidget):
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
+        # keep old value
+        old_value = self.selected_values
+
         # check if updates are required
         if (not self.default_options or
                 self.get_key(self.labels) != self.get_key(labels)):
-            # keep old value
-            old_value = self.selected_values
-
             # Temporarily remove callbacks
             render_function = self._render_function
             self.remove_render_function()
@@ -2653,9 +2657,9 @@ class RendererOptionsWidget(MenpoWidget):
             self.add_callbacks()
             self.add_render_function(render_function)
 
-            # trigger render function if allowed
-            if allow_callback:
-                self.call_render_function(old_value, self.selected_values)
+        # trigger render function if allowed
+        if allow_callback:
+            self.call_render_function(old_value, self.selected_values)
 
 
 class SaveFigureOptionsWidget(ipywidgets.FlexBox):
@@ -4014,13 +4018,13 @@ class PatchOptionsWidget(MenpoWidget):
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
+        # keep old value
+        old_value = self.selected_values
+
         # check if updates are required
         if (not self.default_options or
                 self.get_key(self.n_patches, self.n_offsets) !=
                 self.get_key(n_patches, n_offsets)):
-            # keep old value
-            old_value = self.selected_values
-
             # temporarily remove callbacks
             render_function = self._render_function
             self.remove_render_function()
@@ -4071,9 +4075,9 @@ class PatchOptionsWidget(MenpoWidget):
             self.add_callbacks()
             self.add_render_function(render_function)
 
-            # trigger render function if allowed
-            if allow_callback:
-                self.call_render_function(old_value, self.selected_values)
+        # trigger render function if allowed
+        if allow_callback:
+            self.call_render_function(old_value, self.selected_values)
 
 
 class PlotOptionsWidget(MenpoWidget):

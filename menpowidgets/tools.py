@@ -172,8 +172,8 @@ class ListWidget(MenpoWidget):
                 font_size=11, font_style='italic', visible=example_visible)
         else:
             raise ValueError("mode must be either int or float.")
-        self.cmd_text = ipywidgets.Text(value=selected_cmd[:-2],
-                                        description=description)
+        self.cmd_text = ipywidgets.Text(
+                value=selected_cmd[:-2], description=description)
         self.valid = ipywidgets.Valid(value=True)
         self.error_msg = ipywidgets.Latex(value='', font_style='italic',
                                           color='#FF0000')
@@ -797,11 +797,13 @@ class IndexButtonsWidget(MenpoWidget):
         # Create children
         self.title = ipywidgets.Latex(value=description, padding=6, margin=6)
         m_icon, m_description = parse_font_awesome_icon(minus_description)
-        self.button_minus = ipywidgets.Button(description=m_description,
-                                              icon=m_icon, width='1cm')
+        self.button_minus = ipywidgets.Button(
+                description=m_description, icon=m_icon, width='1cm',
+                tooltip='Previous item')
         p_icon, p_description = parse_font_awesome_icon(plus_description)
-        self.button_plus = ipywidgets.Button(description=p_description,
-                                             icon=p_icon, width='1cm')
+        self.button_plus = ipywidgets.Button(
+                description=p_description, icon=p_icon, width='1cm',
+                tooltip='Next item')
         self.index_text = ipywidgets.BoundedIntText(
             value=index['index'], min=index['min'], max=index['max'],
             disabled=not text_editable)
@@ -2056,13 +2058,10 @@ class LineOptionsWidget(MenpoWidget):
                                            type='change')
 
         def save_options(change):
-            line_colour = self.line_colour_widget.selected_values
-            if len(line_colour) == 1:
-                line_colour = self.line_colour_widget.selected_values[0]
             self.selected_values = {
                 'render_lines': self.render_lines_checkbox.value,
                 'line_width': float(self.line_width_text.value),
-                'line_colour': line_colour,
+                'line_colour': self.line_colour_widget.selected_values,
                 'line_style': self.line_style_dropdown.value}
         self.render_lines_checkbox.observe(save_options, names='value',
                                            type='change')
@@ -2288,19 +2287,13 @@ class MarkerOptionsWidget(MenpoWidget):
                                              names='value', type='change')
 
         def save_options(change):
-            marker_face_colour = self.marker_face_colour_widget.selected_values
-            if len(marker_face_colour) == 1:
-                marker_face_colour = \
-                    self.marker_face_colour_widget.selected_values[0]
-            marker_edge_colour = self.marker_edge_colour_widget.selected_values
-            if len(marker_edge_colour) == 1:
-                marker_edge_colour = \
-                    self.marker_edge_colour_widget.selected_values[0]
             self.selected_values = {
                 'render_markers': self.render_markers_checkbox.value,
                 'marker_size': int(self.marker_size_text.value),
-                'marker_face_colour': marker_face_colour,
-                'marker_edge_colour': marker_edge_colour,
+                'marker_face_colour':
+                    self.marker_face_colour_widget.selected_values,
+                'marker_edge_colour':
+                    self.marker_edge_colour_widget.selected_values,
                 'marker_style': self.marker_style_dropdown.value,
                 'marker_edge_width': float(self.marker_edge_width_text.value)}
         self.render_markers_checkbox.observe(save_options, names='value',
