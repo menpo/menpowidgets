@@ -189,6 +189,7 @@ class AnimationOptionsWidget(MenpoWidget):
         self.index_style = index_style
         self.continuous_update = continuous_update
         self.interval = interval
+        self.interval_step = interval_step
 
         # Set style
         self.predefined_style(style)
@@ -216,28 +217,29 @@ class AnimationOptionsWidget(MenpoWidget):
                 self.loop_toggle.icon = 'fa-repeat'
             else:
                 self.loop_toggle.icon = 'fa-long-arrow-right'
+            kernel.do_one_iteration()
         self.loop_toggle.observe(loop_pressed, names='value', type='change')
 
         def fast_forward_pressed(name):
-            interval = self.interval
-            interval -= 0.02
-            if interval < 0:
-                interval = 0
-            self.interval = interval
+            tmp = self.interval
+            tmp -= self.interval_step
+            if tmp < 0:
+                tmp = 0
+            self.interval = tmp
+            kernel.do_one_iteration()
         self.fast_forward_button.on_click(fast_forward_pressed)
 
         def fast_backward_pressed(name):
-            self.interval += 0.02
+            self.interval += self.interval_step
+            kernel.do_one_iteration()
         self.fast_backward_button.on_click(fast_backward_pressed)
 
         def animate(change):
             i = self.selected_values
-
             if self.loop_toggle.value and i >= self.max:
                 i = self.min
             else:
                 i += self.step
-
             while i <= self.max and self.play_stop_toggle.value:
                 # update index value
                 if index_style == 'slider':
