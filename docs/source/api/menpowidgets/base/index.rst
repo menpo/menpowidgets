@@ -17,4 +17,5 @@ Base
   plot_graph
   save_matplotlib_figure
   features_selection
+  visualize_shape_model
 
