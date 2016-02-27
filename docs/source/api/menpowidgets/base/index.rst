@@ -18,4 +18,6 @@ Base
   save_matplotlib_figure
   features_selection
   visualize_shape_model
+  visualize_appearance_model
+  visualize_patch_appearance_model
 

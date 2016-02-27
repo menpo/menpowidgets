@@ -1378,7 +1378,6 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
         new_figure_size = (
             renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
-        plt.show()
 
         if mode_wid.value == 1:
             # Deformation mode
@@ -1390,12 +1389,13 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
                 mean.view(figure_id=save_figure_wid.renderer.figure_id,
                           new_figure=False, image_view=axes_mode_wid.value == 1,
                           figure_size=None, render_lines=tmp1['render_lines'],
-                          line_colour='y', line_style=tmp1['line_style'],
+                          line_colour='yellow', line_style=tmp1['line_style'],
                           line_width=tmp1['line_width'],
                           render_markers=tmp2['render_markers'],
                           marker_style=tmp2['marker_style'],
                           marker_size=tmp2['marker_size'],
-                          marker_face_colour='y', marker_edge_colour='y',
+                          marker_face_colour='yellow',
+                          marker_edge_colour='yellow',
                           marker_edge_width=tmp2['marker_edge_width'])
 
             # Render instance
@@ -1427,13 +1427,14 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
                     figure_id=save_figure_wid.renderer.figure_id,
                     new_figure=False, image_view=axes_mode_wid.value == 1,
                     figure_size=new_figure_size,
-                    render_lines=tmp1['render_lines'], line_colour='y',
-                    line_style=tmp1['line_style'],
-                    line_width=tmp1['line_width'],
+                    render_lines=tmp1['render_lines'],
+                    line_colour=tmp1['line_colour'][0],
+                    line_style=tmp1['line_style'], line_width=tmp1['line_width'],
                     render_markers=tmp2['render_markers'],
                     marker_style=tmp2['marker_style'],
-                    marker_size=tmp2['marker_size'], marker_face_colour='y',
-                    marker_edge_colour='y',
+                    marker_size=tmp2['marker_size'],
+                    marker_face_colour=tmp2['marker_face_colour'][0],
+                    marker_edge_colour=tmp2['marker_edge_colour'][0],
                     marker_edge_width=tmp2['marker_edge_width'])
 
             # Render vectors
@@ -1554,9 +1555,10 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
             mean_wid.value = False
     mode_wid.observe(mean_visible, names='value', type='change')
     model_parameters_wid = LinearModelParametersWidget(
-        n_parameters[0], render_function, params_str='param ',
+        n_parameters[0], render_function, params_str='Parameter ',
         mode=mode, params_bounds=parameters_bounds, params_step=0.1,
         plot_variance_visible=True, plot_variance_function=plot_variance,
+        animation_step=0.5, interval=0., loop_enabled=True,
         style=model_parameters_style, continuous_update=False)
     axes_mode_wid = ipywidgets.RadioButtons(
         options={'Image': 1, 'Point cloud': 2}, description='Axes mode:',
@@ -1633,8 +1635,8 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
     statistical appearance model.
 
     Parameters
-    -----------
-    appearance_model : `list` of :map:`PCAModel` or subclass
+    ----------
+    appearance_model : `list` of `menpo.model.PCAModel` or subclass
         The multilevel appearance model to be visualized. Note that each level
         can have different number of components.
     n_parameters : `int` or `list` of `int` or ``None``, optional
@@ -1643,7 +1645,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
         between `n_parameters` and the number of active components per level.
         If `list` of `int`, then a number of sliders is defined per level.
         If ``None``, all the active components per level will have a slider.
-    mode : {``'single'``, ``'multiple'``}, optional
+    mode : ``{'single', 'multiple'}``, optional
         If ``'single'``, then only a single slider is constructed along with a
         drop down menu. If ``'multiple'``, then a slider is constructed for each
         parameter.
@@ -1700,7 +1702,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
     n_parameters = check_n_parameters(n_parameters, n_levels, max_n_params)
 
     # Define render function
-    def render_function(name, value):
+    def render_function(change):
         # Clear current figure, but wait until the generation of the new data
         # that will be rendered
         ipydisplay.clear_output(wait=True)
@@ -1717,9 +1719,6 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
         instance = appearance_model[level].instance(weights)
         image_is_masked = isinstance(instance, MaskedImage)
         selected_group = landmark_options_wid.selected_values['group']
-
-        # Update info
-        update_info(instance, level, selected_group)
 
         # show landmarks with selected options
         tmp1 = renderer_options_wid.selected_values['lines']
@@ -1764,6 +1763,9 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
             legend_font_weight=None, legend_font_size=None, render_legend=False,
             legend_font_style=None, legend_border_padding=None, **options)
 
+        # Update info
+        update_info(instance, level, selected_group)
+
         # Save the current figure id
         save_figure_wid.renderer = renderer
 
@@ -1784,7 +1786,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
             "> {} landmark points.".format(lp),
             "> Instance: min={:.3f}, max={:.3f}".format(image.pixels.min(),
                                                         image.pixels.max())]
-        info_wid.set_widget_state(n_lines=8, text_per_line=text_per_line)
+        info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Plot variance function
     def plot_variance(name):
@@ -1815,10 +1817,11 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
 
     # Create widgets
     model_parameters_wid = LinearModelParametersWidget(
-        n_parameters[0], render_function, params_str='param ',
-        mode=mode, params_bounds=parameters_bounds, params_step=0.1,
-        plot_variance_visible=True, plot_variance_function=plot_variance,
-        style=model_parameters_style)
+            n_parameters[0], render_function, params_str='Parameter ',
+            mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+            plot_variance_visible=True, plot_variance_function=plot_variance,
+            animation_step=0.5, interval=0., loop_enabled=True,
+            style=model_parameters_style, continuous_update=False)
     groups_keys, labels_keys = extract_groups_labels_from_image(
         appearance_model[0].mean())
     first_label = labels_keys[0] if labels_keys else None
@@ -1836,13 +1839,13 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
         group_keys=groups_keys, labels_keys=labels_keys,
         render_function=render_function, style=landmarks_style,
         renderer_widget=renderer_options_wid)
-    info_wid = TextPrintWidget(n_lines=8, text_per_line=[''] * 8,
-                               style=info_style)
+    info_wid = TextPrintWidget(text_per_line=[''] * 8, style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)
 
     # Define function that updates options' widgets state
-    def update_widgets(name, value):
+    def update_widgets(change):
+        value = change['new']
         # Update model parameters widget
         model_parameters_wid.set_widget_state(
             n_parameters[value], params_str='param ', allow_callback=False)
@@ -1866,9 +1869,10 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
             else:
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
-            options=radio_str, description='Pyramid:', value=n_levels-1)
-        level_wid.on_trait_change(update_widgets, 'value')
-        level_wid.on_trait_change(render_function, 'value')
+                options=radio_str, description='Pyramid:', value=n_levels-1,
+                margin='0.3cm')
+        level_wid.observe(update_widgets, names='value', type='change')
+        level_wid.observe(render_function, names='value', type='change''value')
         tmp_children.insert(0, level_wid)
     tmp_wid = ipywidgets.HBox(children=tmp_children)
     options_box = ipywidgets.Tab(children=[tmp_wid, channel_options_wid,
@@ -1894,7 +1898,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
     ipydisplay.display(wid)
 
     # Trigger initial visualization
-    render_function('', True)
+    render_function({})
 
 
 def visualize_patch_appearance_model(appearance_model, centers,
@@ -1906,13 +1910,13 @@ def visualize_patch_appearance_model(appearance_model, centers,
     statistical patch-based appearance model.
 
     Parameters
-    -----------
-    appearance_model : `list` of :map:`PCAModel` or subclass
+    ----------
+    appearance_model : `list` of `menpo.model.PCAModel` or subclass
         The multilevel patch-based appearance model to be visualized. Note that
         each level can have different number of components.
-    centers : `list` of :map:`PointCloud` or subclass
+    centers : `list` of `menpo.shape.PointCloud` or subclass
         The centers to set the patches around. If the `list` has only one
-        :map:`PointCloud` then this will be used for all appearance model
+        `menpo.shape.PointCloud` then this will be used for all appearance model
         levels. Otherwise, it needs to have the same length as
         `appearance_model`.
     n_parameters : `int` or `list` of `int` or ``None``, optional
@@ -1921,7 +1925,7 @@ def visualize_patch_appearance_model(appearance_model, centers,
         between `n_parameters` and the number of active components per level.
         If `list` of `int`, then a number of sliders is defined per level.
         If ``None``, all the active components per level will have a slider.
-    mode : {``'single'``, ``'multiple'``}, optional
+    mode : ``{'single', 'multiple'}``, optional
         If ``'single'``, then only a single slider is constructed along with a
         drop down menu. If ``'multiple'``, then a slider is constructed for each
         parameter.
@@ -1986,7 +1990,7 @@ def visualize_patch_appearance_model(appearance_model, centers,
     n_parameters = check_n_parameters(n_parameters, n_levels, max_n_params)
 
     # Define render function
-    def render_function(name, value):
+    def render_function(change):
         # Clear current figure, but wait until the generation of the new data
         # that will be rendered
         ipydisplay.clear_output(wait=True)
@@ -2001,9 +2005,6 @@ def visualize_patch_appearance_model(appearance_model, centers,
         weights = (parameters *
                    appearance_model[level].eigenvalues[:len(parameters)] ** 0.5)
         instance = appearance_model[level].instance(weights)
-
-        # Update info
-        update_info(instance, level)
 
         # Render instance with selected options
         options = renderer_options_wid.selected_values['lines']
@@ -2027,6 +2028,9 @@ def visualize_patch_appearance_model(appearance_model, centers,
             sum_enabled=channel_options_wid.selected_values['sum_enabled'],
             **options)
 
+        # Update info
+        update_info(instance, level)
+
         # Save the current figure id
         save_figure_wid.renderer = renderer
 
@@ -2046,7 +2050,7 @@ def visualize_patch_appearance_model(appearance_model, centers,
             "> {} landmark points.".format(image.pixels.shape[0]),
             "> Instance: min={:.3f}, max={:.3f}".format(image.pixels.min(),
                                                         image.pixels.max())]
-        info_wid.set_widget_state(n_lines=8, text_per_line=text_per_line)
+        info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Plot variance function
     def plot_variance(name):
@@ -2077,10 +2081,11 @@ def visualize_patch_appearance_model(appearance_model, centers,
 
     # Create widgets
     model_parameters_wid = LinearModelParametersWidget(
-        n_parameters[0], render_function, params_str='param ',
-        mode=mode, params_bounds=parameters_bounds, params_step=0.1,
-        plot_variance_visible=True, plot_variance_function=plot_variance,
-        style=model_parameters_style)
+            n_parameters[0], render_function, params_str='Parameter ',
+            mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+            plot_variance_visible=True, plot_variance_function=plot_variance,
+            animation_step=0.5, interval=0., loop_enabled=True,
+            style=model_parameters_style, continuous_update=False)
     patch_options_wid = PatchOptionsWidget(
         n_patches=appearance_model[0].mean().pixels.shape[0],
         n_offsets=appearance_model[0].mean().pixels.shape[1],
@@ -2096,13 +2101,13 @@ def visualize_patch_appearance_model(appearance_model, centers,
         axes_x_limits=None, axes_y_limits=None,
         render_function=render_function,  style=renderer_style,
         tabs_style=renderer_tabs_style)
-    info_wid = TextPrintWidget(n_lines=8, text_per_line=[''] * 8,
-                               style=info_style)
+    info_wid = TextPrintWidget(text_per_line=[''] * 8, style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)
 
     # Define function that updates options' widgets state
-    def update_widgets(name, value):
+    def update_widgets(change):
+        value = change['new']
         # Update model parameters widget
         model_parameters_wid.set_widget_state(n_parameters[value],
                                               params_str='param ',
@@ -2131,9 +2136,10 @@ def visualize_patch_appearance_model(appearance_model, centers,
             else:
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
-            options=radio_str, description='Pyramid:', value=n_levels-1)
-        level_wid.on_trait_change(update_widgets, 'value')
-        level_wid.on_trait_change(render_function, 'value')
+                options=radio_str, description='Pyramid:', value=n_levels-1,
+                margin='0.3cm')
+        level_wid.observe(update_widgets, names='value', type='change')
+        level_wid.observe(render_function, names='value', type='change')
         tmp_children.insert(0, level_wid)
     tmp_wid = ipywidgets.HBox(children=tmp_children)
     options_box = ipywidgets.Tab(children=[tmp_wid, patch_options_wid,
@@ -2158,4 +2164,4 @@ def visualize_patch_appearance_model(appearance_model, centers,
     ipydisplay.display(wid)
 
     # Trigger initial visualization
-    render_function('', True)
+    render_function({})

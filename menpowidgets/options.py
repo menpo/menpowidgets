@@ -4749,16 +4749,22 @@ class PlotOptionsWidget(MenpoWidget):
 class LinearModelParametersWidget(MenpoWidget):
     r"""
     Creates a widget for selecting parameters values when visualizing a linear
-    model (e.g. PCA model). The widget consists of the following objects from
-    `ipywidgets`:
+    model (e.g. PCA model). The widget has options for animating through various
+    parameters values. It consists of the following objects from `ipywidgets`:
 
-    == ============= ================== ==========================
-    No Object        Property (`self.`) Description
-    == ============= ================== ==========================
-    1  `Button`      `plot_button`      The plot variance button
-    2  `Button`      `reset_button`     The reset button
-    3  `HBox`        `plot_and_reset`   Contains 1, 2
-    == ============= ================== ==========================
+    == ============== ====================== ========================
+    No Object         Property (`self.`)     Description
+    == ============== ====================== ========================
+    1  `Button`       `plot_button`          The plot variance button
+    2  `Button`       `reset_button`         The reset button
+    3  `HBox`         `plot_and_reset`       Contains 1, 2
+    4  `ToggleButton` `play_stop_toggle`     The play/stop button
+    5  `Button`       `fast_forward_button`  Increase speed
+    6  `Button`       `fast_backward_button` Decrease speed
+    7  `ToggleButton` `loop_toggle`          Repeat mode
+    8  `HBox`         `animation_buttons`    Contains 4, 5, 6, 7
+    9  `HBox`         `buttons_box`          Contains 3, 8
+    == ============== ====================== ========================
 
     If ``mode = 'single'``, then:
 
@@ -4825,6 +4831,17 @@ class LinearModelParametersWidget(MenpoWidget):
     plot_variance_function : `callable` or ``None``, optional
         The plot function that is executed when the plot variance button is
         clicked. If ``None``, then nothing is assigned.
+    animation_visible : `bool`, optional
+        Defines whether the animation options will be visible.
+    loop_enabled : `bool`, optional
+        If ``True``, then the repeat mode of the animation is enabled.
+    interval : `float`, optional
+        The interval between the animation progress in seconds.
+    interval_step : `float`, optional
+        The interval step (in seconds) that is applied when fast
+        forward/backward buttons are pressed.
+    animation_step : `float`, optional
+        The parameters step that is applied when animation is enabled.
     style : `str` (see below), optional
         Sets a predefined style at the widget. Possible options are:
 
@@ -4838,6 +4855,11 @@ class LinearModelParametersWidget(MenpoWidget):
             ``'danger'``  Red-based style
             ``''``        No style
             ============= ============================
+
+    continuous_update : `bool`, optional
+        If ``True``, then the render function is called while moving a
+        slider's handle. If ``False``, then the the function is called only
+        when the handle (mouse click) is released.
 
     Example
     -------
@@ -4876,7 +4898,16 @@ class LinearModelParametersWidget(MenpoWidget):
     def __init__(self, n_parameters, render_function=None, mode='multiple',
                  params_str='', params_bounds=(-3., 3.), params_step=0.1,
                  plot_variance_visible=True, plot_variance_function=None,
-                 style='minimal', continuous_update=False):
+                 animation_visible=True, loop_enabled=False, interval=0.,
+                 interval_step=0.05, animation_step=0.5, style='minimal',
+                 continuous_update=False):
+        from time import sleep
+        from IPython import get_ipython
+
+        # Get the kernel to use it later in order to make sure that the widgets'
+        # traits changes are passed during a while-loop
+        kernel = get_ipython().kernel
+
         # If only one slider requested, then set mode to multiple
         if n_parameters == 1:
             mode = 'multiple'
@@ -4897,9 +4928,9 @@ class LinearModelParametersWidget(MenpoWidget):
             for p in range(n_parameters):
                 vals["{}{}".format(params_str, p)] = p
             self.slider = ipywidgets.FloatSlider(
-                description='', min=params_bounds[0], max=params_bounds[1],
-                step=params_step, value=0., margin='0.2cm',
-                continuous_update=continuous_update)
+                    description='', min=params_bounds[0], max=params_bounds[1],
+                    step=params_step, value=0., readout=False, margin='0.2cm',
+                    continuous_update=continuous_update)
             self.dropdown_params = ipywidgets.Dropdown(options=vals,
                                                        margin='0.2cm')
             self.parameters_wid = ipywidgets.HBox(
@@ -4909,17 +4940,37 @@ class LinearModelParametersWidget(MenpoWidget):
             visible=plot_variance_visible)
         self.reset_button = ipywidgets.Button(description='Reset',
                                               margin='0.05cm')
-        self.plot_and_reset = ipywidgets.HBox(children=[self.plot_button,
-                                                        self.reset_button])
+        self.plot_and_reset = ipywidgets.HBox(
+                children=[self.reset_button, self.plot_button], margin='0.2cm')
+        self.play_stop_toggle = ipywidgets.ToggleButton(
+                icon='fa-play', description='', value=False, margin='0.05cm',
+                tooltip='Play animation')
+        self._toggle_play_style = '' if style == 'minimal' else 'success'
+        self._toggle_stop_style = '' if style == 'minimal' else 'danger'
+        self.fast_forward_button = ipywidgets.Button(
+                icon='fa-fast-forward', description='', margin='0.05cm',
+                tooltip='Increase animation speed')
+        self.fast_backward_button = ipywidgets.Button(
+                icon='fa-fast-backward', description='', margin='0.05cm',
+                tooltip='Decrease animation speed')
+        loop_icon = 'fa-repeat' if loop_enabled else 'fa-long-arrow-right'
+        self.loop_toggle = ipywidgets.ToggleButton(
+                icon=loop_icon, description='', value=loop_enabled,
+                margin='0.05cm', tooltip='Repeat animation')
+        self.animation_buttons = ipywidgets.HBox(
+                children=[self.play_stop_toggle, self.loop_toggle,
+                          self.fast_backward_button, self.fast_forward_button],
+                margin='0.2cm', visible=animation_visible)
+        self.buttons_box = ipywidgets.HBox(children=[self.animation_buttons,
+                                                     self.plot_and_reset])
         self.options_box = ipywidgets.VBox(
-                children=[self.parameters_wid, self.plot_and_reset],
-                align='end')
+                children=[self.parameters_wid, self.buttons_box], align='start')
 
         # Create final widget
         children = [self.options_box]
         super(LinearModelParametersWidget, self).__init__(
                 children, List, [0.] * n_parameters,
-                render_function=render_function)
+                render_function=render_function, align='start')
 
         # Assign output
         self.n_parameters = n_parameters
@@ -4928,6 +4979,12 @@ class LinearModelParametersWidget(MenpoWidget):
         self.params_bounds = params_bounds
         self.params_step = params_step
         self.plot_variance_visible = plot_variance_visible
+        self.loop_enabled = loop_enabled
+        self.continuous_update = continuous_update
+        self.interval = interval
+        self.interval_step = interval_step
+        self.animation_step = animation_step
+        self.animation_visible = animation_visible
 
         # Set style
         self.predefined_style(style)
@@ -4947,7 +5004,7 @@ class LinearModelParametersWidget(MenpoWidget):
                 render_fun = self._render_function
                 self.remove_render_function()
                 # Set slider value
-                self.slider.value = self.parameters[change['new']]
+                self.slider.value = self.selected_values[change['new']]
                 # Re-assign render callback
                 self.add_render_function(render_fun)
             self.dropdown_params.observe(set_slider_value, names='value',
@@ -4979,6 +5036,185 @@ class LinearModelParametersWidget(MenpoWidget):
             self.add_render_function(render_fun)
             self.call_render_function(old_value, self.selected_values)
         self.reset_button.on_click(reset_parameters)
+
+        # Set functionality
+        def play_stop_pressed(change):
+            value = change['new']
+            if value:
+                # Animation was not playing, so Play was pressed.
+                # Change the button style
+                self.play_stop_toggle.button_style = self._toggle_stop_style
+                # Change the icon and tooltip to Stop
+                self.play_stop_toggle.icon = 'fa-stop'
+                self.play_stop_toggle.tooltip = 'Stop animation'
+                # Disable buttons
+                self.reset_button.disabled = True
+                self.plot_button.disabled = True
+            else:
+                # Animation was playing, so Stop was pressed.
+                # Change the button style
+                self.play_stop_toggle.button_style = self._toggle_play_style
+                # Change the icon and tooltip to Play
+                self.play_stop_toggle.icon = 'fa-play'
+                self.play_stop_toggle.tooltip = 'Play animation'
+                # Enable buttons
+                self.reset_button.disabled = False
+                self.plot_button.disabled = False
+        self.play_stop_toggle.observe(play_stop_pressed, names='value',
+                                      type='change')
+
+        def loop_pressed(change):
+            if change['new']:
+                self.loop_toggle.icon = 'fa-repeat'
+            else:
+                self.loop_toggle.icon = 'fa-long-arrow-right'
+            kernel.do_one_iteration()
+        self.loop_toggle.observe(loop_pressed, names='value', type='change')
+
+        def fast_forward_pressed(name):
+            tmp = self.interval
+            tmp -= self.interval_step
+            if tmp < 0:
+                tmp = 0
+            self.interval = tmp
+            kernel.do_one_iteration()
+        self.fast_forward_button.on_click(fast_forward_pressed)
+
+        def fast_backward_pressed(name):
+            self.interval += self.interval_step
+            kernel.do_one_iteration()
+        self.fast_backward_button.on_click(fast_backward_pressed)
+
+        def animate(change):
+            reset_parameters('')
+            if mode == 'multiple':
+                n_sliders = self.n_parameters
+                slider_id = 0
+                while slider_id < n_sliders and self.play_stop_toggle.value:
+                    # animate from 0 to min
+                    slider_val = 0.
+                    while (slider_val > self.params_bounds[0] and
+                           self.play_stop_toggle.value):
+                        # update slider value
+                        slider_val -= self.animation_step
+
+                        # set value
+                        self.parameters_wid.children[slider_id].value = slider_val
+
+                        # Run IPython iteration.
+                        kernel.do_one_iteration()
+
+                        # wait
+                        sleep(self.interval)
+
+                    # animate from min to max
+                    slider_val = self.params_bounds[0]
+                    while (slider_val < self.params_bounds[1] and
+                           self.play_stop_toggle.value):
+                        # update slider value
+                        slider_val += self.animation_step
+
+                        # set value
+                        self.parameters_wid.children[slider_id].value = slider_val
+
+                        # Run IPython iteration.
+                        kernel.do_one_iteration()
+
+                        # wait
+                        sleep(self.interval)
+
+                    # animate from max to 0
+                    slider_val = self.params_bounds[1]
+                    while slider_val > 0. and self.play_stop_toggle.value:
+                        # update slider value
+                        slider_val -= self.animation_step
+
+                        # set value
+                        self.parameters_wid.children[slider_id].value = slider_val
+
+                        # Run IPython iteration.
+                        kernel.do_one_iteration()
+
+                        # wait
+                        sleep(self.interval)
+
+                    # reset value
+                    self.parameters_wid.children[slider_id].value = 0.
+
+                    # update slider id
+                    if self.loop_toggle.value and slider_id == n_sliders - 1:
+                        slider_id = 0
+                    else:
+                        slider_id += 1
+
+                if not self.loop_toggle.value and slider_id >= n_sliders:
+                    self.stop_animation()
+            else:
+                n_sliders = self.n_parameters
+                slider_id = 0
+                while slider_id < n_sliders and self.play_stop_toggle.value:
+                    # set dropdown value
+                    self.parameters_wid.children[0].value = slider_id
+
+                    # animate from 0 to min
+                    slider_val = 0.
+                    while (slider_val > self.params_bounds[0] and
+                               self.play_stop_toggle.value):
+                        # update slider value
+                        slider_val -= self.animation_step
+
+                        # set value
+                        self.parameters_wid.children[1].value = slider_val
+
+                        # Run IPython iteration.
+                        kernel.do_one_iteration()
+
+                        # wait
+                        sleep(self.interval)
+
+                    # animate from min to max
+                    slider_val = self.params_bounds[0]
+                    while (slider_val < self.params_bounds[1] and
+                               self.play_stop_toggle.value):
+                        # update slider value
+                        slider_val += self.animation_step
+
+                        # set value
+                        self.parameters_wid.children[1].value = slider_val
+
+                        # Run IPython iteration.
+                        kernel.do_one_iteration()
+
+                        # wait
+                        sleep(self.interval)
+
+                    # animate from max to 0
+                    slider_val = self.params_bounds[1]
+                    while slider_val > 0. and self.play_stop_toggle.value:
+                        # update slider value
+                        slider_val -= self.animation_step
+
+                        # set value
+                        self.parameters_wid.children[1].value = slider_val
+
+                        # Run IPython iteration.
+                        kernel.do_one_iteration()
+
+                        # wait
+                        sleep(self.interval)
+
+                    # reset value
+                    self.parameters_wid.children[1].value = 0.
+
+                    # update slider id
+                    if self.loop_toggle.value and slider_id == n_sliders - 1:
+                        slider_id = 0
+                    else:
+                        slider_id += 1
+
+                if not self.loop_toggle.value and slider_id >= n_sliders:
+                    self.stop_animation()
+        self.play_stop_toggle.observe(animate, names='value', type='change')
 
         # Set plot variance function
         self._variance_function = None
@@ -5099,6 +5335,12 @@ class LinearModelParametersWidget(MenpoWidget):
                 ============= ============================
         """
         if style == 'minimal':
+            self.play_stop_toggle.button_style = ''
+            self.fast_forward_button.button_style = ''
+            self.fast_backward_button.button_style = ''
+            self.loop_toggle.button_style = ''
+            self._toggle_play_style = ''
+            self._toggle_stop_style = ''
             self.style(box_style=None, border_visible=True,
                        border_colour='black', border_style='solid',
                        border_width=1, border_radius=0, padding='0.2cm',
@@ -5108,6 +5350,12 @@ class LinearModelParametersWidget(MenpoWidget):
                        buttons_style='')
         elif (style == 'info' or style == 'success' or style == 'danger' or
                     style == 'warning'):
+            self.play_stop_toggle.button_style = 'success'
+            self.fast_forward_button.button_style = 'info'
+            self.fast_backward_button.button_style = 'info'
+            self.loop_toggle.button_style = 'info'
+            self._toggle_play_style = 'success'
+            self._toggle_stop_style = 'danger'
             self.style(box_style=style, border_visible=True,
                        border_colour=map_styles_to_hex_colours(style),
                        border_style='solid', border_width=1, border_radius=10,
@@ -5119,6 +5367,13 @@ class LinearModelParametersWidget(MenpoWidget):
         else:
             raise ValueError('style must be minimal or info or success or '
                              'danger or warning')
+
+    def stop_animation(self):
+        r"""
+        Method that stops an active annotation by setting
+        ``self.play_stop_toggle.value = False``.
+        """
+        self.play_stop_toggle.value = False
 
     def add_variance_function(self, variance_function):
         r"""
@@ -5163,7 +5418,8 @@ class LinearModelParametersWidget(MenpoWidget):
 
     def set_widget_state(self, n_parameters=None, params_str=None,
                          params_bounds=None, params_step=None,
-                         plot_variance_visible=True, allow_callback=True):
+                         plot_variance_visible=True, animation_step=0.5,
+                         allow_callback=True):
         r"""
         Method that updates the state of the widget with a new set of options.
 
@@ -5182,6 +5438,8 @@ class LinearModelParametersWidget(MenpoWidget):
         plot_variance_visible : `bool`, optional
             Defines whether the button for plotting the variance will be visible
             upon construction.
+        animation_step : `float`, optional
+            The parameters step that is applied when animation is enabled.
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
@@ -5204,6 +5462,7 @@ class LinearModelParametersWidget(MenpoWidget):
 
         # Set plot variance visibility
         self.plot_button.visible = plot_variance_visible
+        self.animation_step = animation_step
 
         # Update widget
         if n_parameters == self.n_parameters:
