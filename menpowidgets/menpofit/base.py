@@ -1462,7 +1462,6 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
         renderer_style = 'danger'
         renderer_tabs_style = 'info'
         save_figure_style = 'danger'
-        plot_ced_but_style = 'primary'
     else:
         logo_style = 'minimal'
         widget_box_style = ''
@@ -1476,10 +1475,6 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
         renderer_style = 'minimal'
         renderer_tabs_style = 'minimal'
         save_figure_style = 'minimal'
-        plot_ced_but_style = ''
-
-    # Check if all fitting_results have gt_shape in order to show the ced button
-    show_ced = all(f.gt_shape is not None for f in fitting_results)
 
     # Define function that plots errors curve
     def plot_errors_function(name):
@@ -1488,9 +1483,7 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
         ipydisplay.clear_output(wait=True)
 
         # Get selected index
-        im = 0
-        if n_fitting_results > 1:
-            im = image_number_wid.selected_values
+        im = image_number_wid.selected_values if n_fitting_results > 1 else 0
 
         # Render
         new_figure_size = (
@@ -1513,9 +1506,7 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
         ipydisplay.clear_output(wait=True)
 
         # Get selected index
-        im = 0
-        if n_fitting_results > 1:
-            im = image_number_wid.selected_values
+        im = image_number_wid.selected_values if n_fitting_results > 1 else 0
 
         # Render
         new_figure_size = (
@@ -1538,25 +1529,15 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
         ipydisplay.clear_output(wait=True)
 
         # Get selected index
-        im = 0
-        if n_fitting_results > 1:
-            im = image_number_wid.selected_values
+        im = image_number_wid.selected_values if n_fitting_results > 1 else 0
 
         # Render
-        from menpo.visualize import plot_curve
         new_figure_size = (
             renderer_options_wid.selected_values['zoom_one'] * 10,
             renderer_options_wid.selected_values['zoom_one'] * 3)
-        renderer = plot_curve(
-            list(range(len(fitting_results[im].costs))),
-            [fitting_results[im].costs],
-            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-            figure_size=new_figure_size, x_label='Iteration',
-            y_label='Cost Function', title='Cost Function per Iteration',
-            render_grid=True, grid_line_style='--', line_style='-', line_width=2,
-            render_markers=True, marker_style='o', marker_size=4,
-            marker_face_colour='b', marker_edge_colour='k',
-            marker_edge_width=1., render_lines=True, line_colour='b')
+        renderer = fitting_results[im].plot_costs(
+                figure_id=save_figure_wid.renderer.figure_id,
+                figure_size=new_figure_size)
 
         # Show figure
         plt.show()
@@ -1565,7 +1546,7 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
         save_figure_wid.renderer = renderer
 
     # Define render function
-    def render_function(name, value):
+    def render_function(change):
         # Clear current figure, but wait until the generation of the new data
         # that will be rendered
         ipydisplay.clear_output(wait=True)
@@ -1708,8 +1689,7 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
         labels=None, axes_x_limits=None, axes_y_limits=None,
         render_function=render_function,
         style=renderer_style, tabs_style=renderer_tabs_style)
-    info_wid = TextPrintWidget(n_lines=4, text_per_line=[''] * 4,
-                               style=info_style)
+    info_wid = TextPrintWidget(text_per_line=[''] * 4, style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)
 
@@ -1720,48 +1700,8 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
     error_type_values['RMS Error'] = 'rmse'
     error_type_wid = ipywidgets.RadioButtons(
         options=error_type_values, value='me_norm', description='Error type')
-    error_type_wid.on_trait_change(update_info, 'value')
-    plot_ced_but = ipywidgets.Button(description='Plot CED', visible=show_ced,
-                                     button_style=plot_ced_but_style)
-    error_wid = ipywidgets.VBox(children=[error_type_wid, plot_ced_but],
-                                align='center')
-
-    # Invoke plot_ced widget
-    def plot_ced_fun(name):
-        # Make button invisible, so that it cannot be pressed again until
-        # widget closes
-        plot_ced_but.visible = False
-
-        error_type = error_type_wid.value
-        func = error_type_key_to_func(error_type)
-
-        # Create errors list
-        fit_errors = [f.final_error(compute_error=func)
-                      for f in fitting_results]
-        initial_errors = [f.initial_error(compute_error=func)
-                          for f in fitting_results]
-        errors = [fit_errors, initial_errors]
-
-        # Call plot_ced
-        plot_ced_widget = plot_ced(
-            errors, figure_size=(9, 5), error_type=error_type,
-            error_range=None, legend_entries=['Final Fitting',
-                                              'Initialization'],
-            style=style, return_widget=True)
-
-        # If another tab is selected, then close the widget.
-        def close_plot_ced_fun(name, value):
-            if value != 3:
-                plot_ced_widget.close()
-                plot_ced_but.visible = True
-        options_box.on_trait_change(close_plot_ced_fun, 'selected_index')
-
-        # If another error type, then close the widget
-        def close_plot_ced_fun_2(name, value):
-            plot_ced_widget.close()
-            plot_ced_but.visible = True
-        error_type_wid.on_trait_change(close_plot_ced_fun_2, 'value')
-    plot_ced_but.on_click(plot_ced_fun)
+    error_type_wid.observe(update_info, names='value', type='change')
+    error_wid = ipywidgets.VBox(children=[error_type_wid], align='center')
 
     # Group widgets
     options_wid = ipywidgets.Tab(children=[channel_options_wid,
@@ -1770,7 +1710,7 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
     options_wid.set_title(1, 'Renderer')
     if n_fitting_results > 1:
         # Define function that updates options' widgets state
-        def update_widgets(name, value):
+        def update_widgets(change):
             # stop iterations animation
             fitting_result_wid.index_animation.play_stop_toggle.value = False
 
@@ -1803,14 +1743,8 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
             align='start')
 
         # Widget titles
-        if show_ced:
-            tab_titles = ['Info', 'Result', 'Renderer', 'CED', 'Export']
-        else:
-            tab_titles = ['Info', 'Result', 'Renderer', 'Error type', 'Export']
+        tab_titles = ['Info', 'Result', 'Renderer', 'Error type', 'Export']
     else:
-        # Do not show the plot ced button
-        plot_ced_but.visible = False
-
         # Header widget
         header_wid = LogoWidget(style=logo_style)
         tab_titles = ['Info', 'Result', 'Renderer', 'Error type', 'Export']

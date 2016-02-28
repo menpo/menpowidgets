@@ -14,3 +14,4 @@ Base
   visualize_atm
   visualize_patch_atm
   plot_ced
+  visualize_fitting_result
