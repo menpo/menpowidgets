@@ -20,4 +20,3 @@ Base
   visualize_shape_model
   visualize_appearance_model
   visualize_patch_appearance_model
-

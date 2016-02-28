@@ -43,8 +43,8 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     Appearance Model.
 
     Parameters
-    -----------
-    aam : :map:`AAM`
+    ----------
+    aam : `menpofit.aam.AAM`
         The multilevel AAM to be visualized. Note that each level can have
         different number of components.
     n_shape_parameters : `int` or `list` of `int` or ``None``, optional
@@ -60,7 +60,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         per level. If `list` of `int`, then a number of sliders is defined per
         level. If ``None``, all the active components per level will have a
         slider.
-    mode : {``'single'``, ``'multiple'``}, optional
+    mode : ``{'single', 'multiple'}``, optional
         If ``'single'``, then only a single slider is constructed along with a
         drop down menu. If ``'multiple'``, then a slider is constructed for each
         parameter.
@@ -68,7 +68,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         The minimum and maximum bounds, in std units, for the sliders.
     figure_size : (`int`, `int`), optional
         The size of the plotted figures.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
@@ -121,15 +121,13 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                                                  n_levels, max_n_appearance)
 
     # Define render function
-    def render_function(name, value):
+    def render_function(change):
         # Clear current figure, but wait until the generation of the new data
         # that will be rendered
         ipydisplay.clear_output(wait=True)
 
         # Get selected level
-        level = 0
-        if n_levels > 1:
-            level = level_wid.value
+        level = level_wid.value if n_levels > 1 else 0
 
         # Compute weights and instance
         shape_weights = shape_model_parameters_wid.selected_values
@@ -138,9 +136,6 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                                 appearance_weights=appearance_weights)
         image_is_masked = isinstance(instance, MaskedImage)
         selected_group = landmark_options_wid.selected_values['group']
-
-        # Update info
-        update_info(aam, instance, level, selected_group)
 
         # Render instance with selected options
         tmp1 = renderer_options_wid.selected_values['lines']
@@ -185,6 +180,9 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             legend_font_weight=None, legend_font_size=None, render_legend=False,
             legend_font_style=None, legend_border_padding=None, **options)
 
+        # Update info
+        update_info(aam, instance, level, selected_group)
+
         # Save the current figure id
         save_figure_wid.renderer = renderer
 
@@ -220,8 +218,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                 lvl_app_mod.n_components, lvl_app_mod.variance_ratio() * 100),
             "> Instance: min={:.3f} , max={:.3f}".format(
                 instance.pixels.min(), instance.pixels.max())]
-        info_wid.set_widget_state(n_lines=len(text_per_line),
-                                  text_per_line=text_per_line)
+        info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Plot shape variance function
     def plot_shape_variance(name):
@@ -280,39 +277,42 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
     # Create widgets
     shape_model_parameters_wid = LinearModelParametersWidget(
-        n_shape_parameters[0], render_function, params_str='param ',
-        mode=mode, params_bounds=parameters_bounds, params_step=0.1,
-        plot_variance_visible=True, plot_variance_function=plot_shape_variance,
-        style=model_parameters_style)
+            n_shape_parameters[0], render_function, params_str='Parameter ',
+            mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+            plot_variance_visible=True,
+            plot_variance_function=plot_shape_variance,
+            style=model_parameters_style, animation_step=0.5, interval=0.,
+            loop_enabled=True)
     appearance_model_parameters_wid = LinearModelParametersWidget(
-        n_appearance_parameters[0], render_function, params_str='param ',
-        mode=mode, params_bounds=parameters_bounds, params_step=0.1,
-        plot_variance_visible=True,
-        plot_variance_function=plot_appearance_variance,
-        style=model_parameters_style)
+            n_appearance_parameters[0], render_function, params_str='Parameter ',
+            mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+            plot_variance_visible=True,
+            plot_variance_function=plot_appearance_variance,
+            style=model_parameters_style, animation_step=0.5, interval=0.,
+            loop_enabled=True)
     groups_keys, labels_keys = extract_groups_labels_from_image(
-        aam.appearance_models[0].mean())
+            aam.appearance_models[0].mean())
     channel_options_wid = ChannelOptionsWidget(
-        n_channels=aam.appearance_models[0].mean().n_channels,
-        image_is_masked=isinstance(aam.appearance_models[0].mean(), MaskedImage),
-        render_function=render_function, style=channels_style)
+            n_channels=aam.appearance_models[0].mean().n_channels,
+            image_is_masked=isinstance(aam.appearance_models[0].mean(), MaskedImage),
+            render_function=render_function, style=channels_style)
     renderer_options_wid = RendererOptionsWidget(
-        options_tabs=['markers', 'lines', 'image', 'numbering', 'zoom_one',
-                      'axes'], labels=labels_keys[0],
-        axes_x_limits=None, axes_y_limits=None,
-        render_function=render_function,  style=renderer_style,
-        tabs_style=renderer_tabs_style)
+            options_tabs=['markers', 'lines', 'image', 'numbering', 'zoom_one',
+                          'axes'], labels=labels_keys[0],
+            axes_x_limits=None, axes_y_limits=None,
+            render_function=render_function,  style=renderer_style,
+            tabs_style=renderer_tabs_style)
     landmark_options_wid = LandmarkOptionsWidget(
-        group_keys=groups_keys, labels_keys=labels_keys,
-        render_function=render_function, style=landmarks_style,
-        renderer_widget=renderer_options_wid)
-    info_wid = TextPrintWidget(n_lines=11, text_per_line=[''] * 11,
-                               style=info_style)
+            group_keys=groups_keys, labels_keys=labels_keys,
+            render_function=render_function, style=landmarks_style,
+            renderer_widget=renderer_options_wid)
+    info_wid = TextPrintWidget(text_per_line=[''] * 11, style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)
 
     # Define function that updates options' widgets state
-    def update_widgets(name, value):
+    def update_widgets(change):
+        value = change['new']
         # Update shape model parameters
         shape_model_parameters_wid.set_widget_state(
             n_shape_parameters[value], params_str='param ',
@@ -350,8 +350,8 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
             options=radio_str, description='Pyramid:', value=n_levels-1)
-        level_wid.on_trait_change(update_widgets, 'value')
-        level_wid.on_trait_change(render_function, 'value')
+        level_wid.observe(update_widgets, names='value', type='change')
+        level_wid.observe(render_function, names='value', type='change')
         tmp_children.insert(0, level_wid)
     tmp_wid = ipywidgets.HBox(children=tmp_children, align='center',
                               box_style=model_style)
@@ -378,7 +378,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     ipydisplay.display(wid)
 
     # Trigger initial visualization
-    render_function('', True)
+    render_function({})
 
 
 def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
@@ -389,8 +389,8 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     Active Appearance Model.
 
     Parameters
-    -----------
-    aam : :map:`PatchAAM`
+    ----------
+    aam : `menpofit.aam.PatchAAM`
         The multilevel patch-based AAM to be visualized. Note that each level
         can have different number of components.
     n_shape_parameters : `int` or `list` of `int` or ``None``, optional
@@ -406,7 +406,7 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         per level. If `list` of `int`, then a number of sliders is defined per
         level. If ``None``, all the active components per level will have a
         slider.
-    mode : {``'single'``, ``'multiple'``}, optional
+    mode : ``{'single', 'multiple'}``, optional
         If ``'single'``, then only a single slider is constructed along with a
         drop down menu. If ``'multiple'``, then a slider is constructed for each
         parameter.
@@ -414,7 +414,7 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         The minimum and maximum bounds, in std units, for the sliders.
     figure_size : (`int`, `int`), optional
         The size of the plotted figures.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
@@ -440,7 +440,7 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         renderer_tabs_style = 'info'
         save_figure_style = 'danger'
     elif style == 'minimal':
-        model_style = ''
+        model_style = 'info'
         model_tab_style = ''
         model_parameters_style = 'minimal'
         patches_style = 'minimal'
@@ -469,15 +469,13 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                                                  n_levels, max_n_appearance)
 
     # Define render function
-    def render_function(name, value):
+    def render_function(change):
         # Clear current figure, but wait until the generation of the new data
         # that will be rendered
         ipydisplay.clear_output(wait=True)
 
         # Get selected level
-        level = 0
-        if n_levels > 1:
-            level = level_wid.value
+        level = level_wid.value if n_levels > 1 else 0
 
         # Compute weights and instance
         shape_weights = shape_model_parameters_wid.selected_values
@@ -485,9 +483,6 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         shape_instance, appearance_instance = aam.instance(
             scale_index=level, shape_weights=shape_weights,
             appearance_weights=appearance_weights)
-
-        # Update info
-        update_info(aam, appearance_instance, level)
 
         # Render instance with selected options
         options = renderer_options_wid.selected_values['lines']
@@ -510,6 +505,9 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             glyph_use_negative=channel_options_wid.selected_values['glyph_use_negative'],
             sum_enabled=channel_options_wid.selected_values['sum_enabled'],
             **options)
+
+        # Update info
+        update_info(aam, appearance_instance, level)
 
         # Save the current figure id
         save_figure_wid.renderer = renderer
@@ -550,8 +548,7 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             "> Instance: min={:.3f} , max={:.3f}".format(
                 appearance_instance.pixels.min(),
                 appearance_instance.pixels.max())]
-        info_wid.set_widget_state(n_lines=len(text_per_line),
-                                  text_per_line=text_per_line)
+        info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Plot shape variance function
     def plot_shape_variance(name):
@@ -610,37 +607,39 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
     # Create widgets
     shape_model_parameters_wid = LinearModelParametersWidget(
-        n_shape_parameters[0], render_function, params_str='param ',
-        mode=mode, params_bounds=parameters_bounds, params_step=0.1,
-        plot_variance_visible=True, plot_variance_function=plot_shape_variance,
-        style=model_parameters_style)
+            n_shape_parameters[0], render_function, params_str='Parameter ',
+            mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+            plot_variance_visible=True, style=model_parameters_style,
+            plot_variance_function=plot_shape_variance,
+            animation_step=0.5, interval=0., loop_enabled=True)
     appearance_model_parameters_wid = LinearModelParametersWidget(
-        n_appearance_parameters[0], render_function, params_str='param ',
-        mode=mode, params_bounds=parameters_bounds, params_step=0.1,
-        plot_variance_visible=True, style=model_parameters_style,
-        plot_variance_function=plot_appearance_variance)
+            n_appearance_parameters[0], render_function, params_str='Parameter ',
+            mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+            plot_variance_visible=True, style=model_parameters_style,
+            plot_variance_function=plot_appearance_variance,
+            animation_step=0.5, interval=0., loop_enabled=True)
     patch_options_wid = PatchOptionsWidget(
-        n_patches=aam.appearance_models[0].mean().pixels.shape[0],
-        n_offsets=aam.appearance_models[0].mean().pixels.shape[1],
-        render_function=render_function, style=patches_style,
-        subwidgets_style=patches_subwidgets_style)
+            n_patches=aam.appearance_models[0].mean().pixels.shape[0],
+            n_offsets=aam.appearance_models[0].mean().pixels.shape[1],
+            render_function=render_function, style=patches_style,
+            subwidgets_style=patches_subwidgets_style)
     channel_options_wid = ChannelOptionsWidget(
-        n_channels=aam.appearance_models[0].mean().pixels.shape[2],
-        image_is_masked=False, render_function=render_function,
-        style=channels_style)
+            n_channels=aam.appearance_models[0].mean().pixels.shape[2],
+            image_is_masked=False, render_function=render_function,
+            style=channels_style)
     renderer_options_wid = RendererOptionsWidget(
-        options_tabs=['image', 'markers', 'lines', 'numbering', 'zoom_one',
-                      'axes'], labels=None,
-        axes_x_limits=None, axes_y_limits=None,
-        render_function=render_function,  style=renderer_style,
-        tabs_style=renderer_tabs_style)
-    info_wid = TextPrintWidget(n_lines=8, text_per_line=[''] * 8,
-                               style=info_style)
+            options_tabs=['image', 'markers', 'lines', 'numbering', 'zoom_one',
+                          'axes'], labels=None,
+            axes_x_limits=None, axes_y_limits=None,
+            render_function=render_function,  style=renderer_style,
+            tabs_style=renderer_tabs_style)
+    info_wid = TextPrintWidget(text_per_line=[''] * 8, style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)
 
     # Define function that updates options' widgets state
-    def update_widgets(name, value):
+    def update_widgets(change):
+        value = change['new']
         # Update shape model parameters
         shape_model_parameters_wid.set_widget_state(
             n_shape_parameters[value], params_str='param ',
@@ -682,8 +681,8 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
             options=radio_str, description='Pyramid:', value=n_levels-1)
-        level_wid.on_trait_change(update_widgets, 'value')
-        level_wid.on_trait_change(render_function, 'value')
+        level_wid.observe(update_widgets, names='value', type='change')
+        level_wid.observe(render_function, names='value', type='change')
         tmp_children.insert(0, level_wid)
     tmp_wid = ipywidgets.HBox(children=tmp_children, align='center',
                               box_style=model_style)
@@ -709,7 +708,7 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     ipydisplay.display(wid)
 
     # Trigger initial visualization
-    render_function('', True)
+    render_function({})
 
 
 def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
@@ -720,8 +719,8 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
     Template Model.
 
     Parameters
-    -----------
-    atm : :map:`ATM`
+    ----------
+    atm : `menpofit.atm.ATM`
         The multilevel ATM to be visualized. Note that each level can have
         different number of components.
     n_shape_parameters : `int` or `list` of `int` or ``None``, optional
@@ -730,7 +729,7 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
         between `n_parameters` and the number of active components per level.
         If `list` of `int`, then a number of sliders is defined per level.
         If ``None``, all the active components per level will have a slider.
-    mode : {``'single'``, ``'multiple'``}, optional
+    mode : ``{'single', 'multiple'}``, optional
         If ``'single'``, then only a single slider is constructed along with a
         drop down menu. If ``'multiple'``, then a slider is constructed for each
         parameter.
@@ -738,7 +737,7 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
         The minimum and maximum bounds, in std units, for the sliders.
     figure_size : (`int`, `int`), optional
         The size of the plotted figures.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
@@ -786,24 +785,19 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
                                             max_n_shape)
 
     # Define render function
-    def render_function(name, value):
+    def render_function(change):
         # Clear current figure, but wait until the generation of the new data
         # that will be rendered
         ipydisplay.clear_output(wait=True)
 
         # Get selected level
-        level = 0
-        if n_levels > 1:
-            level = level_wid.value
+        level = level_wid.value if n_levels > 1 else 0
 
         # Compute weights and instance
         shape_weights = shape_model_parameters_wid.selected_values
         instance = atm.instance(scale_index=level, shape_weights=shape_weights)
         image_is_masked = isinstance(instance, MaskedImage)
         selected_group = landmark_options_wid.selected_values['group']
-
-        # Update info
-        update_info(atm, instance, level, selected_group)
 
         # Render instance with selected options
         tmp1 = renderer_options_wid.selected_values['lines']
@@ -848,6 +842,9 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
             legend_font_weight=None, legend_font_size=None, render_legend=False,
             legend_font_style=None, legend_border_padding=None, **options)
 
+        # Update info
+        update_info(atm, instance, level, selected_group)
+
         # Save the current figure id
         save_figure_wid.renderer = renderer
 
@@ -879,8 +876,7 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
                 n_channels),
             "> Instance: min={:.3f} , max={:.3f}".format(
                 instance.pixels.min(), instance.pixels.max())]
-        info_wid.set_widget_state(n_lines=len(text_per_line),
-                                  text_per_line=text_per_line)
+        info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Plot shape variance function
     def plot_shape_variance(name):
@@ -911,33 +907,35 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
 
     # Create widgets
     shape_model_parameters_wid = LinearModelParametersWidget(
-        n_shape_parameters[0], render_function, params_str='param ',
-        mode=mode, params_bounds=parameters_bounds, params_step=0.1,
-        plot_variance_visible=True, plot_variance_function=plot_shape_variance,
-        style=model_parameters_style)
+            n_shape_parameters[0], render_function, params_str='Parameter ',
+            mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+            plot_variance_visible=True,
+            plot_variance_function=plot_shape_variance,
+            style=model_parameters_style, animation_step=0.5, interval=0.,
+            loop_enabled=True)
     groups_keys, labels_keys = extract_groups_labels_from_image(
-        atm.warped_templates[0])
+            atm.warped_templates[0])
     channel_options_wid = ChannelOptionsWidget(
-        n_channels=atm.warped_templates[0].n_channels,
-        image_is_masked=isinstance(atm.warped_templates[0], MaskedImage),
-        render_function=render_function, style=channels_style)
+            n_channels=atm.warped_templates[0].n_channels,
+            image_is_masked=isinstance(atm.warped_templates[0], MaskedImage),
+            render_function=render_function, style=channels_style)
     renderer_options_wid = RendererOptionsWidget(
-        options_tabs=['markers', 'lines', 'image', 'numbering', 'zoom_one',
-                      'axes'], labels=labels_keys[0],
-        axes_x_limits=None, axes_y_limits=None,
-        render_function=render_function,  style=renderer_style,
-        tabs_style=renderer_tabs_style)
+            options_tabs=['markers', 'lines', 'image', 'numbering', 'zoom_one',
+                          'axes'], labels=labels_keys[0],
+            axes_x_limits=None, axes_y_limits=None,
+            render_function=render_function,  style=renderer_style,
+            tabs_style=renderer_tabs_style)
     landmark_options_wid = LandmarkOptionsWidget(
-        group_keys=groups_keys, labels_keys=labels_keys,
-        render_function=render_function, style=landmarks_style,
-        renderer_widget=renderer_options_wid)
-    info_wid = TextPrintWidget(n_lines=10, text_per_line=[''] * 10,
-                               style=info_style)
+            group_keys=groups_keys, labels_keys=labels_keys,
+            render_function=render_function, style=landmarks_style,
+            renderer_widget=renderer_options_wid)
+    info_wid = TextPrintWidget(text_per_line=[''] * 10, style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)
 
     # Define function that updates options' widgets state
-    def update_widgets(name, value):
+    def update_widgets(change):
+        value = change['new']
         # Update shape model parameters
         shape_model_parameters_wid.set_widget_state(
             n_shape_parameters[value], params_str='param ',
@@ -962,8 +960,8 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
             options=radio_str, description='Pyramid:', value=n_levels-1)
-        level_wid.on_trait_change(update_widgets, 'value')
-        level_wid.on_trait_change(render_function, 'value')
+        level_wid.observe(update_widgets, names='value', type='change')
+        level_wid.observe(render_function, names='value', type='change')
         tmp_children.insert(0, level_wid)
     tmp_wid = ipywidgets.HBox(children=tmp_children, align='center',
                               box_style=model_style)
@@ -990,7 +988,7 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
     ipydisplay.display(wid)
 
     # Trigger initial visualization
-    render_function('', True)
+    render_function({})
 
 
 def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
@@ -1001,8 +999,8 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
     Active Template Model.
 
     Parameters
-    -----------
-    atm : :map:`PatchATM`
+    ----------
+    atm : `menpofit.atm.PatchATM`
         The multilevel patch-based ATM to be visualized. Note that each level
         can have different number of components.
     n_shape_parameters : `int` or `list` of `int` or ``None``, optional
@@ -1011,7 +1009,7 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
         between `n_parameters` and the number of active components per level.
         If `list` of `int`, then a number of sliders is defined per level.
         If ``None``, all the active components per level will have a slider.
-    mode : {``'single'``, ``'multiple'``}, optional
+    mode : ``{'single', 'multiple'}``, optional
         If ``'single'``, then only a single slider is constructed along with a
         drop down menu. If ``'multiple'``, then a slider is constructed for each
         parameter.
@@ -1019,7 +1017,7 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
         The minimum and maximum bounds, in std units, for the sliders.
     figure_size : (`int`, `int`), optional
         The size of the plotted figures.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
@@ -1069,23 +1067,18 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
                                             max_n_shape)
 
     # Define render function
-    def render_function(name, value):
+    def render_function(change):
         # Clear current figure, but wait until the generation of the new data
         # that will be rendered
         ipydisplay.clear_output(wait=True)
 
         # Get selected level
-        level = 0
-        if n_levels > 1:
-            level = level_wid.value
+        level = level_wid.value if n_levels > 1 else 0
 
         # Compute weights and instance
         shape_weights = shape_model_parameters_wid.selected_values
         shape_instance, template = atm.instance(scale_index=level,
                                                 shape_weights=shape_weights)
-
-        # Update info
-        update_info(atm, template, level)
 
         # Render instance with selected options
         options = renderer_options_wid.selected_values['lines']
@@ -1108,6 +1101,9 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
             glyph_use_negative=channel_options_wid.selected_values['glyph_use_negative'],
             sum_enabled=channel_options_wid.selected_values['sum_enabled'],
             **options)
+
+        # Update info
+        update_info(atm, template, level)
 
         # Save the current figure id
         save_figure_wid.renderer = renderer
@@ -1141,8 +1137,7 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
                 's' * (instance.pixels.shape[2] > 1)),
             "> Instance: min={:.3f} , max={:.3f}".format(
                 instance.pixels.min(), instance.pixels.max())]
-        info_wid.set_widget_state(n_lines=len(text_per_line),
-                                  text_per_line=text_per_line)
+        info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Plot shape variance function
     def plot_shape_variance(name):
@@ -1173,32 +1168,34 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
 
     # Create widgets
     shape_model_parameters_wid = LinearModelParametersWidget(
-        n_shape_parameters[0], render_function, params_str='param ',
-        mode=mode, params_bounds=parameters_bounds, params_step=0.1,
-        plot_variance_visible=True, plot_variance_function=plot_shape_variance,
-        style=model_parameters_style)
+            n_shape_parameters[0], render_function, params_str='param ',
+            mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+            plot_variance_visible=True,
+            plot_variance_function=plot_shape_variance,
+            style=model_parameters_style, animation_step=0.5, interval=0.,
+            loop_enabled=True)
     patch_options_wid = PatchOptionsWidget(
-        n_patches=atm.warped_templates[0].pixels.shape[0],
-        n_offsets=atm.warped_templates[0].pixels.shape[1],
-        render_function=render_function, style=patches_style,
-        subwidgets_style=patches_subwidgets_style)
+            n_patches=atm.warped_templates[0].pixels.shape[0],
+            n_offsets=atm.warped_templates[0].pixels.shape[1],
+            render_function=render_function, style=patches_style,
+            subwidgets_style=patches_subwidgets_style)
     channel_options_wid = ChannelOptionsWidget(
-        n_channels=atm.warped_templates[0].pixels.shape[2],
-        image_is_masked=False, render_function=render_function,
-        style=channels_style)
+            n_channels=atm.warped_templates[0].pixels.shape[2],
+            image_is_masked=False, render_function=render_function,
+            style=channels_style)
     renderer_options_wid = RendererOptionsWidget(
-        options_tabs=['image', 'markers', 'lines', 'numbering', 'zoom_one',
-                      'axes'], labels=None,
-        axes_x_limits=None, axes_y_limits=None,
-        render_function=render_function,  style=renderer_style,
-        tabs_style=renderer_tabs_style)
-    info_wid = TextPrintWidget(n_lines=7, text_per_line=[''] * 7,
-                               style=info_style)
+            options_tabs=['image', 'markers', 'lines', 'numbering', 'zoom_one',
+                          'axes'], labels=None,
+            axes_x_limits=None, axes_y_limits=None,
+            render_function=render_function,  style=renderer_style,
+            tabs_style=renderer_tabs_style)
+    info_wid = TextPrintWidget(text_per_line=[''] * 7, style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)
 
     # Define function that updates options' widgets state
-    def update_widgets(name, value):
+    def update_widgets(change):
+        value = change['new']
         # Update shape model parameters
         shape_model_parameters_wid.set_widget_state(
             n_shape_parameters[value], params_str='param ',
@@ -1228,8 +1225,8 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
             options=radio_str, description='Pyramid:', value=n_levels-1)
-        level_wid.on_trait_change(update_widgets, 'value')
-        level_wid.on_trait_change(render_function, 'value')
+        level_wid.observe(update_widgets, names='value', type='change')
+        level_wid.observe(render_function, names='value', type='change')
         tmp_children.insert(0, level_wid)
     tmp_wid = ipywidgets.HBox(children=tmp_children, align='center',
                               box_style=model_style)
@@ -1255,7 +1252,7 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
     ipydisplay.display(wid)
 
     # Trigger initial visualization
-    render_function('', True)
+    render_function({})
 
 
 def plot_ced(errors, legend_entries=None, error_range=None,
@@ -1284,11 +1281,11 @@ def plot_ced(errors, legend_entries=None, error_range=None,
             error_range = [0., 20., 1.] for error_type = 'me'
             error_range = [0., 20., 1.] for error_type = 'rmse'
 
-    error_type : {``'me_norm'``, ``'me'``, ``'rmse'``}, optional
+    error_type : ``{'me_norm', 'me', 'rmse'}``, optional
         Specifies the type of the provided errors.
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     return_widget : `bool`, optional
@@ -1296,7 +1293,7 @@ def plot_ced(errors, legend_entries=None, error_range=None,
         as part of a parent widget. If ``False``, the widget object is not
         returned, it is just visualized.
     """
-    from menpofit.result import plot_cumulative_error_distribution
+    from menpofit.visualize import plot_cumulative_error_distribution
     print('Initializing...')
 
     # Make sure that errors is a list even with one list member
@@ -1340,7 +1337,7 @@ def plot_ced(errors, legend_entries=None, error_range=None,
         x_label = 'Error'
 
     # Define render function
-    def render_function(name, value):
+    def render_function(change):
         # Clear current figure, but wait until the generation of the new data
         # that will be rendered
         ipydisplay.clear_output(wait=True)
@@ -1351,10 +1348,16 @@ def plot_ced(errors, legend_entries=None, error_range=None,
             wid.selected_values['zoom'][0] * figure_size[0],
             wid.selected_values['zoom'][1] * figure_size[1])
         del opts['zoom']
+        if opts['axes_x_limits'] is None:
+            tmp_error_range = None
+        elif isinstance(opts['axes_x_limits'], float):
+            tmp_error_range = [0., np.max(errors), x_axis_step]
+        else:
+            tmp_error_range = [opts['axes_x_limits'][0],
+                               1.0001 * opts['axes_x_limits'][1],
+                               x_axis_step]
         renderer = plot_cumulative_error_distribution(
-            errors, error_range=[opts['axes_x_limits'][0],
-                                 1.0001 * opts['axes_x_limits'][1],
-                                 x_axis_step],
+            errors, error_range=tmp_error_range,
             figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
             figure_size=new_figure_size, **opts)
 
@@ -1409,7 +1412,7 @@ def plot_ced(errors, legend_entries=None, error_range=None,
     ipydisplay.display(wid)
 
     # Trigger initial visualization
-    render_function('', True)
+    render_function({})
 
     # return widget object if asked
     if return_widget:
@@ -1423,16 +1426,16 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
 
     Parameters
     -----------
-    fitting_results : `list` of :map:`FittingResult` or subclass
+    fitting_results : `list` of `menpofit.result.Result` or `subclass`
         The `list` of fitting results to be displayed. Note that the fitting
         results can have different attributes between them, i.e. different
         number of iterations, number of channels etc.
     figure_size : (`int`, `int`), optional
         The initial size of the plotted figures.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
-    browser_style : {``'buttons'``, ``'slider'``}, optional
+    browser_style : ``{'buttons', 'slider'}``, optional
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
     """
