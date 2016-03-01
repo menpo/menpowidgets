@@ -1,5 +1,8 @@
 from menpo.base import MenpoMissingDependencyError
 
+from menpofit.error import (euclidean_bb_normalised_error,
+                            root_mean_square_bb_normalised_error)
+
 
 try:
     import menpofit
@@ -20,19 +23,17 @@ from menpo.base import name_of_callable
 from menpo.image import MaskedImage
 
 from ..checks import check_n_parameters
-from ..options import (
-    SaveFigureOptionsWidget, RendererOptionsWidget,
-    ChannelOptionsWidget, PatchOptionsWidget, LandmarkOptionsWidget,
-    LinearModelParametersWidget, PlotOptionsWidget, AnimationOptionsWidget,
-    TextPrintWidget)
+from ..options import (SaveFigureOptionsWidget, RendererOptionsWidget,
+                       ChannelOptionsWidget, PatchOptionsWidget,
+                       LandmarkOptionsWidget, LinearModelParametersWidget,
+                       PlotOptionsWidget, AnimationOptionsWidget,
+                       TextPrintWidget)
 from ..style import map_styles_to_hex_colours
 from ..tools import LogoWidget
-from ..utils import (
-    render_patches, render_image, extract_groups_labels_from_image,
-    render_images, sample_colours_from_colourmap)
+from ..utils import (render_patches, render_image,
+                     extract_groups_labels_from_image)
 
 from .options import IterativeResultOptionsWidget
-from .utils import error_type_key_to_func
 
 
 def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
@@ -1459,7 +1460,7 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
         fitting_result_tabs_style = 'warning'
         info_style = 'danger'
         renderer_style = 'danger'
-        renderer_tabs_style = 'info'
+        renderer_tabs_style = 'warning'
         save_figure_style = 'danger'
     else:
         logo_style = 'minimal'
@@ -1565,7 +1566,8 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
 
         # get selected view function
-        if fitting_result_wid.result_iterations_tab.selected_index == 0:
+        if (fitting_result_wid.result_iterations_tab.selected_index == 0 or
+                not hasattr(fitting_results[im], 'n_iters')):
             # use view()
             # final shape colour
             final_marker_face_colour = tmp1['marker_face_colour'][0]
@@ -1583,7 +1585,7 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
             gt_marker_face_colour = 'y'
             gt_marker_edge_colour = 'y'
             gt_line_colour = 'y'
-            if fitting_results[im].initial_shape is not None:
+            if fitting_results[im].gt_shape is not None:
                 if fitting_results[im].initial_shape is not None:
                     gt_marker_face_colour = tmp1['marker_face_colour'][2]
                     gt_marker_edge_colour = tmp1['marker_edge_colour'][2]
@@ -1614,11 +1616,25 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
                     figure_size=new_figure_size, **options)
         else:
             # use view_iterations()
-            # get colours
-            marker_face_colour = [tmp1['marker_face_colour'][i] for i in
-                                  fitting_result_wid.selected_values['iters']]
-            marker_edge_colour = [tmp1['marker_edge_colour'][i] for i in
-                                  fitting_result_wid.selected_values['iters']]
+            if fitting_result_wid.iterations_mode.value == 'animation':
+                # The mode is 'Animation'
+                # get colours
+                marker_face_colour = tmp1['marker_face_colour'][0]
+                marker_edge_colour = tmp1['marker_edge_colour'][0]
+                line_colour = tmp2['line_colour'][0]
+            else:
+                # The mode is 'Static'
+                # get colours
+                marker_face_colour = [
+                    tmp1['marker_face_colour'][i]
+                    for i in fitting_result_wid.selected_values['iters']]
+                marker_edge_colour = [
+                    tmp1['marker_edge_colour'][i]
+                    for i in fitting_result_wid.selected_values['iters']]
+                line_colour = [
+                    tmp2['line_colour'][i]
+                    for i in fitting_result_wid.selected_values['iters']]
+
             # render
             renderer = fitting_results[im].view_iterations(
                     figure_id=save_figure_wid.renderer.figure_id,
@@ -1628,7 +1644,10 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
                     marker_size=tmp1['marker_size'],
                     marker_edge_colour=marker_edge_colour,
                     marker_edge_width=tmp1['marker_edge_width'],
-                    figure_size=new_figure_size, **options)
+                    render_lines=tmp2['render_lines'],
+                    line_style=tmp2['line_style'], line_width=tmp2['line_width'],
+                    line_colour=line_colour, figure_size=new_figure_size,
+                    **options)
 
         # Show figure
         plt.show()
@@ -1641,53 +1660,99 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
 
     # Define function that updates info text
     def update_info(change):
-        # Get selected image
-        im = 0
-        if n_fitting_results > 1:
-            im = image_number_wid.selected_values
+        # Get selected object
+        im = image_number_wid.selected_values if n_fitting_results > 1 else 0
+        fr = fitting_results[im]
 
-        # Create output str
-        # if fitting_results[im].gt_shape is not None:
-        #     func = error_type_key_to_func(value)
-        #     text_per_line = [
-        #         "> Initial error: {:.4f}".format(
-        #             fitting_results[im].initial_error(compute_error=func)),
-        #         "> Final error: {:.4f}".format(
-        #             fitting_results[im].final_error(compute_error=func)),
-        #         "> {} iterations".format(fitting_results[im].n_iters)]
-        # else:
-        #     text_per_line = [
-        #         "> {} iterations".format(fitting_results[im].n_iters)]
-        if hasattr(fitting_results[im], 'n_scales'):  # Multilevel result
-            text_per_line = ["> {} scales".format(
-                fitting_results[im].n_scales)]
+        # Errors
+        text_per_line = []
+        if fr.gt_shape is not None:
+            # Get error function
+            error_fun = euclidean_bb_normalised_error
+            if error_type_toggles.value == 'RMS':
+                error_fun = root_mean_square_bb_normalised_error
+            # Set error options visibility
+            error_box.visible = True
+            # Compute errors
+            if fr.initial_shape is not None:
+                text_per_line.append(' > Initial error: {:.4f}'.format(
+                        error_fun(fr.initial_shape, fr.gt_shape,
+                                  norm_type=norm_type_toggles.value)))
+            text_per_line.append(' > Final error: {:.4f}'.format(
+                    error_fun(fr.final_shape, fr.gt_shape,
+                              norm_type=norm_type_toggles.value)))
         else:
-            text_per_line = ['> ']
+            # Set error options visibility
+            error_box.visible = False
+            text_per_line.append(' > No groundtruth shape.')
+
+        # Landmarks, scales, iterations
+        text_per_line.append(' > {} landmark points.'.format(
+                fr.final_shape.n_points))
+        if hasattr(fr, 'n_iters'):
+            text_per_line.append(' > {} iterations.'.format(fr.n_iters))
+        else:
+            text_per_line.append(' > No iterations.')
+        if hasattr(fr, 'n_scales'):
+            text_per_line.append(' > {} scales.'.format(fr.n_scales))
         info_wid.set_widget_state(text_per_line=text_per_line)
 
-    # Create options widgets
+    # Create renderer widget
     labels = ['Final']
+    default_colours = ['red']
     if fitting_results[0].initial_shape is not None:
         labels.append('Initial')
+        default_colours.append('blue')
     if fitting_results[0].gt_shape is not None:
         labels.append('Groundtruth')
+        default_colours.append('yellow')
     renderer_options_wid = RendererOptionsWidget(
             options_tabs=['markers', 'lines', 'zoom_one', 'legend',
                           'numbering', 'image', 'axes'],
             labels=labels, axes_x_limits=None, axes_y_limits=None,
-            render_function=render_function, style=renderer_style,
+            render_function=None, style=renderer_style,
             tabs_style=renderer_tabs_style)
+    # Set initial values
+    renderer_options_wid.options_widgets[3].render_legend_checkbox.value = True
+    renderer_options_wid.options_widgets[0].marker_face_colour_widget.set_colours(
+            default_colours, allow_callback=False)
+    renderer_options_wid.options_widgets[0].marker_edge_colour_widget.set_colours(
+            ['black'] * len(default_colours), allow_callback=False)
+    renderer_options_wid.options_widgets[1].line_colour_widget.set_colours(
+            default_colours, allow_callback=False)
+    renderer_options_wid.add_render_function(render_function)
+
+    # Create info and error options
     info_wid = TextPrintWidget(text_per_line=[''] * 4, style=info_style)
+    error_type_toggles = ipywidgets.ToggleButtons(
+            options=['Euclidean', 'RMS'], value='Euclidean',
+            description='Error type')
+    norm_type_toggles = ipywidgets.ToggleButtons(
+            options=['area', 'perimeter', 'avg_edge_length', 'diagonal'],
+            value='avg_edge_length', description='Normalise')
+    error_box = ipywidgets.VBox(children=[error_type_toggles, norm_type_toggles],
+                                visible=fitting_results[0].gt_shape is not None,
+                                align='start', margin='0.3cm')
+    error_type_toggles.observe(update_info, names='value', type='change')
+    norm_type_toggles.observe(update_info, names='value', type='change')
+    info_error_box = ipywidgets.HBox(children=[info_wid, error_box],
+                                     align='start')
+
+    # Create save figure widget
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)
 
     def update_renderer_options(change):
+        # Get selected fitting result object
+        im = image_number_wid.selected_values if n_fitting_results > 1 else 0
+
+        # Get labels
         if fitting_result_wid.result_iterations_tab.selected_index == 0:
             # We are at the Results tab
             labels = ['Final']
-            if fitting_results[0].initial_shape is not None:
+            if fitting_results[im].initial_shape is not None:
                 labels.append('Initial')
-            if fitting_results[0].gt_shape is not None:
+            if fitting_results[im].gt_shape is not None:
                 labels.append('Groundtruth')
         else:
             # We are at the Iterations tab
@@ -1696,12 +1761,12 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
                 labels = None
             else:
                 # The mode is 'Static'
-                n_digits = len(str(fitting_results[0].n_iters))
+                n_digits = len(str(fitting_results[im].n_iters))
                 labels = []
-                for j in list(range(fitting_results[0].n_iters + 1)):
-                    if j == 0 and fitting_results[0].initial_shape is not None:
+                for j in list(range(fitting_results[im].n_iters + 1)):
+                    if j == 0 and fitting_results[im].initial_shape is not None:
                         labels.append('Initial')
-                    elif j == fitting_results[0].n_iters:
+                    elif j == fitting_results[im].n_iters:
                         labels.append('Final')
                     else:
                         labels.append("iteration {:0{}d}".format(j, n_digits))
@@ -1740,7 +1805,13 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
                 has_gt_shape=fitting_results[im].gt_shape is not None,
                 has_initial_shape=fitting_results[im].initial_shape is not None,
                 has_image=fitting_results[im].image is not None,
-                n_iters=n_iters, allow_callback=True)
+                n_iters=n_iters, allow_callback=False)
+
+            # Update renderer options
+            update_renderer_options({})
+
+            # Render callback
+            render_function({})
 
         # Image selection slider
         index = {'min': 0, 'max': n_fitting_results - 1, 'step': 1, 'index': 0}
@@ -1753,16 +1824,14 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
         header_wid = ipywidgets.HBox(
             children=[LogoWidget(style=logo_style), image_number_wid],
             align='start')
-
-        # Widget titles
-        tab_titles = ['Info', 'Result', 'Renderer', 'Error type', 'Export']
     else:
         # Header widget
         header_wid = LogoWidget(style=logo_style)
-        tab_titles = ['Info', 'Result', 'Renderer', 'Export']
+    # Widget titles
+    tab_titles = ['Info', 'Result', 'Renderer', 'Export']
     header_wid.margin = '0.2cm'
     options_box = ipywidgets.Tab(
-        children=[info_wid, fitting_result_wid, renderer_options_wid,
+        children=[info_error_box, fitting_result_wid, renderer_options_wid,
                   save_figure_wid], margin='0.2cm')
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)

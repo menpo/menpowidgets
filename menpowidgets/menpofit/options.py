@@ -2,7 +2,7 @@ import ipywidgets
 from traitlets.traitlets import Dict
 
 from menpowidgets.abstract import MenpoWidget
-from menpowidgets.options import AnimationOptionsWidget, RendererOptionsWidget
+from menpowidgets.options import AnimationOptionsWidget
 from menpowidgets.tools import SlicingCommandWidget
 from menpowidgets.style import (format_font, format_box,
                                 map_styles_to_hex_colours)
@@ -487,38 +487,23 @@ class IterativeResultOptionsWidget(MenpoWidget):
         >>>                      allow_callback=True)
     """
     def __init__(self, has_gt_shape, has_initial_shape, has_image, n_iters,
-                 render_function=None, displacements_function=None,
-                 errors_function=None, costs_function=None, style='minimal',
-                 tabs_style='minimal'):
+                 render_function=None, tab_update_function=None,
+                 displacements_function=None, errors_function=None,
+                 costs_function=None, style='minimal', tabs_style='minimal'):
         # Initialise default options dictionary
         render_image = True if has_image else False
         default_options = {'render_final_shape': True,
                            'render_initial_shape': False,
                            'render_gt_shape': False,
                            'render_image': render_image,
-                           'subplots_enabled': True,
-                           'final_marker_face_colour': 'r',
-                           'final_marker_edge_colour': 'k',
-                           'final_line_colour': 'r',
-                           'initial_marker_face_colour': 'b',
-                           'initial_marker_edge_colour': 'k',
-                           'initial_line_colour': 'b',
-                           'gt_marker_face_colour': 'y',
-                           'gt_marker_edge_colour': 'k',
-                           'gt_line_colour': 'y',
-                           'render_lines': True,
-                           'line_style': '-',
-                           'line_width': 1.,
-                           'render_markers': True,
-                           'marker_style': 'o',
-                           'marker_size': 4,
-                           'marker_edge_width': 1.}
+                           'subplots_enabled': True}
 
         # Assign properties
         self.has_gt_shape = None
         self.has_initial_shape = None
         self.has_image = None
         self.n_iters = -1
+        self.tab_update_function = tab_update_function
 
         # Create result tab
         self.mode = ipywidgets.RadioButtons(
@@ -550,7 +535,7 @@ class IterativeResultOptionsWidget(MenpoWidget):
         index = {'min': 0, 'max': n_iters + 1, 'step': 1, 'index': 0}
         self.index_animation = AnimationOptionsWidget(
                 index, description='', index_style='slider',
-                loop_enabled=False, interval=0.2)
+                loop_enabled=False, interval=0.)
         slice_options = {'command': 'range({})'.format(n_iters + 1),
                          'length': n_iters + 1}
         self.index_slicing = SlicingCommandWidget(
@@ -579,33 +564,21 @@ class IterativeResultOptionsWidget(MenpoWidget):
         self.iterations_box = ipywidgets.VBox(
             children=[self.mode_index_buttons_box, self.no_iterations_text])
 
-        # Create rendering options tab
-        initial_labels = ['Final']
-        if has_initial_shape is not None:
-            initial_labels.append('Initial')
-        if has_gt_shape is not None:
-            initial_labels.append('Groundtruth')
-        self.rendered_options_wid = RendererOptionsWidget(
-                options_tabs=['markers', 'lines'], labels=initial_labels,
-                axes_x_limits=None, axes_y_limits=None, style=tabs_style,
-                tabs_style=tabs_style)
-
         # Create final tab widget
         self.result_iterations_tab = ipywidgets.Tab(
-            children=[self.result_box, self.iterations_box,
-                      self.rendered_options_wid], margin='0.2cm')
+            children=[self.result_box, self.iterations_box], margin='0.2cm')
         self.result_iterations_tab.set_title(0, 'Final')
         self.result_iterations_tab.set_title(1, 'Iterations')
-        self.result_iterations_tab.set_title(2, 'Renderer')
         self.result_iterations_tab.observe(
                 self._stop_animation, names='selected_index', type='change')
 
         # Function for updating rendering options
-        self.result_iterations_tab.observe(
-                self._update_renderer_options, names='selected_index',
-                type='change')
-        self.iterations_mode.observe(self._update_renderer_options,
-                                     names='value', type='change')
+        if tab_update_function is not None:
+            self.result_iterations_tab.observe(tab_update_function,
+                                               names='selected_index',
+                                               type='change')
+            self.iterations_mode.observe(tab_update_function, names='value',
+                                         type='change')
 
         # Create final widget
         children = [self.mode_render_image_box, self.result_iterations_tab]
@@ -631,32 +604,6 @@ class IterativeResultOptionsWidget(MenpoWidget):
 
         # Set style
         self.predefined_style(style, tabs_style)
-
-    def _update_renderer_options(self, change):
-        if self.result_iterations_tab.selected_index == 0:
-            # We are at the Results tab
-            labels = ['Final']
-            if self.has_initial_shape:
-                labels.append('Initial')
-            if self.has_gt_shape:
-                labels.append('Groundtruth')
-        else:
-            # We are at the Iterations tab
-            if self.iterations_mode.value == 'animation':
-                # The mode is 'Animation'
-                labels = None
-            else:
-                # The mode is 'Static'
-                n_digits = len(str(self.n_iters))
-                labels = []
-                for j in list(range(self.n_iters + 1)):
-                    if j == 0 and self.has_initial_shape:
-                        labels.append('Initial')
-                    elif j == self.n_iters:
-                        labels.append('Final')
-                    else:
-                        labels.append("iteration {:0{}d}".format(j, n_digits))
-        self.rendered_options_wid.set_widget_state(labels, allow_callback=False)
 
     def _index_visibility(self, change):
         self.index_animation.visible = change['new'] == 'animation'
@@ -814,34 +761,6 @@ class IterativeResultOptionsWidget(MenpoWidget):
         if (self.result_iterations_tab.selected_index == 0 or
                 self.n_iters is None):
             # Result tab
-            tmp1 = self.rendered_options_wid.selected_values['markers']
-            tmp2 = self.rendered_options_wid.selected_values['lines']
-            # Get final shape colour
-            final_marker_face_colour = tmp1['marker_face_colour'][0]
-            final_marker_edge_colour = tmp1['marker_edge_colour'][0]
-            final_line_colour = tmp2['line_colour'][0]
-            # Get initial shape colour
-            initial_marker_face_colour = 'b'
-            initial_marker_edge_colour = 'b'
-            initial_line_colour = 'b'
-            if self.has_initial_shape:
-                initial_marker_face_colour = tmp1['marker_face_colour'][1]
-                initial_marker_edge_colour = tmp1['marker_edge_colour'][1]
-                initial_line_colour = tmp2['line_colour'][1]
-            # Get gt shape colour
-            gt_marker_face_colour = 'y'
-            gt_marker_edge_colour = 'y'
-            gt_line_colour = 'y'
-            if self.has_gt_shape:
-                if self.has_initial_shape:
-                    gt_marker_face_colour = tmp1['marker_face_colour'][2]
-                    gt_marker_edge_colour = tmp1['marker_edge_colour'][2]
-                    gt_line_colour = tmp2['line_colour'][2]
-                else:
-                    gt_marker_face_colour = tmp1['marker_face_colour'][1]
-                    gt_marker_edge_colour = tmp1['marker_edge_colour'][1]
-                    gt_line_colour = tmp2['line_colour'][1]
-            # Get selected values
             self.selected_values = {
                 'render_final_shape': self.shape_buttons[2].value,
                 'render_initial_shape': (self.shape_buttons[1].value and
@@ -849,63 +768,20 @@ class IterativeResultOptionsWidget(MenpoWidget):
                 'render_gt_shape': (self.shape_buttons[3].value and
                                     self.has_gt_shape),
                 'render_image': self.render_image.value and self.has_image,
-                'subplots_enabled': self.mode.value,
-                'final_marker_face_colour': final_marker_face_colour,
-                'final_marker_edge_colour': final_marker_edge_colour,
-                'final_line_colour': final_line_colour,
-                'initial_marker_face_colour': initial_marker_face_colour,
-                'initial_marker_edge_colour': initial_marker_edge_colour,
-                'initial_line_colour': initial_line_colour,
-                'gt_marker_face_colour': gt_marker_face_colour,
-                'gt_marker_edge_colour': gt_marker_edge_colour,
-                'gt_line_colour': gt_line_colour,
-                'render_lines': tmp2['render_lines'],
-                'line_style': tmp2['line_style'],
-                'line_width': tmp2['line_width'],
-                'render_markers': tmp1['render_markers'],
-                'marker_style': tmp1['marker_style'],
-                'marker_size': tmp1['marker_size'],
-                'marker_edge_width': tmp1['marker_edge_width']}
+                'subplots_enabled': self.mode.value}
         else:
             # Iterations tab
-            tmp1 = self.rendered_options_wid.selected_values['markers']
-            tmp2 = self.rendered_options_wid.selected_values['lines']
             if self.iterations_mode.value == 'animation':
                 # The mode is 'Animation'
-                # Get iters
-                iters = self.index_animation.selected_values
-
-                # Get colours
-                marker_face_colour = tmp1['marker_face_colour'][0]
-                marker_edge_colour = tmp1['marker_edge_colour'][0]
-                line_colour = tmp2['line_colour'][0]
+                 iters = self.index_animation.selected_values
             else:
                 # The mode is 'Static'
-                # Get iters
                 iters = self.index_slicing.selected_values
-
-                # Get colours
-                marker_face_colour = [tmp1['marker_face_colour'][i]
-                                      for i in iters]
-                marker_edge_colour = [tmp1['marker_edge_colour'][i]
-                                      for i in iters]
-                line_colour = [tmp2['line_colour'][i] for i in iters]
-
             # Get selected values
             self.selected_values = {
                 'iters': iters,
                 'render_image': self.render_image.value and self.has_image,
-                'subplots_enabled': self.mode.value,
-                'render_lines': tmp2['render_lines'],
-                'line_style': tmp2['line_style'],
-                'line_width': tmp2['line_width'],
-                'line_colour': line_colour,
-                'render_markers': tmp1['render_markers'],
-                'marker_style': tmp1['marker_style'],
-                'marker_size': tmp1['marker_size'],
-                'marker_edge_width': tmp1['marker_edge_width'],
-                'marker_face_colour': marker_face_colour,
-                'marker_edge_colour': marker_edge_colour}
+                'subplots_enabled': self.mode.value}
 
     def add_callbacks(self):
         r"""
@@ -925,7 +801,6 @@ class IterativeResultOptionsWidget(MenpoWidget):
                                      type='change')
         self.result_iterations_tab.observe(
                 self._save_options, names='selected_index', type='change')
-        self.rendered_options_wid.add_render_function(self._save_options)
 
     def remove_callbacks(self):
         r"""
@@ -944,7 +819,6 @@ class IterativeResultOptionsWidget(MenpoWidget):
                                        type='change')
         self.result_iterations_tab.unobserve(
                 self._save_options, names='selected_index', type='change')
-        self.rendered_options_wid.remove_render_function()
 
     def set_visibility(self):
         r"""
@@ -1179,9 +1053,6 @@ class IterativeResultOptionsWidget(MenpoWidget):
             self.has_initial_shape = has_initial_shape
             self.has_image = has_image
             self.n_iters = n_iters
-
-            # Update renderer options
-            self._update_renderer_options({})
 
             # Set widget's visibility
             self.set_visibility()

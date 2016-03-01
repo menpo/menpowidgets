@@ -1058,6 +1058,7 @@ class ColourSelectionWidget(MenpoWidget):
 
         # Assign properties
         self.labels = labels
+        self.n_colours = n_labels
         self.description = description
 
         # Set functionality
@@ -1187,6 +1188,7 @@ class ColourSelectionWidget(MenpoWidget):
             colours_list = [colours_list]
         if labels is None:
             labels = ["label {}".format(k) for k in range(len(colours_list))]
+        self.n_colours = len(colours_list)
 
         sel_colours = self.selected_values
         sel_labels = self.labels
@@ -1256,6 +1258,58 @@ class ColourSelectionWidget(MenpoWidget):
             # trigger render function if allowed
             if allow_callback:
                 self.call_render_function(old_value, self.selected_values)
+
+    def set_colours(self, colours_list, allow_callback=True):
+        r"""
+        Method that updates the colour values of the widget.
+
+        Parameters
+        ----------
+        colours_list : `list` of `str` or [`float`, `float`, `float`]
+            A `list` of colours. If a colour is defined as an `str`, then it must
+            either be a hex code or a colour name, such as ::
+
+                'blue', 'green', 'red', 'cyan', 'magenta', 'yellow', 'black',
+                'white', 'pink', 'orange'
+
+            If a colour has the form [`float`, `float`, `float`], then it defines
+            an RGB value and must have length 3.
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+
+        Raises
+        ------
+        ValueError
+            You must provide a colour per label.
+        """
+        # Check provided colours
+        if isinstance(colours_list, str) or isinstance(colours_list, unicode):
+            colours_list = [colours_list]
+        if len(colours_list) != self.n_colours:
+            raise ValueError("You must provide a colour per label.")
+
+        # Keep old value
+        old_value = self.selected_values
+
+        # Remove render function
+        render_fun = self._render_function
+        self.remove_render_function()
+
+        # Keep previously selected label
+        previous_value = self.label_dropdown.value
+        for k, c in enumerate(colours_list):
+            self.label_dropdown.value = k
+            self.colour_widget.value = c
+
+        # Select previous label
+        self.label_dropdown.value = previous_value
+
+        # Add render function
+        self.add_render_function(render_fun)
+
+        # Callback
+        if allow_callback:
+            self.call_render_function(old_value, self.selected_values)
 
 
 class ZoomOneScaleWidget(MenpoWidget):
