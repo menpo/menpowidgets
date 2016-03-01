@@ -1014,8 +1014,10 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
         options_tabs=['markers', 'lines', 'numbering', 'zoom_one', 'axes',
                       'image'], labels=None,
         axes_x_limits=None, axes_y_limits=None,
-        render_function=render_function,  style=renderer_style,
+        render_function=None,  style=renderer_style,
         tabs_style=renderer_tabs_style)
+    renderer_options_wid.options_widgets[5].interpolation_checkbox.value = True
+    renderer_options_wid.add_render_function(render_function)
     info_wid = TextPrintWidget(text_per_line=[''] * 3, style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)
@@ -2099,8 +2101,10 @@ def visualize_patch_appearance_model(appearance_model, centers,
         options_tabs=['image', 'markers', 'lines', 'numbering', 'zoom_one',
                       'axes'], labels=None,
         axes_x_limits=None, axes_y_limits=None,
-        render_function=render_function,  style=renderer_style,
+        render_function=None,  style=renderer_style,
         tabs_style=renderer_tabs_style)
+    renderer_options_wid.options_widgets[0].interpolation_checkbox.value = True
+    renderer_options_wid.add_render_function(render_function)
     info_wid = TextPrintWidget(text_per_line=[''] * 8, style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)

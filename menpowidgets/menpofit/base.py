@@ -1,4 +1,5 @@
 from menpo.base import MenpoMissingDependencyError
+from menpo.image.base import _convert_patches_list_to_single_array
 
 from menpofit.error import (euclidean_bb_normalised_error,
                             root_mean_square_bb_normalised_error)
@@ -316,12 +317,12 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         value = change['new']
         # Update shape model parameters
         shape_model_parameters_wid.set_widget_state(
-            n_shape_parameters[value], params_str='param ',
+            n_shape_parameters[value], params_str='Parameter ',
             allow_callback=False)
 
         # Update appearance model parameters
         appearance_model_parameters_wid.set_widget_state(
-            n_appearance_parameters[value], params_str='param ',
+            n_appearance_parameters[value], params_str='Parameter ',
             allow_callback=False)
 
         # Update channel options
@@ -632,8 +633,10 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             options_tabs=['image', 'markers', 'lines', 'numbering', 'zoom_one',
                           'axes'], labels=None,
             axes_x_limits=None, axes_y_limits=None,
-            render_function=render_function,  style=renderer_style,
+            render_function=None,  style=renderer_style,
             tabs_style=renderer_tabs_style)
+    renderer_options_wid.options_widgets[0].interpolation_checkbox.value = True
+    renderer_options_wid.add_render_function(render_function)
     info_wid = TextPrintWidget(text_per_line=[''] * 8, style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)
@@ -643,12 +646,12 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         value = change['new']
         # Update shape model parameters
         shape_model_parameters_wid.set_widget_state(
-            n_shape_parameters[value], params_str='param ',
+            n_shape_parameters[value], params_str='Parameter ',
             allow_callback=False)
 
         # Update appearance model parameters
         appearance_model_parameters_wid.set_widget_state(
-            n_appearance_parameters[value], params_str='param ',
+            n_appearance_parameters[value], params_str='Parameter ',
             allow_callback=False)
 
         # Update patch options
@@ -939,7 +942,7 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
         value = change['new']
         # Update shape model parameters
         shape_model_parameters_wid.set_widget_state(
-            n_shape_parameters[value], params_str='param ',
+            n_shape_parameters[value], params_str='Parameter ',
             allow_callback=False)
 
         # Update channel options
@@ -1169,7 +1172,7 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
 
     # Create widgets
     shape_model_parameters_wid = LinearModelParametersWidget(
-            n_shape_parameters[0], render_function, params_str='param ',
+            n_shape_parameters[0], render_function, params_str='Parameter ',
             mode=mode, params_bounds=parameters_bounds, params_step=0.1,
             plot_variance_visible=True,
             plot_variance_function=plot_shape_variance,
@@ -1188,8 +1191,10 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
             options_tabs=['image', 'markers', 'lines', 'numbering', 'zoom_one',
                           'axes'], labels=None,
             axes_x_limits=None, axes_y_limits=None,
-            render_function=render_function,  style=renderer_style,
+            render_function=None,  style=renderer_style,
             tabs_style=renderer_tabs_style)
+    renderer_options_wid.options_widgets[0].interpolation_checkbox.value = True
+    renderer_options_wid.add_render_function(render_function)
     info_wid = TextPrintWidget(text_per_line=[''] * 7, style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)
@@ -1199,7 +1204,7 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
         value = change['new']
         # Update shape model parameters
         shape_model_parameters_wid.set_widget_state(
-            n_shape_parameters[value], params_str='param ',
+            n_shape_parameters[value], params_str='Parameter ',
             allow_callback=False)
 
         # Update patch options
@@ -1236,6 +1241,280 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
                                            renderer_options_wid,
                                            info_wid, save_figure_wid])
     tab_titles = ['Model', 'Patches', 'Channels', 'Renderer', 'Info', 'Export']
+    for (k, tl) in enumerate(tab_titles):
+        options_box.set_title(k, tl)
+    logo_wid = LogoWidget(style=logo_style)
+    logo_wid.margin = '0.1cm'
+    wid = ipywidgets.HBox(children=[logo_wid, options_box], align='start')
+
+    # Set widget's style
+    wid.box_style = widget_box_style
+    wid.border_radius = widget_border_radius
+    wid.border_width = widget_border_width
+    wid.border_color = map_styles_to_hex_colours(widget_box_style)
+    renderer_options_wid.margin = '0.2cm'
+
+    # Display final widget
+    ipydisplay.display(wid)
+
+    # Trigger initial visualization
+    render_function({})
+
+
+def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
+                  parameters_bounds=(-3.0, 3.0), figure_size=(10, 8),
+                  style='coloured'):
+    r"""
+    Widget that allows the dynamic visualization of a multilevel Constrained
+    Local Model.
+
+    Parameters
+    ----------
+    clm : `menpofit.clm.CLM`
+        The multilevel CLM to be visualized. Note that each level can have
+        different number of components.
+    n_shape_parameters : `int` or `list` of `int` or ``None``, optional
+        The number of principal components to be used for the shape parameters
+        sliders. If `int`, then the number of sliders per level is the minimum
+        between `n_parameters` and the number of active components per level.
+        If `list` of `int`, then a number of sliders is defined per level.
+        If ``None``, all the active components per level will have a slider.
+    mode : ``{'single', 'multiple'}``, optional
+        If ``'single'``, then only a single slider is constructed along with a
+        drop down menu. If ``'multiple'``, then a slider is constructed for each
+        parameter.
+    parameters_bounds : (`float`, `float`), optional
+        The minimum and maximum bounds, in std units, for the sliders.
+    figure_size : (`int`, `int`), optional
+        The size of the plotted figures.
+    style : ``{'coloured', 'minimal'}``, optional
+        If ``'coloured'``, then the style of the widget will be coloured. If
+        ``minimal``, then the style is simple using black and white colours.
+    """
+    print('Initializing...')
+
+    # Get the number of levels
+    n_levels = clm.n_scales
+
+    # Define the styling options
+    if style == 'coloured':
+        model_style = 'info'
+        model_parameters_style = 'danger'
+        patches_style = 'minimal'
+        patches_subwidgets_style = 'danger'
+        channels_style = 'danger'
+        logo_style = 'info'
+        widget_box_style = 'info'
+        widget_border_radius = 10
+        widget_border_width = 1
+        info_style = 'danger'
+        renderer_style = 'danger'
+        renderer_tabs_style = 'info'
+        save_figure_style = 'danger'
+    elif style == 'minimal':
+        model_style = ''
+        model_parameters_style = 'minimal'
+        patches_style = 'minimal'
+        patches_subwidgets_style = 'minimal'
+        channels_style = 'minimal'
+        logo_style = 'minimal'
+        widget_box_style = ''
+        widget_border_radius = 0
+        widget_border_width = 0
+        info_style = 'minimal'
+        renderer_style = 'minimal'
+        renderer_tabs_style = 'minimal'
+        save_figure_style = 'minimal'
+    else:
+        raise ValueError("style must be either coloured or minimal")
+
+    # Get the maximum number of components per level
+    max_n_shape = [sp.n_active_components for sp in clm.shape_models]
+
+    # Check the given number of parameters (the returned n_parameters is a list
+    # of len n_scales)
+    n_shape_parameters = check_n_parameters(n_shape_parameters, n_levels,
+                                            max_n_shape)
+
+    # Define render function
+    def render_function(change):
+        # Clear current figure, but wait until the generation of the new data
+        # that will be rendered
+        ipydisplay.clear_output(wait=True)
+
+        # Get selected level
+        level = level_wid.value if n_levels > 1 else 0
+
+        # Compute weights and instance
+        shape_weights = shape_model_parameters_wid.selected_values
+        shape_instance = clm.shape_instance(scale_index=level,
+                                            shape_weights=shape_weights)
+        if domain_toggles.value == 'spatial':
+            patches = _convert_patches_list_to_single_array(
+                    clm.expert_ensembles[level].spatial_filter_images,
+                    clm.expert_ensembles[level].n_experts)
+        else:
+            patches = _convert_patches_list_to_single_array(
+                    clm.expert_ensembles[level].frequency_filter_images,
+                    clm.expert_ensembles[level].n_experts)
+
+        # Render instance with selected options
+        options = renderer_options_wid.selected_values['lines']
+        options.update(renderer_options_wid.selected_values['markers'])
+        options.update(renderer_options_wid.selected_values['numbering'])
+        options.update(renderer_options_wid.selected_values['axes'])
+        options.update(renderer_options_wid.selected_values['image'])
+        options.update(patch_options_wid.selected_values)
+        new_figure_size = (
+            renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
+            renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
+
+        # show image with selected options
+        renderer = render_patches(
+                patches=patches, patch_centers=shape_instance,
+                renderer=save_figure_wid.renderer, figure_size=new_figure_size,
+                channels=channel_options_wid.selected_values['channels'],
+                glyph_enabled=channel_options_wid.selected_values['glyph_enabled'],
+                glyph_block_size=channel_options_wid.selected_values['glyph_block_size'],
+                glyph_use_negative=channel_options_wid.selected_values['glyph_use_negative'],
+                sum_enabled=channel_options_wid.selected_values['sum_enabled'],
+                **options)
+
+        # Update info
+        update_info(clm, patches, level)
+
+        # Save the current figure id
+        save_figure_wid.renderer = renderer
+
+    # Define function that updates the info text
+    def update_info(clm, patches, level):
+        lvl_shape_mod = clm.shape_models[level].model
+        n_channels = patches.shape[2]
+        feat = clm.holistic_features[level]
+
+        # Feature string
+        tmp_feat = 'Feature is {} with {} channel{}'.format(
+                name_of_callable(feat), n_channels, 's' * (n_channels > 1))
+
+        # update info widgets
+        text_per_line = [
+            "> {} ensemble of experts".format(
+                    name_of_callable(clm.expert_ensemble_cls[level])),
+            "> Level {}/{}".format(level + 1, clm.n_scales),
+            "> {} landmark points".format(patches.shape[0]),
+            "> {} shape components ({:.2f}% of variance)".format(
+                    lvl_shape_mod.n_components,
+                    lvl_shape_mod.variance_ratio() * 100),
+            "> {}".format(tmp_feat),
+            "> Patch shape: {} x {}".format(
+                    clm.expert_ensembles[level].patch_shape[0],
+                    clm.expert_ensembles[level].patch_shape[1]),
+            "> Instance: min={:.3f} , max={:.3f}".format(
+                    patches.min(), patches.max())]
+        info_wid.set_widget_state(text_per_line=text_per_line)
+
+    # Plot shape variance function
+    def plot_shape_variance(name):
+        # Clear current figure, but wait until the generation of the new data
+        # that will be rendered
+        ipydisplay.clear_output(wait=True)
+
+        # Get selected level
+        level = 0
+        if n_levels > 1:
+            level = level_wid.value
+
+        # Render
+        new_figure_size = (
+            renderer_options_wid.selected_values['zoom_one'] * 10,
+            renderer_options_wid.selected_values['zoom_one'] * 3)
+        plt.subplot(121)
+        clm.shape_models[level].model.plot_eigenvalues_ratio(
+                figure_id=save_figure_wid.renderer.figure_id)
+        plt.subplot(122)
+        renderer = clm.shape_models[level].model.plot_eigenvalues_cumulative_ratio(
+                figure_id=save_figure_wid.renderer.figure_id,
+                figure_size=new_figure_size)
+        plt.show()
+
+        # Save the current figure id
+        save_figure_wid.renderer = renderer
+
+    # Create widgets
+    shape_model_parameters_wid = LinearModelParametersWidget(
+            n_shape_parameters[0], render_function, params_str='Parameter ',
+            mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+            plot_variance_visible=True,
+            plot_variance_function=plot_shape_variance,
+            style=model_parameters_style, animation_step=0.5, interval=0.,
+            loop_enabled=True)
+    patch_options_wid = PatchOptionsWidget(
+            n_patches=clm.expert_ensembles[0].n_experts, n_offsets=1,
+            render_function=render_function, style=patches_style,
+            subwidgets_style=patches_subwidgets_style)
+    domain_toggles = ipywidgets.ToggleButtons(
+            description='Domain:', options=['spatial', 'frequency'],
+            value='spatial', margin='0.3cm')
+    experts_box = ipywidgets.VBox(children=[domain_toggles, patch_options_wid],
+                                  align='start')
+    domain_toggles.observe(render_function, names='value', type='change')
+    channel_options_wid = ChannelOptionsWidget(
+            n_channels=clm.expert_ensembles[0].spatial_filter_images[0].n_channels,
+            image_is_masked=False, render_function=render_function,
+            style=channels_style)
+    renderer_options_wid = RendererOptionsWidget(
+            options_tabs=['image', 'markers', 'lines', 'numbering', 'zoom_one',
+                          'axes'], labels=None,
+            axes_x_limits=None, axes_y_limits=None,
+            render_function=None,  style=renderer_style,
+            tabs_style=renderer_tabs_style)
+    renderer_options_wid.options_widgets[0].interpolation_checkbox.value = True
+    renderer_options_wid.add_render_function(render_function)
+    info_wid = TextPrintWidget(text_per_line=[''] * 7, style=info_style)
+    save_figure_wid = SaveFigureOptionsWidget(renderer=None,
+                                              style=save_figure_style)
+
+    # Define function that updates options' widgets state
+    def update_widgets(change):
+        value = change['new']
+        # Update shape model parameters
+        shape_model_parameters_wid.set_widget_state(
+                n_shape_parameters[value], params_str='Parameter ',
+                allow_callback=False)
+
+        # Update patch options
+        patch_options_wid.set_widget_state(
+                n_patches=clm.expert_ensembles[value].n_experts, n_offsets=1,
+                allow_callback=False)
+
+        # Update channels options
+        channel_options_wid.set_widget_state(
+                n_channels=clm.expert_ensembles[value].spatial_filter_images[0].n_channels,
+                image_is_masked=False, allow_callback=True)
+
+    # Group widgets
+    tmp_children = [shape_model_parameters_wid]
+    if n_levels > 1:
+        radio_str = OrderedDict()
+        for l in range(n_levels):
+            if l == 0:
+                radio_str["Level {} (low)".format(l)] = l
+            elif l == n_levels - 1:
+                radio_str["Level {} (high)".format(l)] = l
+            else:
+                radio_str["Level {}".format(l)] = l
+        level_wid = ipywidgets.RadioButtons(
+                options=radio_str, description='Pyramid:', value=n_levels-1)
+        level_wid.observe(update_widgets, names='value', type='change')
+        level_wid.observe(render_function, names='value', type='change')
+        tmp_children.insert(0, level_wid)
+    tmp_wid = ipywidgets.HBox(children=tmp_children, align='center',
+                              box_style=model_style)
+    options_box = ipywidgets.Tab(children=[tmp_wid, experts_box,
+                                           channel_options_wid,
+                                           renderer_options_wid,
+                                           info_wid, save_figure_wid])
+    tab_titles = ['Model', 'Experts', 'Channels', 'Renderer', 'Info', 'Export']
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
     logo_wid = LogoWidget(style=logo_style)

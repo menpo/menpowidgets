@@ -13,5 +13,6 @@ Base
   visualize_patch_aam
   visualize_atm
   visualize_patch_atm
+  visualize_clm
   plot_ced
   visualize_fitting_result
