@@ -74,6 +74,9 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from menpowidgets.utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     print('Initializing...')
 
     # Get the number of levels
@@ -420,6 +423,9 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from menpowidgets.utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     print('Initializing...')
 
     # Get the number of levels
@@ -745,6 +751,9 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from menpowidgets.utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     print('Initializing...')
 
     # Get the number of levels
@@ -1025,6 +1034,9 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from menpowidgets.utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     print('Initializing...')
 
     # Get the number of levels
@@ -1291,6 +1303,9 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from menpowidgets.utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     print('Initializing...')
 
     # Get the number of levels
@@ -1564,6 +1579,9 @@ def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(10, 8),
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from menpowidgets.utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     print('Initializing...')
 
     # Make sure that expert_ensemble is a list even with one member
@@ -1799,6 +1817,9 @@ def plot_ced(errors, legend_entries=None, error_range=None,
         as part of a parent widget. If ``False``, the widget object is not
         returned, it is just visualized.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from menpowidgets.utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     from menpofit.visualize import plot_cumulative_error_distribution
     print('Initializing...')
 
@@ -1945,6 +1966,9 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from menpowidgets.utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     print('Initializing...')
 
     # Make sure that fitting_results is a list even with one fitting_result

@@ -66,6 +66,9 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     print('Initializing...')
 
     # Make sure that pointclouds is a list even with one pointcloud member
@@ -238,6 +241,9 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     print('Initializing...')
 
     # Make sure that landmarkgroups is a list even with one landmark group
@@ -447,6 +453,9 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     print('Initializing...')
 
     # Make sure that landmarks is a list even with one landmark manager member
@@ -665,6 +674,9 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     print('Initializing...')
 
     # Make sure that images is a list even with one image member
@@ -902,6 +914,9 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     print('Initializing...')
 
     # Make sure that patches is a list even with one patches member
@@ -1103,6 +1118,9 @@ def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(10, 6),
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     from menpo.visualize import plot_curve
     print('Initializing...')
 
@@ -1191,6 +1209,9 @@ def save_matplotlib_figure(renderer, style='coloured'):
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     # Create sub-widgets
     if style == 'coloured':
         style = 'warning'
@@ -1225,6 +1246,10 @@ def features_selection(style='coloured'):
             features_image = features_function[0](image)
 
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
+
     # Styling options
     if style == 'coloured':
         logo_style = 'info'
@@ -1304,6 +1329,9 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     from menpo.visualize.viewmatplotlib import (_set_axes_options,
                                                 _parse_axes_limits)
     print('Initializing...')
@@ -1658,6 +1686,9 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     print('Initializing...')
 
     # Make sure that appearance_model is a list even with one member
@@ -1938,6 +1969,9 @@ def visualize_patch_appearance_model(appearance_model, centers,
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     print('Initializing...')
 
     # Make sure that appearance_model is a list even with one member

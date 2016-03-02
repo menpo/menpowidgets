@@ -1,9 +1,3 @@
-# Ensure that the code is being run inside a Jupyter kernel!
-from .utils import verify_ipython_and_kernel
-verify_ipython_and_kernel()
-del verify_ipython_and_kernel
-
-
 from .base import (visualize_pointclouds, visualize_landmarkgroups,
                    visualize_landmarks, visualize_images, visualize_patches,
                    plot_graph, save_matplotlib_figure, features_selection,
