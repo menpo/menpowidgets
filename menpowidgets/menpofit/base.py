@@ -1,4 +1,8 @@
 from menpo.base import MenpoMissingDependencyError
+from menpo.image.base import _convert_patches_list_to_single_array
+
+from menpofit.error import (euclidean_bb_normalised_error,
+                            root_mean_square_bb_normalised_error)
 
 
 try:
@@ -20,32 +24,30 @@ from menpo.base import name_of_callable
 from menpo.image import MaskedImage
 
 from ..checks import check_n_parameters
-from ..options import (
-    SaveFigureOptionsWidget, RendererOptionsWidget,
-    ChannelOptionsWidget, PatchOptionsWidget, LandmarkOptionsWidget,
-    LinearModelParametersWidget, PlotOptionsWidget, AnimationOptionsWidget,
-    TextPrintWidget)
+from ..options import (SaveFigureOptionsWidget, RendererOptionsWidget,
+                       ChannelOptionsWidget, PatchOptionsWidget,
+                       LandmarkOptionsWidget, LinearModelParametersWidget,
+                       PlotOptionsWidget, AnimationOptionsWidget,
+                       TextPrintWidget)
 from ..style import map_styles_to_hex_colours
 from ..tools import LogoWidget
-from ..utils import (
-    render_patches, render_image, extract_groups_labels_from_image,
-    render_images, sample_colours_from_colourmap)
+from ..utils import (render_patches, render_image,
+                     extract_groups_labels_from_image)
 
 from .options import IterativeResultOptionsWidget
-from .utils import error_type_key_to_func
 
 
 def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                   mode='multiple', parameters_bounds=(-3.0, 3.0),
                   figure_size=(10, 8), style='coloured'):
     r"""
-    Widget that allows the dynamic visualization of a multilevel Active
+    Widget that allows the dynamic visualization of a multi-scale Active
     Appearance Model.
 
     Parameters
     ----------
     aam : `menpofit.aam.AAM`
-        The multilevel AAM to be visualized. Note that each level can have
+        The multi-scale AAM to be visualized. Note that each level can have
         different number of components.
     n_shape_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the shape parameters
@@ -315,12 +317,12 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         value = change['new']
         # Update shape model parameters
         shape_model_parameters_wid.set_widget_state(
-            n_shape_parameters[value], params_str='param ',
+            n_shape_parameters[value], params_str='Parameter ',
             allow_callback=False)
 
         # Update appearance model parameters
         appearance_model_parameters_wid.set_widget_state(
-            n_appearance_parameters[value], params_str='param ',
+            n_appearance_parameters[value], params_str='Parameter ',
             allow_callback=False)
 
         # Update channel options
@@ -385,13 +387,13 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                         mode='multiple', parameters_bounds=(-3.0, 3.0),
                         figure_size=(10, 8), style='coloured'):
     r"""
-    Widget that allows the dynamic visualization of a multilevel patch-based
+    Widget that allows the dynamic visualization of a multi-scale patch-based
     Active Appearance Model.
 
     Parameters
     ----------
     aam : `menpofit.aam.PatchAAM`
-        The multilevel patch-based AAM to be visualized. Note that each level
+        The multi-scale patch-based AAM to be visualized. Note that each level
         can have different number of components.
     n_shape_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the shape parameters
@@ -631,8 +633,10 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             options_tabs=['image', 'markers', 'lines', 'numbering', 'zoom_one',
                           'axes'], labels=None,
             axes_x_limits=None, axes_y_limits=None,
-            render_function=render_function,  style=renderer_style,
+            render_function=None,  style=renderer_style,
             tabs_style=renderer_tabs_style)
+    renderer_options_wid.options_widgets[0].interpolation_checkbox.value = True
+    renderer_options_wid.add_render_function(render_function)
     info_wid = TextPrintWidget(text_per_line=[''] * 8, style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)
@@ -642,12 +646,12 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         value = change['new']
         # Update shape model parameters
         shape_model_parameters_wid.set_widget_state(
-            n_shape_parameters[value], params_str='param ',
+            n_shape_parameters[value], params_str='Parameter ',
             allow_callback=False)
 
         # Update appearance model parameters
         appearance_model_parameters_wid.set_widget_state(
-            n_appearance_parameters[value], params_str='param ',
+            n_appearance_parameters[value], params_str='Parameter ',
             allow_callback=False)
 
         # Update patch options
@@ -715,13 +719,13 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
                   parameters_bounds=(-3.0, 3.0), figure_size=(10, 8),
                   style='coloured'):
     r"""
-    Widget that allows the dynamic visualization of a multilevel Active
+    Widget that allows the dynamic visualization of a multi-scale Active
     Template Model.
 
     Parameters
     ----------
     atm : `menpofit.atm.ATM`
-        The multilevel ATM to be visualized. Note that each level can have
+        The multi-scale ATM to be visualized. Note that each level can have
         different number of components.
     n_shape_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the shape parameters
@@ -938,7 +942,7 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
         value = change['new']
         # Update shape model parameters
         shape_model_parameters_wid.set_widget_state(
-            n_shape_parameters[value], params_str='param ',
+            n_shape_parameters[value], params_str='Parameter ',
             allow_callback=False)
 
         # Update channel options
@@ -995,13 +999,13 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
                         parameters_bounds=(-3.0, 3.0), figure_size=(10, 8),
                         style='coloured'):
     r"""
-    Widget that allows the dynamic visualization of a multilevel patch-based
+    Widget that allows the dynamic visualization of a multi-scale patch-based
     Active Template Model.
 
     Parameters
     ----------
     atm : `menpofit.atm.PatchATM`
-        The multilevel patch-based ATM to be visualized. Note that each level
+        The multi-scale patch-based ATM to be visualized. Note that each level
         can have different number of components.
     n_shape_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the shape parameters
@@ -1168,7 +1172,7 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
 
     # Create widgets
     shape_model_parameters_wid = LinearModelParametersWidget(
-            n_shape_parameters[0], render_function, params_str='param ',
+            n_shape_parameters[0], render_function, params_str='Parameter ',
             mode=mode, params_bounds=parameters_bounds, params_step=0.1,
             plot_variance_visible=True,
             plot_variance_function=plot_shape_variance,
@@ -1187,8 +1191,10 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
             options_tabs=['image', 'markers', 'lines', 'numbering', 'zoom_one',
                           'axes'], labels=None,
             axes_x_limits=None, axes_y_limits=None,
-            render_function=render_function,  style=renderer_style,
+            render_function=None,  style=renderer_style,
             tabs_style=renderer_tabs_style)
+    renderer_options_wid.options_widgets[0].interpolation_checkbox.value = True
+    renderer_options_wid.add_render_function(render_function)
     info_wid = TextPrintWidget(text_per_line=[''] * 7, style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)
@@ -1198,7 +1204,7 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
         value = change['new']
         # Update shape model parameters
         shape_model_parameters_wid.set_widget_state(
-            n_shape_parameters[value], params_str='param ',
+            n_shape_parameters[value], params_str='Parameter ',
             allow_callback=False)
 
         # Update patch options
@@ -1235,6 +1241,506 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
                                            renderer_options_wid,
                                            info_wid, save_figure_wid])
     tab_titles = ['Model', 'Patches', 'Channels', 'Renderer', 'Info', 'Export']
+    for (k, tl) in enumerate(tab_titles):
+        options_box.set_title(k, tl)
+    logo_wid = LogoWidget(style=logo_style)
+    logo_wid.margin = '0.1cm'
+    wid = ipywidgets.HBox(children=[logo_wid, options_box], align='start')
+
+    # Set widget's style
+    wid.box_style = widget_box_style
+    wid.border_radius = widget_border_radius
+    wid.border_width = widget_border_width
+    wid.border_color = map_styles_to_hex_colours(widget_box_style)
+    renderer_options_wid.margin = '0.2cm'
+
+    # Display final widget
+    ipydisplay.display(wid)
+
+    # Trigger initial visualization
+    render_function({})
+
+
+def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
+                  parameters_bounds=(-3.0, 3.0), figure_size=(10, 8),
+                  style='coloured'):
+    r"""
+    Widget that allows the dynamic visualization of a multi-scale Constrained
+    Local Model.
+
+    Parameters
+    ----------
+    clm : `menpofit.clm.CLM`
+        The multi-scale CLM to be visualized. Note that each level can have
+        different number of components.
+    n_shape_parameters : `int` or `list` of `int` or ``None``, optional
+        The number of principal components to be used for the shape parameters
+        sliders. If `int`, then the number of sliders per level is the minimum
+        between `n_parameters` and the number of active components per level.
+        If `list` of `int`, then a number of sliders is defined per level.
+        If ``None``, all the active components per level will have a slider.
+    mode : ``{'single', 'multiple'}``, optional
+        If ``'single'``, then only a single slider is constructed along with a
+        drop down menu. If ``'multiple'``, then a slider is constructed for each
+        parameter.
+    parameters_bounds : (`float`, `float`), optional
+        The minimum and maximum bounds, in std units, for the sliders.
+    figure_size : (`int`, `int`), optional
+        The size of the plotted figures.
+    style : ``{'coloured', 'minimal'}``, optional
+        If ``'coloured'``, then the style of the widget will be coloured. If
+        ``minimal``, then the style is simple using black and white colours.
+    """
+    print('Initializing...')
+
+    # Get the number of levels
+    n_levels = clm.n_scales
+
+    # Define the styling options
+    if style == 'coloured':
+        model_style = 'info'
+        model_parameters_style = 'danger'
+        patches_style = 'minimal'
+        patches_subwidgets_style = 'danger'
+        channels_style = 'danger'
+        logo_style = 'info'
+        widget_box_style = 'info'
+        widget_border_radius = 10
+        widget_border_width = 1
+        info_style = 'danger'
+        renderer_style = 'danger'
+        renderer_tabs_style = 'info'
+        save_figure_style = 'danger'
+    elif style == 'minimal':
+        model_style = ''
+        model_parameters_style = 'minimal'
+        patches_style = 'minimal'
+        patches_subwidgets_style = 'minimal'
+        channels_style = 'minimal'
+        logo_style = 'minimal'
+        widget_box_style = ''
+        widget_border_radius = 0
+        widget_border_width = 0
+        info_style = 'minimal'
+        renderer_style = 'minimal'
+        renderer_tabs_style = 'minimal'
+        save_figure_style = 'minimal'
+    else:
+        raise ValueError("style must be either coloured or minimal")
+
+    # Get the maximum number of components per level
+    max_n_shape = [sp.n_active_components for sp in clm.shape_models]
+
+    # Check the given number of parameters (the returned n_parameters is a list
+    # of len n_scales)
+    n_shape_parameters = check_n_parameters(n_shape_parameters, n_levels,
+                                            max_n_shape)
+
+    # Define render function
+    def render_function(change):
+        # Clear current figure, but wait until the generation of the new data
+        # that will be rendered
+        ipydisplay.clear_output(wait=True)
+
+        # Get selected level
+        level = level_wid.value if n_levels > 1 else 0
+
+        # Compute weights and instance
+        shape_weights = shape_model_parameters_wid.selected_values
+        shape_instance = clm.shape_instance(scale_index=level,
+                                            shape_weights=shape_weights)
+        if domain_toggles.value == 'spatial':
+            patches = _convert_patches_list_to_single_array(
+                    clm.expert_ensembles[level].spatial_filter_images,
+                    clm.expert_ensembles[level].n_experts)
+        else:
+            patches = _convert_patches_list_to_single_array(
+                    clm.expert_ensembles[level].frequency_filter_images,
+                    clm.expert_ensembles[level].n_experts)
+
+        # Render instance with selected options
+        options = renderer_options_wid.selected_values['lines']
+        options.update(renderer_options_wid.selected_values['markers'])
+        options.update(renderer_options_wid.selected_values['numbering'])
+        options.update(renderer_options_wid.selected_values['axes'])
+        options.update(renderer_options_wid.selected_values['image'])
+        options.update(patch_options_wid.selected_values)
+        new_figure_size = (
+            renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
+            renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
+
+        # show image with selected options
+        renderer = render_patches(
+                patches=patches, patch_centers=shape_instance,
+                renderer=save_figure_wid.renderer, figure_size=new_figure_size,
+                channels=channel_options_wid.selected_values['channels'],
+                glyph_enabled=channel_options_wid.selected_values['glyph_enabled'],
+                glyph_block_size=channel_options_wid.selected_values['glyph_block_size'],
+                glyph_use_negative=channel_options_wid.selected_values['glyph_use_negative'],
+                sum_enabled=channel_options_wid.selected_values['sum_enabled'],
+                **options)
+
+        # Update info
+        update_info(clm, patches, level)
+
+        # Save the current figure id
+        save_figure_wid.renderer = renderer
+
+    # Define function that updates the info text
+    def update_info(clm, patches, level):
+        lvl_shape_mod = clm.shape_models[level].model
+        n_channels = patches.shape[2]
+        feat = clm.holistic_features[level]
+
+        # Feature string
+        tmp_feat = 'Feature is {} with {} channel{}'.format(
+                name_of_callable(feat), n_channels, 's' * (n_channels > 1))
+
+        # update info widgets
+        text_per_line = [
+            "> {} ensemble of experts".format(
+                    name_of_callable(clm.expert_ensemble_cls[level])),
+            "> Level {}/{}".format(level + 1, clm.n_scales),
+            "> {} experts (landmark points)".format(
+                    clm.expert_ensembles[level].n_experts),
+            "> {} shape components ({:.2f}% of variance)".format(
+                    lvl_shape_mod.n_components,
+                    lvl_shape_mod.variance_ratio() * 100),
+            "> {}".format(tmp_feat),
+            "> Patch shape: {} x {}".format(
+                    clm.expert_ensembles[level].search_shape[0],
+                    clm.expert_ensembles[level].search_shape[1]),
+            "> Instance: min={:.3f} , max={:.3f}".format(
+                    patches.min(), patches.max())]
+        info_wid.set_widget_state(text_per_line=text_per_line)
+
+    # Plot shape variance function
+    def plot_shape_variance(name):
+        # Clear current figure, but wait until the generation of the new data
+        # that will be rendered
+        ipydisplay.clear_output(wait=True)
+
+        # Get selected level
+        level = 0
+        if n_levels > 1:
+            level = level_wid.value
+
+        # Render
+        new_figure_size = (
+            renderer_options_wid.selected_values['zoom_one'] * 10,
+            renderer_options_wid.selected_values['zoom_one'] * 3)
+        plt.subplot(121)
+        clm.shape_models[level].model.plot_eigenvalues_ratio(
+                figure_id=save_figure_wid.renderer.figure_id)
+        plt.subplot(122)
+        renderer = clm.shape_models[level].model.plot_eigenvalues_cumulative_ratio(
+                figure_id=save_figure_wid.renderer.figure_id,
+                figure_size=new_figure_size)
+        plt.show()
+
+        # Save the current figure id
+        save_figure_wid.renderer = renderer
+
+    # Create widgets
+    shape_model_parameters_wid = LinearModelParametersWidget(
+            n_shape_parameters[0], render_function, params_str='Parameter ',
+            mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+            plot_variance_visible=True,
+            plot_variance_function=plot_shape_variance,
+            style=model_parameters_style, animation_step=0.5, interval=0.,
+            loop_enabled=True)
+    patch_options_wid = PatchOptionsWidget(
+            n_patches=clm.expert_ensembles[0].n_experts, n_offsets=1,
+            render_function=None, style=patches_style,
+            subwidgets_style=patches_subwidgets_style)
+    domain_toggles = ipywidgets.ToggleButtons(
+            description='Domain:', options=['spatial', 'frequency'],
+            value='spatial', margin='0.3cm')
+    experts_box = ipywidgets.VBox(children=[domain_toggles, patch_options_wid],
+                                  align='start')
+    channel_options_wid = ChannelOptionsWidget(
+            n_channels=clm.expert_ensembles[0].spatial_filter_images[0].n_channels,
+            image_is_masked=False, render_function=render_function,
+            style=channels_style)
+    renderer_options_wid = RendererOptionsWidget(
+            options_tabs=['image', 'markers', 'lines', 'numbering', 'zoom_one',
+                          'axes'], labels=None,
+            axes_x_limits=None, axes_y_limits=None, render_function=None,
+            style=renderer_style, tabs_style=renderer_tabs_style)
+    info_wid = TextPrintWidget(text_per_line=[''] * 7, style=info_style)
+    save_figure_wid = SaveFigureOptionsWidget(renderer=None,
+                                              style=save_figure_style)
+
+    # Set default values
+    patch_options_wid.bboxes_line_options_wid.line_colour_widget.set_colours(
+            ['white'], allow_callback=False)
+    renderer_options_wid.options_widgets[0].cmap_select.value = 'afmhot'
+    renderer_options_wid.options_widgets[0].interpolation_checkbox.value = True
+
+    # Add render function
+    domain_toggles.observe(render_function, names='value', type='change')
+    patch_options_wid.add_render_function(render_function)
+    renderer_options_wid.add_render_function(render_function)
+
+    # Define function that updates options' widgets state
+    def update_widgets(change):
+        value = change['new']
+        # Update shape model parameters
+        shape_model_parameters_wid.set_widget_state(
+                n_shape_parameters[value], params_str='Parameter ',
+                allow_callback=False)
+
+        # Update patch options
+        patch_options_wid.set_widget_state(
+                n_patches=clm.expert_ensembles[value].n_experts, n_offsets=1,
+                allow_callback=False)
+
+        # Update channels options
+        channel_options_wid.set_widget_state(
+                n_channels=clm.expert_ensembles[value].spatial_filter_images[0].n_channels,
+                image_is_masked=False, allow_callback=True)
+
+    # Group widgets
+    tmp_children = [shape_model_parameters_wid]
+    if n_levels > 1:
+        radio_str = OrderedDict()
+        for l in range(n_levels):
+            if l == 0:
+                radio_str["Level {} (low)".format(l)] = l
+            elif l == n_levels - 1:
+                radio_str["Level {} (high)".format(l)] = l
+            else:
+                radio_str["Level {}".format(l)] = l
+        level_wid = ipywidgets.RadioButtons(
+                options=radio_str, description='Pyramid:', value=n_levels-1)
+        level_wid.observe(update_widgets, names='value', type='change')
+        level_wid.observe(render_function, names='value', type='change')
+        tmp_children.insert(0, level_wid)
+    tmp_wid = ipywidgets.HBox(children=tmp_children, align='center',
+                              box_style=model_style)
+    options_box = ipywidgets.Tab(children=[tmp_wid, experts_box,
+                                           channel_options_wid,
+                                           renderer_options_wid,
+                                           info_wid, save_figure_wid])
+    tab_titles = ['Model', 'Experts', 'Channels', 'Renderer', 'Info', 'Export']
+    for (k, tl) in enumerate(tab_titles):
+        options_box.set_title(k, tl)
+    logo_wid = LogoWidget(style=logo_style)
+    logo_wid.margin = '0.1cm'
+    wid = ipywidgets.HBox(children=[logo_wid, options_box], align='start')
+
+    # Set widget's style
+    wid.box_style = widget_box_style
+    wid.border_radius = widget_border_radius
+    wid.border_width = widget_border_width
+    wid.border_color = map_styles_to_hex_colours(widget_box_style)
+    renderer_options_wid.margin = '0.2cm'
+
+    # Display final widget
+    ipydisplay.display(wid)
+
+    # Trigger initial visualization
+    render_function({})
+
+
+def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(10, 8),
+                              style='coloured'):
+    r"""
+    Widget that allows the dynamic visualization of a multi-scale Ensemble of
+    Experts.
+
+    Parameters
+    ----------
+    expert_ensemble : `list` of `menpofit.clm.expert.ExpertEnsemble` or subclass
+        The multi-scale ensemble of experts to be visualized.
+    centers : `list` of `menpo.shape.PointCloud` or subclass
+        The centers to set the patches around. If the `list` has only one
+        `menpo.shape.PointCloud` then this will be used for all expert ensemble
+        levels. Otherwise, it needs to have the same length as
+        `expert_ensemble`.
+    figure_size : (`int`, `int`), optional
+        The size of the plotted figures.
+    style : ``{'coloured', 'minimal'}``, optional
+        If ``'coloured'``, then the style of the widget will be coloured. If
+        ``minimal``, then the style is simple using black and white colours.
+    """
+    print('Initializing...')
+
+    # Make sure that expert_ensemble is a list even with one member
+    if not isinstance(expert_ensemble, list):
+        expert_ensemble = [expert_ensemble]
+
+    # Get the number of levels (i.e. number of expert ensembles)
+    n_levels = len(expert_ensemble)
+
+    # Make sure that centers is a list even with one pointcloud
+    if not isinstance(centers, list):
+        centers = [centers] * n_levels
+    elif isinstance(centers, list) and len(centers) == 1:
+        centers *= n_levels
+
+    # Define the styling options
+    if style == 'coloured':
+        model_style = 'info'
+        patches_style = 'minimal'
+        patches_subwidgets_style = 'danger'
+        channels_style = 'danger'
+        logo_style = 'info'
+        widget_box_style = 'info'
+        widget_border_radius = 10
+        widget_border_width = 1
+        info_style = 'danger'
+        renderer_style = 'danger'
+        renderer_tabs_style = 'info'
+        save_figure_style = 'danger'
+    elif style == 'minimal':
+        model_style = ''
+        patches_style = 'minimal'
+        patches_subwidgets_style = 'minimal'
+        channels_style = 'minimal'
+        logo_style = 'minimal'
+        widget_box_style = ''
+        widget_border_radius = 0
+        widget_border_width = 0
+        info_style = 'minimal'
+        renderer_style = 'minimal'
+        renderer_tabs_style = 'minimal'
+        save_figure_style = 'minimal'
+    else:
+        raise ValueError("style must be either coloured or minimal")
+
+    # Define render function
+    def render_function(change):
+        # Clear current figure, but wait until the generation of the new data
+        # that will be rendered
+        ipydisplay.clear_output(wait=True)
+
+        # Get selected level
+        level = level_wid.value if n_levels > 1 else 0
+
+        if domain_toggles.value == 'spatial':
+            patches = _convert_patches_list_to_single_array(
+                    expert_ensemble[level].spatial_filter_images,
+                    expert_ensemble[level].n_experts)
+        else:
+            patches = _convert_patches_list_to_single_array(
+                    expert_ensemble[level].frequency_filter_images,
+                    expert_ensemble[level].n_experts)
+
+        # Render instance with selected options
+        options = renderer_options_wid.selected_values['lines']
+        options.update(renderer_options_wid.selected_values['markers'])
+        options.update(renderer_options_wid.selected_values['numbering'])
+        options.update(renderer_options_wid.selected_values['axes'])
+        options.update(renderer_options_wid.selected_values['image'])
+        options.update(patch_options_wid.selected_values)
+        new_figure_size = (
+            renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
+            renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
+
+        # show image with selected options
+        renderer = render_patches(
+                patches=patches, patch_centers=centers[level],
+                renderer=save_figure_wid.renderer, figure_size=new_figure_size,
+                channels=channel_options_wid.selected_values['channels'],
+                glyph_enabled=channel_options_wid.selected_values['glyph_enabled'],
+                glyph_block_size=channel_options_wid.selected_values['glyph_block_size'],
+                glyph_use_negative=channel_options_wid.selected_values['glyph_use_negative'],
+                sum_enabled=channel_options_wid.selected_values['sum_enabled'],
+                **options)
+
+        # Update info
+        update_info(expert_ensemble, patches, level)
+
+        # Save the current figure id
+        save_figure_wid.renderer = renderer
+
+    # Define function that updates the info text
+    def update_info(expert_ensemble, patches, level):
+        # update info widgets
+        text_per_line = [
+            "> {} ensemble of experts".format(
+                    name_of_callable(expert_ensemble[level])),
+            "> Level {}/{}".format(level + 1, n_levels),
+            "> {} experts.".format(expert_ensemble[level].n_experts),
+            "> Channels: {}".format(patches.shape[2]),
+            "> Patch shape: {} x {}".format(
+                    expert_ensemble[level].search_shape[0],
+                    expert_ensemble[level].search_shape[1]),
+            "> Instance: min={:.3f} , max={:.3f}".format(
+                    patches.min(), patches.max())]
+        info_wid.set_widget_state(text_per_line=text_per_line)
+
+    # Create widgets
+    patch_options_wid = PatchOptionsWidget(
+            n_patches=expert_ensemble[0].n_experts, n_offsets=1,
+            render_function=None, style=patches_style,
+            subwidgets_style=patches_subwidgets_style)
+    domain_toggles = ipywidgets.ToggleButtons(
+            description='Domain:', options=['spatial', 'frequency'],
+            value='spatial', margin='0.1cm')
+    channel_options_wid = ChannelOptionsWidget(
+            n_channels=expert_ensemble[0].spatial_filter_images[0].n_channels,
+            image_is_masked=False, render_function=render_function,
+            style=channels_style)
+    renderer_options_wid = RendererOptionsWidget(
+            options_tabs=['image', 'markers', 'lines', 'numbering', 'zoom_one',
+                          'axes'], labels=None,
+            axes_x_limits=None, axes_y_limits=None, render_function=None,
+            style=renderer_style, tabs_style=renderer_tabs_style)
+    info_wid = TextPrintWidget(text_per_line=[''] * 7, style=info_style)
+    save_figure_wid = SaveFigureOptionsWidget(renderer=None,
+                                              style=save_figure_style)
+
+    # Set default values
+    patch_options_wid.bboxes_line_options_wid.line_colour_widget.set_colours(
+            ['white'], allow_callback=False)
+    renderer_options_wid.options_widgets[0].cmap_select.value = 'afmhot'
+    renderer_options_wid.options_widgets[0].interpolation_checkbox.value = True
+
+    # Add render function
+    domain_toggles.observe(render_function, names='value', type='change')
+    patch_options_wid.add_render_function(render_function)
+    renderer_options_wid.add_render_function(render_function)
+
+    # Define function that updates options' widgets state
+    def update_widgets(change):
+        value = change['new']
+        # Update patch options
+        patch_options_wid.set_widget_state(
+                n_patches=expert_ensemble[value].n_experts, n_offsets=1,
+                allow_callback=False)
+
+        # Update channels options
+        channel_options_wid.set_widget_state(
+                n_channels=expert_ensemble[value].spatial_filter_images[0].n_channels,
+                image_is_masked=False, allow_callback=True)
+
+    # Group widgets
+    tmp_children = [domain_toggles]
+    if n_levels > 1:
+        radio_str = OrderedDict()
+        for l in range(n_levels):
+            if l == 0:
+                radio_str["Level {} (low)".format(l)] = l
+            elif l == n_levels - 1:
+                radio_str["Level {} (high)".format(l)] = l
+            else:
+                radio_str["Level {}".format(l)] = l
+        level_wid = ipywidgets.RadioButtons(
+                options=radio_str, description='Pyramid:', value=n_levels-1,
+                margin='0.1cm')
+        level_wid.observe(update_widgets, names='value', type='change')
+        level_wid.observe(render_function, names='value', type='change')
+        tmp_children.insert(0, level_wid)
+    tmp_wid = ipywidgets.HBox(children=tmp_children, align='start',
+                              box_style=model_style)
+    experts_box = ipywidgets.VBox(children=[tmp_wid, patch_options_wid],
+                                  align='start')
+    options_box = ipywidgets.Tab(children=[experts_box, channel_options_wid,
+                                           renderer_options_wid, info_wid,
+                                           save_figure_wid])
+    tab_titles = ['Experts', 'Channels', 'Renderer', 'Info', 'Export']
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
     logo_wid = LogoWidget(style=logo_style)
@@ -1425,7 +1931,7 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
     Widget that allows browsing through a `list` of fitting results.
 
     Parameters
-    -----------
+    ----------
     fitting_results : `list` of `menpofit.result.Result` or `subclass`
         The `list` of fitting results to be displayed. Note that the fitting
         results can have different attributes between them, i.e. different
@@ -1457,10 +1963,9 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
         animation_style = 'info'
         fitting_result_style = 'danger'
         fitting_result_tabs_style = 'warning'
-        channels_style = 'danger'
         info_style = 'danger'
         renderer_style = 'danger'
-        renderer_tabs_style = 'info'
+        renderer_tabs_style = 'warning'
         save_figure_style = 'danger'
     else:
         logo_style = 'minimal'
@@ -1469,7 +1974,6 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
         widget_border_width = 0
         fitting_result_style = 'minimal'
         fitting_result_tabs_style = 'minimal'
-        channels_style = 'minimal'
         animation_style = 'minimal'
         info_style = 'minimal'
         renderer_style = 'minimal'
@@ -1551,184 +2055,268 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
         # that will be rendered
         ipydisplay.clear_output(wait=True)
 
-        # get selected image
-        im = 0
-        if n_fitting_results > 1:
-            im = image_number_wid.selected_values
-
-        # update info text widget
-        update_info('', error_type_wid.value)
+        # get selected object
+        im = image_number_wid.selected_values if n_fitting_results > 1 else 0
 
         # get selected options
-        render_image = fitting_result_wid.selected_values['render_image']
-        groups = fitting_result_wid.selected_values['groups']
-        subplots_enabled = fitting_result_wid.selected_values['subplots_enabled']
-        if fitting_result_wid.selected_values['mode'] == 'result':
-            # image object
-            image = fitting_results[im].fitted_image
-            # lines and markers options
-            subplots_titles = dict()
-            render_lines = [True] * len(groups)
-            line_colour = []
-            line_style = ['-'] * len(groups)
-            line_width = [1] * len(groups)
-            render_markers = [True] * len(groups)
-            marker_style = ['o'] * len(groups)
-            marker_size = [5] * len(groups)
-            marker_face_colour = []
-            marker_edge_colour = ['black'] * len(groups)
-            marker_edge_width = [1] * len(groups)
-            for g in groups:
-                if g == 'final':
-                    line_colour.append('red')
-                    marker_face_colour.append('red')
-                    subplots_titles[g] = 'Final'
-                elif g == 'initial':
-                    line_colour.append('blue')
-                    marker_face_colour.append('blue')
-                    subplots_titles[g] = 'Initial'
-                elif g == 'ground':
-                    line_colour.append('yellow')
-                    marker_face_colour.append('yellow')
-                    subplots_titles[g] = 'Groundtruth'
-        else:
-            # image object
-            image = fitting_results[im].iter_image
-            subplots_titles = dict()
-            for i, g in enumerate(groups):
-                subplots_titles[g] = "Iteration " + g.split('_')[1]
-            # lines and markers options
-            render_lines = [True] * len(groups)
-            line_style = ['-'] * len(groups)
-            line_width = [1] * len(groups)
-            render_markers = [True] * len(groups)
-            marker_style = ['o'] * len(groups)
-            marker_size = [5] * len(groups)
-            marker_edge_colour = ['black'] * len(groups)
-            marker_edge_width = [1] * len(groups)
-            if (subplots_enabled or
-                        fitting_result_wid.iterations_mode.value == 'animation'):
-                line_colour = ['red'] * len(groups)
-                marker_face_colour = ['red'] * len(groups)
-            else:
-                cols = sample_colours_from_colourmap(len(groups), 'jet')
-                line_colour = cols
-                marker_face_colour = cols
-
-        options = renderer_options_wid.selected_values['numbering']
-        options.update(renderer_options_wid.selected_values['legend'])
+        tmp1 = renderer_options_wid.selected_values['markers']
+        tmp2 = renderer_options_wid.selected_values['lines']
+        options = fitting_result_wid.selected_values
         options.update(renderer_options_wid.selected_values['axes'])
+        options.update(renderer_options_wid.selected_values['legend'])
+        options.update(renderer_options_wid.selected_values['numbering'])
         options.update(renderer_options_wid.selected_values['image'])
         new_figure_size = (
             renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
 
-        # call helper _visualize
-        renderer = render_images(
-            image=image, renderer=save_figure_wid.renderer,
-            render_image=render_image, render_landmarks=True,
-            image_is_masked=False, masked_enabled=False,
-            channels=channel_options_wid.selected_values['channels'],
-            glyph_enabled=channel_options_wid.selected_values['glyph_enabled'],
-            glyph_block_size=channel_options_wid.selected_values['glyph_block_size'],
-            glyph_use_negative=channel_options_wid.selected_values['glyph_use_negative'],
-            sum_enabled=channel_options_wid.selected_values['sum_enabled'],
-            groups=groups, with_labels=[None] * len(groups),
-            subplots_enabled=subplots_enabled, subplots_titles=subplots_titles,
-            image_axes_mode=True, render_lines=render_lines,
-            line_style=line_style, line_width=line_width,
-            line_colour=line_colour, render_markers=render_markers,
-            marker_style=marker_style, marker_size=marker_size,
-            marker_edge_width=marker_edge_width,
-            marker_edge_colour=marker_edge_colour,
-            marker_face_colour=marker_face_colour, figure_size=new_figure_size,
-            **options)
+        # get selected view function
+        if (fitting_result_wid.result_iterations_tab.selected_index == 0 or
+                not hasattr(fitting_results[im], 'n_iters')):
+            # use view()
+            # final shape colour
+            final_marker_face_colour = tmp1['marker_face_colour'][0]
+            final_marker_edge_colour = tmp1['marker_edge_colour'][0]
+            final_line_colour = tmp2['line_colour'][0]
+            # initial shape colour
+            initial_marker_face_colour = 'b'
+            initial_marker_edge_colour = 'b'
+            initial_line_colour = 'b'
+            if fitting_results[im].initial_shape is not None:
+                initial_marker_face_colour = tmp1['marker_face_colour'][1]
+                initial_marker_edge_colour = tmp1['marker_edge_colour'][1]
+                initial_line_colour = tmp2['line_colour'][1]
+            # gt shape colour
+            gt_marker_face_colour = 'y'
+            gt_marker_edge_colour = 'y'
+            gt_line_colour = 'y'
+            if fitting_results[im].gt_shape is not None:
+                if fitting_results[im].initial_shape is not None:
+                    gt_marker_face_colour = tmp1['marker_face_colour'][2]
+                    gt_marker_edge_colour = tmp1['marker_edge_colour'][2]
+                    gt_line_colour = tmp2['line_colour'][2]
+                else:
+                    gt_marker_face_colour = tmp1['marker_face_colour'][1]
+                    gt_marker_edge_colour = tmp1['marker_edge_colour'][1]
+                    gt_line_colour = tmp2['line_colour'][1]
+            # render
+            renderer = fitting_results[im].view(
+                    figure_id=save_figure_wid.renderer.figure_id,
+                    new_figure=False, render_markers=tmp1['render_markers'],
+                    final_marker_face_colour=final_marker_face_colour,
+                    final_marker_edge_colour=final_marker_edge_colour,
+                    final_line_colour=final_line_colour,
+                    initial_marker_face_colour=initial_marker_face_colour,
+                    initial_marker_edge_colour=initial_marker_edge_colour,
+                    initial_line_colour=initial_line_colour,
+                    gt_marker_face_colour=gt_marker_face_colour,
+                    gt_marker_edge_colour=gt_marker_edge_colour,
+                    gt_line_colour=gt_line_colour,
+                    marker_style=tmp1['marker_style'],
+                    marker_size=tmp1['marker_size'],
+                    marker_edge_width=tmp1['marker_edge_width'],
+                    render_lines=tmp2['render_lines'],
+                    line_style=tmp2['line_style'],
+                    line_width=tmp2['line_width'],
+                    figure_size=new_figure_size, **options)
+        else:
+            # use view_iterations()
+            if fitting_result_wid.iterations_mode.value == 'animation':
+                # The mode is 'Animation'
+                # get colours
+                marker_face_colour = tmp1['marker_face_colour'][0]
+                marker_edge_colour = tmp1['marker_edge_colour'][0]
+                line_colour = tmp2['line_colour'][0]
+            else:
+                # The mode is 'Static'
+                # get colours
+                marker_face_colour = [
+                    tmp1['marker_face_colour'][i]
+                    for i in fitting_result_wid.selected_values['iters']]
+                marker_edge_colour = [
+                    tmp1['marker_edge_colour'][i]
+                    for i in fitting_result_wid.selected_values['iters']]
+                line_colour = [
+                    tmp2['line_colour'][i]
+                    for i in fitting_result_wid.selected_values['iters']]
+
+            # render
+            renderer = fitting_results[im].view_iterations(
+                    figure_id=save_figure_wid.renderer.figure_id,
+                    new_figure=False, render_markers=tmp1['render_markers'],
+                    marker_face_colour=marker_face_colour,
+                    marker_style=tmp1['marker_style'],
+                    marker_size=tmp1['marker_size'],
+                    marker_edge_colour=marker_edge_colour,
+                    marker_edge_width=tmp1['marker_edge_width'],
+                    render_lines=tmp2['render_lines'],
+                    line_style=tmp2['line_style'], line_width=tmp2['line_width'],
+                    line_colour=line_colour, figure_size=new_figure_size,
+                    **options)
+
+        # Show figure
+        plt.show()
+
+        # update info text widget
+        update_info({})
 
         # Save the current figure id
         save_figure_wid.renderer = renderer
 
     # Define function that updates info text
-    def update_info(name, value):
-        # Get selected image
-        im = 0
-        if n_fitting_results > 1:
-            im = image_number_wid.selected_values
+    def update_info(change):
+        # Get selected object
+        im = image_number_wid.selected_values if n_fitting_results > 1 else 0
+        fr = fitting_results[im]
 
-        # Create output str
-        if fitting_results[im].gt_shape is not None:
-            func = error_type_key_to_func(value)
-            text_per_line = [
-                "> Initial error: {:.4f}".format(
-                    fitting_results[im].initial_error(compute_error=func)),
-                "> Final error: {:.4f}".format(
-                    fitting_results[im].final_error(compute_error=func)),
-                "> {} iterations".format(fitting_results[im].n_iters)]
+        # Errors
+        text_per_line = []
+        if fr.gt_shape is not None:
+            # Get error function
+            error_fun = euclidean_bb_normalised_error
+            if error_type_toggles.value == 'RMS':
+                error_fun = root_mean_square_bb_normalised_error
+            # Set error options visibility
+            error_box.visible = True
+            # Compute errors
+            if fr.initial_shape is not None:
+                text_per_line.append(' > Initial error: {:.4f}'.format(
+                        error_fun(fr.initial_shape, fr.gt_shape,
+                                  norm_type=norm_type_toggles.value)))
+            text_per_line.append(' > Final error: {:.4f}'.format(
+                    error_fun(fr.final_shape, fr.gt_shape,
+                              norm_type=norm_type_toggles.value)))
         else:
-            text_per_line = [
-                "> {} iterations".format(fitting_results[im].n_iters)]
-        if hasattr(fitting_results[im], 'n_scales'):  # Multilevel result
-            text_per_line.append("> {} scales".format(
-                fitting_results[im].n_scales))
-        info_wid.set_widget_state(n_lines=len(text_per_line),
-                                  text_per_line=text_per_line)
+            # Set error options visibility
+            error_box.visible = False
+            text_per_line.append(' > No groundtruth shape.')
 
-    # Create options widgets
-    fitting_result_wid = IterativeResultOptionsWidget(
-        has_groundtruth=fitting_results[0].gt_shape is not None,
-        n_iters=fitting_results[0].iter_image.landmarks.n_groups,
-        render_function=render_function,
-        displacements_function=plot_displacements_function,
-        errors_function=plot_errors_function, costs_function=plot_costs_function,
-        style=fitting_result_style, tabs_style=fitting_result_tabs_style)
-    channel_options_wid = ChannelOptionsWidget(
-        n_channels=fitting_results[0].fitted_image.n_channels,
-        image_is_masked=isinstance(fitting_results[0].fitted_image, MaskedImage),
-        render_function=render_function, style=channels_style)
+        # Landmarks, scales, iterations
+        text_per_line.append(' > {} landmark points.'.format(
+                fr.final_shape.n_points))
+        if hasattr(fr, 'n_iters'):
+            text_per_line.append(' > {} iterations.'.format(fr.n_iters))
+        else:
+            text_per_line.append(' > No iterations.')
+        if hasattr(fr, 'n_scales'):
+            text_per_line.append(' > {} scales.'.format(fr.n_scales))
+        info_wid.set_widget_state(text_per_line=text_per_line)
+
+    # Create renderer widget
+    labels = ['Final']
+    default_colours = ['red']
+    if fitting_results[0].initial_shape is not None:
+        labels.append('Initial')
+        default_colours.append('blue')
+    if fitting_results[0].gt_shape is not None:
+        labels.append('Groundtruth')
+        default_colours.append('yellow')
     renderer_options_wid = RendererOptionsWidget(
-        options_tabs=['zoom_one', 'axes', 'legend', 'numbering', 'image'],
-        labels=None, axes_x_limits=None, axes_y_limits=None,
-        render_function=render_function,
-        style=renderer_style, tabs_style=renderer_tabs_style)
+            options_tabs=['markers', 'lines', 'zoom_one', 'legend',
+                          'numbering', 'image', 'axes'],
+            labels=labels, axes_x_limits=None, axes_y_limits=None,
+            render_function=None, style=renderer_style,
+            tabs_style=renderer_tabs_style)
+    # Set initial values
+    renderer_options_wid.options_widgets[3].render_legend_checkbox.value = True
+    renderer_options_wid.options_widgets[0].marker_face_colour_widget.set_colours(
+            default_colours, allow_callback=False)
+    renderer_options_wid.options_widgets[0].marker_edge_colour_widget.set_colours(
+            ['black'] * len(default_colours), allow_callback=False)
+    renderer_options_wid.options_widgets[1].line_colour_widget.set_colours(
+            default_colours, allow_callback=False)
+    renderer_options_wid.add_render_function(render_function)
+
+    # Create info and error options
     info_wid = TextPrintWidget(text_per_line=[''] * 4, style=info_style)
+    error_type_toggles = ipywidgets.ToggleButtons(
+            options=['Euclidean', 'RMS'], value='Euclidean',
+            description='Error type')
+    norm_type_toggles = ipywidgets.ToggleButtons(
+            options=['area', 'perimeter', 'avg_edge_length', 'diagonal'],
+            value='avg_edge_length', description='Normalise')
+    error_box = ipywidgets.VBox(children=[error_type_toggles, norm_type_toggles],
+                                visible=fitting_results[0].gt_shape is not None,
+                                align='start', margin='0.3cm')
+    error_type_toggles.observe(update_info, names='value', type='change')
+    norm_type_toggles.observe(update_info, names='value', type='change')
+    info_error_box = ipywidgets.HBox(children=[info_wid, error_box],
+                                     align='start')
+
+    # Create save figure widget
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)
 
-    # Create error type radio buttons
-    error_type_values = OrderedDict()
-    error_type_values['Point-to-point Normalized Mean Error'] = 'me_norm'
-    error_type_values['Point-to-point Mean Error'] = 'me'
-    error_type_values['RMS Error'] = 'rmse'
-    error_type_wid = ipywidgets.RadioButtons(
-        options=error_type_values, value='me_norm', description='Error type')
-    error_type_wid.observe(update_info, names='value', type='change')
-    error_wid = ipywidgets.VBox(children=[error_type_wid], align='center')
+    def update_renderer_options(change):
+        # Get selected fitting result object
+        im = image_number_wid.selected_values if n_fitting_results > 1 else 0
+
+        # Get labels
+        if fitting_result_wid.result_iterations_tab.selected_index == 0:
+            # We are at the Results tab
+            labels = ['Final']
+            if fitting_results[im].initial_shape is not None:
+                labels.append('Initial')
+            if fitting_results[im].gt_shape is not None:
+                labels.append('Groundtruth')
+        else:
+            # We are at the Iterations tab
+            if fitting_result_wid.iterations_mode.value == 'animation':
+                # The mode is 'Animation'
+                labels = None
+            else:
+                # The mode is 'Static'
+                n_digits = len(str(fitting_results[im].n_iters))
+                labels = []
+                for j in list(range(fitting_results[im].n_iters + 1)):
+                    if j == 0 and fitting_results[im].initial_shape is not None:
+                        labels.append('Initial')
+                    elif j == fitting_results[im].n_iters:
+                        labels.append('Final')
+                    else:
+                        labels.append("iteration {:0{}d}".format(j, n_digits))
+        renderer_options_wid.set_widget_state(labels=labels,
+                                              allow_callback=False)
+
+    n_iters = None
+    if hasattr(fitting_results[0], 'n_iters'):
+        n_iters = fitting_results[0].n_iters
+    fitting_result_wid = IterativeResultOptionsWidget(
+            has_gt_shape=fitting_results[0].gt_shape is not None,
+            has_initial_shape=fitting_results[0].initial_shape is not None,
+            has_image=fitting_results[0].image is not None,
+            n_iters=n_iters, render_function=render_function,
+            tab_update_function=update_renderer_options,
+            displacements_function=plot_displacements_function,
+            errors_function=plot_errors_function,
+            costs_function=plot_costs_function, style=fitting_result_style,
+            tabs_style=fitting_result_tabs_style)
 
     # Group widgets
-    options_wid = ipywidgets.Tab(children=[channel_options_wid,
-                                           renderer_options_wid])
-    options_wid.set_title(0, 'Channels')
-    options_wid.set_title(1, 'Renderer')
     if n_fitting_results > 1:
         # Define function that updates options' widgets state
         def update_widgets(change):
             # stop iterations animation
-            fitting_result_wid.index_animation.play_stop_toggle.value = False
+            fitting_result_wid.index_animation.stop_animation()
 
             # get selected fitting result
             im = image_number_wid.selected_values
 
-            # Update channels options
-            channel_options_wid.set_widget_state(
-                n_channels=fitting_results[im].fitted_image.n_channels,
-                image_is_masked=isinstance(fitting_results[im].fitted_image,
-                                           MaskedImage),
-                allow_callback=False)
-
             # Update fitting result options
+            n_iters = None
+            if hasattr(fitting_results[im], 'n_iters'):
+                n_iters = fitting_results[im].n_iters
             fitting_result_wid.set_widget_state(
-                has_groundtruth=fitting_results[im].gt_shape is not None,
-                n_iters=fitting_results[im].iter_image.landmarks.n_groups,
-                allow_callback=True)
+                has_gt_shape=fitting_results[im].gt_shape is not None,
+                has_initial_shape=fitting_results[im].initial_shape is not None,
+                has_image=fitting_results[im].image is not None,
+                n_iters=n_iters, allow_callback=False)
+
+            # Update renderer options
+            update_renderer_options({})
+
+            # Render callback
+            render_function({})
 
         # Image selection slider
         index = {'min': 0, 'max': n_fitting_results - 1, 'step': 1, 'index': 0}
@@ -1741,16 +2329,14 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
         header_wid = ipywidgets.HBox(
             children=[LogoWidget(style=logo_style), image_number_wid],
             align='start')
-
-        # Widget titles
-        tab_titles = ['Info', 'Result', 'Renderer', 'Error type', 'Export']
     else:
         # Header widget
         header_wid = LogoWidget(style=logo_style)
-        tab_titles = ['Info', 'Result', 'Renderer', 'Error type', 'Export']
+    # Widget titles
+    tab_titles = ['Info', 'Result', 'Renderer', 'Export']
     header_wid.margin = '0.2cm'
     options_box = ipywidgets.Tab(
-        children=[info_wid, fitting_result_wid, options_wid, error_wid,
+        children=[info_error_box, fitting_result_wid, renderer_options_wid,
                   save_figure_wid], margin='0.2cm')
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
@@ -1761,10 +2347,12 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
     if n_fitting_results > 1:
         # If animation is activated and the user selects the save figure tab,
         # then the animation stops.
-        def save_fig_tab_fun(name, value):
-            if value == 3 and image_number_wid.play_options_toggle.value:
-                image_number_wid.stop_options_toggle.value = True
-        options_box.on_trait_change(save_fig_tab_fun, 'selected_index')
+        def save_fig_tab_fun(change):
+            if (change['new'] == 3 and
+                    image_number_wid.play_options_toggle.value):
+                image_number_wid.stop_animation()
+        options_box.observe(save_fig_tab_fun, names='selected_index',
+                            type='change')
 
     # Set widget's style
     wid.box_style = widget_box_style
@@ -1775,5 +2363,5 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
     # Display final widget
     ipydisplay.display(wid)
 
-    # Set render legend to True to trigger initial visualization
-    renderer_options_wid.options_widgets[2].render_legend_checkbox.value = True
+    # Trigger initial visualization
+    render_function({})

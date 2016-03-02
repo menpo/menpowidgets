@@ -39,7 +39,6 @@ def menpowidgets_src_dir_path():
     return Path(os.path.abspath(__file__)).parent
 
 
-# MENPO RELATED WIDGETS
 def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
                           browser_style='buttons'):
     r"""
@@ -1014,8 +1013,10 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
         options_tabs=['markers', 'lines', 'numbering', 'zoom_one', 'axes',
                       'image'], labels=None,
         axes_x_limits=None, axes_y_limits=None,
-        render_function=render_function,  style=renderer_style,
+        render_function=None,  style=renderer_style,
         tabs_style=renderer_tabs_style)
+    renderer_options_wid.options_widgets[5].interpolation_checkbox.value = True
+    renderer_options_wid.add_render_function(render_function)
     info_wid = TextPrintWidget(text_per_line=[''] * 3, style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)
@@ -1277,13 +1278,13 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
                           parameters_bounds=(-3.0, 3.0), figure_size=(10, 8),
                           style='coloured'):
     r"""
-    Widget that allows the dynamic visualization of a multilevel linear
+    Widget that allows the dynamic visualization of a multi-scale linear
     statistical shape model.
 
     Parameters
     ----------
     shape_model : `list` of `menpo.shape.PCAModel` or `subclass`
-        The multilevel shape model to be visualized. Note that each level can
+        The multi-scale shape model to be visualized. Note that each level can
         have different number of components.
     n_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the parameters
@@ -1631,13 +1632,13 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
                                mode='multiple', parameters_bounds=(-3.0, 3.0),
                                figure_size=(10, 8), style='coloured'):
     r"""
-    Widget that allows the dynamic visualization of a multilevel linear
+    Widget that allows the dynamic visualization of a multi-scale linear
     statistical appearance model.
 
     Parameters
     ----------
     appearance_model : `list` of `menpo.model.PCAModel` or subclass
-        The multilevel appearance model to be visualized. Note that each level
+        The multi-scale appearance model to be visualized. Note that each level
         can have different number of components.
     n_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the parameters
@@ -1906,13 +1907,13 @@ def visualize_patch_appearance_model(appearance_model, centers,
                                      parameters_bounds=(-3.0, 3.0),
                                      figure_size=(10, 8), style='coloured'):
     r"""
-    Widget that allows the dynamic visualization of a multilevel linear
+    Widget that allows the dynamic visualization of a multi-scale linear
     statistical patch-based appearance model.
 
     Parameters
     ----------
     appearance_model : `list` of `menpo.model.PCAModel` or subclass
-        The multilevel patch-based appearance model to be visualized. Note that
+        The multi-scale patch-based appearance model to be visualized. Note that
         each level can have different number of components.
     centers : `list` of `menpo.shape.PointCloud` or subclass
         The centers to set the patches around. If the `list` has only one
@@ -2099,8 +2100,10 @@ def visualize_patch_appearance_model(appearance_model, centers,
         options_tabs=['image', 'markers', 'lines', 'numbering', 'zoom_one',
                       'axes'], labels=None,
         axes_x_limits=None, axes_y_limits=None,
-        render_function=render_function,  style=renderer_style,
+        render_function=None,  style=renderer_style,
         tabs_style=renderer_tabs_style)
+    renderer_options_wid.options_widgets[0].interpolation_checkbox.value = True
+    renderer_options_wid.add_render_function(render_function)
     info_wid = TextPrintWidget(text_per_line=[''] * 8, style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)

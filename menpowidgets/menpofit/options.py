@@ -314,13 +314,13 @@ class ResultOptionsWidget(MenpoWidget):
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
+        # keep old value
+        old_value = self.selected_values
+
         # check if updates are required
         if (self.has_gt_shape != has_gt_shape or
                 self.has_initial_shape != has_initial_shape or
                 self.has_image != has_image):
-            # keep old value
-            old_value = self.selected_values
-
             # Assign properties
             self.has_gt_shape = has_gt_shape
             self.has_initial_shape = has_initial_shape
@@ -332,9 +332,9 @@ class ResultOptionsWidget(MenpoWidget):
             # Get values
             self._save_options({})
 
-            # trigger render function if allowed
-            if allow_callback:
-                self.call_render_function(old_value, self.selected_values)
+        # trigger render function if allowed
+        if allow_callback:
+            self.call_render_function(old_value, self.selected_values)
 
 
 class IterativeResultOptionsWidget(MenpoWidget):
@@ -407,6 +407,9 @@ class IterativeResultOptionsWidget(MenpoWidget):
         * ``name`` : the name of the modified trait attribute.
 
         If ``None``, then nothing is assigned.
+    tab_update_function : `callable` or ``None``, optional
+        A function that gets called when switching between the 'Result' and
+        'Iterations' tabs. If ``None``, then nothing is assigned.
     displacements_function : `callable` or ``None``, optional
         The function that is executed when the 'Displacements' button is
         pressed. It must have signature ``displacements_function(name)``. If
@@ -484,9 +487,9 @@ class IterativeResultOptionsWidget(MenpoWidget):
         >>>                      allow_callback=True)
     """
     def __init__(self, has_gt_shape, has_initial_shape, has_image, n_iters,
-                 render_function=None, displacements_function=None,
-                 errors_function=None, costs_function=None, style='minimal',
-                 tabs_style='minimal'):
+                 render_function=None, tab_update_function=None,
+                 displacements_function=None, errors_function=None,
+                 costs_function=None, style='minimal', tabs_style='minimal'):
         # Initialise default options dictionary
         render_image = True if has_image else False
         default_options = {'render_final_shape': True,
@@ -500,8 +503,9 @@ class IterativeResultOptionsWidget(MenpoWidget):
         self.has_initial_shape = None
         self.has_image = None
         self.n_iters = -1
+        self.tab_update_function = tab_update_function
 
-        # Create children
+        # Create result tab
         self.mode = ipywidgets.RadioButtons(
             description='Figure mode:',
             options={'Single': False, 'Multiple': True},
@@ -519,6 +523,8 @@ class IterativeResultOptionsWidget(MenpoWidget):
         self.result_box = ipywidgets.HBox(children=self.shape_buttons,
                                           align='center', margin='0.2cm',
                                           padding='0.2cm')
+
+        # Create iterations tab
         self.iterations_mode = ipywidgets.RadioButtons(
             options={'Animation': 'animation', 'Static': 'static'},
             value='animation', description='Iterations:', margin='0.15cm')
@@ -526,12 +532,12 @@ class IterativeResultOptionsWidget(MenpoWidget):
                                      type='change')
         self.iterations_mode.observe(self._index_visibility, names='value',
                                      type='change')
-        index = {'min': 0, 'max': n_iters - 1, 'step': 1, 'index': 0}
+        index = {'min': 0, 'max': n_iters + 1, 'step': 1, 'index': 0}
         self.index_animation = AnimationOptionsWidget(
                 index, description='', index_style='slider',
-                loop_enabled=False, interval=0.2)
-        slice_options = {'command': 'range({})'.format(n_iters),
-                         'length': n_iters}
+                loop_enabled=False, interval=0.)
+        slice_options = {'command': 'range({})'.format(n_iters + 1),
+                         'length': n_iters + 1}
         self.index_slicing = SlicingCommandWidget(
                 slice_options, description='', example_visible=True,
                 continuous_update=False, orientation='vertical')
@@ -557,12 +563,22 @@ class IterativeResultOptionsWidget(MenpoWidget):
                 value='No iterations available')
         self.iterations_box = ipywidgets.VBox(
             children=[self.mode_index_buttons_box, self.no_iterations_text])
+
+        # Create final tab widget
         self.result_iterations_tab = ipywidgets.Tab(
             children=[self.result_box, self.iterations_box], margin='0.2cm')
         self.result_iterations_tab.set_title(0, 'Final')
         self.result_iterations_tab.set_title(1, 'Iterations')
         self.result_iterations_tab.observe(
                 self._stop_animation, names='selected_index', type='change')
+
+        # Function for updating rendering options
+        if tab_update_function is not None:
+            self.result_iterations_tab.observe(tab_update_function,
+                                               names='selected_index',
+                                               type='change')
+            self.iterations_mode.observe(tab_update_function, names='value',
+                                         type='change')
 
         # Create final widget
         children = [self.mode_render_image_box, self.result_iterations_tab]
@@ -746,22 +762,25 @@ class IterativeResultOptionsWidget(MenpoWidget):
                 self.n_iters is None):
             # Result tab
             self.selected_values = {
+                'render_final_shape': self.shape_buttons[2].value,
                 'render_initial_shape': (self.shape_buttons[1].value and
                                          self.has_initial_shape),
-                'render_final_shape': self.shape_buttons[2].value,
                 'render_gt_shape': (self.shape_buttons[3].value and
                                     self.has_gt_shape),
-                'render_image': (self.render_image.value and self.has_image),
+                'render_image': self.render_image.value and self.has_image,
                 'subplots_enabled': self.mode.value}
         else:
             # Iterations tab
             if self.iterations_mode.value == 'animation':
-                iters = [self.index_animation.selected_values]
+                # The mode is 'Animation'
+                 iters = self.index_animation.selected_values
             else:
+                # The mode is 'Static'
                 iters = self.index_slicing.selected_values
+            # Get selected values
             self.selected_values = {
                 'iters': iters,
-                'render_image': (self.render_image.value and self.has_image),
+                'render_image': self.render_image.value and self.has_image,
                 'subplots_enabled': self.mode.value}
 
     def add_callbacks(self):
@@ -1006,14 +1025,14 @@ class IterativeResultOptionsWidget(MenpoWidget):
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
+        # keep old value
+        old_value = self.selected_values
+
         # check if updates are required
         if (self.has_gt_shape != has_gt_shape or
                 self.has_initial_shape != has_initial_shape or
                 self.has_image != has_image or
                 self.n_iters != n_iters):
-            # keep old value
-            old_value = self.selected_values
-
             # temporarily remove callbacks
             render_function = self._render_function
             self.remove_render_function()
@@ -1021,11 +1040,11 @@ class IterativeResultOptionsWidget(MenpoWidget):
 
             # Update widgets
             if self.n_iters != n_iters and n_iters is not None:
-                index = {'min': 0, 'max': n_iters - 1, 'step': 1, 'index': 0}
+                index = {'min': 0, 'max': n_iters, 'step': 1, 'index': 0}
                 self.index_animation.set_widget_state(index,
                                                       allow_callback=False)
-                slice_options = {'command': 'range({})'.format(n_iters),
-                                 'length': n_iters}
+                slice_options = {'command': 'range({})'.format(n_iters + 1),
+                                 'length': n_iters + 1}
                 self.index_slicing.set_widget_state(slice_options,
                                                     allow_callback=False)
 
@@ -1045,6 +1064,6 @@ class IterativeResultOptionsWidget(MenpoWidget):
             self.add_callbacks()
             self.add_render_function(render_function)
 
-            # trigger render function if allowed
-            if allow_callback:
-                self.call_render_function(old_value, self.selected_values)
+        # trigger render function if allowed
+        if allow_callback:
+            self.call_render_function(old_value, self.selected_values)

@@ -362,11 +362,8 @@ class SlicingCommandWidget(MenpoWidget):
         self.cmd_text = ipywidgets.Text(value=slice_options['command'],
                                         description=description)
         self.example = ipywidgets.Latex(
-            value="e.g. ':3', '-3:', '1:{}:2', '3::', '0, {}', '7', "
-                  "'range({})' etc.".format(slice_options['length'],
-                                            slice_options['length'],
-                                            slice_options['length']),
-            font_size=11, font_style='italic', visible=example_visible)
+                value=self._example_str(slice_options['length']),
+                font_size=11, font_style='italic', visible=example_visible)
         self.error_msg = ipywidgets.Latex(value='', font_style='italic',
                                           color='#FF0000')
         self.single_slider = ipywidgets.IntSlider(
@@ -443,6 +440,10 @@ class SlicingCommandWidget(MenpoWidget):
         self.multiple_slider.observe(multiple_slider_value, names='value',
                                      type='change')
 
+    def _example_str(self, length):
+        return "e.g. ':3', '-3:', '1:{}:2', '3::', '0, {}', '7', 'range({})' " \
+               "etc.".format(length, length, length)
+
     def _single_slider_visible(self, selected_values):
         return len(selected_values) == 1
 
@@ -501,6 +502,9 @@ class SlicingCommandWidget(MenpoWidget):
 
             # update command text
             self.cmd_text.value = slice_options['command']
+
+            # Update example str
+            self.example.value = self._example_str(slice_options['length'])
 
             # re-assign render callback
             self.add_render_function(render_function)
@@ -1058,6 +1062,7 @@ class ColourSelectionWidget(MenpoWidget):
 
         # Assign properties
         self.labels = labels
+        self.n_colours = n_labels
         self.description = description
 
         # Set functionality
@@ -1187,6 +1192,7 @@ class ColourSelectionWidget(MenpoWidget):
             colours_list = [colours_list]
         if labels is None:
             labels = ["label {}".format(k) for k in range(len(colours_list))]
+        self.n_colours = len(colours_list)
 
         sel_colours = self.selected_values
         sel_labels = self.labels
@@ -1256,6 +1262,58 @@ class ColourSelectionWidget(MenpoWidget):
             # trigger render function if allowed
             if allow_callback:
                 self.call_render_function(old_value, self.selected_values)
+
+    def set_colours(self, colours_list, allow_callback=True):
+        r"""
+        Method that updates the colour values of the widget.
+
+        Parameters
+        ----------
+        colours_list : `list` of `str` or [`float`, `float`, `float`]
+            A `list` of colours. If a colour is defined as an `str`, then it must
+            either be a hex code or a colour name, such as ::
+
+                'blue', 'green', 'red', 'cyan', 'magenta', 'yellow', 'black',
+                'white', 'pink', 'orange'
+
+            If a colour has the form [`float`, `float`, `float`], then it defines
+            an RGB value and must have length 3.
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+
+        Raises
+        ------
+        ValueError
+            You must provide a colour per label.
+        """
+        # Check provided colours
+        if isinstance(colours_list, str) or isinstance(colours_list, unicode):
+            colours_list = [colours_list]
+        if len(colours_list) != self.n_colours:
+            raise ValueError("You must provide a colour per label.")
+
+        # Keep old value
+        old_value = self.selected_values
+
+        # Remove render function
+        render_fun = self._render_function
+        self.remove_render_function()
+
+        # Keep previously selected label
+        previous_value = self.label_dropdown.value
+        for k, c in enumerate(colours_list):
+            self.label_dropdown.value = k
+            self.colour_widget.value = c
+
+        # Select previous label
+        self.label_dropdown.value = previous_value
+
+        # Add render function
+        self.add_render_function(render_fun)
+
+        # Callback
+        if allow_callback:
+            self.call_render_function(old_value, self.selected_values)
 
 
 class ZoomOneScaleWidget(MenpoWidget):
@@ -1834,10 +1892,13 @@ class ImageOptionsWidget(MenpoWidget):
         cmap_dict['gray'] = 'gray'
         cmap_dict['hot'] = 'hot'
         cmap_dict['hsv'] = 'hsv'
+        cmap_dict['inferno'] = 'inferno'
         cmap_dict['jet'] = 'jet'
+        cmap_dict['magma'] = 'magma'
         cmap_dict['nipy_spectral'] = 'nipy_spectral'
         cmap_dict['ocean'] = 'ocean'
         cmap_dict['pink'] = 'pink'
+        cmap_dict['plasma'] = 'plasma'
         cmap_dict['prism'] = 'prism'
         cmap_dict['rainbow'] = 'rainbow'
         cmap_dict['seismic'] = 'seismic'
@@ -1845,7 +1906,26 @@ class ImageOptionsWidget(MenpoWidget):
         cmap_dict['spring'] = 'spring'
         cmap_dict['summer'] = 'summer'
         cmap_dict['terrain'] = 'terrain'
+        cmap_dict['viridis'] = 'viridis'
         cmap_dict['winter'] = 'winter'
+        cmap_dict['Blues'] = 'Blues'
+        cmap_dict['BuGn'] = 'BuGn'
+        cmap_dict['BuPu'] = 'BuPu'
+        cmap_dict['GnBu'] = 'GnBu'
+        cmap_dict['Greens'] = 'Greens'
+        cmap_dict['Greys'] = 'Greys'
+        cmap_dict['Oranges'] = 'Oranges'
+        cmap_dict['OrRd'] = 'OrRd'
+        cmap_dict['PuBu'] = 'PuBu'
+        cmap_dict['PuBuGn'] = 'PuBuGn'
+        cmap_dict['PuRd'] = 'PuRd'
+        cmap_dict['Purples'] = 'Purples'
+        cmap_dict['RdPu'] = 'RdPu'
+        cmap_dict['Reds'] = 'Reds'
+        cmap_dict['YlGn'] = 'YlGn'
+        cmap_dict['YlGnBu'] = 'YlGnBu'
+        cmap_dict['YlOrBr'] = 'YlOrBr'
+        cmap_dict['YlOrRd'] = 'YlOrRd'
         self.cmap_select = ipywidgets.Select(
             options=cmap_dict, value='gray', description='Colourmap',
             width='3cm', height='2cm')
