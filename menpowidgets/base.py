@@ -39,7 +39,6 @@ def menpowidgets_src_dir_path():
     return Path(os.path.abspath(__file__)).parent
 
 
-# MENPO RELATED WIDGETS
 def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
                           browser_style='buttons'):
     r"""
@@ -1279,13 +1278,13 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
                           parameters_bounds=(-3.0, 3.0), figure_size=(10, 8),
                           style='coloured'):
     r"""
-    Widget that allows the dynamic visualization of a multilevel linear
+    Widget that allows the dynamic visualization of a multi-scale linear
     statistical shape model.
 
     Parameters
     ----------
     shape_model : `list` of `menpo.shape.PCAModel` or `subclass`
-        The multilevel shape model to be visualized. Note that each level can
+        The multi-scale shape model to be visualized. Note that each level can
         have different number of components.
     n_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the parameters
@@ -1633,13 +1632,13 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
                                mode='multiple', parameters_bounds=(-3.0, 3.0),
                                figure_size=(10, 8), style='coloured'):
     r"""
-    Widget that allows the dynamic visualization of a multilevel linear
+    Widget that allows the dynamic visualization of a multi-scale linear
     statistical appearance model.
 
     Parameters
     ----------
     appearance_model : `list` of `menpo.model.PCAModel` or subclass
-        The multilevel appearance model to be visualized. Note that each level
+        The multi-scale appearance model to be visualized. Note that each level
         can have different number of components.
     n_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the parameters
@@ -1908,13 +1907,13 @@ def visualize_patch_appearance_model(appearance_model, centers,
                                      parameters_bounds=(-3.0, 3.0),
                                      figure_size=(10, 8), style='coloured'):
     r"""
-    Widget that allows the dynamic visualization of a multilevel linear
+    Widget that allows the dynamic visualization of a multi-scale linear
     statistical patch-based appearance model.
 
     Parameters
     ----------
     appearance_model : `list` of `menpo.model.PCAModel` or subclass
-        The multilevel patch-based appearance model to be visualized. Note that
+        The multi-scale patch-based appearance model to be visualized. Note that
         each level can have different number of components.
     centers : `list` of `menpo.shape.PointCloud` or subclass
         The centers to set the patches around. If the `list` has only one

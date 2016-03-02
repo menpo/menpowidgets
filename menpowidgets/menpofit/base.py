@@ -41,13 +41,13 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                   mode='multiple', parameters_bounds=(-3.0, 3.0),
                   figure_size=(10, 8), style='coloured'):
     r"""
-    Widget that allows the dynamic visualization of a multilevel Active
+    Widget that allows the dynamic visualization of a multi-scale Active
     Appearance Model.
 
     Parameters
     ----------
     aam : `menpofit.aam.AAM`
-        The multilevel AAM to be visualized. Note that each level can have
+        The multi-scale AAM to be visualized. Note that each level can have
         different number of components.
     n_shape_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the shape parameters
@@ -387,13 +387,13 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                         mode='multiple', parameters_bounds=(-3.0, 3.0),
                         figure_size=(10, 8), style='coloured'):
     r"""
-    Widget that allows the dynamic visualization of a multilevel patch-based
+    Widget that allows the dynamic visualization of a multi-scale patch-based
     Active Appearance Model.
 
     Parameters
     ----------
     aam : `menpofit.aam.PatchAAM`
-        The multilevel patch-based AAM to be visualized. Note that each level
+        The multi-scale patch-based AAM to be visualized. Note that each level
         can have different number of components.
     n_shape_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the shape parameters
@@ -719,13 +719,13 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
                   parameters_bounds=(-3.0, 3.0), figure_size=(10, 8),
                   style='coloured'):
     r"""
-    Widget that allows the dynamic visualization of a multilevel Active
+    Widget that allows the dynamic visualization of a multi-scale Active
     Template Model.
 
     Parameters
     ----------
     atm : `menpofit.atm.ATM`
-        The multilevel ATM to be visualized. Note that each level can have
+        The multi-scale ATM to be visualized. Note that each level can have
         different number of components.
     n_shape_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the shape parameters
@@ -999,13 +999,13 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
                         parameters_bounds=(-3.0, 3.0), figure_size=(10, 8),
                         style='coloured'):
     r"""
-    Widget that allows the dynamic visualization of a multilevel patch-based
+    Widget that allows the dynamic visualization of a multi-scale patch-based
     Active Template Model.
 
     Parameters
     ----------
     atm : `menpofit.atm.PatchATM`
-        The multilevel patch-based ATM to be visualized. Note that each level
+        The multi-scale patch-based ATM to be visualized. Note that each level
         can have different number of components.
     n_shape_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the shape parameters
@@ -1265,13 +1265,13 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
                   parameters_bounds=(-3.0, 3.0), figure_size=(10, 8),
                   style='coloured'):
     r"""
-    Widget that allows the dynamic visualization of a multilevel Constrained
+    Widget that allows the dynamic visualization of a multi-scale Constrained
     Local Model.
 
     Parameters
     ----------
     clm : `menpofit.clm.CLM`
-        The multilevel CLM to be visualized. Note that each level can have
+        The multi-scale CLM to be visualized. Note that each level can have
         different number of components.
     n_shape_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the shape parameters
@@ -1401,14 +1401,15 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
             "> {} ensemble of experts".format(
                     name_of_callable(clm.expert_ensemble_cls[level])),
             "> Level {}/{}".format(level + 1, clm.n_scales),
-            "> {} landmark points".format(patches.shape[0]),
+            "> {} experts (landmark points)".format(
+                    clm.expert_ensembles[level].n_experts),
             "> {} shape components ({:.2f}% of variance)".format(
                     lvl_shape_mod.n_components,
                     lvl_shape_mod.variance_ratio() * 100),
             "> {}".format(tmp_feat),
             "> Patch shape: {} x {}".format(
-                    clm.expert_ensembles[level].patch_shape[0],
-                    clm.expert_ensembles[level].patch_shape[1]),
+                    clm.expert_ensembles[level].search_shape[0],
+                    clm.expert_ensembles[level].search_shape[1]),
             "> Instance: min={:.3f} , max={:.3f}".format(
                     patches.min(), patches.max())]
         info_wid.set_widget_state(text_per_line=text_per_line)
@@ -1450,14 +1451,13 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
             loop_enabled=True)
     patch_options_wid = PatchOptionsWidget(
             n_patches=clm.expert_ensembles[0].n_experts, n_offsets=1,
-            render_function=render_function, style=patches_style,
+            render_function=None, style=patches_style,
             subwidgets_style=patches_subwidgets_style)
     domain_toggles = ipywidgets.ToggleButtons(
             description='Domain:', options=['spatial', 'frequency'],
             value='spatial', margin='0.3cm')
     experts_box = ipywidgets.VBox(children=[domain_toggles, patch_options_wid],
                                   align='start')
-    domain_toggles.observe(render_function, names='value', type='change')
     channel_options_wid = ChannelOptionsWidget(
             n_channels=clm.expert_ensembles[0].spatial_filter_images[0].n_channels,
             image_is_masked=False, render_function=render_function,
@@ -1465,14 +1465,22 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
     renderer_options_wid = RendererOptionsWidget(
             options_tabs=['image', 'markers', 'lines', 'numbering', 'zoom_one',
                           'axes'], labels=None,
-            axes_x_limits=None, axes_y_limits=None,
-            render_function=None,  style=renderer_style,
-            tabs_style=renderer_tabs_style)
-    renderer_options_wid.options_widgets[0].interpolation_checkbox.value = True
-    renderer_options_wid.add_render_function(render_function)
+            axes_x_limits=None, axes_y_limits=None, render_function=None,
+            style=renderer_style, tabs_style=renderer_tabs_style)
     info_wid = TextPrintWidget(text_per_line=[''] * 7, style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)
+
+    # Set default values
+    patch_options_wid.bboxes_line_options_wid.line_colour_widget.set_colours(
+            ['white'], allow_callback=False)
+    renderer_options_wid.options_widgets[0].cmap_select.value = 'afmhot'
+    renderer_options_wid.options_widgets[0].interpolation_checkbox.value = True
+
+    # Add render function
+    domain_toggles.observe(render_function, names='value', type='change')
+    patch_options_wid.add_render_function(render_function)
+    renderer_options_wid.add_render_function(render_function)
 
     # Define function that updates options' widgets state
     def update_widgets(change):
@@ -1515,6 +1523,224 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
                                            renderer_options_wid,
                                            info_wid, save_figure_wid])
     tab_titles = ['Model', 'Experts', 'Channels', 'Renderer', 'Info', 'Export']
+    for (k, tl) in enumerate(tab_titles):
+        options_box.set_title(k, tl)
+    logo_wid = LogoWidget(style=logo_style)
+    logo_wid.margin = '0.1cm'
+    wid = ipywidgets.HBox(children=[logo_wid, options_box], align='start')
+
+    # Set widget's style
+    wid.box_style = widget_box_style
+    wid.border_radius = widget_border_radius
+    wid.border_width = widget_border_width
+    wid.border_color = map_styles_to_hex_colours(widget_box_style)
+    renderer_options_wid.margin = '0.2cm'
+
+    # Display final widget
+    ipydisplay.display(wid)
+
+    # Trigger initial visualization
+    render_function({})
+
+
+def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(10, 8),
+                              style='coloured'):
+    r"""
+    Widget that allows the dynamic visualization of a multi-scale Ensemble of
+    Experts.
+
+    Parameters
+    ----------
+    expert_ensemble : `list` of `menpofit.clm.expert.ExpertEnsemble` or subclass
+        The multi-scale ensemble of experts to be visualized.
+    centers : `list` of `menpo.shape.PointCloud` or subclass
+        The centers to set the patches around. If the `list` has only one
+        `menpo.shape.PointCloud` then this will be used for all expert ensemble
+        levels. Otherwise, it needs to have the same length as
+        `expert_ensemble`.
+    figure_size : (`int`, `int`), optional
+        The size of the plotted figures.
+    style : ``{'coloured', 'minimal'}``, optional
+        If ``'coloured'``, then the style of the widget will be coloured. If
+        ``minimal``, then the style is simple using black and white colours.
+    """
+    print('Initializing...')
+
+    # Make sure that expert_ensemble is a list even with one member
+    if not isinstance(expert_ensemble, list):
+        expert_ensemble = [expert_ensemble]
+
+    # Get the number of levels (i.e. number of expert ensembles)
+    n_levels = len(expert_ensemble)
+
+    # Make sure that centers is a list even with one pointcloud
+    if not isinstance(centers, list):
+        centers = [centers] * n_levels
+    elif isinstance(centers, list) and len(centers) == 1:
+        centers *= n_levels
+
+    # Define the styling options
+    if style == 'coloured':
+        model_style = 'info'
+        patches_style = 'minimal'
+        patches_subwidgets_style = 'danger'
+        channels_style = 'danger'
+        logo_style = 'info'
+        widget_box_style = 'info'
+        widget_border_radius = 10
+        widget_border_width = 1
+        info_style = 'danger'
+        renderer_style = 'danger'
+        renderer_tabs_style = 'info'
+        save_figure_style = 'danger'
+    elif style == 'minimal':
+        model_style = ''
+        patches_style = 'minimal'
+        patches_subwidgets_style = 'minimal'
+        channels_style = 'minimal'
+        logo_style = 'minimal'
+        widget_box_style = ''
+        widget_border_radius = 0
+        widget_border_width = 0
+        info_style = 'minimal'
+        renderer_style = 'minimal'
+        renderer_tabs_style = 'minimal'
+        save_figure_style = 'minimal'
+    else:
+        raise ValueError("style must be either coloured or minimal")
+
+    # Define render function
+    def render_function(change):
+        # Clear current figure, but wait until the generation of the new data
+        # that will be rendered
+        ipydisplay.clear_output(wait=True)
+
+        # Get selected level
+        level = level_wid.value if n_levels > 1 else 0
+
+        if domain_toggles.value == 'spatial':
+            patches = _convert_patches_list_to_single_array(
+                    expert_ensemble[level].spatial_filter_images,
+                    expert_ensemble[level].n_experts)
+        else:
+            patches = _convert_patches_list_to_single_array(
+                    expert_ensemble[level].frequency_filter_images,
+                    expert_ensemble[level].n_experts)
+
+        # Render instance with selected options
+        options = renderer_options_wid.selected_values['lines']
+        options.update(renderer_options_wid.selected_values['markers'])
+        options.update(renderer_options_wid.selected_values['numbering'])
+        options.update(renderer_options_wid.selected_values['axes'])
+        options.update(renderer_options_wid.selected_values['image'])
+        options.update(patch_options_wid.selected_values)
+        new_figure_size = (
+            renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
+            renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
+
+        # show image with selected options
+        renderer = render_patches(
+                patches=patches, patch_centers=centers[level],
+                renderer=save_figure_wid.renderer, figure_size=new_figure_size,
+                channels=channel_options_wid.selected_values['channels'],
+                glyph_enabled=channel_options_wid.selected_values['glyph_enabled'],
+                glyph_block_size=channel_options_wid.selected_values['glyph_block_size'],
+                glyph_use_negative=channel_options_wid.selected_values['glyph_use_negative'],
+                sum_enabled=channel_options_wid.selected_values['sum_enabled'],
+                **options)
+
+        # Update info
+        update_info(expert_ensemble, patches, level)
+
+        # Save the current figure id
+        save_figure_wid.renderer = renderer
+
+    # Define function that updates the info text
+    def update_info(expert_ensemble, patches, level):
+        # update info widgets
+        text_per_line = [
+            "> {} ensemble of experts".format(
+                    name_of_callable(expert_ensemble[level])),
+            "> Level {}/{}".format(level + 1, n_levels),
+            "> {} experts.".format(expert_ensemble[level].n_experts),
+            "> Channels: {}".format(patches.shape[2]),
+            "> Patch shape: {} x {}".format(
+                    expert_ensemble[level].search_shape[0],
+                    expert_ensemble[level].search_shape[1]),
+            "> Instance: min={:.3f} , max={:.3f}".format(
+                    patches.min(), patches.max())]
+        info_wid.set_widget_state(text_per_line=text_per_line)
+
+    # Create widgets
+    patch_options_wid = PatchOptionsWidget(
+            n_patches=expert_ensemble[0].n_experts, n_offsets=1,
+            render_function=None, style=patches_style,
+            subwidgets_style=patches_subwidgets_style)
+    domain_toggles = ipywidgets.ToggleButtons(
+            description='Domain:', options=['spatial', 'frequency'],
+            value='spatial', margin='0.1cm')
+    channel_options_wid = ChannelOptionsWidget(
+            n_channels=expert_ensemble[0].spatial_filter_images[0].n_channels,
+            image_is_masked=False, render_function=render_function,
+            style=channels_style)
+    renderer_options_wid = RendererOptionsWidget(
+            options_tabs=['image', 'markers', 'lines', 'numbering', 'zoom_one',
+                          'axes'], labels=None,
+            axes_x_limits=None, axes_y_limits=None, render_function=None,
+            style=renderer_style, tabs_style=renderer_tabs_style)
+    info_wid = TextPrintWidget(text_per_line=[''] * 7, style=info_style)
+    save_figure_wid = SaveFigureOptionsWidget(renderer=None,
+                                              style=save_figure_style)
+
+    # Set default values
+    patch_options_wid.bboxes_line_options_wid.line_colour_widget.set_colours(
+            ['white'], allow_callback=False)
+    renderer_options_wid.options_widgets[0].cmap_select.value = 'afmhot'
+    renderer_options_wid.options_widgets[0].interpolation_checkbox.value = True
+
+    # Add render function
+    domain_toggles.observe(render_function, names='value', type='change')
+    patch_options_wid.add_render_function(render_function)
+    renderer_options_wid.add_render_function(render_function)
+
+    # Define function that updates options' widgets state
+    def update_widgets(change):
+        value = change['new']
+        # Update patch options
+        patch_options_wid.set_widget_state(
+                n_patches=expert_ensemble[value].n_experts, n_offsets=1,
+                allow_callback=False)
+
+        # Update channels options
+        channel_options_wid.set_widget_state(
+                n_channels=expert_ensemble[value].spatial_filter_images[0].n_channels,
+                image_is_masked=False, allow_callback=True)
+
+    # Group widgets
+    tmp_children = [domain_toggles]
+    if n_levels > 1:
+        radio_str = OrderedDict()
+        for l in range(n_levels):
+            if l == 0:
+                radio_str["Level {} (low)".format(l)] = l
+            elif l == n_levels - 1:
+                radio_str["Level {} (high)".format(l)] = l
+            else:
+                radio_str["Level {}".format(l)] = l
+        level_wid = ipywidgets.RadioButtons(
+                options=radio_str, description='Pyramid:', value=n_levels-1,
+                margin='0.1cm')
+        level_wid.observe(update_widgets, names='value', type='change')
+        level_wid.observe(render_function, names='value', type='change')
+        tmp_children.insert(0, level_wid)
+    tmp_wid = ipywidgets.HBox(children=tmp_children, align='start',
+                              box_style=model_style)
+    experts_box = ipywidgets.VBox(children=[tmp_wid, patch_options_wid],
+                                  align='start')
+    options_box = ipywidgets.Tab(children=[experts_box, channel_options_wid,
+                                           renderer_options_wid, info_wid,
+                                           save_figure_wid])
+    tab_titles = ['Experts', 'Channels', 'Renderer', 'Info', 'Export']
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
     logo_wid = LogoWidget(style=logo_style)

@@ -14,5 +14,6 @@ Base
   visualize_atm
   visualize_patch_atm
   visualize_clm
-  plot_ced
+  visualize_expert_ensemble
   visualize_fitting_result
+  plot_ced
