@@ -362,11 +362,8 @@ class SlicingCommandWidget(MenpoWidget):
         self.cmd_text = ipywidgets.Text(value=slice_options['command'],
                                         description=description)
         self.example = ipywidgets.Latex(
-            value="e.g. ':3', '-3:', '1:{}:2', '3::', '0, {}', '7', "
-                  "'range({})' etc.".format(slice_options['length'],
-                                            slice_options['length'],
-                                            slice_options['length']),
-            font_size=11, font_style='italic', visible=example_visible)
+                value=self._example_str(slice_options['length']),
+                font_size=11, font_style='italic', visible=example_visible)
         self.error_msg = ipywidgets.Latex(value='', font_style='italic',
                                           color='#FF0000')
         self.single_slider = ipywidgets.IntSlider(
@@ -443,6 +440,10 @@ class SlicingCommandWidget(MenpoWidget):
         self.multiple_slider.observe(multiple_slider_value, names='value',
                                      type='change')
 
+    def _example_str(self, length):
+        return "e.g. ':3', '-3:', '1:{}:2', '3::', '0, {}', '7', 'range({})' " \
+               "etc.".format(length, length, length)
+
     def _single_slider_visible(self, selected_values):
         return len(selected_values) == 1
 
@@ -501,6 +502,9 @@ class SlicingCommandWidget(MenpoWidget):
 
             # update command text
             self.cmd_text.value = slice_options['command']
+
+            # Update example str
+            self.example.value = self._example_str(slice_options['length'])
 
             # re-assign render callback
             self.add_render_function(render_function)

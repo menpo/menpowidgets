@@ -2,18 +2,45 @@
 
 :mod:`menpowidgets.menpofit.base`
 =================================
+Functions that can be used for visualizing the various MenpoFit objects using
+interactive widgets.
 
-Base
-----
+
+Active Appearance Model
+-----------------------
 
 .. toctree::
-  :maxdepth: 1
+    :maxdepth: 1
 
-  visualize_aam
-  visualize_patch_aam
-  visualize_atm
-  visualize_patch_atm
-  visualize_clm
-  visualize_expert_ensemble
-  visualize_fitting_result
-  plot_ced
+    visualize_aam
+    visualize_patch_aam
+
+
+Active Appearance Model
+-----------------------
+
+.. toctree::
+    :maxdepth: 1
+
+    visualize_atm
+    visualize_patch_atm
+
+
+Constrained Local Model
+-----------------------
+
+.. toctree::
+    :maxdepth: 1
+
+    visualize_clm
+    visualize_expert_ensemble
+
+
+Fitting Result
+--------------
+
+.. toctree::
+    :maxdepth: 1
+
+    visualize_fitting_result
+    plot_ced

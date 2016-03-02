@@ -2,32 +2,60 @@
 
 :mod:`menpowidgets.tools`
 =========================
+Low-level widget classes that can be used as the main ingredients for creating
+more complex widgets, as the ones in :ref:`api-options-index` and
+:ref:`api-menpofit-options-index`.
 
-Tools
------
+
+Logo
+----
 
 .. toctree::
-  :maxdepth: 1
+    :maxdepth: 1
 
-  ListWidget
-  LogoWidget
-  SlicingCommandWidget
-  IndexSliderWidget
-  IndexButtonsWidget
-  ColourSelectionWidget
-  ZoomOneScaleWidget
-  ZoomTwoScalesWidget
-  ImageOptionsWidget
-  LineOptionsWidget
-  MarkerOptionsWidget
-  NumberingOptionsWidget
-  AxesLimitsWidget
-  AxesTicksWidget
-  AxesOptionsWidget
-  LegendOptionsWidget
-  GridOptionsWidget
-  HOGOptionsWidget
-  DSIFTOptionsWidget
-  DaisyOptionsWidget
-  LBPOptionsWidget
-  IGOOptionsWidget
+    LogoWidget
+
+
+Indexing
+--------
+
+.. toctree::
+    :maxdepth: 1
+
+    IndexSliderWidget
+    IndexButtonsWidget
+    ListWidget
+    SlicingCommandWidget
+
+
+Rendering
+---------
+
+.. toctree::
+    :maxdepth: 1
+
+    AxesLimitsWidget
+    AxesOptionsWidget
+    AxesTicksWidget
+    ColourSelectionWidget
+    GridOptionsWidget
+    ImageOptionsWidget
+    LegendOptionsWidget
+    LineOptionsWidget
+    MarkerOptionsWidget
+    NumberingOptionsWidget
+    ZoomOneScaleWidget
+    ZoomTwoScalesWidget
+
+
+Features
+--------
+
+.. toctree::
+    :maxdepth: 1
+
+    DaisyOptionsWidget
+    DSIFTOptionsWidget
+    HOGOptionsWidget
+    IGOOptionsWidget
+    LBPOptionsWidget

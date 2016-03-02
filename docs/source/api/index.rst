@@ -10,16 +10,20 @@ the core classes available for viewing online.
 
 Main Widgets
 ------------
+Functions for visualizing the various Menpo and MenpoFit objects using
+interactive widgets.
 
 .. toctree::
-   :maxdepth: 1
+    :maxdepth: 1
 
-   menpowidgets/base/index
-   menpowidgets/menpofit/base/index
+    menpowidgets/base/index
+    menpowidgets/menpofit/base/index
 
 
 Options Widgets
 ---------------
+Independent widget objects that can be used as the main components for
+designing high-level widget functions.
 
 .. toctree::
     :maxdepth: 1
@@ -30,6 +34,8 @@ Options Widgets
 
 Tools Widgets
 -------------
+Low-level widget objects that can be used as the main ingredients for
+creating more complex widgets.
 
 .. toctree::
     :maxdepth: 1
