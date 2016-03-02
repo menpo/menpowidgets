@@ -8,6 +8,48 @@ from menpo.feature import glyph, sum_channels
 from menpo.visualize.viewmatplotlib import MatplotlibSubplots
 
 
+def verify_ipython_and_kernel():
+    r"""
+    Verify that the current environment is a valid IPython environment that
+    contains a communication kernel. There is no solid way of identifying a
+    notebook vs. the QT console, but the QT console will at least visualise the
+    matplotlib commands without the widget functionality.
+
+    Raises
+    ------
+    ValueError
+        Unable to import IPython, ipykernel or traitlets
+    ValueError
+        No valid IPython kernel found
+    ValueError
+        The IPython kernel does not contain a communication manager (the
+        default IPython shell rather than a notebook or a QT console).
+    """
+    try:
+        from IPython import get_ipython
+        from ipykernel.comm import Comm
+        from traitlets.traitlets import TraitError
+
+        if get_ipython() is None:
+            raise ValueError('menpowidgets can only be used from inside '
+                             'a Jupyter notebook. We were unable to detect '
+                             'an active IPython session. Please re-run your '
+                             'code from inside a Jupyter Notebook.')
+        try:
+            Comm()
+        except TraitError:
+            raise ValueError('menpowidgets can only be used from inside '
+                             'a Jupyter notebook. We were unable to detect '
+                             'a valid active kernel. Please ensure your code '
+                             'is running inside a Jupyter notebook and not '
+                             'a standalone script or the default IPython '
+                             'shell.')
+    except ImportError:
+        raise ValueError('menpowidgets can only be used from inside '
+                         'a Jupyter notebook. We were unable to import '
+                         'IPython, please ensure it is installed.')
+
+
 def lists_are_the_same(a, b):
     r"""
     Function that checks if two `lists` have the same elements in the same
