@@ -1,0 +1,23 @@
+xref_map = {
+'AnimationOptionsWidget': ('class', 'menpowidgets.options.AnimationOptionsWidget'),
+'AxesOptionsWidget': ('class', 'menpowidgets.tools.AxesOptionsWidget'),
+'ColourSelectionWidget': ('class', 'menpowidgets.tools.ColourSelectionWidget'),
+'DaisyOptionsWidget': ('class', 'menpowidgets.tools.DaisyOptionsWidget'),
+'DSIFTOptionsWidget': ('class', 'menpowidgets.tools.DSIFTOptionsWidget'),
+'GridOptionsWidget': ('class', 'menpowidgets.tools.GridOptionsWidget'),
+'HOGOptionsWidget': ('class', 'menpowidgets.tools.HOGOptionsWidget'),
+'IGOOptionsWidget': ('class', 'menpowidgets.tools.IGOOptionsWidget'),
+'ImageOptionsWidget': ('class', 'menpowidgets.tools.ImageOptionsWidget'),
+'IndexButtonsWidget': ('class', 'menpowidgets.tools.IndexButtonsWidget'),
+'IndexSliderWidget': ('class', 'menpowidgets.tools.IndexSliderWidget'),
+'LBPOptionsWidget': ('class', 'menpowidgets.tools.LBPOptionsWidget'),
+'LegendOptionsWidget': ('class', 'menpowidgets.tools.LegendOptionsWidget'),
+'LineOptionsWidget': ('class', 'menpowidgets.tools.LineOptionsWidget'),
+'MarkerOptionsWidget': ('class', 'menpowidgets.tools.MarkerOptionsWidget'),
+'MenpoWidget': ('class', 'menpowidgets.abstract.MenpoWidget'),
+'NumberingOptionsWidget': ('class', 'menpowidgets.tools.NumberingOptionsWidget'),
+'RendererOptionsWidget': ('class', 'menpowidgets.options.RendererOptionsWidget'),
+'SlicingCommandWidget': ('class', 'menpowidgets.tools.SlicingCommandWidget'),
+'ZoomOneScaleWidget': ('class', 'menpowidgets.tools.ZoomOneScaleWidget'),
+'ZoomTwoScalesWidget': ('class', 'menpowidgets.tools.ZoomTwoScalesWidget')
+}

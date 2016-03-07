@@ -6,7 +6,6 @@ import numpy as np
 import ipywidgets
 import IPython.display as ipydisplay
 
-from menpo.base import name_of_callable
 from menpo.image import MaskedImage, Image
 from menpo.image.base import _convert_patches_list_to_single_array
 
@@ -19,8 +18,7 @@ from .style import format_box, map_styles_to_hex_colours
 from .tools import LogoWidget
 from .utils import (extract_group_labels_from_landmarks,
                     extract_groups_labels_from_image, render_image,
-                    render_patches, render_images,
-                    sample_colours_from_colourmap)
+                    render_patches)
 from .checks import check_n_parameters
 
 
@@ -41,14 +39,13 @@ def menpowidgets_src_dir_path():
     return Path(os.path.abspath(__file__)).parent
 
 
-# MENPO RELATED WIDGETS
 def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
                           browser_style='buttons'):
     r"""
-    Widget that allows browsing through a `list` of :map:`PointCloud`,
-    :map:`PointUndirectedGraph`, :map:`PointDirectedGraph`, :map:`PointTree`,
-    :map:`TriMesh` or subclasses. Any instance of the above can be combined in
-    the `list`.
+    Widget that allows browsing through a `list` of `menpo.shape.PointCloud`,
+    `menpo.shape.PointUndirectedGraph`, `menpo.shape.PointDirectedGraph`,
+    `menpo.shape.PointTree`, `menpo.shape.TriMesh` or any subclass of those.
+    Any instance of the above can be combined in the `list`.
 
     The widget has options tabs regarding the renderer (lines, markers,
     numbering, zoom, axes) and saving the figure to file.
@@ -57,18 +54,21 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
     ----------
     pointclouds : `list`
         The `list` of objects to be visualized. It can contain a combination of
-        :map:`PointCloud`, :map:`PointUndirectedGraph`,
-        :map:`PointDirectedGraph`, :map:`PointTree`, :map:`TriMesh` or
-        subclasses of those.
+        `menpo.shape.PointCloud`, `menpo.shape.PointUndirectedGraph`,
+        `menpo.shape.PointDirectedGraph`, `menpo.shape.PointTree`,
+        `menpo.shape.TriMesh` or subclasses of those.
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
-    browser_style : {``'buttons'``, ``'slider'``}, optional
+    browser_style : ``{'buttons', 'slider'}``, optional
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     print('Initializing...')
 
     # Make sure that pointclouds is a list even with one pointcloud member
@@ -107,32 +107,39 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
         save_figure_style = 'minimal'
 
     # Define render function
-    def render_function(name, value):
+    def render_function(change):
         # Clear current figure, but wait until the generation of the new data
         # that will be rendered
         ipydisplay.clear_output(wait=True)
 
         # Get selected pointcloud index
-        im = 0
-        if n_pointclouds > 1:
-            im = pointcloud_number_wid.selected_values
-
-        # Update info text widget
-        update_info(pointclouds[im])
+        im = pointcloud_number_wid.selected_values if n_pointclouds > 1 else 0
 
         # Render pointcloud with selected options
-        options = renderer_options_wid.selected_values['lines']
-        options.update(renderer_options_wid.selected_values['markers'])
-        options.update(renderer_options_wid.selected_values['numbering'])
+        tmp1 = renderer_options_wid.selected_values['lines']
+        tmp2 = renderer_options_wid.selected_values['markers']
+        options = renderer_options_wid.selected_values['numbering']
         options.update(renderer_options_wid.selected_values['axes'])
         new_figure_size = (
             renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
         renderer = pointclouds[im].view(
-            figure_id=save_figure_wid.renderer.figure_id,
-            new_figure=False, image_view=axes_mode_wid.value == 1,
-            figure_size=new_figure_size, label=None, **options)
+                figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+                image_view=axes_mode_wid.value == 1, label=None,
+                render_lines=tmp1['render_lines'],
+                line_colour=tmp1['line_colour'][0],
+                line_style=tmp1['line_style'], line_width=tmp1['line_width'],
+                render_markers=tmp2['render_markers'],
+                marker_style=tmp2['marker_style'],
+                marker_size=tmp2['marker_size'],
+                marker_face_colour=tmp2['marker_face_colour'][0],
+                marker_edge_colour=tmp2['marker_edge_colour'][0],
+                marker_edge_width=tmp2['marker_edge_width'],
+                figure_size=new_figure_size, **options)
         plt.show()
+
+        # Update info text widget
+        update_info(pointclouds[im])
 
         # Save the current figure id
         save_figure_wid.renderer = renderer
@@ -149,13 +156,13 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
             "> Range: {0:.1f}W, {1:.1f}H".format(rang[0], rang[1]),
             "> Centre of mass: ({0:.1f}, {1:.1f})".format(cm[0], cm[1]),
             "> Norm: {0:.2f}".format(pointcloud.norm())]
-        info_wid.set_widget_state(n_lines=5, text_per_line=text_per_line)
+        info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Create widgets
     axes_mode_wid = ipywidgets.RadioButtons(
         options={'Image': 1, 'Point cloud': 2}, description='Axes mode:',
         value=1)
-    axes_mode_wid.on_trait_change(render_function, 'value')
+    axes_mode_wid.observe(render_function, names='value', type='change')
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['markers', 'lines', 'numbering', 'zoom_one', 'axes'],
         labels=None, axes_x_limits=0.1, axes_y_limits=0.1,
@@ -164,8 +171,7 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
     renderer_options_box = ipywidgets.VBox(
         children=[axes_mode_wid, renderer_options_wid], align='center',
         margin='0.1cm')
-    info_wid = TextPrintWidget(n_lines=5, text_per_line=[''] * 5,
-                               style=info_style)
+    info_wid = TextPrintWidget(text_per_line=[''] * 5, style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(style=save_figure_style)
 
     # Group widgets
@@ -208,14 +214,14 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
     ipydisplay.display(wid)
 
     # Trigger initial visualization
-    render_function('', True)
+    render_function({})
 
 
 def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
                              style='coloured', browser_style='buttons'):
     r"""
-    Widget that allows browsing through a `list` of :map:`LandmarkGroup`
-    (or subclass) objects.
+    Widget that allows browsing through a `list` of
+    `menpo.landmark.LandmarkGroup` (or subclass) objects.
 
     The landmark groups can have a combination of different attributes, e.g.
     different labels, number of points etc. The widget has options tabs
@@ -224,17 +230,20 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
 
     Parameters
     ----------
-    landmarkgroups : `list` of :map:`LandmarkGroup` or subclass
+    landmarkgroups : `list` of `menpo.landmark.LandmarkGroup` or subclass
         The `list` of landmark groups to be visualized.
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
-    browser_style : {``'buttons'``, ``'slider'``}, optional
+    browser_style : ``{'buttons', 'slider'}``, optional
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     print('Initializing...')
 
     # Make sure that landmarkgroups is a list even with one landmark group
@@ -276,18 +285,13 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
         save_figure_style = 'minimal'
 
     # Define render function
-    def render_function(name, value):
+    def render_function(change):
         # Clear current figure, but wait until the generation of the new data
         # that will be rendered
         ipydisplay.clear_output(wait=True)
 
         # get selected index
-        im = 0
-        if n_landmarkgroups > 1:
-            im = landmark_number_wid.selected_values
-
-        # update info text widget
-        update_info(landmarkgroups[im])
+        im = landmark_number_wid.selected_values if n_landmarkgroups > 1 else 0
 
         # show landmarks with selected options
         tmp1 = renderer_options_wid.selected_values['lines']
@@ -330,6 +334,9 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
         else:
             ipydisplay.clear_output()
 
+        # update info text widget
+        update_info(landmarkgroups[im])
+
     # Define function that updates the info text
     def update_info(landmarkgroup):
         min_b, max_b = landmarkgroup.lms.bounds()
@@ -342,7 +349,7 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
             "> Range: {0:.1f}W, {1:.1f}H".format(rang[0], rang[1]),
             "> Centre of mass: ({0:.1f}, {1:.1f})".format(cm[0], cm[1]),
             "> Norm: {0:.2f}".format(landmarkgroup.lms.norm())]
-        info_wid.set_widget_state(n_lines=5, text_per_line=text_per_line)
+        info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Create widgets
     landmark_options_wid = LandmarkOptionsWidget(
@@ -351,7 +358,7 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
     axes_mode_wid = ipywidgets.RadioButtons(
         options={'Image': 1, 'Point cloud': 2}, description='Axes mode:',
         value=1)
-    axes_mode_wid.on_trait_change(render_function, 'value')
+    axes_mode_wid.observe(render_function, names='value', type='change')
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['lines', 'markers', 'numbering', 'legend', 'zoom_one',
                       'axes'], labels=landmarkgroups[0].labels,
@@ -361,15 +368,14 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
     renderer_options_box = ipywidgets.VBox(
         children=[axes_mode_wid, renderer_options_wid], align='center',
         margin='0.1cm')
-    info_wid = TextPrintWidget(n_lines=5, text_per_line=[''] * 5,
-                               style=info_style)
+    info_wid = TextPrintWidget(text_per_line=[''] * 5, style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)
 
     # Group widgets
     if n_landmarkgroups > 1:
         # Define function that updates options' widgets state
-        def update_widgets(name, value):
+        def update_widgets(change):
             # Get new labels
             im = landmark_number_wid.selected_values
             labels = landmarkgroups[im].labels
@@ -420,14 +426,14 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
     ipydisplay.display(wid)
 
     # Trigger initial visualization
-    render_function('', True)
+    render_function({})
 
 
 def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
                         browser_style='buttons'):
     r"""
-    Widget that allows browsing through a `list` of :map:`LandmarkManager`
-    (or subclass) objects.
+    Widget that allows browsing through a `list` of
+    `menpo.landmark.LandmarkManager` (or subclass) objects.
 
     The landmark managers can have a combination of different attributes, e.g.
     landmark groups and labels etc. The widget has options tabs regarding the
@@ -436,17 +442,20 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
 
     Parameters
     ----------
-    landmarks : `list` of :map:`LandmarkManager` or subclass
+    landmarks : `list` of `menpo.landmark.LandmarkManager` or subclass
         The `list` of landmark managers to be visualized.
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
-    browser_style : {``'buttons'``, ``'slider'``}, optional
+    browser_style : ``{'buttons', 'slider'}``, optional
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     print('Initializing...')
 
     # Make sure that landmarks is a list even with one landmark manager member
@@ -487,21 +496,16 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
         save_figure_style = 'minimal'
 
     # Define render function
-    def render_function(name, value):
+    def render_function(change):
         # Clear current figure, but wait until the generation of the new data
         # that will be rendered
         ipydisplay.clear_output(wait=True)
 
         # get selected index
-        im = 0
-        if n_landmarks > 1:
-            im = landmark_number_wid.selected_values
+        im = landmark_number_wid.selected_values if n_landmarks > 1 else 0
 
         # get selected group
         selected_group = landmark_options_wid.selected_values['group']
-
-        # update info text widget
-        update_info(landmarks[im], selected_group)
 
         if landmark_options_wid.selected_values['render_landmarks']:
             # show landmarks with selected options
@@ -543,6 +547,9 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
         else:
             ipydisplay.clear_output()
 
+        # update info text widget
+        update_info(landmarks[im], selected_group)
+
     # Define function that updates the info text
     def update_info(landmarks, group):
         if group is not None:
@@ -560,7 +567,7 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
         else:
             text_per_line = ["No landmarks available."]
             n_lines = 1
-        info_wid.set_widget_state(n_lines=n_lines, text_per_line=text_per_line)
+        info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Create widgets
     groups_keys, labels_keys = extract_group_labels_from_landmarks(landmarks[0])
@@ -568,7 +575,7 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
     axes_mode_wid = ipywidgets.RadioButtons(
         options={'Image': 1, 'Point cloud': 2}, description='Axes mode:',
         value=1)
-    axes_mode_wid.on_trait_change(render_function, 'value')
+    axes_mode_wid.observe(render_function, names='value', type='change')
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['markers', 'lines', 'numbering', 'legend', 'zoom_one',
                       'axes'], labels=first_label,
@@ -582,24 +589,22 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
         group_keys=groups_keys, labels_keys=labels_keys,
         render_function=render_function, style=landmarks_style,
         renderer_widget=renderer_options_wid)
-    info_wid = TextPrintWidget(n_lines=5, text_per_line=[''] * 5,
-                               style=info_style)
+    info_wid = TextPrintWidget(text_per_line=[''] * 5, style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)
 
     # Group widgets
     if n_landmarks > 1:
         # Define function that updates options' widgets state
-        def update_widgets(name, value):
+        def update_widgets(change):
             # Get new groups and labels
             im = landmark_number_wid.selected_values
-            group_keys, labels_keys = extract_group_labels_from_landmarks(
+            g_keys, l_keys = extract_group_labels_from_landmarks(
                 landmarks[im])
 
             # Update landmarks options
             landmark_options_wid.set_widget_state(
-                group_keys=group_keys, labels_keys=labels_keys,
-                allow_callback=True)
+                group_keys=g_keys, labels_keys=l_keys, allow_callback=True)
             landmark_options_wid.predefined_style(landmarks_style)
 
         # Landmark selection slider
@@ -641,14 +646,14 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
     ipydisplay.display(wid)
 
     # Trigger initial visualization
-    render_function('', True)
+    render_function({})
 
 
 def visualize_images(images, figure_size=(10, 8), style='coloured',
                      browser_style='buttons'):
     r"""
-    Widget that allows browsing through a `list` of :map:`Image` (or subclass)
-    objects.
+    Widget that allows browsing through a `list` of `menpo.image.Image` (or
+    subclass) objects.
 
     The images can have a combination of different attributes, e.g. masked or
     not, landmarked or not, without multiple landmark groups and labels etc.
@@ -658,17 +663,20 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
 
     Parameters
     ----------
-    images : `list` of :map:`Image` or subclass
+    images : `list` of `menpo.image.Image` or subclass
         The `list` of images to be visualized.
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
-    browser_style : {``'buttons'``, ``'slider'``}, optional
+    browser_style : ``{'buttons', 'slider'}``, optional
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     print('Initializing...')
 
     # Make sure that images is a list even with one image member
@@ -705,20 +713,17 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
         save_figure_style = 'minimal'
 
     # Define render function
-    def render_function(name, value):
+    def render_function(change):
         # Clear current figure, but wait until the generation of the new data
         # that will be rendered
         ipydisplay.clear_output(wait=True)
 
         # get selected index
-        im = 0
-        if n_images > 1:
-            im = image_number_wid.selected_values
+        im = image_number_wid.selected_values if n_images > 1 else 0
 
         # update info text widget
         image_is_masked = isinstance(images[im], MaskedImage)
         selected_group = landmark_options_wid.selected_values['group']
-        update_info(images[im], image_is_masked, selected_group)
 
         # show landmarks with selected options
         tmp1 = renderer_options_wid.selected_values['lines']
@@ -757,6 +762,9 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
             marker_face_colour=marker_face_colour,
             figure_size=new_figure_size, **options)
 
+        # Update info
+        update_info(images[im], image_is_masked, selected_group)
+
         # Save the current figure id
         save_figure_wid.renderer = renderer
 
@@ -785,7 +793,7 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
             text_per_line.append("> {} landmark points".format(
                 img.landmarks[group].lms.n_points))
             n_lines += 1
-        info_wid.set_widget_state(n_lines=n_lines, text_per_line=text_per_line)
+        info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Create widgets
     groups_keys, labels_keys = extract_groups_labels_from_image(images[0])
@@ -804,24 +812,22 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
         group_keys=groups_keys, labels_keys=labels_keys,
         render_function=render_function, style=landmarks_style,
         renderer_widget=renderer_options_wid)
-    info_wid = TextPrintWidget(n_lines=1, text_per_line=[''],
-                               style=info_style)
+    info_wid = TextPrintWidget(text_per_line=[''], style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)
 
     # Group widgets
     if n_images > 1:
         # Define function that updates options' widgets state
-        def update_widgets(name, value):
+        def update_widgets(change):
             # Get new groups and labels, then update landmark options
             im = image_number_wid.selected_values
-            group_keys, labels_keys = extract_groups_labels_from_image(
+            g_keys, l_keys = extract_groups_labels_from_image(
                 images[im])
 
             # Update landmarks options
             landmark_options_wid.set_widget_state(
-                group_keys=group_keys, labels_keys=labels_keys,
-                allow_callback=False)
+                group_keys=g_keys, labels_keys=l_keys, allow_callback=False)
             landmark_options_wid.predefined_style(landmarks_style)
 
             # Update channels options
@@ -866,7 +872,7 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
     ipydisplay.display(wid)
 
     # Trigger initial visualization
-    render_function('', True)
+    render_function({})
 
 
 def visualize_patches(patches, patch_centers, figure_size=(10, 8),
@@ -875,11 +881,11 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
     Widget that allows browsing through a `list` of patch-based images.
 
     The patches argument can have any of the two formats that are returned from
-    the `extract_patches()` and `extract_patches_around_landmarks()` methods.
-    Specifically it can be:
+    the `extract_patches()` and `extract_patches_around_landmarks()` methods
+    of `menpo.image.Image`. Specifically it can be:
 
         1. ``(n_center, n_offset, self.n_channels, patch_shape)`` `ndarray`
-        2. `list` of ``n_center * n_offset`` :map:`Image` objects
+        2. `list` of ``n_center * n_offset`` `menpo.image.Image` objects
 
     The patches can have a combination of different attributes, e.g. number of
     centers, number of offsets, number of channels etc. The widget has options
@@ -894,20 +900,23 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
         `extract_patches()` and `extract_patches_around_landmarks()` methods.
         Specifically, it can either be an
         ``(n_center, n_offset, self.n_channels, patch_shape)`` `ndarray` or a
-        `list` of ``n_center * n_offset`` :map:`Image` objects.
-    patch_centers : `list` of :map:`PointCloud`
+        `list` of ``n_center * n_offset`` `menpo.image.Image` objects.
+    patch_centers : `list` of `menpo.shape.PointCloud`
         The centers to set the patches around. If the `list` has only one
-        :map:`PointCloud` then this will be used for all patches members.
+        `menpo.shape.PointCloud` then this will be used for all patches members.
         Otherwise, it needs to have the same length as patches.
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
-    browser_style : {``'buttons'``, ``'slider'``}, optional
+    browser_style : ``{'buttons', 'slider'}``, optional
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     print('Initializing...')
 
     # Make sure that patches is a list even with one patches member
@@ -959,18 +968,13 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
         save_figure_style = 'minimal'
 
     # Define render function
-    def render_function(name, value):
+    def render_function(change):
         # Clear current figure, but wait until the generation of the new data
         # that will be rendered
         ipydisplay.clear_output(wait=True)
 
         # get selected index
-        im = 0
-        if n_patches > 1:
-            im = image_number_wid.selected_values
-
-        # update info text widget
-        update_info(patches[im])
+        im = image_number_wid.selected_values if n_patches > 1 else 0
 
         # show patch-based image with selected options
         options = renderer_options_wid.selected_values['lines']
@@ -994,6 +998,9 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
             sum_enabled=channel_options_wid.selected_values['sum_enabled'],
             **options)
 
+        # update info text widget
+        update_info(patches[im])
+
         # Save the current figure id
         save_figure_wid.renderer = renderer
 
@@ -1007,8 +1014,7 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
                 ptchs.shape[3], ptchs.shape[4], ptchs.shape[2],
                 's' * (ptchs.shape[2] > 1)),
             "> min={:.3f}, max={:.3f}".format(ptchs.min(), ptchs.max())]
-        info_wid.set_widget_state(n_lines=len(text_per_line),
-                                  text_per_line=text_per_line)
+        info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Create widgets
     patch_options_wid = PatchOptionsWidget(
@@ -1022,17 +1028,18 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
         options_tabs=['markers', 'lines', 'numbering', 'zoom_one', 'axes',
                       'image'], labels=None,
         axes_x_limits=None, axes_y_limits=None,
-        render_function=render_function,  style=renderer_style,
+        render_function=None,  style=renderer_style,
         tabs_style=renderer_tabs_style)
-    info_wid = TextPrintWidget(n_lines=3, text_per_line=[''] * 3,
-                               style=info_style)
+    renderer_options_wid.options_widgets[5].interpolation_checkbox.value = True
+    renderer_options_wid.add_render_function(render_function)
+    info_wid = TextPrintWidget(text_per_line=[''] * 3, style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)
 
     # Group widgets
     if n_patches > 1:
         # Define function that updates options' widgets state
-        def update_widgets(name, value):
+        def update_widgets(change):
             # Get new groups and labels, then update landmark options
             im = 0
             if n_patches > 1:
@@ -1084,14 +1091,13 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
     ipydisplay.display(wid)
 
     # Trigger initial visualization
-    render_function('', True)
+    render_function({})
 
 
 def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(10, 6),
                style='coloured'):
     r"""
-    Widget that allows plotting various curves in a graph using
-    :map:`GraphPlotter`.
+    Widget that allows plotting various curves in a graph.
 
     The widget has options tabs regarding the graph and the renderer (lines,
     markers, legend, figure, axes, grid) and saving the figure to file.
@@ -1106,24 +1112,15 @@ def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(10, 6),
     legend_entries : `list` or `str` or ``None``, optional
         The `list` of names that will appear on the legend for each curve. If
         ``None``, then the names format is ``curve {}.format(i)``.
-    title : `str` or ``None``, optional
-        The title of the graph.
-    x_label : `str` or ``None``, optional
-        The label on the horizontal axis of the graph.
-    y_label : `str` or ``None``, optional
-        The label on the vertical axis of the graph.
-    x_axis_limits : (`float`, `float`) or ``None``, optional
-        The limits of the horizontal axis. If ``None``, the limits are set
-        based on the min and max values of `x_axis`.
-    y_axis_limits : (`float`, `float`), optional
-        The limits of the vertical axis. If ``None``, the limits are set based
-        on the min and max values of `y_axis`.
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     from menpo.visualize import plot_curve
     print('Initializing...')
 
@@ -1147,7 +1144,7 @@ def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(10, 6),
         legend_entries = ["curve {}".format(i) for i in range(n_curves)]
 
     # Define render function
-    def render_function(name, value):
+    def render_function(change):
         # Clear current figure, but wait until the generation of the new data
         # that will be rendered
         ipydisplay.clear_output(wait=True)
@@ -1196,7 +1193,7 @@ def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(10, 6),
     ipydisplay.display(wid)
 
     # Trigger initial visualization
-    render_function('', True)
+    render_function({})
 
 
 def save_matplotlib_figure(renderer, style='coloured'):
@@ -1206,12 +1203,15 @@ def save_matplotlib_figure(renderer, style='coloured'):
 
     Parameters
     ----------
-    renderer : :map:`MatplotlibRenderer`
+    renderer : `menpo.visualize.viewmatplotlib.MatplotlibRenderer`
         The Matplotlib renderer object.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     # Create sub-widgets
     if style == 'coloured':
         style = 'warning'
@@ -1228,13 +1228,12 @@ def save_matplotlib_figure(renderer, style='coloured'):
 def features_selection(style='coloured'):
     r"""
     Widget that allows selecting a features function and its options. The
-    widget supports all features from :ref:`api-feature-index` and has a
-    preview tab. It returns a `list` of length 1 with the selected features
-    function closure.
+    widget supports all features from `menpo.feature` and has a preview tab.
+    It returns a `list` of length 1 with the selected features function closure.
 
     Parameters
     ----------
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
 
@@ -1247,6 +1246,10 @@ def features_selection(style='coloured'):
             features_image = features_function[0](image)
 
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
+
     # Styling options
     if style == 'coloured':
         logo_style = 'info'
@@ -1300,13 +1303,13 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
                           parameters_bounds=(-3.0, 3.0), figure_size=(10, 8),
                           style='coloured'):
     r"""
-    Widget that allows the dynamic visualization of a multilevel linear
+    Widget that allows the dynamic visualization of a multi-scale linear
     statistical shape model.
 
     Parameters
-    -----------
-    shape_model : `list` of :map:`PCAModel` or subclass
-        The multilevel shape model to be visualized. Note that each level can
+    ----------
+    shape_model : `list` of `menpo.shape.PCAModel` or `subclass`
+        The multi-scale shape model to be visualized. Note that each level can
         have different number of components.
     n_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the parameters
@@ -1314,7 +1317,7 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
         between `n_parameters` and the number of active components per level.
         If `list` of `int`, then a number of sliders is defined per level.
         If ``None``, all the active components per level will have a slider.
-    mode : {``'single'``, ``'multiple'``}, optional
+    mode : ``{'single', 'multiple'}``, optional
         If ``'single'``, then only a single slider is constructed along with a
         drop down menu. If ``'multiple'``, then a slider is constructed for each
         parameter.
@@ -1322,10 +1325,15 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
         The minimum and maximum bounds, in std units, for the sliders.
     figure_size : (`int`, `int`), optional
         The size of the plotted figures.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
+    from menpo.visualize.viewmatplotlib import (_set_axes_options,
+                                                _parse_axes_limits)
     print('Initializing...')
 
     # Make sure that shape_model is a list even with one member
@@ -1373,7 +1381,7 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
     n_parameters = check_n_parameters(n_parameters, n_levels, max_n_params)
 
     # Define render function
-    def render_function(name, value):
+    def render_function(change):
         # Clear current figure, but wait until the generation of the new data
         # that will be rendered
         ipydisplay.clear_output(wait=True)
@@ -1392,14 +1400,13 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
         mean = shape_model[level].mean()
 
         # Render shape instance with selected options
-        options = renderer_options_wid.selected_values['lines']
-        options.update(renderer_options_wid.selected_values['markers'])
-        options.update(renderer_options_wid.selected_values['numbering'])
+        tmp1 = renderer_options_wid.selected_values['lines']
+        tmp2 = renderer_options_wid.selected_values['markers']
+        options = renderer_options_wid.selected_values['numbering']
         options.update(renderer_options_wid.selected_values['axes'])
         new_figure_size = (
             renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
-        plt.show()
 
         if mode_wid.value == 1:
             # Deformation mode
@@ -1408,24 +1415,33 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
 
             # Render mean shape
             if mean_wid.value:
-                mean.view(
-                    figure_id=save_figure_wid.renderer.figure_id,
-                    new_figure=False, image_view=axes_mode_wid.value == 1,
-                    figure_size=None,
-                    render_lines=options['render_lines'],
-                    line_colour='y', line_style=options['line_style'],
-                    line_width=options['line_width'],
-                    render_markers=options['render_markers'],
-                    marker_style=options['marker_style'],
-                    marker_size=options['marker_size'], marker_face_colour='y',
-                    marker_edge_colour='y',
-                    marker_edge_width=options['marker_edge_width'])
+                mean.view(figure_id=save_figure_wid.renderer.figure_id,
+                          new_figure=False, image_view=axes_mode_wid.value == 1,
+                          figure_size=None, render_lines=tmp1['render_lines'],
+                          line_colour='yellow', line_style=tmp1['line_style'],
+                          line_width=tmp1['line_width'],
+                          render_markers=tmp2['render_markers'],
+                          marker_style=tmp2['marker_style'],
+                          marker_size=tmp2['marker_size'],
+                          marker_face_colour='yellow',
+                          marker_edge_colour='yellow',
+                          marker_edge_width=tmp2['marker_edge_width'])
 
             # Render instance
             renderer = instance.view(
-                figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-                image_view=axes_mode_wid.value == 1, figure_size=new_figure_size,
-                **options)
+                    figure_id=save_figure_wid.renderer.figure_id,
+                    new_figure=False, image_view=axes_mode_wid.value == 1,
+                    figure_size=new_figure_size,
+                    render_lines=tmp1['render_lines'],
+                    line_colour=tmp1['line_colour'][0],
+                    line_style=tmp1['line_style'],
+                    line_width=tmp1['line_width'],
+                    render_markers=tmp2['render_markers'],
+                    marker_style=tmp2['marker_style'],
+                    marker_size=tmp2['marker_size'],
+                    marker_face_colour=tmp2['marker_face_colour'][0],
+                    marker_edge_colour=tmp2['marker_edge_colour'][0],
+                    marker_edge_width=tmp2['marker_edge_width'], **options)
 
             # Get instance range
             instance_range = instance.range()
@@ -1437,19 +1453,25 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
 
             # Render mean shape
             renderer = mean.view(
-                figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-                image_view=axes_mode_wid.value == 1, figure_size=new_figure_size,
-                render_lines=options['render_lines'],
-                line_colour='y', line_style=options['line_style'],
-                line_width=options['line_width'],
-                render_markers=options['render_markers'],
-                marker_style=options['marker_style'],
-                marker_size=options['marker_size'], marker_face_colour='y',
-                marker_edge_colour='y',
-                marker_edge_width=options['marker_edge_width'])
+                    figure_id=save_figure_wid.renderer.figure_id,
+                    new_figure=False, image_view=axes_mode_wid.value == 1,
+                    figure_size=new_figure_size,
+                    render_lines=tmp1['render_lines'],
+                    line_colour=tmp1['line_colour'][0],
+                    line_style=tmp1['line_style'], line_width=tmp1['line_width'],
+                    render_markers=tmp2['render_markers'],
+                    marker_style=tmp2['marker_style'],
+                    marker_size=tmp2['marker_size'],
+                    marker_face_colour=tmp2['marker_face_colour'][0],
+                    marker_edge_colour=tmp2['marker_edge_colour'][0],
+                    marker_edge_width=tmp2['marker_edge_width'])
 
             # Render vectors
             ax = plt.gca()
+            x_min = np.Inf
+            y_min = np.Inf
+            x_max = -np.Inf
+            y_max = -np.Inf
             for p in range(mean.n_points):
                 xm = mean.points[p, 0]
                 ym = mean.points[p, 1]
@@ -1465,7 +1487,30 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
                     lines = [[(xm, ym), (xl, yl)], [(xm, ym), (xu, yu)]]
                 lc = mc.LineCollection(lines, colors=('g', 'b'),
                                        linestyles='solid', linewidths=2)
+                # update min, max
+                y_min = np.min([y_min, xl, xu])
+                y_max = np.max([y_max, xl, xu])
+                x_min = np.min([x_min, yl, yu])
+                x_max = np.max([x_max, yl, yu])
+
+                # add collection
                 ax.add_collection(lc)
+
+            tmp = renderer_options_wid.selected_values['axes']
+            # parse axes limits
+            axes_x_limits, axes_y_limits = _parse_axes_limits(
+                    x_min, x_max, y_min, y_max, tmp['axes_x_limits'],
+                    tmp['axes_y_limits'])
+            _set_axes_options(
+                    ax, render_axes=tmp['render_axes'],
+                    inverted_y_axis=axes_mode_wid.value == 1,
+                    axes_font_name=tmp['axes_font_name'],
+                    axes_font_size=tmp['axes_font_size'],
+                    axes_font_style=tmp['axes_font_style'],
+                    axes_font_weight=tmp['axes_font_weight'],
+                    axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+                    axes_x_ticks=tmp['axes_x_ticks'],
+                    axes_y_ticks=tmp['axes_y_ticks'])
 
             # Get instance range
             instance_range = mean.range()
@@ -1492,7 +1537,7 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
             "> {} landmark points, {} features".format(
                 shape_model[level].mean().n_points,
                 shape_model[level].n_features)]
-        info_wid.set_widget_state(n_lines=6, text_per_line=text_per_line)
+        info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Plot variance function
     def plot_variance(name):
@@ -1501,9 +1546,7 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
         ipydisplay.clear_output(wait=True)
 
         # Get selected level
-        level = 0
-        if n_levels > 1:
-            level = level_wid.value
+        level = level_wid.value if n_levels > 1 else 0
 
         # Render
         new_figure_size = (
@@ -1527,28 +1570,29 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
     mode_dict['Vectors'] = 2
     mode_wid = ipywidgets.RadioButtons(options=mode_dict,
                                        description='Mode:', value=1)
-    mode_wid.on_trait_change(render_function, 'value')
+    mode_wid.observe(render_function, names='value', type='change')
     mean_wid = ipywidgets.Checkbox(value=False,
                                    description='Render mean shape')
-    mean_wid.on_trait_change(render_function, 'value')
+    mean_wid.observe(render_function, names='value', type='change')
 
     # Function that controls mean shape checkbox visibility
-    def mean_visible(name, value):
-        if value == 1:
+    def mean_visible(change):
+        if change['new'] == 1:
             mean_wid.disabled = False
         else:
             mean_wid.disabled = True
             mean_wid.value = False
-    mode_wid.on_trait_change(mean_visible, 'value')
+    mode_wid.observe(mean_visible, names='value', type='change')
     model_parameters_wid = LinearModelParametersWidget(
-        n_parameters[0], render_function, params_str='param ',
+        n_parameters[0], render_function, params_str='Parameter ',
         mode=mode, params_bounds=parameters_bounds, params_step=0.1,
         plot_variance_visible=True, plot_variance_function=plot_variance,
+        animation_step=0.5, interval=0., loop_enabled=True,
         style=model_parameters_style, continuous_update=False)
     axes_mode_wid = ipywidgets.RadioButtons(
         options={'Image': 1, 'Point cloud': 2}, description='Axes mode:',
         value=1)
-    axes_mode_wid.on_trait_change(render_function, 'value')
+    axes_mode_wid.observe(render_function, names='value', type='change')
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['markers', 'lines', 'numbering', 'zoom_one', 'axes'],
         labels=None, axes_x_limits=0.1, axes_y_limits=0.1,
@@ -1557,15 +1601,14 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
     renderer_options_box = ipywidgets.VBox(
         children=[axes_mode_wid, renderer_options_wid], align='center',
         margin='0.1cm')
-    info_wid = TextPrintWidget(n_lines=6, text_per_line=[''] * 6,
-                               style=info_style)
+    info_wid = TextPrintWidget(text_per_line=[''] * 6, style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)
 
     # Define function that updates options' widgets state
-    def update_widgets(name, value):
+    def update_widgets(change):
         model_parameters_wid.set_widget_state(
-            n_parameters=n_parameters[value], params_str='param ',
+            n_parameters=n_parameters[change['new']], params_str='param ',
             allow_callback=True)
 
     # Group widgets
@@ -1580,8 +1623,8 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
             options=radio_str, description='Pyramid:', value=n_levels-1)
-        level_wid.on_trait_change(update_widgets, 'value')
-        level_wid.on_trait_change(render_function, 'value')
+        level_wid.observe(update_widgets, names='value', type='change')
+        level_wid.observe(render_function, names='value', type='change')
         radio_children = [level_wid, mode_wid, mean_wid]
     else:
         radio_children = [mode_wid, mean_wid]
@@ -1610,20 +1653,20 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
     ipydisplay.display(wid)
 
     # Trigger initial visualization
-    render_function('', True)
+    render_function({})
 
 
 def visualize_appearance_model(appearance_model, n_parameters=5,
                                mode='multiple', parameters_bounds=(-3.0, 3.0),
                                figure_size=(10, 8), style='coloured'):
     r"""
-    Widget that allows the dynamic visualization of a multilevel linear
+    Widget that allows the dynamic visualization of a multi-scale linear
     statistical appearance model.
 
     Parameters
-    -----------
-    appearance_model : `list` of :map:`PCAModel` or subclass
-        The multilevel appearance model to be visualized. Note that each level
+    ----------
+    appearance_model : `list` of `menpo.model.PCAModel` or subclass
+        The multi-scale appearance model to be visualized. Note that each level
         can have different number of components.
     n_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the parameters
@@ -1631,7 +1674,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
         between `n_parameters` and the number of active components per level.
         If `list` of `int`, then a number of sliders is defined per level.
         If ``None``, all the active components per level will have a slider.
-    mode : {``'single'``, ``'multiple'``}, optional
+    mode : ``{'single', 'multiple'}``, optional
         If ``'single'``, then only a single slider is constructed along with a
         drop down menu. If ``'multiple'``, then a slider is constructed for each
         parameter.
@@ -1639,10 +1682,13 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
         The minimum and maximum bounds, in std units, for the sliders.
     figure_size : (`int`, `int`), optional
         The size of the plotted figures.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     print('Initializing...')
 
     # Make sure that appearance_model is a list even with one member
@@ -1688,7 +1734,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
     n_parameters = check_n_parameters(n_parameters, n_levels, max_n_params)
 
     # Define render function
-    def render_function(name, value):
+    def render_function(change):
         # Clear current figure, but wait until the generation of the new data
         # that will be rendered
         ipydisplay.clear_output(wait=True)
@@ -1705,9 +1751,6 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
         instance = appearance_model[level].instance(weights)
         image_is_masked = isinstance(instance, MaskedImage)
         selected_group = landmark_options_wid.selected_values['group']
-
-        # Update info
-        update_info(instance, level, selected_group)
 
         # show landmarks with selected options
         tmp1 = renderer_options_wid.selected_values['lines']
@@ -1752,6 +1795,9 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
             legend_font_weight=None, legend_font_size=None, render_legend=False,
             legend_font_style=None, legend_border_padding=None, **options)
 
+        # Update info
+        update_info(instance, level, selected_group)
+
         # Save the current figure id
         save_figure_wid.renderer = renderer
 
@@ -1772,7 +1818,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
             "> {} landmark points.".format(lp),
             "> Instance: min={:.3f}, max={:.3f}".format(image.pixels.min(),
                                                         image.pixels.max())]
-        info_wid.set_widget_state(n_lines=8, text_per_line=text_per_line)
+        info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Plot variance function
     def plot_variance(name):
@@ -1803,10 +1849,11 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
 
     # Create widgets
     model_parameters_wid = LinearModelParametersWidget(
-        n_parameters[0], render_function, params_str='param ',
-        mode=mode, params_bounds=parameters_bounds, params_step=0.1,
-        plot_variance_visible=True, plot_variance_function=plot_variance,
-        style=model_parameters_style)
+            n_parameters[0], render_function, params_str='Parameter ',
+            mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+            plot_variance_visible=True, plot_variance_function=plot_variance,
+            animation_step=0.5, interval=0., loop_enabled=True,
+            style=model_parameters_style, continuous_update=False)
     groups_keys, labels_keys = extract_groups_labels_from_image(
         appearance_model[0].mean())
     first_label = labels_keys[0] if labels_keys else None
@@ -1824,13 +1871,13 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
         group_keys=groups_keys, labels_keys=labels_keys,
         render_function=render_function, style=landmarks_style,
         renderer_widget=renderer_options_wid)
-    info_wid = TextPrintWidget(n_lines=8, text_per_line=[''] * 8,
-                               style=info_style)
+    info_wid = TextPrintWidget(text_per_line=[''] * 8, style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)
 
     # Define function that updates options' widgets state
-    def update_widgets(name, value):
+    def update_widgets(change):
+        value = change['new']
         # Update model parameters widget
         model_parameters_wid.set_widget_state(
             n_parameters[value], params_str='param ', allow_callback=False)
@@ -1854,9 +1901,10 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
             else:
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
-            options=radio_str, description='Pyramid:', value=n_levels-1)
-        level_wid.on_trait_change(update_widgets, 'value')
-        level_wid.on_trait_change(render_function, 'value')
+                options=radio_str, description='Pyramid:', value=n_levels-1,
+                margin='0.3cm')
+        level_wid.observe(update_widgets, names='value', type='change')
+        level_wid.observe(render_function, names='value', type='change''value')
         tmp_children.insert(0, level_wid)
     tmp_wid = ipywidgets.HBox(children=tmp_children)
     options_box = ipywidgets.Tab(children=[tmp_wid, channel_options_wid,
@@ -1882,7 +1930,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
     ipydisplay.display(wid)
 
     # Trigger initial visualization
-    render_function('', True)
+    render_function({})
 
 
 def visualize_patch_appearance_model(appearance_model, centers,
@@ -1890,17 +1938,17 @@ def visualize_patch_appearance_model(appearance_model, centers,
                                      parameters_bounds=(-3.0, 3.0),
                                      figure_size=(10, 8), style='coloured'):
     r"""
-    Widget that allows the dynamic visualization of a multilevel linear
+    Widget that allows the dynamic visualization of a multi-scale linear
     statistical patch-based appearance model.
 
     Parameters
-    -----------
-    appearance_model : `list` of :map:`PCAModel` or subclass
-        The multilevel patch-based appearance model to be visualized. Note that
+    ----------
+    appearance_model : `list` of `menpo.model.PCAModel` or subclass
+        The multi-scale patch-based appearance model to be visualized. Note that
         each level can have different number of components.
-    centers : `list` of :map:`PointCloud` or subclass
+    centers : `list` of `menpo.shape.PointCloud` or subclass
         The centers to set the patches around. If the `list` has only one
-        :map:`PointCloud` then this will be used for all appearance model
+        `menpo.shape.PointCloud` then this will be used for all appearance model
         levels. Otherwise, it needs to have the same length as
         `appearance_model`.
     n_parameters : `int` or `list` of `int` or ``None``, optional
@@ -1909,7 +1957,7 @@ def visualize_patch_appearance_model(appearance_model, centers,
         between `n_parameters` and the number of active components per level.
         If `list` of `int`, then a number of sliders is defined per level.
         If ``None``, all the active components per level will have a slider.
-    mode : {``'single'``, ``'multiple'``}, optional
+    mode : ``{'single', 'multiple'}``, optional
         If ``'single'``, then only a single slider is constructed along with a
         drop down menu. If ``'multiple'``, then a slider is constructed for each
         parameter.
@@ -1917,10 +1965,13 @@ def visualize_patch_appearance_model(appearance_model, centers,
         The minimum and maximum bounds, in std units, for the sliders.
     figure_size : (`int`, `int`), optional
         The size of the plotted figures.
-    style : {``'coloured'``, ``'minimal'``}, optional
+    style : ``{'coloured', 'minimal'}``, optional
         If ``'coloured'``, then the style of the widget will be coloured. If
         ``minimal``, then the style is simple using black and white colours.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
     print('Initializing...')
 
     # Make sure that appearance_model is a list even with one member
@@ -1974,7 +2025,7 @@ def visualize_patch_appearance_model(appearance_model, centers,
     n_parameters = check_n_parameters(n_parameters, n_levels, max_n_params)
 
     # Define render function
-    def render_function(name, value):
+    def render_function(change):
         # Clear current figure, but wait until the generation of the new data
         # that will be rendered
         ipydisplay.clear_output(wait=True)
@@ -1989,9 +2040,6 @@ def visualize_patch_appearance_model(appearance_model, centers,
         weights = (parameters *
                    appearance_model[level].eigenvalues[:len(parameters)] ** 0.5)
         instance = appearance_model[level].instance(weights)
-
-        # Update info
-        update_info(instance, level)
 
         # Render instance with selected options
         options = renderer_options_wid.selected_values['lines']
@@ -2015,6 +2063,9 @@ def visualize_patch_appearance_model(appearance_model, centers,
             sum_enabled=channel_options_wid.selected_values['sum_enabled'],
             **options)
 
+        # Update info
+        update_info(instance, level)
+
         # Save the current figure id
         save_figure_wid.renderer = renderer
 
@@ -2034,7 +2085,7 @@ def visualize_patch_appearance_model(appearance_model, centers,
             "> {} landmark points.".format(image.pixels.shape[0]),
             "> Instance: min={:.3f}, max={:.3f}".format(image.pixels.min(),
                                                         image.pixels.max())]
-        info_wid.set_widget_state(n_lines=8, text_per_line=text_per_line)
+        info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Plot variance function
     def plot_variance(name):
@@ -2065,10 +2116,11 @@ def visualize_patch_appearance_model(appearance_model, centers,
 
     # Create widgets
     model_parameters_wid = LinearModelParametersWidget(
-        n_parameters[0], render_function, params_str='param ',
-        mode=mode, params_bounds=parameters_bounds, params_step=0.1,
-        plot_variance_visible=True, plot_variance_function=plot_variance,
-        style=model_parameters_style)
+            n_parameters[0], render_function, params_str='Parameter ',
+            mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+            plot_variance_visible=True, plot_variance_function=plot_variance,
+            animation_step=0.5, interval=0., loop_enabled=True,
+            style=model_parameters_style, continuous_update=False)
     patch_options_wid = PatchOptionsWidget(
         n_patches=appearance_model[0].mean().pixels.shape[0],
         n_offsets=appearance_model[0].mean().pixels.shape[1],
@@ -2082,15 +2134,17 @@ def visualize_patch_appearance_model(appearance_model, centers,
         options_tabs=['image', 'markers', 'lines', 'numbering', 'zoom_one',
                       'axes'], labels=None,
         axes_x_limits=None, axes_y_limits=None,
-        render_function=render_function,  style=renderer_style,
+        render_function=None,  style=renderer_style,
         tabs_style=renderer_tabs_style)
-    info_wid = TextPrintWidget(n_lines=8, text_per_line=[''] * 8,
-                               style=info_style)
+    renderer_options_wid.options_widgets[0].interpolation_checkbox.value = True
+    renderer_options_wid.add_render_function(render_function)
+    info_wid = TextPrintWidget(text_per_line=[''] * 8, style=info_style)
     save_figure_wid = SaveFigureOptionsWidget(renderer=None,
                                               style=save_figure_style)
 
     # Define function that updates options' widgets state
-    def update_widgets(name, value):
+    def update_widgets(change):
+        value = change['new']
         # Update model parameters widget
         model_parameters_wid.set_widget_state(n_parameters[value],
                                               params_str='param ',
@@ -2119,9 +2173,10 @@ def visualize_patch_appearance_model(appearance_model, centers,
             else:
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
-            options=radio_str, description='Pyramid:', value=n_levels-1)
-        level_wid.on_trait_change(update_widgets, 'value')
-        level_wid.on_trait_change(render_function, 'value')
+                options=radio_str, description='Pyramid:', value=n_levels-1,
+                margin='0.3cm')
+        level_wid.observe(update_widgets, names='value', type='change')
+        level_wid.observe(render_function, names='value', type='change')
         tmp_children.insert(0, level_wid)
     tmp_wid = ipywidgets.HBox(children=tmp_children)
     options_box = ipywidgets.Tab(children=[tmp_wid, patch_options_wid,
@@ -2146,4 +2201,4 @@ def visualize_patch_appearance_model(appearance_model, centers,
     ipydisplay.display(wid)
 
     # Trigger initial visualization
-    render_function('', True)
+    render_function({})
