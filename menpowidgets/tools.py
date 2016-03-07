@@ -1335,7 +1335,7 @@ class ZoomOneScaleWidget(MenpoWidget):
         * ``min`` : (`float`) The minimum value (e.g. ``0.1``).
         * ``max`` : (`float`) The maximum value (e.g. ``4.``).
         * ``step`` : (`float`) The zoom step (e.g. ``0.05``).
-        * ``index`` : (`float`) The zoom value (e.g. ``1.``).
+        * ``zoom`` : (`float`) The zoom value (e.g. ``1.``).
 
     render_function : `callable` or ``None``, optional
         The render function that is executed when the index value changes.
@@ -1491,7 +1491,7 @@ class ZoomOneScaleWidget(MenpoWidget):
             * ``min`` : (`float`) The minimum value (e.g. ``0.1``).
             * ``max`` : (`float`) The maximum value (e.g. ``4.``).
             * ``step`` : (`float`) The zoom step (e.g. ``0.05``).
-            * ``index`` : (`float`) The zoom value (e.g. ``1.``).
+            * ``zoom`` : (`float`) The zoom value (e.g. ``1.``).
 
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
@@ -1543,7 +1543,7 @@ class ZoomTwoScalesWidget(MenpoWidget):
         * ``min`` : (`float`) The minimum value (e.g. ``0.1``).
         * ``max`` : (`float`) The maximum value (e.g. ``4.``).
         * ``step`` : (`float`) The zoom step (e.g. ``0.05``).
-        * ``index`` : (`float`) The zoom value (e.g. ``1.``).
+        * ``zoom`` : (`float`) The zoom value (e.g. ``1.``).
         * ``lock_aspect_ratio`` : (`bool`) Flag that locks the aspect ratio.
 
     render_function : `callable` or ``None``, optional
@@ -1794,7 +1794,7 @@ class ZoomTwoScalesWidget(MenpoWidget):
             * ``min`` : (`float`) The minimum value (e.g. ``0.1``).
             * ``max`` : (`float`) The maximum value (e.g. ``4.``).
             * ``step`` : (`float`) The zoom step (e.g. ``0.05``).
-            * ``index`` : (`float`) The zoom value (e.g. ``1.``).
+            * ``zoom`` : (`float`) The zoom value (e.g. ``1.``).
             * ``lock_aspect_ratio`` : (`bool`) Flag that locks the aspect ratio.
 
         allow_callback : `bool`, optional

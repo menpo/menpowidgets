@@ -2069,7 +2069,8 @@ class RendererOptionsWidget(MenpoWidget):
                 self.tab_titles.append('Numbering')
             elif o == 'zoom_two':
                 tmp = {'min': 0.1, 'max': 4., 'step': 0.05,
-                       'zoom': self.global_options[o]}
+                       'zoom': self.global_options[o],
+                       'lock_aspect_ratio': False}
                 self.options_widgets.append(ZoomTwoScalesWidget(
                     tmp, render_function=None,
                     description='Scale: ',
@@ -3518,7 +3519,7 @@ class PatchOptionsWidget(MenpoWidget):
     Let's create a patches widget and then update its state. Firstly, we need
     to import it:
 
-        >>> from menpowidgets.options_old import PatchOptionsWidget
+        >>> from menpowidgets.options import PatchOptionsWidget
 
     Now let's define a render function that will get called on every widget
     change and will dynamically print the selected patches and bboxes flag:
