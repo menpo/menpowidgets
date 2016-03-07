@@ -1,8 +1,4 @@
 from menpo.base import MenpoMissingDependencyError
-from menpo.image.base import _convert_patches_list_to_single_array
-
-from menpofit.error import (euclidean_bb_normalised_error,
-                            root_mean_square_bb_normalised_error)
 
 
 try:
@@ -22,6 +18,10 @@ import matplotlib.pyplot as plt
 
 from menpo.base import name_of_callable
 from menpo.image import MaskedImage
+from menpo.image.base import _convert_patches_list_to_single_array
+
+from menpofit.error import (euclidean_bb_normalised_error,
+                            root_mean_square_bb_normalised_error)
 
 from ..checks import check_n_parameters
 from ..options import (SaveFigureOptionsWidget, RendererOptionsWidget,
