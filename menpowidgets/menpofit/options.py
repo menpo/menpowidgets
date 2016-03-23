@@ -532,12 +532,12 @@ class IterativeResultOptionsWidget(MenpoWidget):
                                      type='change')
         self.iterations_mode.observe(self._index_visibility, names='value',
                                      type='change')
-        index = {'min': 0, 'max': n_iters + 1, 'step': 1, 'index': 0}
+        index = {'min': 0, 'max': n_iters - 1, 'step': 1, 'index': 0}
         self.index_animation = AnimationOptionsWidget(
                 index, description='', index_style='slider',
                 loop_enabled=False, interval=0.)
-        slice_options = {'command': 'range({})'.format(n_iters + 1),
-                         'length': n_iters + 1}
+        slice_options = {'command': 'range({})'.format(n_iters),
+                         'length': n_iters}
         self.index_slicing = SlicingCommandWidget(
                 slice_options, description='', example_visible=True,
                 continuous_update=False, orientation='vertical')
@@ -1040,11 +1040,11 @@ class IterativeResultOptionsWidget(MenpoWidget):
 
             # Update widgets
             if self.n_iters != n_iters and n_iters is not None:
-                index = {'min': 0, 'max': n_iters, 'step': 1, 'index': 0}
+                index = {'min': 0, 'max': n_iters - 1, 'step': 1, 'index': 0}
                 self.index_animation.set_widget_state(index,
                                                       allow_callback=False)
-                slice_options = {'command': 'range({})'.format(n_iters + 1),
-                                 'length': n_iters + 1}
+                slice_options = {'command': 'range({})'.format(n_iters),
+                                 'length': n_iters}
                 self.index_slicing.set_widget_state(slice_options,
                                                     allow_callback=False)
 

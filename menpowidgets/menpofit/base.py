@@ -2290,12 +2290,12 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
                 labels = None
             else:
                 # The mode is 'Static'
-                n_digits = len(str(fitting_results[im].n_iters))
+                n_digits = len(str(len(fitting_results[im].shapes)))
                 labels = []
-                for j in list(range(fitting_results[im].n_iters + 1)):
+                for j in list(range(len(fitting_results[im].shapes))):
                     if j == 0 and fitting_results[im].initial_shape is not None:
                         labels.append('Initial')
-                    elif j == fitting_results[im].n_iters:
+                    elif j == len(fitting_results[im].shapes) - 1:
                         labels.append('Final')
                     else:
                         labels.append("iteration {:0{}d}".format(j, n_digits))
@@ -2304,7 +2304,7 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
 
     n_iters = None
     if hasattr(fitting_results[0], 'n_iters'):
-        n_iters = fitting_results[0].n_iters
+        n_iters = len(fitting_results[0].shapes)
     fitting_result_wid = IterativeResultOptionsWidget(
             has_gt_shape=fitting_results[0].gt_shape is not None,
             has_initial_shape=fitting_results[0].initial_shape is not None,
@@ -2329,7 +2329,7 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
             # Update fitting result options
             n_iters = None
             if hasattr(fitting_results[im], 'n_iters'):
-                n_iters = fitting_results[im].n_iters
+                n_iters = len(fitting_results[im].shapes)
             fitting_result_wid.set_widget_state(
                 has_gt_shape=fitting_results[im].gt_shape is not None,
                 has_initial_shape=fitting_results[im].initial_shape is not None,
