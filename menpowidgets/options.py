@@ -4511,6 +4511,7 @@ class PlotOptionsWidget(MenpoWidget):
             marker_edge_colour = sample_colours_from_colourmap(
                 self.n_curves, 'jet')
         return {'title': '', 'x_label': '', 'y_label': '', 'render_legend': True,
+                'legend_entries': self.legend_entries,
                 'legend_title': '', 'legend_font_name': 'sans-serif',
                 'legend_font_style': 'normal', 'legend_font_size': 10,
                 'legend_font_weight': 'normal', 'legend_marker_scale': 1.,
@@ -4521,8 +4522,8 @@ class PlotOptionsWidget(MenpoWidget):
                 'legend_shadow': False, 'legend_rounded_corners': False,
                 'render_axes': True, 'axes_font_name': 'sans-serif',
                 'axes_font_size': 10, 'axes_font_style': 'normal',
-                'axes_font_weight': 'normal', 'axes_x_limits': None,
-                'axes_y_limits': None, 'axes_x_ticks': None,
+                'axes_font_weight': 'normal', 'axes_x_limits': 0.,
+                'axes_y_limits': 0., 'axes_x_ticks': None,
                 'axes_y_ticks': None, 'render_grid': True,
                 'grid_line_style': '--', 'grid_line_width': 0.5,
                 'render_lines': render_lines, 'line_width': line_width,
