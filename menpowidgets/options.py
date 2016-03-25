@@ -4494,7 +4494,7 @@ class PlotOptionsWidget(MenpoWidget):
         * ``marker_edge_width = [2.] * self.n_curves``
         * ``zoom = [1., 1.]``
 
-        where ``colours = sample_colours_from_colourmap(self.n_curves, 'jet')``.
+        where ``colours = sample_colours_from_colourmap(self.n_curves, 'Paired')``.
         """
         render_lines = [True] * self.n_curves
         line_style = ['-'] * self.n_curves
@@ -4507,9 +4507,9 @@ class PlotOptionsWidget(MenpoWidget):
         line_colour = ['red']
         marker_edge_colour = ['red']
         if self.n_curves > 1:
-            line_colour = sample_colours_from_colourmap(self.n_curves, 'jet')
+            line_colour = sample_colours_from_colourmap(self.n_curves, 'Paired')
             marker_edge_colour = sample_colours_from_colourmap(
-                self.n_curves, 'jet')
+                self.n_curves, 'Paired')
         return {'title': '', 'x_label': '', 'y_label': '', 'render_legend': True,
                 'legend_entries': self.legend_entries,
                 'legend_title': '', 'legend_font_name': 'sans-serif',
