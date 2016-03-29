@@ -1052,7 +1052,8 @@ class ColourSelectionWidget(MenpoWidget):
         if not multiple:
             colour_description = description
         self.colour_widget = ipywidgets.ColorPicker(
-            value=default_colour, description=colour_description, width='3cm')
+            value=default_colour, description=colour_description, width='3cm',
+            tooltip='Select colour')
 
         # Create final widget
         children = [self.labels_box, self.colour_widget]
@@ -1360,11 +1361,13 @@ class ZoomOneScaleWidget(MenpoWidget):
         # Create children
         self.title = ipywidgets.Latex(value=description, padding=6, margin=6)
         m_icon, m_description = parse_font_awesome_icon(minus_description)
-        self.button_minus = ipywidgets.Button(description=m_description,
-                                              icon=m_icon, width='1cm')
+        self.button_minus = ipywidgets.Button(
+            description=m_description, icon=m_icon, width='1cm',
+            tooltip='Zoom Out')
         p_icon, p_description = parse_font_awesome_icon(plus_description)
-        self.button_plus = ipywidgets.Button(description=p_description,
-                                             icon=p_icon, width='1cm')
+        self.button_plus = ipywidgets.Button(
+            description=p_description, icon=p_icon, width='1cm',
+            tooltip='Zoom In')
         self.zoom_slider = ipywidgets.FloatSlider(
             value=zoom_options['zoom'], min=zoom_options['min'],
             max=zoom_options['max'], step=zoom_options['step'], readout=False,
@@ -1571,15 +1574,19 @@ class ZoomTwoScalesWidget(MenpoWidget):
         self.x_title = ipywidgets.Latex(value='X', padding=6, margin=6)
         self.y_title = ipywidgets.Latex(value='Y', padding=6, margin=6)
         m_icon, m_description = parse_font_awesome_icon(minus_description)
-        self.x_button_minus = ipywidgets.Button(description=m_description,
-                                                icon=m_icon, width='1cm')
-        self.y_button_minus = ipywidgets.Button(description=m_description,
-                                                icon=m_icon, width='1cm')
+        self.x_button_minus = ipywidgets.Button(
+            description=m_description, icon=m_icon, width='1cm',
+            tooltip='Zoom Out')
+        self.y_button_minus = ipywidgets.Button(
+            description=m_description, icon=m_icon, width='1cm',
+            tooltip='Zoom Out')
         p_icon, p_description = parse_font_awesome_icon(plus_description)
-        self.x_button_plus = ipywidgets.Button(description=p_description,
-                                               icon=p_icon, width='1cm')
-        self.y_button_plus = ipywidgets.Button(description=p_description,
-                                               icon=p_icon, width='1cm')
+        self.x_button_plus = ipywidgets.Button(
+            description=p_description, icon=p_icon, width='1cm',
+            tooltip='Zoom In')
+        self.y_button_plus = ipywidgets.Button(
+            description=p_description, icon=p_icon, width='1cm',
+            tooltip='Zoom In')
         self.x_zoom_slider = ipywidgets.FloatSlider(
             value=zoom_options['zoom'][0], min=zoom_options['min'],
             max=zoom_options['max'], readout=False, width='6cm',
@@ -1609,7 +1616,7 @@ class ZoomTwoScalesWidget(MenpoWidget):
             self.lock_link.unlink()
         self.lock_aspect_button = ipywidgets.ToggleButton(
             value=zoom_options['lock_aspect_ratio'], description='',
-            icon=lock_icon)
+            icon=lock_icon, tooltip='Keep aspect ratio')
         self.options_box = ipywidgets.HBox(
             children=[self.lock_aspect_button, self.x_y_box], align='center')
 
