@@ -435,7 +435,7 @@ class AnimationOptionsWidget(MenpoWidget):
                 self.index_wid.set_widget_state(index, allow_callback=False)
             else:
                 self.index_wid.set_widget_state(
-                    index, loop_enabled=self.loop_checkbox.value,
+                    index, loop_enabled=self.loop_toggle.value,
                     text_editable=True, allow_callback=False)
             self.selected_values = index['index']
             self.min = index['min']
