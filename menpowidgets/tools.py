@@ -1052,7 +1052,8 @@ class ColourSelectionWidget(MenpoWidget):
         if not multiple:
             colour_description = description
         self.colour_widget = ipywidgets.ColorPicker(
-            value=default_colour, description=colour_description, width='3cm')
+            value=default_colour, description=colour_description, width='3cm',
+            tooltip='Select colour')
 
         # Create final widget
         children = [self.labels_box, self.colour_widget]
@@ -1360,11 +1361,13 @@ class ZoomOneScaleWidget(MenpoWidget):
         # Create children
         self.title = ipywidgets.Latex(value=description, padding=6, margin=6)
         m_icon, m_description = parse_font_awesome_icon(minus_description)
-        self.button_minus = ipywidgets.Button(description=m_description,
-                                              icon=m_icon, width='1cm')
+        self.button_minus = ipywidgets.Button(
+            description=m_description, icon=m_icon, width='1cm',
+            tooltip='Zoom Out')
         p_icon, p_description = parse_font_awesome_icon(plus_description)
-        self.button_plus = ipywidgets.Button(description=p_description,
-                                             icon=p_icon, width='1cm')
+        self.button_plus = ipywidgets.Button(
+            description=p_description, icon=p_icon, width='1cm',
+            tooltip='Zoom In')
         self.zoom_slider = ipywidgets.FloatSlider(
             value=zoom_options['zoom'], min=zoom_options['min'],
             max=zoom_options['max'], step=zoom_options['step'], readout=False,
@@ -1571,15 +1574,19 @@ class ZoomTwoScalesWidget(MenpoWidget):
         self.x_title = ipywidgets.Latex(value='X', padding=6, margin=6)
         self.y_title = ipywidgets.Latex(value='Y', padding=6, margin=6)
         m_icon, m_description = parse_font_awesome_icon(minus_description)
-        self.x_button_minus = ipywidgets.Button(description=m_description,
-                                                icon=m_icon, width='1cm')
-        self.y_button_minus = ipywidgets.Button(description=m_description,
-                                                icon=m_icon, width='1cm')
+        self.x_button_minus = ipywidgets.Button(
+            description=m_description, icon=m_icon, width='1cm',
+            tooltip='Zoom Out')
+        self.y_button_minus = ipywidgets.Button(
+            description=m_description, icon=m_icon, width='1cm',
+            tooltip='Zoom Out')
         p_icon, p_description = parse_font_awesome_icon(plus_description)
-        self.x_button_plus = ipywidgets.Button(description=p_description,
-                                               icon=p_icon, width='1cm')
-        self.y_button_plus = ipywidgets.Button(description=p_description,
-                                               icon=p_icon, width='1cm')
+        self.x_button_plus = ipywidgets.Button(
+            description=p_description, icon=p_icon, width='1cm',
+            tooltip='Zoom In')
+        self.y_button_plus = ipywidgets.Button(
+            description=p_description, icon=p_icon, width='1cm',
+            tooltip='Zoom In')
         self.x_zoom_slider = ipywidgets.FloatSlider(
             value=zoom_options['zoom'][0], min=zoom_options['min'],
             max=zoom_options['max'], readout=False, width='6cm',
@@ -1609,7 +1616,7 @@ class ZoomTwoScalesWidget(MenpoWidget):
             self.lock_link.unlink()
         self.lock_aspect_button = ipywidgets.ToggleButton(
             value=zoom_options['lock_aspect_ratio'], description='',
-            icon=lock_icon)
+            icon=lock_icon, tooltip='Keep aspect ratio')
         self.options_box = ipywidgets.HBox(
             children=[self.lock_aspect_button, self.x_y_box], align='center')
 
@@ -2850,20 +2857,22 @@ class AxesLimitsWidget(MenpoWidget):
             range_visible = True
         self.axes_x_limits_toggles = ipywidgets.ToggleButtons(
             description='X limits:', value=toggles_initial_value,
-            options=['auto', 'percentage', 'range'], margin='0.2cm')
+            options=['auto', 'percentage', 'range'], margin='0.1cm')
         self.axes_x_limits_percentage = ListWidget(
             percentage_initial_value, mode='float', description='',
             render_function=None, example_visible=False)
+        self.axes_x_limits_percentage.margin = '0.1cm'
         self.axes_x_limits_percentage.visible = percentage_visible
         self.axes_x_limits_range = ListWidget(
             range_initial_value, mode='float', description='',
             render_function=None, example_visible=False)
+        self.axes_x_limits_range.margin = '0.1cm'
         self.axes_x_limits_range.visible = range_visible
-        self.axes_x_limits_options_box = ipywidgets.VBox(
+        self.axes_x_limits_options_box = ipywidgets.HBox(
             children=[self.axes_x_limits_percentage, self.axes_x_limits_range])
         self.axes_x_limits_box = ipywidgets.HBox(
             children=[self.axes_x_limits_toggles,
-                      self.axes_x_limits_options_box], align='center')
+                      self.axes_x_limits_options_box], align='start')
 
         # y limits
         if axes_y_limits is None:
@@ -2886,20 +2895,22 @@ class AxesLimitsWidget(MenpoWidget):
             range_visible = True
         self.axes_y_limits_toggles = ipywidgets.ToggleButtons(
             description='Y limits:', value=toggles_initial_value,
-            options=['auto', 'percentage', 'range'], margin='0.2cm')
+            options=['auto', 'percentage', 'range'], margin='0.1cm')
         self.axes_y_limits_percentage = ListWidget(
             percentage_initial_value, mode='float', description='',
             render_function=None, example_visible=False)
+        self.axes_y_limits_percentage.margin = '0.1cm'
         self.axes_y_limits_percentage.visible = percentage_visible
         self.axes_y_limits_range = ListWidget(
             range_initial_value, mode='float', description='',
             render_function=None, example_visible=False)
+        self.axes_y_limits_range.margin = '0.1cm'
         self.axes_y_limits_range.visible = range_visible
-        self.axes_y_limits_options_box = ipywidgets.VBox(
+        self.axes_y_limits_options_box = ipywidgets.HBox(
             children=[self.axes_y_limits_percentage, self.axes_y_limits_range])
         self.axes_y_limits_box = ipywidgets.HBox(
             children=[self.axes_y_limits_toggles,
-                      self.axes_y_limits_options_box], align='center')
+                      self.axes_y_limits_options_box], align='start')
 
         # Create final widget
         children = [self.axes_x_limits_box, self.axes_y_limits_box]
@@ -2941,13 +2952,15 @@ class AxesLimitsWidget(MenpoWidget):
             elif self.axes_x_limits_toggles.value == 'percentage':
                 x_val = self.axes_x_limits_percentage.selected_values[0]
             else:
-                x_val = self.axes_x_limits_range.selected_values
+                x_val = [self.axes_x_limits_range.selected_values[0],
+                         self.axes_x_limits_range.selected_values[1]]
             if self.axes_y_limits_toggles.value == 'auto':
                 y_val = None
             elif self.axes_y_limits_toggles.value == 'percentage':
                 y_val = self.axes_y_limits_percentage.selected_values[0]
             else:
-                y_val = self.axes_y_limits_range.selected_values
+                y_val = [self.axes_y_limits_range.selected_values[0],
+                         self.axes_y_limits_range.selected_values[1]]
             self.selected_values = {'x': x_val, 'y': y_val}
         self.axes_x_limits_toggles.observe(save_options, names='value',
                                            type='change')
@@ -3026,22 +3039,22 @@ class AxesLimitsWidget(MenpoWidget):
         self.axes_y_limits_toggles.button_style = toggles_style
         self.axes_x_limits_percentage.style(
             box_style=box_style, border_visible=False, padding=0,
-            margin=0, text_box_style=box_style, text_box_width=None,
+            margin='0.1cm', text_box_style=box_style, text_box_width=None,
             font_family=font_family, font_size=font_size,
             font_style=font_style, font_weight=font_weight)
         self.axes_x_limits_range.style(
             box_style=box_style, border_visible=False, padding=0,
-            margin=0, text_box_style=box_style, text_box_width=None,
+            margin='0.1cm', text_box_style=box_style, text_box_width=None,
             font_family=font_family, font_size=font_size,
             font_style=font_style, font_weight=font_weight)
         self.axes_y_limits_percentage.style(
             box_style=box_style, border_visible=False, padding=0,
-            margin=0, text_box_style=box_style, text_box_width=None,
+            margin='0.1cm', text_box_style=box_style, text_box_width=None,
             font_family=font_family, font_size=font_size,
             font_style=font_style, font_weight=font_weight)
         self.axes_y_limits_range.style(
             box_style=box_style, border_visible=False, padding=0,
-            margin=0, text_box_style=box_style, text_box_width=None,
+            margin='0.1cm', text_box_style=box_style, text_box_width=None,
             font_family=font_family, font_size=font_size,
             font_style=font_style, font_weight=font_weight)
 

@@ -435,7 +435,7 @@ class AnimationOptionsWidget(MenpoWidget):
                 self.index_wid.set_widget_state(index, allow_callback=False)
             else:
                 self.index_wid.set_widget_state(
-                    index, loop_enabled=self.loop_checkbox.value,
+                    index, loop_enabled=self.loop_toggle.value,
                     text_editable=True, allow_callback=False)
             self.selected_values = index['index']
             self.min = index['min']
@@ -4494,7 +4494,7 @@ class PlotOptionsWidget(MenpoWidget):
         * ``marker_edge_width = [2.] * self.n_curves``
         * ``zoom = [1., 1.]``
 
-        where ``colours = sample_colours_from_colourmap(self.n_curves, 'jet')``.
+        where ``colours = sample_colours_from_colourmap(self.n_curves, 'Paired')``.
         """
         render_lines = [True] * self.n_curves
         line_style = ['-'] * self.n_curves
@@ -4507,10 +4507,11 @@ class PlotOptionsWidget(MenpoWidget):
         line_colour = ['red']
         marker_edge_colour = ['red']
         if self.n_curves > 1:
-            line_colour = sample_colours_from_colourmap(self.n_curves, 'jet')
+            line_colour = sample_colours_from_colourmap(self.n_curves, 'Paired')
             marker_edge_colour = sample_colours_from_colourmap(
-                self.n_curves, 'jet')
+                self.n_curves, 'Paired')
         return {'title': '', 'x_label': '', 'y_label': '', 'render_legend': True,
+                'legend_entries': self.legend_entries,
                 'legend_title': '', 'legend_font_name': 'sans-serif',
                 'legend_font_style': 'normal', 'legend_font_size': 10,
                 'legend_font_weight': 'normal', 'legend_marker_scale': 1.,
@@ -4521,8 +4522,8 @@ class PlotOptionsWidget(MenpoWidget):
                 'legend_shadow': False, 'legend_rounded_corners': False,
                 'render_axes': True, 'axes_font_name': 'sans-serif',
                 'axes_font_size': 10, 'axes_font_style': 'normal',
-                'axes_font_weight': 'normal', 'axes_x_limits': None,
-                'axes_y_limits': None, 'axes_x_ticks': None,
+                'axes_font_weight': 'normal', 'axes_x_limits': 0.,
+                'axes_y_limits': 0., 'axes_x_ticks': None,
                 'axes_y_ticks': None, 'render_grid': True,
                 'grid_line_style': '--', 'grid_line_width': 0.5,
                 'render_lines': render_lines, 'line_width': line_width,

@@ -392,9 +392,9 @@ class IterativeResultOptionsWidget(MenpoWidget):
         Whether the fitting result object has the initial shape.
     has_image : `bool`
         Whether the fitting result object has the image.
-    n_iters : `int` or ``None``
-        The total number of iterations. If ``None``, then it is assumed that no
-        iterations are available.
+    n_shapes : `int` or ``None``
+        The total number of shapes. If ``None``, then it is assumed that no
+        iteration shapes are available.
     render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         It must have signature ``render_function(change)`` where ``change`` is
@@ -473,7 +473,7 @@ class IterativeResultOptionsWidget(MenpoWidget):
 
         >>> wid = IterativeResultOptionsWidget(
         >>>         has_gt_shape=True, has_initial_shape=True, has_image=True,
-        >>>         n_iters=20, render_function=render_function,
+        >>>         n_shapes=20, render_function=render_function,
         >>>         displacements_function=plot_function,
         >>>         errors_function=plot_function, costs_function=plot_function,
         >>>         style='info', tabs_style='danger')
@@ -483,10 +483,10 @@ class IterativeResultOptionsWidget(MenpoWidget):
     let's change the widget status with a new set of options:
 
         >>> wid.set_widget_state(has_gt_shape=False, has_initial_shape=True,
-        >>>                      has_image=True, n_iters=None,
+        >>>                      has_image=True, n_shapes=None,
         >>>                      allow_callback=True)
     """
-    def __init__(self, has_gt_shape, has_initial_shape, has_image, n_iters,
+    def __init__(self, has_gt_shape, has_initial_shape, has_image, n_shapes,
                  render_function=None, tab_update_function=None,
                  displacements_function=None, errors_function=None,
                  costs_function=None, style='minimal', tabs_style='minimal'):
@@ -502,7 +502,7 @@ class IterativeResultOptionsWidget(MenpoWidget):
         self.has_gt_shape = None
         self.has_initial_shape = None
         self.has_image = None
-        self.n_iters = -1
+        self.n_shapes = -1
         self.tab_update_function = tab_update_function
 
         # Create result tab
@@ -532,12 +532,12 @@ class IterativeResultOptionsWidget(MenpoWidget):
                                      type='change')
         self.iterations_mode.observe(self._index_visibility, names='value',
                                      type='change')
-        index = {'min': 0, 'max': n_iters + 1, 'step': 1, 'index': 0}
+        index = {'min': 0, 'max': n_shapes - 1, 'step': 1, 'index': 0}
         self.index_animation = AnimationOptionsWidget(
                 index, description='', index_style='slider',
                 loop_enabled=False, interval=0.)
-        slice_options = {'command': 'range({})'.format(n_iters + 1),
-                         'length': n_iters + 1}
+        slice_options = {'command': 'range({})'.format(n_shapes),
+                         'length': n_shapes}
         self.index_slicing = SlicingCommandWidget(
                 slice_options, description='', example_visible=True,
                 continuous_update=False, orientation='vertical')
@@ -600,7 +600,7 @@ class IterativeResultOptionsWidget(MenpoWidget):
         # Set values
         self.add_callbacks()
         self.set_widget_state(has_gt_shape, has_initial_shape, has_image,
-                              n_iters, allow_callback=False)
+                              n_shapes, allow_callback=False)
 
         # Set style
         self.predefined_style(style, tabs_style)
@@ -759,7 +759,7 @@ class IterativeResultOptionsWidget(MenpoWidget):
 
     def _save_options(self, change):
         if (self.result_iterations_tab.selected_index == 0 or
-                self.n_iters is None):
+                self.n_shapes is None):
             # Result tab
             self.selected_values = {
                 'render_final_shape': self.shape_buttons[2].value,
@@ -831,8 +831,8 @@ class IterativeResultOptionsWidget(MenpoWidget):
         self.render_image.visible = self.has_image
         self.plot_errors_button.visible = (self.has_gt_shape and
                                            self._errors_function is not None)
-        self.mode_index_buttons_box.visible = self.n_iters is not None
-        self.no_iterations_text.visible = self.n_iters is None
+        self.mode_index_buttons_box.visible = self.n_shapes is not None
+        self.no_iterations_text.visible = self.n_shapes is None
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -1007,7 +1007,7 @@ class IterativeResultOptionsWidget(MenpoWidget):
                              'danger or warning')
 
     def set_widget_state(self, has_gt_shape, has_initial_shape, has_image,
-                         n_iters, allow_callback=True):
+                         n_shapes, allow_callback=True):
         r"""
         Method that updates the state of the widget with a new set of values.
 
@@ -1019,9 +1019,9 @@ class IterativeResultOptionsWidget(MenpoWidget):
             Whether the fitting result object has the initial shape.
         has_image : `bool`
             Whether the fitting result object has the image.
-        n_iters : `int` or ``None``
-            The total number of iterations. If ``None``, then it is assumed
-            that no iterations are available.
+        n_shapes : `int` or ``None``
+            The total number of shapes. If ``None``, then it is assumed
+            that no iteration shapes are available.
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
@@ -1032,19 +1032,19 @@ class IterativeResultOptionsWidget(MenpoWidget):
         if (self.has_gt_shape != has_gt_shape or
                 self.has_initial_shape != has_initial_shape or
                 self.has_image != has_image or
-                self.n_iters != n_iters):
+                self.n_shapes != n_shapes):
             # temporarily remove callbacks
             render_function = self._render_function
             self.remove_render_function()
             self.remove_callbacks()
 
             # Update widgets
-            if self.n_iters != n_iters and n_iters is not None:
-                index = {'min': 0, 'max': n_iters, 'step': 1, 'index': 0}
+            if self.n_shapes != n_shapes and n_shapes is not None:
+                index = {'min': 0, 'max': n_shapes - 1, 'step': 1, 'index': 0}
                 self.index_animation.set_widget_state(index,
                                                       allow_callback=False)
-                slice_options = {'command': 'range({})'.format(n_iters + 1),
-                                 'length': n_iters + 1}
+                slice_options = {'command': 'range({})'.format(n_shapes),
+                                 'length': n_shapes}
                 self.index_slicing.set_widget_state(slice_options,
                                                     allow_callback=False)
 
@@ -1052,7 +1052,7 @@ class IterativeResultOptionsWidget(MenpoWidget):
             self.has_gt_shape = has_gt_shape
             self.has_initial_shape = has_initial_shape
             self.has_image = has_image
-            self.n_iters = n_iters
+            self.n_shapes = n_shapes
 
             # Set widget's visibility
             self.set_visibility()

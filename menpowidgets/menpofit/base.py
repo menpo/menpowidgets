@@ -2096,7 +2096,7 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
 
         # get selected view function
         if (fitting_result_wid.result_iterations_tab.selected_index == 0 or
-                not hasattr(fitting_results[im], 'n_iters')):
+                not fitting_results[im].is_iterative):
             # use view()
             # final shape colour
             final_marker_face_colour = tmp1['marker_face_colour'][0]
@@ -2218,7 +2218,7 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
         # Landmarks, scales, iterations
         text_per_line.append(' > {} landmark points.'.format(
                 fr.final_shape.n_points))
-        if hasattr(fr, 'n_iters'):
+        if fr.is_iterative:
             text_per_line.append(' > {} iterations.'.format(fr.n_iters))
         else:
             text_per_line.append(' > No iterations.')
@@ -2290,31 +2290,31 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
                 labels = None
             else:
                 # The mode is 'Static'
-                n_digits = len(str(fitting_results[im].n_iters))
+                n_digits = len(str(len(fitting_results[im].shapes)))
                 labels = []
-                for j in list(range(fitting_results[im].n_iters + 1)):
+                for j in list(range(len(fitting_results[im].shapes))):
                     if j == 0 and fitting_results[im].initial_shape is not None:
                         labels.append('Initial')
-                    elif j == fitting_results[im].n_iters:
+                    elif j == len(fitting_results[im].shapes) - 1:
                         labels.append('Final')
                     else:
                         labels.append("iteration {:0{}d}".format(j, n_digits))
         renderer_options_wid.set_widget_state(labels=labels,
                                               allow_callback=False)
 
-    n_iters = None
-    if hasattr(fitting_results[0], 'n_iters'):
-        n_iters = fitting_results[0].n_iters
+    n_shapes = None
+    if fitting_results[0].is_iterative:
+        n_shapes = len(fitting_results[0].shapes)
     fitting_result_wid = IterativeResultOptionsWidget(
-            has_gt_shape=fitting_results[0].gt_shape is not None,
-            has_initial_shape=fitting_results[0].initial_shape is not None,
-            has_image=fitting_results[0].image is not None,
-            n_iters=n_iters, render_function=render_function,
-            tab_update_function=update_renderer_options,
-            displacements_function=plot_displacements_function,
-            errors_function=plot_errors_function,
-            costs_function=plot_costs_function, style=fitting_result_style,
-            tabs_style=fitting_result_tabs_style)
+        has_gt_shape=fitting_results[0].gt_shape is not None,
+        has_initial_shape=fitting_results[0].initial_shape is not None,
+        has_image=fitting_results[0].image is not None,
+        n_shapes=n_shapes, render_function=render_function,
+        tab_update_function=update_renderer_options,
+        displacements_function=plot_displacements_function,
+        errors_function=plot_errors_function,
+        costs_function=plot_costs_function, style=fitting_result_style,
+        tabs_style=fitting_result_tabs_style)
 
     # Group widgets
     if n_fitting_results > 1:
@@ -2327,14 +2327,14 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
             im = image_number_wid.selected_values
 
             # Update fitting result options
-            n_iters = None
-            if hasattr(fitting_results[im], 'n_iters'):
-                n_iters = fitting_results[im].n_iters
+            n_shapes = None
+            if fitting_results[im].is_iterative:
+                n_shapes = len(fitting_results[im].shapes)
             fitting_result_wid.set_widget_state(
                 has_gt_shape=fitting_results[im].gt_shape is not None,
                 has_initial_shape=fitting_results[im].initial_shape is not None,
                 has_image=fitting_results[im].image is not None,
-                n_iters=n_iters, allow_callback=False)
+                n_shapes=n_shapes, allow_callback=False)
 
             # Update renderer options
             update_renderer_options({})
@@ -2357,10 +2357,10 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
         # Header widget
         header_wid = LogoWidget(style=logo_style)
     # Widget titles
-    tab_titles = ['Info', 'Result', 'Renderer', 'Export']
+    tab_titles = ['Result', 'Info', 'Renderer', 'Export']
     header_wid.margin = '0.2cm'
     options_box = ipywidgets.Tab(
-        children=[info_error_box, fitting_result_wid, renderer_options_wid,
+        children=[fitting_result_wid, info_error_box, renderer_options_wid,
                   save_figure_wid], margin='0.2cm')
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
