@@ -586,7 +586,6 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
                 "> Range: {0:.1f}W, {1:.1f}H".format(rang[0], rang[1]),
                 "> Centre of mass: ({0:.1f}, {1:.1f})".format(cm[0], cm[1]),
                 "> Norm: {0:.2f}".format(landmarks[group][None].norm())]
-            n_lines = 5
             if custom_info_callback is not None:
                 # iterate over the list of messages returned by the callback
                 # function and append them in the text_per_line.
@@ -594,7 +593,6 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
                     text_per_line.append('> {}'.format(msg))
         else:
             text_per_line = ["No landmarks available."]
-            n_lines = 1
 
         info_wid.set_widget_state(text_per_line=text_per_line)
 
@@ -814,19 +812,15 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
                 masked_str, img._str_shape(), img.n_channels,
                 's' * (img.n_channels > 1)),
             "> Path: '{}'".format(path_str)]
-        n_lines = 2
         if image_is_masked:
             text_per_line.append(
                 "> {} masked pixels (attached mask {:.1%} true)".format(
                     img.n_true_pixels(), img.mask.proportion_true()))
-            n_lines += 1
         text_per_line.append("> min={:.3f}, max={:.3f}".format(
             img.pixels.min(), img.pixels.max()))
-        n_lines += 1
         if img.has_landmarks:
             text_per_line.append("> {} landmark points".format(
                 img.landmarks[group].lms.n_points))
-            n_lines += 1
         if custom_info_callback is not None:
             # iterate over the list of messages returned by the callback
             # function and append them in the text_per_line.
