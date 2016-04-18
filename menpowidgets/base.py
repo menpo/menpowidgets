@@ -650,7 +650,7 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
 
 
 def visualize_images(images, figure_size=(10, 8), style='coloured',
-                     browser_style='buttons', custom_function=None):
+                     browser_style='buttons', custom_info_callback=None):
     r"""
     Widget that allows browsing through a `list` of `menpo.image.Image` (or
     subclass) objects.
@@ -673,9 +673,10 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
     browser_style : ``{'buttons', 'slider'}``, optional
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
-    custom_function: `function` or ``None``, optional
+    custom_info_callback: `function` or ``None``, optional
         If not None, it should be a function that accepts an image and returns
-        the custom message to be printed per image.
+        a list of custom messages to be printed per image. Each custom message
+        will be printed in a separate line.
     """
     # Ensure that the code is being run inside a Jupyter kernel!
     from .utils import verify_ipython_and_kernel
@@ -766,17 +767,14 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
             figure_size=new_figure_size, **options)
 
         # Update info
-        if custom_function is None:
-            update_info(images[im], image_is_masked, selected_group)
-        else:
-            update_info(images[im], image_is_masked, selected_group,
-                        custom_function(images[im]))
+        update_info(images[im], image_is_masked, selected_group,
+                    custom_info_callback)
 
         # Save the current figure id
         save_figure_wid.renderer = renderer
 
     # Define function that updates the info text
-    def update_info(img, image_is_masked, group, custom_str=None):
+    def update_info(img, image_is_masked, group, custom_info_callback):
         # Prepare masked (or non-masked) string
         masked_str = 'Masked Image' if image_is_masked else 'Image'
         # Get image path, if available
@@ -800,8 +798,9 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
             text_per_line.append("> {} landmark points".format(
                 img.landmarks[group].lms.n_points))
             n_lines += 1
-        if custom_str is not None:
-            text_per_line.append('> custom message: {}'.format(custom_str))
+        if custom_info_callback is not None:
+            for msg in custom_info_callback(img):
+                text_per_line.append('> {}'.format(msg))
         info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Create widgets
