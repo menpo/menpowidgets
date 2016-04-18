@@ -650,7 +650,7 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
 
 
 def visualize_images(images, figure_size=(10, 8), style='coloured',
-                     browser_style='buttons', messages=''):
+                     browser_style='buttons', custom_function=None):
     r"""
     Widget that allows browsing through a `list` of `menpo.image.Image` (or
     subclass) objects.
@@ -673,9 +673,9 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
     browser_style : ``{'buttons', 'slider'}``, optional
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
-    messages: `list` with the same length as the `images`, optional
-        The list can be some additional message to print with each image,
-        along with the rest of the info.       
+    custom_function: `function` or ``None``, optional
+        If not None, it should be a function that accepts an image and returns
+        the custom message to be printed per image.
     """
     # Ensure that the code is being run inside a Jupyter kernel!
     from .utils import verify_ipython_and_kernel
@@ -688,14 +688,6 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
 
     # Get the number of images
     n_images = len(images)
-  
-    # ensure the messages are list and that they are of the 
-    # same length as images (if provided).
-    if not messages == '':
-        if not isinstance(messages, list):
-            raise ValueError('Messages should be of instance list if provided.')
-        if len(messages) != len(images):
-            raise ValueError('Messages should have the same length as the images.')
 
     # Define the styling options
     if style == 'coloured':
@@ -774,16 +766,17 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
             figure_size=new_figure_size, **options)
 
         # Update info
-        if messages != '':
-            update_info(images[im], image_is_masked, selected_group, messages[im])
-        else:
+        if custom_function is None:
             update_info(images[im], image_is_masked, selected_group)
+        else:
+            update_info(images[im], image_is_masked, selected_group,
+                        custom_function(images[im]))
 
         # Save the current figure id
         save_figure_wid.renderer = renderer
 
     # Define function that updates the info text
-    def update_info(img, image_is_masked, group, msg=''):
+    def update_info(img, image_is_masked, group, custom_str=None):
         # Prepare masked (or non-masked) string
         masked_str = 'Masked Image' if image_is_masked else 'Image'
         # Get image path, if available
@@ -807,8 +800,8 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
             text_per_line.append("> {} landmark points".format(
                 img.landmarks[group].lms.n_points))
             n_lines += 1
-        if msg != '':
-            text_per_line.append('> msg: {}'.format(msg))
+        if custom_str is not None:
+            text_per_line.append('> custom message: {}'.format(custom_str))
         info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Create widgets
