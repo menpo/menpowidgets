@@ -40,7 +40,7 @@ def menpowidgets_src_dir_path():
 
 
 def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
-                          browser_style='buttons'):
+                          browser_style='buttons', custom_info_callback=None):
     r"""
     Widget that allows browsing through a `list` of `menpo.shape.PointCloud`,
     `menpo.shape.PointUndirectedGraph`, `menpo.shape.PointDirectedGraph`,
@@ -65,6 +65,10 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
     browser_style : ``{'buttons', 'slider'}``, optional
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
+    custom_info_callback: `function` or ``None``, optional
+        If not None, it should be a function that accepts a pointcloud
+        and returns a list of custom messages to be printed per
+        pointcloud. Each custom message will be printed in a separate line.
     """
     # Ensure that the code is being run inside a Jupyter kernel!
     from .utils import verify_ipython_and_kernel
@@ -139,13 +143,13 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
         plt.show()
 
         # Update info text widget
-        update_info(pointclouds[im])
+        update_info(pointclouds[im], custom_info_callback=custom_info_callback)
 
         # Save the current figure id
         save_figure_wid.renderer = renderer
 
     # Define function that updates the info text
-    def update_info(pointcloud):
+    def update_info(pointcloud, custom_info_callback=None):
         min_b, max_b = pointcloud.bounds()
         rang = pointcloud.range()
         cm = pointcloud.centre()
@@ -156,6 +160,11 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
             "> Range: {0:.1f}W, {1:.1f}H".format(rang[0], rang[1]),
             "> Centre of mass: ({0:.1f}, {1:.1f})".format(cm[0], cm[1]),
             "> Norm: {0:.2f}".format(pointcloud.norm())]
+        if custom_info_callback is not None:
+            # iterate over the list of messages returned by the callback
+            # function and append them in the text_per_line.
+            for msg in custom_info_callback(pointcloud):
+                text_per_line.append('> {}'.format(msg))
         info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Create widgets
@@ -217,8 +226,8 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
     render_function({})
 
 
-def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
-                             style='coloured', browser_style='buttons'):
+def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8), style='coloured',
+                             browser_style='buttons', custom_info_callback=None):
     r"""
     Widget that allows browsing through a `list` of
     `menpo.landmark.LandmarkGroup` (or subclass) objects.
@@ -240,6 +249,10 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
     browser_style : ``{'buttons', 'slider'}``, optional
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
+    custom_info_callback: `function` or ``None``, optional
+        If not None, it should be a function that accepts a landmark group
+        and returns a list of custom messages to be printed per landmark
+        group. Each custom message will be printed in a separate line.
     """
     # Ensure that the code is being run inside a Jupyter kernel!
     from .utils import verify_ipython_and_kernel
@@ -335,10 +348,10 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
             ipydisplay.clear_output()
 
         # update info text widget
-        update_info(landmarkgroups[im])
+        update_info(landmarkgroups[im], custom_info_callback=custom_info_callback)
 
     # Define function that updates the info text
-    def update_info(landmarkgroup):
+    def update_info(landmarkgroup, custom_info_callback=None):
         min_b, max_b = landmarkgroup.lms.bounds()
         rang = landmarkgroup.lms.range()
         cm = landmarkgroup.lms.centre()
@@ -349,6 +362,11 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
             "> Range: {0:.1f}W, {1:.1f}H".format(rang[0], rang[1]),
             "> Centre of mass: ({0:.1f}, {1:.1f})".format(cm[0], cm[1]),
             "> Norm: {0:.2f}".format(landmarkgroup.lms.norm())]
+        if custom_info_callback is not None:
+            # iterate over the list of messages returned by the callback
+            # function and append them in the text_per_line.
+            for msg in custom_info_callback(landmarkgroup):
+                text_per_line.append('> {}'.format(msg))
         info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Create widgets
@@ -430,7 +448,7 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8),
 
 
 def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
-                        browser_style='buttons'):
+                        browser_style='buttons', custom_info_callback=None):
     r"""
     Widget that allows browsing through a `list` of
     `menpo.landmark.LandmarkManager` (or subclass) objects.
@@ -452,6 +470,10 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
     browser_style : ``{'buttons', 'slider'}``, optional
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
+    custom_info_callback: `function` or ``None``, optional
+        If not None, it should be a function that accepts a landmark group and returns
+        a list of custom messages to be printed per landmark group. Each custom message
+        will be printed in a separate line.
     """
     # Ensure that the code is being run inside a Jupyter kernel!
     from .utils import verify_ipython_and_kernel
@@ -548,10 +570,11 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
             ipydisplay.clear_output()
 
         # update info text widget
-        update_info(landmarks[im], selected_group)
+        update_info(landmarks[im], selected_group,
+                    custom_info_callback=custom_info_callback)
 
     # Define function that updates the info text
-    def update_info(landmarks, group):
+    def update_info(landmarks, group, custom_info_callback=None):
         if group is not None:
             min_b, max_b = landmarks[group][None].bounds()
             rang = landmarks[group][None].range()
@@ -563,10 +586,14 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
                 "> Range: {0:.1f}W, {1:.1f}H".format(rang[0], rang[1]),
                 "> Centre of mass: ({0:.1f}, {1:.1f})".format(cm[0], cm[1]),
                 "> Norm: {0:.2f}".format(landmarks[group][None].norm())]
-            n_lines = 5
+            if custom_info_callback is not None:
+                # iterate over the list of messages returned by the callback
+                # function and append them in the text_per_line.
+                for msg in custom_info_callback(landmarks[group][None]):
+                    text_per_line.append('> {}'.format(msg))
         else:
             text_per_line = ["No landmarks available."]
-            n_lines = 1
+
         info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Create widgets
@@ -650,7 +677,7 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
 
 
 def visualize_images(images, figure_size=(10, 8), style='coloured',
-                     browser_style='buttons'):
+                     browser_style='buttons', custom_info_callback=None):
     r"""
     Widget that allows browsing through a `list` of `menpo.image.Image` (or
     subclass) objects.
@@ -673,6 +700,10 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
     browser_style : ``{'buttons', 'slider'}``, optional
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
+    custom_info_callback: `function` or ``None``, optional
+        If not None, it should be a function that accepts an image and returns
+        a list of custom messages to be printed per image. Each custom message
+        will be printed in a separate line.
     """
     # Ensure that the code is being run inside a Jupyter kernel!
     from .utils import verify_ipython_and_kernel
@@ -763,13 +794,14 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
             figure_size=new_figure_size, **options)
 
         # Update info
-        update_info(images[im], image_is_masked, selected_group)
+        update_info(images[im], image_is_masked, selected_group,
+                    custom_info_callback=custom_info_callback)
 
         # Save the current figure id
         save_figure_wid.renderer = renderer
 
     # Define function that updates the info text
-    def update_info(img, image_is_masked, group):
+    def update_info(img, image_is_masked, group, custom_info_callback=None):
         # Prepare masked (or non-masked) string
         masked_str = 'Masked Image' if image_is_masked else 'Image'
         # Get image path, if available
@@ -780,19 +812,20 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
                 masked_str, img._str_shape(), img.n_channels,
                 's' * (img.n_channels > 1)),
             "> Path: '{}'".format(path_str)]
-        n_lines = 2
         if image_is_masked:
             text_per_line.append(
                 "> {} masked pixels (attached mask {:.1%} true)".format(
                     img.n_true_pixels(), img.mask.proportion_true()))
-            n_lines += 1
         text_per_line.append("> min={:.3f}, max={:.3f}".format(
             img.pixels.min(), img.pixels.max()))
-        n_lines += 1
         if img.has_landmarks:
             text_per_line.append("> {} landmark points".format(
                 img.landmarks[group].lms.n_points))
-            n_lines += 1
+        if custom_info_callback is not None:
+            # iterate over the list of messages returned by the callback
+            # function and append them in the text_per_line.
+            for msg in custom_info_callback(img):
+                text_per_line.append('> {}'.format(msg))
         info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Create widgets
@@ -875,8 +908,8 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
     render_function({})
 
 
-def visualize_patches(patches, patch_centers, figure_size=(10, 8),
-                      style='coloured', browser_style='buttons'):
+def visualize_patches(patches, patch_centers, figure_size=(10, 8), style='coloured',
+                      browser_style='buttons', custom_info_callback=None):
     r"""
     Widget that allows browsing through a `list` of patch-based images.
 
@@ -913,6 +946,10 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
     browser_style : ``{'buttons', 'slider'}``, optional
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
+    custom_info_callback: `function` or ``None``, optional
+        If not None, it should be a function that accepts an image and returns
+        a list of custom messages to be printed per image. Each custom message
+        will be printed in a separate line.
     """
     # Ensure that the code is being run inside a Jupyter kernel!
     from .utils import verify_ipython_and_kernel
@@ -999,13 +1036,13 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
             **options)
 
         # update info text widget
-        update_info(patches[im])
+        update_info(patches[im], custom_info_callback=custom_info_callback)
 
         # Save the current figure id
         save_figure_wid.renderer = renderer
 
     # Define function that updates the info text
-    def update_info(ptchs):
+    def update_info(ptchs, custom_info_callback=None):
         text_per_line = [
             "> Patch-Based Image with {} patche{} and {} offset{}.".format(
                 ptchs.shape[0], 's' * (ptchs.shape[0] > 1), ptchs.shape[1],
@@ -1014,6 +1051,11 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8),
                 ptchs.shape[3], ptchs.shape[4], ptchs.shape[2],
                 's' * (ptchs.shape[2] > 1)),
             "> min={:.3f}, max={:.3f}".format(ptchs.min(), ptchs.max())]
+        if custom_info_callback is not None:
+            # iterate over the list of messages returned by the callback
+            # function and append them in the text_per_line.
+            for msg in custom_info_callback(ptchs):
+                text_per_line.append('> {}'.format(msg))
         info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Create widgets

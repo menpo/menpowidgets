@@ -1946,8 +1946,8 @@ def plot_ced(errors, legend_entries=None, error_range=None,
         return wid
 
 
-def visualize_fitting_result(fitting_results, figure_size=(10, 8),
-                             style='coloured', browser_style='buttons'):
+def visualize_fitting_result(fitting_results, figure_size=(10, 8), style='coloured',
+                             browser_style='buttons', custom_info_callback=None):
     r"""
     Widget that allows browsing through a `list` of fitting results.
 
@@ -1965,6 +1965,10 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
     browser_style : ``{'buttons', 'slider'}``, optional
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
+    custom_info_callback: `function` or ``None``, optional
+        If not None, it should be a function that accepts a fitting result
+        and returns a list of custom messages to be printed per result.
+        Each custom message will be printed in a separate line.
     """
     # Ensure that the code is being run inside a Jupyter kernel!
     from menpowidgets.utils import verify_ipython_and_kernel
@@ -2182,13 +2186,13 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
         plt.show()
 
         # update info text widget
-        update_info({})
+        update_info({}, custom_info_callback=custom_info_callback)
 
         # Save the current figure id
         save_figure_wid.renderer = renderer
 
     # Define function that updates info text
-    def update_info(change):
+    def update_info(change, custom_info_callback=None):
         # Get selected object
         im = image_number_wid.selected_values if n_fitting_results > 1 else 0
         fr = fitting_results[im]
@@ -2224,6 +2228,11 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8),
             text_per_line.append(' > No iterations.')
         if hasattr(fr, 'n_scales'):
             text_per_line.append(' > {} scales.'.format(fr.n_scales))
+        if custom_info_callback is not None:
+            # iterate over the list of messages returned by the callback
+            # function and append them in the text_per_line.
+            for msg in custom_info_callback(fr):
+                text_per_line.append('> {}'.format(msg))
         info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Create renderer widget
