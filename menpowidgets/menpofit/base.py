@@ -2318,7 +2318,8 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8), style='colour
         has_gt_shape=fitting_results[0].gt_shape is not None,
         has_initial_shape=fitting_results[0].initial_shape is not None,
         has_image=fitting_results[0].image is not None,
-        n_shapes=n_shapes, render_function=render_function,
+        n_shapes=n_shapes, has_costs=fitting_results[0].costs is not None,
+        render_function=render_function,
         tab_update_function=update_renderer_options,
         displacements_function=plot_displacements_function,
         errors_function=plot_errors_function,
@@ -2343,7 +2344,9 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8), style='colour
                 has_gt_shape=fitting_results[im].gt_shape is not None,
                 has_initial_shape=fitting_results[im].initial_shape is not None,
                 has_image=fitting_results[im].image is not None,
-                n_shapes=n_shapes, allow_callback=False)
+                n_shapes=n_shapes,
+                has_costs=fitting_results[im].costs is not None,
+                allow_callback=False)
 
             # Update renderer options
             update_renderer_options({})

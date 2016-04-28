@@ -395,6 +395,8 @@ class IterativeResultOptionsWidget(MenpoWidget):
     n_shapes : `int` or ``None``
         The total number of shapes. If ``None``, then it is assumed that no
         iteration shapes are available.
+    has_costs : `bool`
+        Whether the fitting result object has costs attached.
     render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         It must have signature ``render_function(change)`` where ``change`` is
@@ -473,7 +475,7 @@ class IterativeResultOptionsWidget(MenpoWidget):
 
         >>> wid = IterativeResultOptionsWidget(
         >>>         has_gt_shape=True, has_initial_shape=True, has_image=True,
-        >>>         n_shapes=20, render_function=render_function,
+        >>>         n_shapes=20, has_costs=True, render_function=render_function,
         >>>         displacements_function=plot_function,
         >>>         errors_function=plot_function, costs_function=plot_function,
         >>>         style='info', tabs_style='danger')
@@ -483,11 +485,11 @@ class IterativeResultOptionsWidget(MenpoWidget):
     let's change the widget status with a new set of options:
 
         >>> wid.set_widget_state(has_gt_shape=False, has_initial_shape=True,
-        >>>                      has_image=True, n_shapes=None,
+        >>>                      has_image=True, n_shapes=None, has_costs=False,
         >>>                      allow_callback=True)
     """
     def __init__(self, has_gt_shape, has_initial_shape, has_image, n_shapes,
-                 render_function=None, tab_update_function=None,
+                 has_costs, render_function=None, tab_update_function=None,
                  displacements_function=None, errors_function=None,
                  costs_function=None, style='minimal', tabs_style='minimal'):
         # Initialise default options dictionary
@@ -548,8 +550,7 @@ class IterativeResultOptionsWidget(MenpoWidget):
             description='Displacements', margin='0.1cm',
             visible=displacements_function is not None)
         self.plot_costs_button = ipywidgets.Button(
-            description='Costs', margin='0.1cm',
-            visible=costs_function is not None)
+            description='Costs', margin='0.1cm', visible=has_costs)
         self.buttons_box = ipywidgets.HBox(
             children=[self.plot_errors_button, self.plot_costs_button,
                       self.plot_displacements_button])
@@ -600,7 +601,7 @@ class IterativeResultOptionsWidget(MenpoWidget):
         # Set values
         self.add_callbacks()
         self.set_widget_state(has_gt_shape, has_initial_shape, has_image,
-                              n_shapes, allow_callback=False)
+                              n_shapes, has_costs, allow_callback=False)
 
         # Set style
         self.predefined_style(style, tabs_style)
@@ -1007,7 +1008,7 @@ class IterativeResultOptionsWidget(MenpoWidget):
                              'danger or warning')
 
     def set_widget_state(self, has_gt_shape, has_initial_shape, has_image,
-                         n_shapes, allow_callback=True):
+                         n_shapes, has_costs, allow_callback=True):
         r"""
         Method that updates the state of the widget with a new set of values.
 
@@ -1022,6 +1023,8 @@ class IterativeResultOptionsWidget(MenpoWidget):
         n_shapes : `int` or ``None``
             The total number of shapes. If ``None``, then it is assumed
             that no iteration shapes are available.
+        has_costs : `bool`
+            Whether the fitting result object has the costs attached.
         allow_callback : `bool`, optional
             If ``True``, it allows triggering of any callback functions.
         """
@@ -1063,6 +1066,9 @@ class IterativeResultOptionsWidget(MenpoWidget):
             # Re-assign callbacks
             self.add_callbacks()
             self.add_render_function(render_function)
+
+        # set costs button visibility
+        self.plot_costs_button.visible = has_costs
 
         # trigger render function if allowed
         if allow_callback:
