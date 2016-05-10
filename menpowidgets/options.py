@@ -156,7 +156,7 @@ class AnimationOptionsWidget(MenpoWidget):
                 text_editable=True)
         else:
             raise ValueError('index_style should be either slider or buttons')
-        self.index_wid.style(box_style=None, border_visible=False,
+        self.index_wid.style(box_style='', border_visible=False,
                              padding=0, margin='0.1cm')
 
         # Create other widgets
@@ -274,7 +274,7 @@ class AnimationOptionsWidget(MenpoWidget):
         self.index_wid.observe(save_value, names='selected_values',
                                type='change')
 
-    def style(self, box_style=None, border_visible=False, border_colour='black',
+    def style(self, box_style='', border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -327,12 +327,12 @@ class AnimationOptionsWidget(MenpoWidget):
         format_font(self, font_family, font_size, font_style, font_weight)
         if self.index_style == 'buttons':
             self.index_wid.style(
-                box_style=None, border_visible=False, padding=0,
+                box_style='', border_visible=False, padding=0,
                 margin='0.1cm', font_family=font_family, font_size=font_size,
                 font_style=font_style, font_weight=font_weight)
         else:
             self.index_wid.style(
-                box_style=None, border_visible=False, padding=0,
+                box_style='', border_visible=False, padding=0,
                 margin='0.1cm', font_family=font_family, font_size=font_size,
                 font_style=font_style, font_weight=font_weight)
 
@@ -613,7 +613,7 @@ class ChannelOptionsWidget(MenpoWidget):
             description='Block size', min=1, max=25, width='1.5cm')
         self.glyph_use_negative_checkbox = ipywidgets.Checkbox(
             description='Negative')
-        self.no_options_latex = ipywidgets.Latex(value='No options available')
+        self.no_options_latex = ipywidgets.Label(value='No options available')
 
         # Group widgets
         self.glyph_options_box = ipywidgets.VBox(
@@ -850,7 +850,7 @@ class ChannelOptionsWidget(MenpoWidget):
         else:
             return str(channels)
 
-    def style(self, box_style=None, border_visible=False, border_colour='black',
+    def style(self, box_style='', border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight='', slider_width='4cm'):
@@ -947,7 +947,7 @@ class ChannelOptionsWidget(MenpoWidget):
                 ============= ============================
         """
         if style == 'minimal':
-            self.style(box_style=None, border_visible=True,
+            self.style(box_style='', border_visible=True,
                        border_colour='black', border_style='solid',
                        border_width=1, border_radius=0, padding='0.2cm',
                        margin='0.3cm', font_family='', font_size=None,
@@ -1186,18 +1186,18 @@ class LandmarkOptionsWidget(MenpoWidget):
 
         # Create children
         # Render landmarks checkbox and no landmarks message
-        self.no_landmarks_msg = ipywidgets.Latex(
+        self.no_landmarks_msg = ipywidgets.Label(
             value='No landmarks available.')
         self.render_landmarks_checkbox = ipywidgets.Checkbox(
             description='Render landmarks', margin='0.3cm')
         # Create group description, dropdown and slider
-        self.group_description = ipywidgets.Latex(value='Group', margin='0.1cm')
+        self.group_description = ipywidgets.Label(value='Group', margin='0.1cm')
         self.group_slider = ipywidgets.IntSlider(
             margin='0.1cm', readout=False, width='3cm', value=0,
             continuous_update=False, min=0)
         self.group_dropdown = ipywidgets.Dropdown(
             options={'0': 0}, description='', margin='0.1cm', value=0)
-        self.group_latex = ipywidgets.Latex(padding='0.2cm')
+        self.group_latex = ipywidgets.Label(padding='0.2cm')
         self.group_selection_box = ipywidgets.HBox(
             children=[self.group_description, self.group_slider,
                       self.group_dropdown, self.group_latex], align='center')
@@ -1206,7 +1206,7 @@ class LandmarkOptionsWidget(MenpoWidget):
             (self.group_dropdown, 'value'), (self.group_slider, 'value'))
         # Create labels
         self.labels_toggles = [[]]
-        self.labels_text = ipywidgets.Latex(value='Labels')
+        self.labels_text = ipywidgets.Label(value='Labels')
         self.labels_box = ipywidgets.HBox(children=self.labels_toggles[0],
                                           padding='0.3cm')
         self.labels_and_text_box = ipywidgets.HBox(
@@ -1414,7 +1414,7 @@ class LandmarkOptionsWidget(MenpoWidget):
         for w in self.labels_box.children:
             w.value = w.description in with_labels
 
-    def style(self, box_style=None, border_visible=False, border_colour='black',
+    def style(self, box_style='', border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight='', labels_buttons_style=''):
@@ -1508,7 +1508,7 @@ class LandmarkOptionsWidget(MenpoWidget):
                 ============= ============================
         """
         if style == 'minimal':
-            self.style(box_style=None, border_visible=True,
+            self.style(box_style='', border_visible=True,
                        border_colour='black', border_style='solid',
                        border_width=1, border_radius=0, padding='0.2cm',
                        margin='0.3cm', font_family='', font_size=None,
@@ -1612,7 +1612,7 @@ class LandmarkOptionsWidget(MenpoWidget):
 class TextPrintWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for printing text. Specifically, it consists of a `list`
-    of `ipywidgets.Latex` objects, i.e. one per text line.
+    of `ipywidgets.Label` objects, i.e. one per text line.
 
     Note that:
 
@@ -1662,7 +1662,7 @@ class TextPrintWidget(ipywidgets.FlexBox):
     """
     def __init__(self, text_per_line, style='minimal'):
         n_lines = len(text_per_line)
-        self.latex_texts = [ipywidgets.Latex(value=text_per_line[i])
+        self.latex_texts = [ipywidgets.Label(value=text_per_line[i])
                             for i in range(n_lines)]
         super(TextPrintWidget, self).__init__(children=self.latex_texts)
         self.align = 'start'
@@ -1674,7 +1674,7 @@ class TextPrintWidget(ipywidgets.FlexBox):
         # Set style
         self.predefined_style(style)
 
-    def style(self, box_style=None, border_visible=False, border_colour='black',
+    def style(self, box_style='', border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -1750,7 +1750,7 @@ class TextPrintWidget(ipywidgets.FlexBox):
                 ============= ============================
         """
         if style == 'minimal':
-            self.style(box_style=None, border_visible=True,
+            self.style(box_style='', border_visible=True,
                        border_colour='black', border_style='solid',
                        border_width=1, border_radius=0, padding='0.1cm',
                        margin='0.3cm', font_family='', font_size=None,
@@ -1778,7 +1778,7 @@ class TextPrintWidget(ipywidgets.FlexBox):
         # Check if n_lines has changed
         n_lines = len(text_per_line)
         if n_lines != self.n_lines:
-            self.latex_texts = [ipywidgets.Latex(value=text_per_line[i])
+            self.latex_texts = [ipywidgets.Label(value=text_per_line[i])
                                 for i in range(n_lines)]
             self.children = self.latex_texts
         else:
@@ -2451,7 +2451,7 @@ class RendererOptionsWidget(MenpoWidget):
                     'marker_style': 'o', 'marker_edge_width': 1}
         return self.default_options[key]
 
-    def style(self, box_style=None, border_visible=False, border_colour='black',
+    def style(self, box_style='', border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0,
               padding='0.2cm', margin=0, tabs_box_style=None,
               tabs_border_visible=True, tabs_border_colour='black',
@@ -2806,7 +2806,7 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
             width='10cm')
         self.overwrite_checkbox = ipywidgets.Checkbox(
             description='Overwrite if file exists', value=overwrite)
-        self.error_latex = ipywidgets.Latex(value="", font_weight='bold',
+        self.error_latex = ipywidgets.Label(value="", font_weight='bold',
                                             font_style='italic')
         self.save_button = ipywidgets.Button(description='  Save',
                                              icon='fa-floppy-o', margin='0.2cm')
@@ -2899,7 +2899,7 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
             self.save_button.disabled = False
         self.save_button.on_click(save_function)
 
-    def style(self, box_style=None, border_visible=False, border_colour='black',
+    def style(self, box_style='', border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -2969,10 +2969,10 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
         format_font(self.save_button, font_family, font_size, font_style,
                     font_weight)
         self.facecolour_widget.style(
-            box_style=None, border_visible=False, font_family=font_family,
+            box_style='', border_visible=False, font_family=font_family,
             font_size=font_size, font_weight=font_weight, font_style=font_style)
         self.edgecolour_widget.style(
-            box_style=None, border_visible=False, font_family=font_family,
+            box_style='', border_visible=False, font_family=font_family,
             font_size=font_size, font_weight=font_weight, font_style=font_style)
 
     def predefined_style(self, style):
@@ -3094,7 +3094,7 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
                               'num_or_bins': 9, 'cell_size_horizontal': 6,
                               'cell_size_vertical': 6, 'fast': True}
         self.dsift_options_widget = DSIFTOptionsWidget(dsift_options_dict)
-        self.dsift_options_widget.style(box_style=None, border_visible=False,
+        self.dsift_options_widget.style(box_style='', border_visible=False,
                                         margin='0.2cm')
         hog_options_dict = {'mode': 'dense', 'algorithm': 'dalaltriggs',
                             'num_bins': 9, 'cell_size': 8, 'block_size': 2,
@@ -3104,27 +3104,27 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
                             'window_step_horizontal': 1,
                             'window_step_unit': 'pixels', 'padding': True}
         self.hog_options_widget = HOGOptionsWidget(hog_options_dict)
-        self.hog_options_widget.style(box_style=None, border_visible=False,
+        self.hog_options_widget.style(box_style='', border_visible=False,
                                       margin='0.2cm')
         igo_options_dict = {'double_angles': True}
         self.igo_options_widget = IGOOptionsWidget(igo_options_dict)
-        self.igo_options_widget.style(box_style=None, border_visible=False,
+        self.igo_options_widget.style(box_style='', border_visible=False,
                                       margin='0.2cm')
         lbp_options_dict = {'radius': list(range(1, 5)), 'samples': [8] * 4,
                             'mapping_type': 'u2', 'window_step_vertical': 1,
                             'window_step_horizontal': 1,
                             'window_step_unit': 'pixels', 'padding': True}
         self.lbp_options_widget = LBPOptionsWidget(lbp_options_dict)
-        self.lbp_options_widget.style(box_style=None, border_visible=False,
+        self.lbp_options_widget.style(box_style='', border_visible=False,
                                       margin='0.2cm')
         daisy_options_dict = {'step': 1, 'radius': 15, 'rings': 2,
                               'histograms': 2, 'orientations': 8,
                               'normalization': 'l1', 'sigmas': None,
                               'ring_radii': None}
         self.daisy_options_widget = DaisyOptionsWidget(daisy_options_dict)
-        self.daisy_options_widget.style(box_style=None, border_visible=False,
+        self.daisy_options_widget.style(box_style='', border_visible=False,
                                         margin='0.2cm')
-        self.no_options_widget = ipywidgets.Latex(value='No options available.')
+        self.no_options_widget = ipywidgets.Label(value='No options available.')
 
         # Load and rescale preview image (lenna)
         self.image = mio.import_builtin_asset.lenna_png()
@@ -3138,12 +3138,12 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
                       self.daisy_options_widget, self.no_options_widget])
         self.preview_image = ipywidgets.Image(
             value=convert_image_to_bytes(self.image), visible=False)
-        self.preview_input_latex = ipywidgets.Latex(
+        self.preview_input_latex = ipywidgets.Label(
             value="Input: {}W x {}H x {}C".format(
                 self.image.width, self.image.height, self.image.n_channels),
             visible=False)
-        self.preview_output_latex = ipywidgets.Latex(value="")
-        self.preview_time_latex = ipywidgets.Latex(value="")
+        self.preview_output_latex = ipywidgets.Label(value="")
+        self.preview_time_latex = ipywidgets.Label(value="")
         self.preview_box = ipywidgets.VBox(
             children=[self.preview_image, self.preview_input_latex,
                       self.preview_output_latex, self.preview_time_latex])
@@ -3283,7 +3283,7 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
         self.options_box.observe(preview_function, names='selected_index',
                                  type='change')
 
-    def style(self, box_style=None, border_visible=False, border_colour='black',
+    def style(self, box_style='', border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -3345,23 +3345,23 @@ class FeatureOptionsWidget(ipywidgets.FlexBox):
         format_font(self.preview_time_latex, font_family, font_size, font_style,
                     font_weight)
         self.dsift_options_widget.style(
-            box_style=None, border_visible=False, margin='0.2cm',
+            box_style='', border_visible=False, margin='0.2cm',
             font_family=font_family, font_size=font_size, font_style=font_style,
             font_weight=font_weight)
         self.hog_options_widget.style(
-            box_style=None, border_visible=False, margin='0.2cm',
+            box_style='', border_visible=False, margin='0.2cm',
             font_family=font_family, font_size=font_size, font_style=font_style,
             font_weight=font_weight)
         self.igo_options_widget.style(
-            box_style=None, border_visible=False, margin='0.2cm',
+            box_style='', border_visible=False, margin='0.2cm',
             font_family=font_family, font_size=font_size, font_style=font_style,
             font_weight=font_weight)
         self.lbp_options_widget.style(
-            box_style=None, border_visible=False, margin='0.2cm',
+            box_style='', border_visible=False, margin='0.2cm',
             font_family=font_family, font_size=font_size, font_style=font_style,
             font_weight=font_weight)
         self.daisy_options_widget.style(
-            box_style=None, border_visible=False, margin='0.2cm',
+            box_style='', border_visible=False, margin='0.2cm',
             font_family=font_family, font_size=font_size, font_style=font_style,
             font_weight=font_weight)
         self.no_options_widget.margin = '0.2cm'
@@ -3581,7 +3581,7 @@ class PatchOptionsWidget(MenpoWidget):
         self.background_toggle.observe(change_toggle_description, names='value',
                                        type='change')
 
-        self.background_title = ipywidgets.Latex(value='Background:',
+        self.background_title = ipywidgets.Label(value='Background:',
                                                  margin='0.1cm')
         slice_options = {'command': "range({})".format(n_patches),
                          'length': n_patches}
@@ -3789,14 +3789,14 @@ class PatchOptionsWidget(MenpoWidget):
             description = 'black'
         return background_colour, color, description
 
-    def style(self, box_style=None, border_visible=False, border_colour='black',
+    def style(self, box_style='', border_visible=False, border_colour='black',
               border_style='dashed', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
-              font_weight='', bboxes_box_style=None,
+              font_weight='', bboxes_box_style='',
               bboxes_border_visible=False, bboxes_border_colour='black',
               bboxes_border_style='solid', bboxes_border_width=1,
               bboxes_border_radius=0, bboxes_padding=0, bboxes_margin=0,
-              patches_box_style=None, patches_border_visible=False,
+              patches_box_style='', patches_border_visible=False,
               patches_border_colour='black', patches_border_style='solid',
               patches_border_width=1, patches_border_radius=0,
               patches_padding=0, patches_margin=0):
@@ -3907,7 +3907,7 @@ class PatchOptionsWidget(MenpoWidget):
             margin=bboxes_margin, font_family=font_family, font_size=font_size,
             font_style=font_style, font_weight=font_weight)
         self.slicing_wid.style(
-            box_style=patches_box_style, text_box_style=None,
+            box_style=patches_box_style, text_box_style='',
             text_box_background_colour=None, text_box_width=None,
             font_family=font_family, font_size=font_size, font_style=font_style,
             font_weight=font_weight)
@@ -3954,7 +3954,7 @@ class PatchOptionsWidget(MenpoWidget):
                 ============= ============================
         """
         if style == 'minimal':
-            box_style = None
+            box_style = ''
             border_visible = False
             border_colour = 'black'
             border_radius = 0
@@ -3969,10 +3969,10 @@ class PatchOptionsWidget(MenpoWidget):
                              'or danger or warning')
 
         if subwidgets_style == 'minimal':
-            bboxes_box_style = None
+            bboxes_box_style = ''
             bboxes_border_colour = 'black'
             bboxes_border_radius = 0
-            patches_box_style = None
+            patches_box_style = ''
             patches_border_colour = 'black'
             patches_border_radius = 0
         elif (subwidgets_style == 'info' or subwidgets_style == 'success' or
@@ -4542,7 +4542,7 @@ class PlotOptionsWidget(MenpoWidget):
         tmp_lines = tmp_lines[:-1]
         return unicode().join(tmp_lines)
 
-    def style(self, box_style=None, border_visible=False, border_colour='black',
+    def style(self, box_style='', border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0,
               padding='0.2cm', margin=0, tabs_box_style=None,
               tabs_border_visible=True, tabs_border_colour='black',
@@ -5229,7 +5229,7 @@ class LinearModelParametersWidget(MenpoWidget):
         current_parameters[i] = change['new']
         self.selected_values = current_parameters
 
-    def style(self, box_style=None, border_visible=False, border_colour='black',
+    def style(self, box_style='', border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight='', slider_width='', slider_handle_colour=None,
@@ -5343,7 +5343,7 @@ class LinearModelParametersWidget(MenpoWidget):
             self.loop_toggle.button_style = ''
             self._toggle_play_style = ''
             self._toggle_stop_style = ''
-            self.style(box_style=None, border_visible=True,
+            self.style(box_style='', border_visible=True,
                        border_colour='black', border_style='solid',
                        border_width=1, border_radius=0, padding='0.2cm',
                        margin='0.3cm', font_family='', font_size=None,
