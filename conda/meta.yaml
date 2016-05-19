@@ -9,7 +9,7 @@ requirements:
 
   run:
     - python
-    - menpo 0.6.*
+    - menpo 0.7.*
     - ipython 4.*
     - jupyter 1.*
     - ipywidgets >=4.1.1,<5.0
