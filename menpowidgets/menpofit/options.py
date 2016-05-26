@@ -534,12 +534,12 @@ class IterativeResultOptionsWidget(MenpoWidget):
                                      type='change')
         self.iterations_mode.observe(self._index_visibility, names='value',
                                      type='change')
-        index = {'min': 0, 'max': n_shapes - 1, 'step': 1, 'index': 0}
+        index = {'min': 0, 'max': 1, 'step': 1, 'index': 0}
         self.index_animation = AnimationOptionsWidget(
                 index, description='', index_style='slider',
                 loop_enabled=False, interval=0.)
-        slice_options = {'command': 'range({})'.format(n_shapes),
-                         'length': n_shapes}
+        slice_options = {'command': 'range({})'.format(1),
+                         'length': 1}
         self.index_slicing = SlicingCommandWidget(
                 slice_options, description='', example_visible=True,
                 continuous_update=False, orientation='vertical')
