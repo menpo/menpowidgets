@@ -1650,7 +1650,7 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
     # Define function that updates options' widgets state
     def update_widgets(change):
         model_parameters_wid.set_widget_state(
-            n_parameters=n_parameters[change['new']], params_str='param ',
+            n_parameters=n_parameters[change['new']], params_str='Parameter ',
             allow_callback=True)
 
     # Group widgets
@@ -1922,7 +1922,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
         value = change['new']
         # Update model parameters widget
         model_parameters_wid.set_widget_state(
-            n_parameters[value], params_str='param ', allow_callback=False)
+            n_parameters[value], params_str='Parameter ', allow_callback=False)
 
         # Update channel options
         channel_options_wid.set_widget_state(
@@ -2189,7 +2189,7 @@ def visualize_patch_appearance_model(appearance_model, centers,
         value = change['new']
         # Update model parameters widget
         model_parameters_wid.set_widget_state(n_parameters[value],
-                                              params_str='param ',
+                                              params_str='Parameter ',
                                               allow_callback=False)
 
         # Update patch options
