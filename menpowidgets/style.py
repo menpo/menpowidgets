@@ -50,7 +50,7 @@ def map_styles_to_hex_colours(style, background=False):
             return None
 
 
-def format_box(box, box_style=None, border_visible=False, border_colour='black',
+def format_box(box, box_style='', border_visible=False, border_colour='black',
                border_style='solid', border_width=1, border_radius=0,
                padding=0, margin=0):
     r"""
