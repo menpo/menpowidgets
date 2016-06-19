@@ -16,8 +16,8 @@ Active Appearance Model
     visualize_patch_aam
 
 
-Active Appearance Model
------------------------
+Active Template Model
+---------------------
 
 .. toctree::
     :maxdepth: 1
