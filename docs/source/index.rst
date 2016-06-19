@@ -9,6 +9,10 @@ In the Menpo Project we take an opinionated stance that visualization is a key p
 to make the mental overhead of visualizing objects as low as possible. MenpoWidgets makes tasks like data exploration, model observation 
 and results demonstration as simple as possible.
 
+.. raw:: html
+
+   <p><div style="background-color: #F2DEDE; width: 100%; border: 1px solid #A52A2A; padding: 1%;"><p style="float: left;"><i class="fa fa-exclamation-circle" aria-hidden="true" style="font-size:4em; padding-right: 15%; padding-bottom: 10%; padding-top: 10%;"></i></p>We highly recommend that you render all matplotlib figures <b>inline</b> the Jupyter notebook for the best <em>menpowidgets</em> experience. This can be done by running</br><center><code>%matplotlib inline</code></center> in a cell. Note that you only have to run it once and not in every rendering cell.</div></p>
+
 
 API Documentation
 ~~~~~~~~~~~~~~~~~
