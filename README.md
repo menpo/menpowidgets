@@ -28,7 +28,7 @@ API Documentation
 -----------------
 In MenpoWidgets, we use legible docstrings, and therefore, all documentation
 should be easily accessible in any sensible IDE (or IPython) via tab completion.
-However, we strongly advise you to visit the [MenpoWidgets API documentation](http://menpofit.readthedocs.io/).
+However, we strongly advise you to visit the [MenpoWidgets API documentation](http://menpowidgets.readthedocs.io/).
 
 Usage Example
 -------------
@@ -48,6 +48,8 @@ visualize_images(images)
 Your browser does not support the video tag.
 </video>
 
+
+<iframe width="100%" src="docs/source/visualize_images.mp4" frameborder="0"></iframe>
 
 Similarly, the fitting result of a deformable model from the MenpoFit package can be demonstrated as:
 
