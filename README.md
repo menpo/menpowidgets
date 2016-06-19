@@ -29,35 +29,3 @@ API Documentation
 In MenpoWidgets, we use legible docstrings, and therefore, all documentation
 should be easily accessible in any sensible IDE (or IPython) via tab completion.
 However, we strongly advise you to visit the [MenpoWidgets API documentation](http://menpowidgets.readthedocs.io/).
-
-Usage Example
--------------
-A short example is often more illustrative than a verbose explanation. Let's assume that you want to quickly explore a folder of numerous annotated images,
-without the overhead of waiting to load them and writing code to view them. The images can be easily loaded using the Menpo package and then visualized using an
-interactive widget as:
-
-```python
-import menpo.io as mio
-from menpowidgets import visualize_images
-
-images = mio.import_images('/path/to/images/')
-visualize_images(images)
-```
-
-<video width="100%" autoplay loop><source src="docs/source/visualize_images.mp4" type="video/mp4">
-Your browser does not support the video tag.
-</video>
-
-
-<iframe width="100%" src="docs/source/visualize_images.mp4" frameborder="0"></iframe>
-
-Similarly, the fitting result of a deformable model from the MenpoFit package can be demonstrated as:
-
-```python
-result = fitter.fit_from_bb(image, initial_bounding_box)
-result.view_widget()
-```
-
-<video width="100%" autoplay loop><source src="docs/source/view_result_widget.mp4" type="video/mp4">
-Your browser does not support the video tag.
-</video>
