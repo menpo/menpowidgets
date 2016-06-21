@@ -80,7 +80,7 @@ class LogoWidget(ipywidgets.FlexBox):
                              "given.".format(style))
         super(LogoWidget, self).__init__(children=[self.image])
 
-    def style(self, box_style='', border_visible=False, border_colour='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0):
         r"""
@@ -146,14 +146,14 @@ class ListWidget(MenpoWidget):
         if mode == 'int':
             for i in selected_list:
                 selected_cmd += '{}, '.format(i)
-            self.example = ipywidgets.Label(
+            self.example = ipywidgets.Latex(
                 value="e.g. '[1, 2]', '10', '10, 20', 'range(10)', "
                       "'range(1, 8, 2)' etc.",
                 font_size=11, font_style='italic', visible=example_visible)
         elif mode == 'float':
             for i in selected_list:
                 selected_cmd += '{:.1f}, '.format(i)
-            self.example = ipywidgets.Label(
+            self.example = ipywidgets.Latex(
                 value="e.g. '10.', '10., 20.', 'range(10.)', "
                       "'range(2.5, 5., 2.)' etc.",
                 font_size=11, font_style='italic', visible=example_visible)
@@ -162,7 +162,7 @@ class ListWidget(MenpoWidget):
         self.cmd_text = ipywidgets.Text(
                 value=selected_cmd[:-2], description=description)
         self.valid = ipywidgets.Valid(value=True)
-        self.error_msg = ipywidgets.Label(value='', font_style='italic',
+        self.error_msg = ipywidgets.Latex(value='', font_style='italic',
                                           color='#FF0000')
         self.cmd_text_example_error = ipywidgets.FlexBox(
                 children=[self.cmd_text, self.example, self.error_msg],
@@ -233,7 +233,7 @@ class ListWidget(MenpoWidget):
             if allow_callback:
                 self.call_render_function(old_value, self.selected_values)
 
-    def style(self, box_style='', border_visible=False, border_colour='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, text_box_style=None, text_box_background_colour=None,
               text_box_width=None, font_family='', font_size=None,
@@ -348,10 +348,10 @@ class SlicingCommandWidget(MenpoWidget):
                                         slice_options['length'])
         self.cmd_text = ipywidgets.Text(value=slice_options['command'],
                                         description=description)
-        self.example = ipywidgets.Label(
+        self.example = ipywidgets.Latex(
                 value=self._example_str(slice_options['length']),
                 font_size=11, font_style='italic', visible=example_visible)
-        self.error_msg = ipywidgets.Label(value='', font_style='italic',
+        self.error_msg = ipywidgets.Latex(value='', font_style='italic',
                                           color='#FF0000')
         self.single_slider = ipywidgets.IntSlider(
             min=0, max=slice_options['length'] - 1, value=0, width='6.8cm',
@@ -500,7 +500,7 @@ class SlicingCommandWidget(MenpoWidget):
             if allow_callback:
                 self.call_render_function(old_value, self.selected_values)
 
-    def style(self, box_style='', border_visible=False, border_colour='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, text_box_style=None, text_box_background_colour=None,
               text_box_width=None, font_family='', font_size=None,
@@ -631,7 +631,7 @@ class IndexSliderWidget(MenpoWidget):
             self.selected_values = change['new']
         self.slider.observe(save_index, names='value', type='change')
 
-    def style(self, box_style='', border_visible=False, border_colour='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight='', slider_width='6cm', slider_bar_colour=None,
@@ -786,7 +786,7 @@ class IndexButtonsWidget(MenpoWidget):
                  minus_description='fa-minus', plus_description='fa-plus',
                  loop_enabled=True, text_editable=True):
         # Create children
-        self.title = ipywidgets.Label(value=description, padding=6, margin=6)
+        self.title = ipywidgets.Latex(value=description, padding=6, margin=6)
         m_icon, m_description = parse_font_awesome_icon(minus_description)
         self.button_minus = ipywidgets.Button(
                 description=m_description, icon=m_icon, width='1cm',
@@ -840,7 +840,7 @@ class IndexButtonsWidget(MenpoWidget):
             self.selected_values = int(change['new'])
         self.index_text.observe(save_index, names='value', type='change')
 
-    def style(self, box_style='', border_visible=False, border_colour='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight='', minus_style='', plus_style='',
@@ -1074,7 +1074,7 @@ class ColourSelectionWidget(MenpoWidget):
             self.selected_values = tmp
         self.colour_widget.observe(save_colour, names='value', type='change')
 
-    def style(self, box_style='', border_visible=False, border_colour='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight='', label_colour=None, label_background_colour=None,
@@ -1346,7 +1346,7 @@ class ZoomOneScaleWidget(MenpoWidget):
                  minus_description='fa-search-minus',
                  plus_description='fa-search-plus', continuous_update=False):
         # Create children
-        self.title = ipywidgets.Label(value=description, padding=6, margin=6)
+        self.title = ipywidgets.Latex(value=description, padding=6, margin=6)
         m_icon, m_description = parse_font_awesome_icon(minus_description)
         self.button_minus = ipywidgets.Button(
             description=m_description, icon=m_icon, width='1cm',
@@ -1395,7 +1395,7 @@ class ZoomOneScaleWidget(MenpoWidget):
             self.selected_values = change['new']
         self.zoom_slider.observe(save_zoom_slider, names='value', type='change')
 
-    def style(self, box_style='', border_visible=False, border_colour='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight='', slider_width='6cm'):
@@ -1456,12 +1456,12 @@ class ZoomOneScaleWidget(MenpoWidget):
                     font_weight)
         format_font(self.zoom_text, font_family, font_size, font_style,
                     font_weight)
-        if box_style != '':
+        if box_style not in ['', None]:
             self.button_minus.button_style = 'primary'
             self.button_plus.button_style = 'primary'
         else:
-            self.button_minus.button_style = ''
-            self.button_plus.button_style = ''
+            self.button_minus.button_style = None
+            self.button_plus.button_style = None
         format_slider(self.zoom_slider, slider_width=slider_width,
                       slider_handle_colour=map_styles_to_hex_colours(box_style),
                       slider_bar_colour=map_styles_to_hex_colours(box_style),
@@ -1557,9 +1557,9 @@ class ZoomTwoScalesWidget(MenpoWidget):
                  minus_description='fa-search-minus',
                  plus_description='fa-search-plus', continuous_update=False):
         # Create children
-        self.title = ipywidgets.Label(value=description, padding=6, margin=6)
-        self.x_title = ipywidgets.Label(value='X', padding=6, margin=6)
-        self.y_title = ipywidgets.Label(value='Y', padding=6, margin=6)
+        self.title = ipywidgets.Latex(value=description, padding=6, margin=6)
+        self.x_title = ipywidgets.Latex(value='X', padding=6, margin=6)
+        self.y_title = ipywidgets.Latex(value='Y', padding=6, margin=6)
         m_icon, m_description = parse_font_awesome_icon(minus_description)
         self.x_button_minus = ipywidgets.Button(
             description=m_description, icon=m_icon, width='1cm',
@@ -1682,7 +1682,7 @@ class ZoomTwoScalesWidget(MenpoWidget):
         self.lock_aspect_button.observe(link_button, names='value',
                                         type='change')
 
-    def style(self, box_style='', border_visible=False, border_colour='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight='', slider_width='6cm'):
@@ -1760,11 +1760,11 @@ class ZoomTwoScalesWidget(MenpoWidget):
             self.y_button_plus.button_style = 'primary'
             self.lock_aspect_button.button_style = 'warning'
         else:
-            self.x_button_minus.button_style = ''
-            self.x_button_plus.button_style = ''
-            self.y_button_minus.button_style = ''
-            self.y_button_plus.button_style = ''
-            self.lock_aspect_button.button_style = ''
+            self.x_button_minus.button_style = None
+            self.x_button_plus.button_style = None
+            self.y_button_minus.button_style = None
+            self.y_button_plus.button_style = None
+            self.lock_aspect_button.button_style = None
         format_slider(self.x_zoom_slider, slider_width=slider_width,
                       slider_handle_colour=map_styles_to_hex_colours(box_style),
                       slider_bar_colour=map_styles_to_hex_colours(box_style),
@@ -1959,7 +1959,7 @@ class ImageOptionsWidget(MenpoWidget):
                                     'cmap_name': change['new']}
         self.cmap_select.observe(save_cmap, names='value', type='change')
 
-    def style(self, box_style='', border_visible=False, border_colour='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -2145,7 +2145,7 @@ class LineOptionsWidget(MenpoWidget):
         self.line_style_dropdown.observe(save_options, names='value',
                                          type='change')
 
-    def style(self, box_style='', border_visible=False, border_colour='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -2204,7 +2204,7 @@ class LineOptionsWidget(MenpoWidget):
         format_font(self.line_width_text, font_family, font_size, font_style,
                     font_weight)
         self.line_colour_widget.style(
-            box_style='', border_visible=False, font_family=font_family,
+            box_style=None, border_visible=False, font_family=font_family,
             font_size=font_size, font_weight=font_weight, font_style=font_style,
             label_colour=None, label_background_colour=None,
             picker_colour=None, picker_background_colour=None,
@@ -2382,7 +2382,7 @@ class MarkerOptionsWidget(MenpoWidget):
         self.marker_edge_width_text.observe(save_options, names='value',
                                             type='change')
 
-    def style(self, box_style='', border_visible=False, border_colour='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -2443,13 +2443,13 @@ class MarkerOptionsWidget(MenpoWidget):
         format_font(self.marker_edge_width_text, font_family, font_size,
                     font_style, font_weight)
         self.marker_edge_colour_widget.style(
-            box_style='', border_visible=False, font_family=font_family,
+            box_style=None, border_visible=False, font_family=font_family,
             font_size=font_size, font_weight=font_weight, font_style=font_style,
             label_colour=None, label_background_colour=None,
             picker_colour=None, picker_background_colour=None,
             apply_to_all_style='')
         self.marker_face_colour_widget.style(
-            box_style='', border_visible=False, font_family=font_family,
+            box_style=None, border_visible=False, font_family=font_family,
             font_size=font_size, font_weight=font_weight, font_style=font_style,
             label_colour=None, label_background_colour=None,
             picker_colour=None, picker_background_colour=None,
@@ -2666,7 +2666,7 @@ class NumberingOptionsWidget(MenpoWidget):
         self.numbers_vertical_align_dropdown.observe(
                 save_options, names='value', type='change')
 
-    def style(self, box_style='', border_visible=False, border_colour='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -2733,7 +2733,7 @@ class NumberingOptionsWidget(MenpoWidget):
         format_font(self.numbers_vertical_align_dropdown, font_family,
                     font_size, font_style, font_weight)
         self.numbers_font_colour_widget.style(
-            box_style='', border_visible=False, font_family=font_family,
+            box_style=None, border_visible=False, font_family=font_family,
             font_size=font_size, font_weight=font_weight, font_style=font_style,
             label_colour=None, label_background_colour=None,
             picker_colour=None, picker_background_colour=None,
@@ -2962,7 +2962,7 @@ class AxesLimitsWidget(MenpoWidget):
         self.axes_y_limits_range.observe(save_options, names='selected_values',
                                          type='change')
 
-    def style(self, box_style='', border_visible=False, border_colour='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight='', toggles_style=''):
@@ -3203,7 +3203,7 @@ class AxesTicksWidget(MenpoWidget):
         self.axes_y_ticks_list.observe(save_options, names='selected_values',
                                        type='change')
 
-    def style(self, box_style='', border_visible=False, border_colour='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight='', toggles_style=''):
@@ -3266,12 +3266,12 @@ class AxesTicksWidget(MenpoWidget):
         self.axes_x_ticks_toggles.button_style = toggles_style
         self.axes_y_ticks_toggles.button_style = toggles_style
         self.axes_x_ticks_list.style(
-            box_style='', border_visible=False, text_box_style=None,
+            box_style=None, border_visible=False, text_box_style=None,
             text_box_background_colour=None, font_family=font_family,
             margin='0.1cm', font_size=font_size, font_style=font_style,
             font_weight=font_weight)
         self.axes_y_ticks_list.style(
-            box_style='', border_visible=False, text_box_style=None,
+            box_style=None, border_visible=False, text_box_style=None,
             text_box_background_colour=None, font_family=font_family,
             margin='0.1cm', font_size=font_size, font_style=font_style,
             font_weight=font_weight)
@@ -3535,7 +3535,7 @@ class AxesOptionsWidget(MenpoWidget):
             if allow_callback:
                 self.call_render_function(old_value, self.selected_values)
 
-    def style(self, box_style='', border_visible=False, border_colour='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -3598,11 +3598,11 @@ class AxesOptionsWidget(MenpoWidget):
         format_font(self.axes_font_weight_dropdown, font_family, font_size,
                     font_style, font_weight)
         self.axes_ticks_widget.style(
-            box_style='', border_visible=False, font_family=font_family,
+            box_style=None, border_visible=False, font_family=font_family,
             font_size=font_size, font_style=font_style,
             font_weight=font_weight, toggles_style='')
         self.axes_limits_widget.style(
-            box_style='', border_visible=False, font_family=font_family,
+            box_style=None, border_visible=False, font_family=font_family,
             font_size=font_size, font_style=font_style,
             font_weight=font_weight, toggles_style='')
 
@@ -3902,7 +3902,7 @@ class LegendOptionsWidget(MenpoWidget):
         self.legend_rounded_corners_checkbox.observe(
                 save_options, names='value', type='change')
 
-    def style(self, box_style='', border_visible=False, border_colour='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -4191,7 +4191,7 @@ class GridOptionsWidget(MenpoWidget):
         self.grid_line_style_dropdown.observe(save_options, names='value',
                                               type='change')
 
-    def style(self, box_style='', border_visible=False, border_colour='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -4479,7 +4479,7 @@ class HOGOptionsWidget(MenpoWidget):
         self.l2_norm_clipping_text.observe(save_options, names='value',
                                            type='change')
 
-    def style(self, box_style='', border_visible=False, border_colour='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -4669,7 +4669,7 @@ class DSIFTOptionsWidget(MenpoWidget):
                                                type='change')
         self.fast_checkbox.observe(save_options, names='value', type='change')
 
-    def style(self, box_style='', border_visible=False, border_colour='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -4848,7 +4848,7 @@ class DaisyOptionsWidget(MenpoWidget):
         self.ring_radii_wid.observe(save_options, names='selected_values',
                                     type='change')
 
-    def style(self, box_style='', border_visible=False, border_colour='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -4912,10 +4912,10 @@ class DaisyOptionsWidget(MenpoWidget):
                     font_weight)
         format_font(self.normalization_dropdown, font_family, font_size,
                     font_style, font_weight)
-        self.sigmas_wid.style(box_style='', border_visible=False,
+        self.sigmas_wid.style(box_style=None, border_visible=False,
                               font_family=font_family, font_size=font_size,
                               font_style=font_style, font_weight=font_weight)
-        self.ring_radii_wid.style(box_style='', border_visible=False,
+        self.ring_radii_wid.style(box_style=None, border_visible=False,
                                   font_family=font_family, font_size=font_size,
                                   font_style=font_style,
                                   font_weight=font_weight)
@@ -5017,7 +5017,7 @@ class LBPOptionsWidget(MenpoWidget):
         self.samples_wid.observe(save_options, names='selected_values',
                                  type='change')
 
-    def style(self, box_style='', border_visible=False, border_colour='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
@@ -5071,10 +5071,10 @@ class LBPOptionsWidget(MenpoWidget):
         format_font(self, font_family, font_size, font_style, font_weight)
         format_font(self.mapping_type_dropdown, font_family, font_size,
                     font_style, font_weight)
-        self.radius_wid.style(box_style='', border_visible=False,
+        self.radius_wid.style(box_style=None, border_visible=False,
                               font_family=font_family, font_size=font_size,
                               font_style=font_style, font_weight=font_weight)
-        self.samples_wid.style(box_style='', border_visible=False,
+        self.samples_wid.style(box_style=None, border_visible=False,
                                font_family=font_family, font_size=font_size,
                                font_style=font_style, font_weight=font_weight)
         format_font(self.window_vertical_text, font_family, font_size,
@@ -5124,7 +5124,7 @@ class IGOOptionsWidget(MenpoWidget):
         self.double_angles_checkbox.observe(save_options, names='value',
                                             type='change')
 
-    def style(self, box_style='', border_visible=False, border_colour='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight=''):
