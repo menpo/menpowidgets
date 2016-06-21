@@ -131,7 +131,7 @@ class ResultOptionsWidget(MenpoWidget):
         self.mode_render_image_box = ipywidgets.VBox(
                 children=[self.mode, self.render_image], margin='0.2cm')
         self.shape_buttons = [
-            ipywidgets.Label(value='Shape:', margin='0.2cm'),
+            ipywidgets.Latex(value='Shape:', margin='0.2cm'),
             ipywidgets.ToggleButton(description='Initial', value=False),
             ipywidgets.ToggleButton(description='Final', value=True),
             ipywidgets.ToggleButton(description='Groundtruth', value=False)]
@@ -195,7 +195,7 @@ class ResultOptionsWidget(MenpoWidget):
         self.shape_selection.children[3].visible = self.has_gt_shape
         self.render_image.visible = self.has_image
 
-    def style(self, box_style='', border_visible=False, border_colour='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight='', buttons_style=''):
@@ -281,7 +281,7 @@ class ResultOptionsWidget(MenpoWidget):
                 ============= ============================
         """
         if style == 'minimal':
-            self.style(box_style='', border_visible=True,
+            self.style(box_style=None, border_visible=True,
                        border_colour='black', border_style='solid',
                        border_width=1, border_radius=0, padding='0.2cm',
                        margin='0.3cm', font_family='', font_size=None,
@@ -518,7 +518,7 @@ class IterativeResultOptionsWidget(MenpoWidget):
         self.mode_render_image_box = ipywidgets.VBox(
             children=[self.mode, self.render_image], margin='0.2cm')
         self.shape_buttons = [
-            ipywidgets.Label(value='Shape:', margin='0.2cm'),
+            ipywidgets.Latex(value='Shape:', margin='0.2cm'),
             ipywidgets.ToggleButton(description='Initial', value=False),
             ipywidgets.ToggleButton(description='Final', value=True),
             ipywidgets.ToggleButton(description='Groundtruth', value=False)]
@@ -560,7 +560,7 @@ class IterativeResultOptionsWidget(MenpoWidget):
         self.mode_index_buttons_box = ipywidgets.HBox(
                 children=[self.iterations_mode, self.index_buttons_box],
                 margin='0.2cm', padding='0.2cm')
-        self.no_iterations_text = ipywidgets.Label(
+        self.no_iterations_text = ipywidgets.Latex(
                 value='No iterations available')
         self.iterations_box = ipywidgets.VBox(
             children=[self.mode_index_buttons_box, self.no_iterations_text])
@@ -835,7 +835,7 @@ class IterativeResultOptionsWidget(MenpoWidget):
         self.mode_index_buttons_box.visible = self.n_shapes is not None
         self.no_iterations_text.visible = self.n_shapes is None
 
-    def style(self, box_style='', border_visible=False, border_colour='black',
+    def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
               margin=0, font_family='', font_size=None, font_style='',
               font_weight='', buttons_style='', tabs_box_style=None,
@@ -985,7 +985,7 @@ class IterativeResultOptionsWidget(MenpoWidget):
                 ============= ============================
         """
         if style == 'minimal':
-            self.style(box_style='', border_visible=True,
+            self.style(box_style=None, border_visible=True,
                        border_colour='black', border_style='solid',
                        border_width=1, border_radius=0, padding='0.2cm',
                        margin='0.3cm', font_family='', font_size=None,
