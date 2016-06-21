@@ -19,7 +19,6 @@ MENPO_DANGER_LOGO = None
 MENPO_WARNING_LOGO = None
 MENPO_SUCCESS_LOGO = None
 MENPO_INFO_LOGO = None
-MENPO_LOGO_SCALE = None
 
 
 class LogoWidget(ipywidgets.FlexBox):
@@ -30,13 +29,11 @@ class LogoWidget(ipywidgets.FlexBox):
 
     Parameters
     ----------
-    scale : `float`, optional
-        Defines the scale that will be applied to the logo image.
     style : ``{'minimal', 'danger', 'info', 'warning', 'success'}``, optional
         Defines the styling of the logo widget, i.e. the colour around the
         logo image.
     """
-    def __init__(self, scale=0.3, style='minimal'):
+    def __init__(self, style='minimal'):
         from menpowidgets.base import menpowidgets_src_dir_path
         import menpo.io as mio
         # Try to only load the logo once
@@ -44,46 +41,37 @@ class LogoWidget(ipywidgets.FlexBox):
         logos_path = menpowidgets_src_dir_path() / 'logos'
         if style == 'minimal':
             global MENPO_MINIMAL_LOGO
-            if MENPO_MINIMAL_LOGO is None or scale != MENPO_LOGO_SCALE:
-                image = mio.import_image(logos_path / "menpo_{}.png".format(
-                    style))
-                MENPO_MINIMAL_LOGO = image.rescale(scale)
-                MENPO_LOGO_SCALE = scale
+            if MENPO_MINIMAL_LOGO is None:
+                MENPO_MINIMAL_LOGO = mio.import_image(
+                    logos_path / "menpoproject_{}.png".format(style))
             self.image = ipywidgets.Image(
                 value=convert_image_to_bytes(MENPO_MINIMAL_LOGO))
         elif style == 'danger':
             global MENPO_DANGER_LOGO
-            if MENPO_DANGER_LOGO is None or scale != MENPO_LOGO_SCALE:
-                image = mio.import_image(logos_path / "menpo_{}.png".format(
-                    style))
-                MENPO_DANGER_LOGO = image.rescale(scale)
-                MENPO_LOGO_SCALE = scale
+            if MENPO_DANGER_LOGO is None:
+                MENPO_DANGER_LOGO = mio.import_image(
+                    logos_path / "menpoproject_{}.png".format(style))
             self.image = ipywidgets.Image(
                 value=convert_image_to_bytes(MENPO_DANGER_LOGO))
         elif style == 'info':
             global MENPO_INFO_LOGO
-            if MENPO_INFO_LOGO is None or scale != MENPO_LOGO_SCALE:
-                image = mio.import_image(logos_path / "menpo_{}.png".format(
-                    style))
-                MENPO_INFO_LOGO = image.rescale(scale)
-                MENPO_LOGO_SCALE = scale
+            if MENPO_INFO_LOGO is None:
+                MENPO_INFO_LOGO = mio.import_image(
+                    logos_path / "menpoproject_{}.png".format(style))
             self.image = ipywidgets.Image(
                 value=convert_image_to_bytes(MENPO_INFO_LOGO))
         elif style == 'warning':
             global MENPO_WARNING_LOGO
-            if MENPO_WARNING_LOGO is None or scale != MENPO_LOGO_SCALE:
-                image = mio.import_image(logos_path / "menpo_{}.png".format(
-                    style))
-                MENPO_WARNING_LOGO = image.rescale(scale)
-                MENPO_LOGO_SCALE = scale
+            if MENPO_WARNING_LOGO is None:
+                MENPO_WARNING_LOGO = mio.import_image(
+                    logos_path / "menpoproject_{}.png".format(style))
             self.image = ipywidgets.Image(
                 value=convert_image_to_bytes(MENPO_WARNING_LOGO))
         elif style == 'success':
             global MENPO_SUCCESS_LOGO
-            if MENPO_SUCCESS_LOGO is None or scale != MENPO_LOGO_SCALE:
-                image = mio.import_image(logos_path / "menpo_{}.png".format(
-                    style))
-                MENPO_SUCCESS_LOGO = image.rescale(scale)
+            if MENPO_SUCCESS_LOGO is None:
+                MENPO_SUCCESS_LOGO = mio.import_image(
+                    logos_path / "menpoproject_{}.png".format(style))
             self.image = ipywidgets.Image(
                 value=convert_image_to_bytes(MENPO_SUCCESS_LOGO))
         else:
