@@ -4,6 +4,7 @@ from matplotlib import collections as mc
 import numpy as np
 
 import ipywidgets
+import traitlets
 import IPython.display as ipydisplay
 
 from menpo.image import MaskedImage, Image
@@ -37,6 +38,52 @@ def menpowidgets_src_dir_path():
     from pathlib import Path
     import os.path
     return Path(os.path.abspath(__file__)).parent
+
+
+class CameraWidget(ipywidgets.DOMWidget):
+    _view_name = traitlets.Unicode('CameraView').tag(sync=True)
+    imageurl = traitlets.Unicode('').tag(sync=True)
+    take_snapshot = traitlets.Bool(False).tag(sync=True)
+
+    def __init__(self, *args):
+        super(CameraWidget, self).__init__(*args)
+        self.observe(self._from_data_url, names='imageurl',
+                     type='change')
+        self.snapshots = []
+
+    @staticmethod
+    def _from_data_url(change):
+        from PIL import Image as PILImage
+        from io import BytesIO
+
+        self = change['owner']
+        data_uri = change['new']
+        data_uri = data_uri[len('data:image/png;base64,'):]
+        im = PILImage.open(BytesIO(data_uri.decode('base64')))
+
+        self.snapshots.append(Image.init_from_channels_at_back(
+            np.array(im)[..., :3]))
+
+
+def take_picture():
+    with open(str(menpowidgets_src_dir_path() / 'js' / 'webcam.js'), 'r') as f:
+        ipydisplay.display(ipydisplay.Javascript(data=f.read()))
+
+    wid = CameraWidget()
+    snapshot_but = ipywidgets.Button(description='Take Snapshot')
+    close_but = ipywidgets.Button(description='Close')
+
+    def take_snapshot(_):
+        wid.take_snapshot = not wid.take_snapshot
+    snapshot_but.on_click(take_snapshot)
+
+    def close(_):
+        wid.close()
+        snapshot_but.close()
+        close_but.close()
+    close_but.on_click(close)
+    ipydisplay.display(wid, close_but, snapshot_but)
+    return wid.snapshots
 
 
 def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
