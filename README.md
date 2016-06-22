@@ -1,15 +1,20 @@
-IMPORTANT
-=========
-Menpowidgets has been designed for academic use. The project changes quickly as
-determined by our research, and this should be kept in mind at all times.
+<p align="center">
+  <img src="menpowidgets-logo.png" alt="menpo" width="30%"></center>
+  <br><br>
+  <a href="https://github.com/menpo/menpowidgets/blob/master/LICENSE.txt"><img src="http://img.shields.io/badge/License-BSD-green.svg" alt="BSD License"/></a>
+  <img src="https://img.shields.io/badge/Python-2.7-green.svg" alt="Python 2.7 Support"/>
+  <img src="https://img.shields.io/badge/Python-3.4-green.svg" alt="Python 3.4 Support"/>
+  <img src="https://img.shields.io/badge/Python-3.5-green.svg" alt="Python 3.5 Support"/>
+</p>
 
-MenpoWidgets. Jupyter widgets for fancy visualization
+
+menpowidgets - Jupyter widgets for fancy visualization
 ======================================================
 
 What is MenpoWidgets?
 ---------------------
-MenpoWidgets is the Menpo Project's Python package for fancy visualization within the Jupyter notebook using interactive widgets.
-In the Menpo Project we take an opinionated stance that visualization is a key part of generating research. Therefore, we have tried
+MenpoWidgets is the [Menpo Project](http://www.menpo.org/)'s Python package for fancy visualization within the Jupyter notebook using interactive widgets.
+In the [Menpo Project](http://www.menpo.org/) we take an opinionated stance that visualization is a key part of generating research. Therefore, we have tried
 to make the mental overhead of visualizing objects as low as possible. MenpoWidgets makes tasks like data exploration, model observation
 and results demonstration as simple as possible.
 
