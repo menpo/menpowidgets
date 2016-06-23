@@ -2274,6 +2274,10 @@ def webcam_widget(canvas_width=640, hd=True, n_preview_windows=5,
     snapshots : `list` of `menpo.image.Image`
         The list of captured images.
     """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
+
     # Define the styling options
     if style == 'coloured':
         wid_style = 'danger'
