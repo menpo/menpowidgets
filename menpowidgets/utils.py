@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 
 from menpo.compatibility import unicode
 from menpo.feature import glyph, sum_channels
-from menpo.visualize.viewmatplotlib import MatplotlibSubplots
 
 
 def verify_ipython_and_kernel():

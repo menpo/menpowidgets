@@ -1,17 +1,19 @@
 import ipywidgets
+from IPython.display import display, Javascript
 from traitlets.traitlets import Int, Dict, List
 from traitlets import link
 from collections import OrderedDict
 import numpy as np
+from base64 import b64decode
 
 from menpo.compatibility import unicode
 
 from .abstract import MenpoWidget
 from .tools import (IndexSliderWidget, IndexButtonsWidget, SlicingCommandWidget,
-                    LineOptionsWidget, MarkerOptionsWidget,
+                    LineOptionsWidget, MarkerOptionsWidget, LogoWidget,
                     NumberingOptionsWidget, LegendOptionsWidget,
                     ZoomOneScaleWidget, ZoomTwoScalesWidget, AxesOptionsWidget,
-                    GridOptionsWidget, ImageOptionsWidget,
+                    GridOptionsWidget, ImageOptionsWidget, CameraWidget,
                     ColourSelectionWidget, HOGOptionsWidget, DSIFTOptionsWidget,
                     IGOOptionsWidget, LBPOptionsWidget, DaisyOptionsWidget)
 from .style import (map_styles_to_hex_colours, format_box, format_font,
@@ -2569,7 +2571,7 @@ class RendererOptionsWidget(MenpoWidget):
                 ``''``        No style
                 ============= ============================
         """
-        if tabs_style == 'minimal' or tabs_style=='':
+        if tabs_style == 'minimal' or tabs_style == '':
             tabs_style = ''
             tabs_border_visible = False
             tabs_border_colour = 'black'
@@ -5534,3 +5536,410 @@ class LinearModelParametersWidget(MenpoWidget):
         # trigger render function if allowed
         if allow_callback:
             self.call_render_function(old_value, self.selected_values)
+
+
+class CameraSnapshotWidget(MenpoWidget):
+    r"""
+    Creates a webcam widget for taking screenshots. The widget consists of the
+    following objects from `ipywidgets` and :ref:`api-tools-index`:
+
+    == ========================= ================== ======================
+    No Object                    Property (`self.`) Description
+    == ========================= ================== ======================
+    1  :map:`CameraWidget`       `camera_wid`       The webcam widget
+    2  `Latex`                   `n_snapshots_text` Number of snapshots
+    3  `Button`                  `snapshot_but`     Take snapshot button
+    4  `VBox`                    `snapshot_box`     Contains 3, 2
+    5  `Button`                  `close_but`        Close widget button
+    8  :map:`ZoomOneScaleWidget` `zoom_widget`      Resolution controller
+    9  `HBox`                    `buttons_box`      Contains 3, 5, 8
+    10 `Image`                   `preview_children` List of preview images
+    11 `HBox`                    `preview`          Contains all 10
+    == ========================= ================== ======================
+
+    Note that:
+
+    * The selected values are stored in the ``self.selected_values`` `trait`.
+    * To set the styling of this widget please refer to the :meth:`style` and
+      :meth:`predefined_style` methods.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
+
+    Parameters
+    ----------
+    canvas_width : `int`, optional
+        The initial width of the rendered canvas. Note that this doesn't actually
+        change the webcam resolution. It simply rescales the rendered image, as
+        well as the size of the returned screenshots.
+    hd : `bool`, optional
+        If ``True``, then the webcam will be set to high definition (HD), i.e.
+        720 x 1280. Otherwise the default resolution will be used.
+    n_preview_windows : `int`, optional
+        The number of preview thumbnails that will be used as a FIFO stack to
+        show the captured screenshots. It must be at least 4.
+    preview_windows_margin : `int`, optional
+        The margin between the preview thumbnails in pixels.
+    render_function : `callable` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        It must have signature ``render_function(change)`` where ``change`` is
+        a `dict` with the following keys:
+
+        * ``type`` : The type of notification (normally ``'change'``).
+        * ``owner`` : the `HasTraits` instance
+        * ``old`` : the old value of the modified trait attribute
+        * ``new`` : the new value of the modified trait attribute
+        * ``name`` : the name of the modified trait attribute.
+
+        If ``None``, then nothing is assigned.
+    style : `str` (see below), optional
+        Sets a predefined style at the widget. Possible options are:
+
+            ============= ============================
+            Style         Description
+            ============= ============================
+            ``'minimal'`` Simple black and white style
+            ``'success'`` Green-based style
+            ``'info'``    Blue-based style
+            ``'warning'`` Yellow-based style
+            ``'danger'``  Red-based style
+            ``''``        No style
+            ============= ============================
+
+    preview_style : `str` (see below), optional
+        Sets a predefined style at the widget's preview box. Possible options
+        are:
+
+            ============= ============================
+            Style         Description
+            ============= ============================
+            ``'minimal'`` Simple black and white style
+            ``'success'`` Green-based style
+            ``'info'``    Blue-based style
+            ``'warning'`` Yellow-based style
+            ``'danger'``  Red-based style
+            ``''``        No style
+            ============= ============================
+
+    Example
+    -------
+    Let's create a webcam widget. Firstly, we need to import it:
+
+        >>> from menpowidgets.options import CameraSnapshotWidget
+
+    Create the widget with some initial options and display it:
+
+        >>> wid = CameraSnapshotWidget(canvas_width=640, hd=True,
+        >>>                            n_preview_windows=5,
+        >>>                            preview_windows_margin=1, style='info')
+        >>> wid
+
+    By pressing the "Take snapshot" button, the snapshots appear in the
+    thumbnails below the stream. The video stream can be interrupted by pressing
+    the "Close" button.
+    """
+    javascript_exported = False
+
+    def __init__(self, canvas_width=640, hd=True, n_preview_windows=5,
+                 preview_windows_margin=3, render_function=None,
+                 style='minimal', preview_style='minimal'):
+        # Publish javascript - only occurs once on construction of first
+        # webcam widget
+        if not self.javascript_exported:
+            import os.path
+            from pathlib import Path
+            menpowidgets_path =  Path(os.path.abspath(__file__)).parent
+            with open(str(menpowidgets_path / 'js' / 'webcam.js'), 'r') as f:
+                display(Javascript(data=f.read()))
+            self.javascript_exported = True
+
+        # Check arguments
+        if n_preview_windows < 4:
+            n_preview_windows = 4
+        if preview_windows_margin < 0:
+            preview_windows_margin = 0
+
+        # Create widgets
+        self.logo_wid = LogoWidget(style=style)
+        self.logo_wid.margin = '0.1cm'
+        self.camera_wid = CameraWidget(canvas_width=canvas_width, hd=hd)
+        self.camera_wid.margin = '0.1cm'
+        self.camera_logo_box = ipywidgets.VBox(
+            children=[self.logo_wid, self.camera_wid], align='center')
+        self.n_snapshots_text = ipywidgets.Latex(value='', margin=2,
+                                                 visible=False)
+        self.snapshot_but = ipywidgets.Button(
+            icon='fa-camera', description='  Take Snapshot',
+            tooltip='Take snapshot')
+        self.snapshot_but.style = 'primary'
+        self.snapshot_box = ipywidgets.VBox(
+            children=[self.snapshot_but, self.n_snapshots_text],
+            align='center', margin='0.1cm')
+        self.close_but = ipywidgets.Button(
+            icon='fa-close', description='  Close', tooltip='Close the widget',
+            margin='0.1cm')
+        self.zoom_widget = ZoomOneScaleWidget(
+            {'min': 0.1, 'max': 2.1, 'step': 0.05, 'zoom': 1.},
+            continuous_update=False)
+        self.zoom_widget.title.visible = False
+        self.zoom_widget.zoom_text.visible = False
+        self.zoom_widget.button_plus.tooltip = 'Increase video resolution'
+        self.zoom_widget.button_minus.tooltip = 'Decrease video resolution'
+        self.zoom_widget.margin = '0.1cm'
+        self.resolution_text = ipywidgets.Latex(
+            value="{}W x {}H".format(self.camera_wid.canvas_width,
+                                     self.camera_wid.canvas_height),
+            margin='0.1cm')
+        self.resolution_text.font_family = 'monospace'
+        self.zoom_and_resolution_box = ipywidgets.HBox(
+            children=[self.zoom_widget, self.resolution_text], align='center')
+        self.buttons_box = ipywidgets.HBox(
+            children=[self.snapshot_box, self.close_but,
+                      self.zoom_and_resolution_box], align='start')
+        width_per_preview = int((canvas_width - preview_windows_margin * 2 *
+                                 n_preview_windows) / n_preview_windows)
+        preview_children = [
+            ipywidgets.Image(width=width_per_preview,
+                             margin=preview_windows_margin, visible=False)
+            for k in range(n_preview_windows)]
+        self.preview = ipywidgets.HBox(children=preview_children, align='start',
+                                       visible=False)
+
+        # Create final widget
+        children = [self.camera_logo_box, self.buttons_box, self.preview]
+        super(CameraSnapshotWidget, self).__init__(
+            children, List, [], render_function=render_function,
+            orientation='vertical', align='center')
+
+        # Assign properties
+        self.selected_values = self.camera_wid.snapshots
+
+        # Assign take screenshot callback
+        def take_snapshot(_):
+            self.camera_wid.take_snapshot = not self.camera_wid.take_snapshot
+        self.snapshot_but.on_click(take_snapshot)
+
+        # Assign close callback
+        def close(_):
+            self.close()
+        self.close_but.on_click(close)
+
+        # Assign preview callback
+        def update_preview(_):
+            # Convert image to bytes
+            img = self.camera_wid.imageurl.encode('utf-8')
+            img = b64decode(img[len('data:image/png;base64,'):])
+            # Increase n_snapshots text
+            n_snapshots = len(self.selected_values)
+            if n_snapshots == 1:
+                self.n_snapshots_text.value = "1 snapshot"
+                self.n_snapshots_text.visible = True
+                self.preview.visible = True
+            else:
+                self.n_snapshots_text.value = "{} snapshots".format(n_snapshots)
+            # Update preview thumbnails
+            if n_snapshots <= n_preview_windows:
+                self.preview.children[n_snapshots-1].value = img
+                self.preview.children[n_snapshots-1].visible = True
+            else:
+                for k in range(n_preview_windows-1):
+                    self.preview.children[k].value = \
+                        self.preview.children[k+1].value
+                self.preview.children[n_preview_windows-1].value = img
+        self.camera_wid.observe(update_preview, names='imageurl', type='change')
+
+        # Assign zoom resolution callback
+        def change_resolution(change):
+            self.camera_wid.canvas_width = int(canvas_width * change['new'])
+            self.resolution_text.value = "{}W x {}H".format(
+                self.camera_wid.canvas_width, self.camera_wid.canvas_height)
+        self.zoom_widget.observe(change_resolution, names='selected_values',
+                                 type='change')
+
+        # Assign resolution text callback
+        def set_resolution_text(_):
+            self.resolution_text.value = "{}W x {}H".format(
+                self.camera_wid.canvas_width, self.camera_wid.canvas_height)
+        self.camera_wid.observe(set_resolution_text, names='canvas_height',
+                                type='change')
+
+        # Set style
+        self.predefined_style(style, preview_style)
+
+    def style(self, box_style=None, border_visible=False, border_colour='black',
+              border_style='solid', border_width=1, border_radius=0,
+              padding='0.2cm', margin=0, preview_box_style=None,
+              preview_border_visible=True, preview_border_colour='black',
+              preview_border_style='solid', preview_border_width=1,
+              preview_border_radius=1, preview_padding=0, preview_margin=0,
+              font_family='', font_size=None, font_style='', font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        box_style : `str` or ``None`` (see below), optional
+            Possible widget style options::
+
+                'success', 'info', 'warning', 'danger', '', None
+
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the border around the widget.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
+        preview_box_style : `str` or ``None`` (see below), optional
+            Possible tab widgets style options::
+
+                'success', 'info', 'warning', 'danger', '', None
+
+        preview_border_visible : `bool`, optional
+            Defines whether to draw the border line around the preview.
+        preview_border_colour : `str`, optional
+            The color of the border around the preview.
+        preview_border_style : `str`, optional
+            The line style of the border around the preview.
+        preview_border_width : `float`, optional
+            The line width of the border around the preview.
+        preview_border_radius : `float`, optional
+            The radius of the corners of the box of the preview.
+        preview_padding : `float`, optional
+            The padding around the preview box.
+        preview_margin : `float`, optional
+            The margin around the preview box.
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
+
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
+
+        font_size : `int`, optional
+            The font size.
+        font_style : `str` (see below), optional
+            The font style. Example options::
+
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
+        """
+        format_box(self, box_style, border_visible, border_colour, border_style,
+                   border_width, border_radius, padding, margin)
+        format_box(self.preview, preview_box_style, preview_border_visible,
+                   preview_border_colour, preview_border_style,
+                   preview_border_width, preview_border_radius, preview_padding,
+                   preview_margin)
+        format_font(self, font_family, font_size, font_style, font_weight)
+        format_font(self.preview, font_family, font_size, font_style,
+                    font_weight)
+
+    def predefined_style(self, style, preview_style='minimal'):
+        r"""
+        Function that sets a predefined style on the widget.
+
+        Parameters
+        ----------
+        style : `str` (see below)
+            Style options:
+
+                ============= ============================
+                Style         Description
+                ============= ============================
+                ``'minimal'`` Simple black and white style
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ============================
+
+        preview_style : `str` (see below)
+            Preview box style options:
+
+                ============= ============================
+                Style         Description
+                ============= ============================
+                ``'minimal'`` Simple black and white style
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ============================
+        """
+        if preview_style == 'minimal' or preview_style == '':
+            preview_style = ''
+            preview_border_visible = True
+            preview_border_colour = 'black'
+            preview_border_radius = 0
+            preview_padding = 0
+        else:
+            preview_style = preview_style
+            preview_border_visible = not style == preview_style
+            preview_border_colour = map_styles_to_hex_colours(preview_style)
+            preview_border_radius = 10
+            preview_padding = '0.3cm'
+
+        if style == 'minimal':
+            self.snapshot_but.button_style = ''
+            self.close_but.button_style = ''
+            self.zoom_widget.button_minus.button_style = ''
+            self.zoom_widget.button_plus.button_style = ''
+            self.resolution_text.color = map_styles_to_hex_colours(
+                'minimal', background=False)
+            self.n_snapshots_text.color = map_styles_to_hex_colours(
+                'minimal', background=False)
+            format_slider(self.zoom_widget.zoom_slider, slider_width='2cm',
+                          slider_handle_colour=map_styles_to_hex_colours('minimal'),
+                          slider_bar_colour=map_styles_to_hex_colours('minimal'),
+                          slider_text_visible=False)
+            self.style(box_style='', border_visible=False,
+                       border_colour='black', border_style='solid',
+                       border_width=1, border_radius=0, padding=0, margin=0,
+                       font_family='', font_size=None, font_style='',
+                       font_weight='', preview_box_style=preview_style,
+                       preview_border_visible=preview_border_visible,
+                       preview_border_colour=preview_border_colour,
+                       preview_border_style='solid', preview_border_width=1,
+                       preview_border_radius=preview_border_radius,
+                       preview_padding=preview_padding, preview_margin='0.1cm')
+        elif (style == 'info' or style == 'success' or style == 'danger' or
+                      style == 'warning'):
+            self.snapshot_but.button_style = 'primary'
+            self.close_but.button_style = 'danger'
+            self.zoom_widget.button_minus.button_style = 'warning'
+            self.zoom_widget.button_plus.button_style = 'warning'
+            self.resolution_text.color = map_styles_to_hex_colours(
+                'warning', background=False)
+            self.n_snapshots_text.color = map_styles_to_hex_colours(
+                'info', background=False)
+            format_slider(self.zoom_widget.zoom_slider, slider_width='2cm',
+                          slider_handle_colour=map_styles_to_hex_colours('warning'),
+                          slider_bar_colour=map_styles_to_hex_colours('warning'),
+                          slider_text_visible=False)
+            self.style(box_style=style, border_visible=True,
+                       border_colour=map_styles_to_hex_colours(style),
+                       border_style='solid', border_width=1, border_radius=10,
+                       padding=0, margin=0, font_family='',
+                       font_size=None, font_style='', font_weight='',
+                       preview_box_style=preview_style,
+                       preview_border_visible=preview_border_visible,
+                       preview_border_colour=preview_border_colour,
+                       preview_border_style='solid', preview_border_width=1,
+                       preview_border_radius=preview_border_radius,
+                       preview_padding=preview_padding, preview_margin='0.1cm')
+        else:
+            raise ValueError('style must be minimal or info or success or '
+                             'danger or warning')
