@@ -5685,15 +5685,16 @@ class CameraSnapshotWidget(MenpoWidget):
         self.zoom_widget.button_plus.tooltip = 'Increase video resolution'
         self.zoom_widget.button_minus.tooltip = 'Decrease video resolution'
         self.zoom_widget.margin = '0.1cm'
-        self.resolution_text = ipywidgets.Text(
+        self.resolution_text = ipywidgets.Latex(
             value="{}W x {}H".format(self.camera_wid.canvas_width,
                                      self.camera_wid.canvas_height),
-            margin='0.1cm', disabled=True, width='3cm')
-        self.resolution_text.background_color = map_styles_to_hex_colours(
-            'warning', background=True)
+            margin='0.1cm')
+        self.resolution_text.font_family = 'monospace'
+        self.zoom_and_resolution_box = ipywidgets.HBox(
+            children=[self.zoom_widget, self.resolution_text], align='center')
         self.buttons_box = ipywidgets.HBox(
-            children=[self.snapshot_box, self.close_but, self.zoom_widget,
-                      self.resolution_text], align='start')
+            children=[self.snapshot_box, self.close_but,
+                      self.zoom_and_resolution_box], align='start')
         width_per_preview = int((canvas_width - preview_windows_margin * 2 *
                                  n_preview_windows) / n_preview_windows)
         preview_children = [
@@ -5896,15 +5897,19 @@ class CameraSnapshotWidget(MenpoWidget):
             self.close_but.button_style = ''
             self.zoom_widget.button_minus.button_style = ''
             self.zoom_widget.button_plus.button_style = ''
+            self.resolution_text.color = map_styles_to_hex_colours(
+                'minimal', background=False)
+            self.n_snapshots_text.color = map_styles_to_hex_colours(
+                'minimal', background=False)
             format_slider(self.zoom_widget.zoom_slider, slider_width='2cm',
                           slider_handle_colour=map_styles_to_hex_colours('minimal'),
                           slider_bar_colour=map_styles_to_hex_colours('minimal'),
                           slider_text_visible=False)
-            self.style(box_style='', border_visible=True, border_colour='black',
-                       border_style='solid', border_width=1, border_radius=0,
-                       padding=0, margin=0, font_family='',
-                       font_size=None, font_style='', font_weight='',
-                       preview_box_style=preview_style,
+            self.style(box_style='', border_visible=False,
+                       border_colour='black', border_style='solid',
+                       border_width=1, border_radius=0, padding=0, margin=0,
+                       font_family='', font_size=None, font_style='',
+                       font_weight='', preview_box_style=preview_style,
                        preview_border_visible=preview_border_visible,
                        preview_border_colour=preview_border_colour,
                        preview_border_style='solid', preview_border_width=1,
@@ -5916,6 +5921,10 @@ class CameraSnapshotWidget(MenpoWidget):
             self.close_but.button_style = 'danger'
             self.zoom_widget.button_minus.button_style = 'warning'
             self.zoom_widget.button_plus.button_style = 'warning'
+            self.resolution_text.color = map_styles_to_hex_colours(
+                'warning', background=False)
+            self.n_snapshots_text.color = map_styles_to_hex_colours(
+                'info', background=False)
             format_slider(self.zoom_widget.zoom_slider, slider_width='2cm',
                           slider_handle_colour=map_styles_to_hex_colours('warning'),
                           slider_bar_colour=map_styles_to_hex_colours('warning'),
