@@ -26,6 +26,8 @@ require(["nbextensions/widgets/widgets/js/widget", "nbextensions/widgets/widgets
             this.video.setAttribute('height', this.height);
             this.canvas.setAttribute('width', this.width);
             this.canvas.setAttribute('height', this.height);
+            this.model.set('canvas_height', this.height);
+            this.touch();
         },
         _wire_handlers: function() {
             var that = this;

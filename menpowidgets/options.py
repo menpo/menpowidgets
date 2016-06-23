@@ -5685,9 +5685,15 @@ class CameraSnapshotWidget(MenpoWidget):
         self.zoom_widget.button_plus.tooltip = 'Increase video resolution'
         self.zoom_widget.button_minus.tooltip = 'Decrease video resolution'
         self.zoom_widget.margin = '0.1cm'
+        self.resolution_text = ipywidgets.Text(
+            value="{}W x {}H".format(self.camera_wid.canvas_width,
+                                     self.camera_wid.canvas_height),
+            margin='0.1cm', disabled=True, width='3cm')
+        self.resolution_text.background_color = map_styles_to_hex_colours(
+            'warning', background=True)
         self.buttons_box = ipywidgets.HBox(
-            children=[self.snapshot_box, self.close_but, self.zoom_widget],
-            align='start')
+            children=[self.snapshot_box, self.close_but, self.zoom_widget,
+                      self.resolution_text], align='start')
         width_per_preview = int((canvas_width - preview_windows_margin * 2 *
                                  n_preview_windows) / n_preview_windows)
         preview_children = [
@@ -5743,8 +5749,17 @@ class CameraSnapshotWidget(MenpoWidget):
         # Assign zoom resolution callback
         def change_resolution(change):
             self.camera_wid.canvas_width = int(canvas_width * change['new'])
+            self.resolution_text.value = "{}W x {}H".format(
+                self.camera_wid.canvas_width, self.camera_wid.canvas_height)
         self.zoom_widget.observe(change_resolution, names='selected_values',
                                  type='change')
+
+        # Assign resolution text callback
+        def set_resolution_text(_):
+            self.resolution_text.value = "{}W x {}H".format(
+                self.camera_wid.canvas_width, self.camera_wid.canvas_height)
+        self.camera_wid.observe(set_resolution_text, names='canvas_height',
+                                type='change')
 
         # Set style
         self.predefined_style(style, preview_style)

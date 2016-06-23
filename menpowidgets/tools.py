@@ -5191,11 +5191,22 @@ class IGOOptionsWidget(MenpoWidget):
 class CameraWidget(ipywidgets.DOMWidget):
     r"""
     Creates a webcam widget.
+
+    Parameters
+    ----------
+    canvas_width : `int`, optional
+        The initial width of the rendered canvas. Note that this doesn't actually
+        change the webcam resolution. It simply rescales the rendered image, as
+        well as the size of the returned screenshots.
+    hd : `bool`, optional
+        If ``True``, then the webcam will be set to high definition (HD), i.e.
+        720 x 1280. Otherwise the default resolution will be used.
     """
     _view_name = Unicode('CameraView').tag(sync=True)
     imageurl = Unicode('').tag(sync=True)
     take_snapshot = Bool(False).tag(sync=True)
     canvas_width = Int(640).tag(sync=True)
+    canvas_height = Int().tag(sync=True)
     hd = Bool(True).tag(sync=True)
     snapshots = List().tag(sync=True)
 
