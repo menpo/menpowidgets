@@ -5637,16 +5637,21 @@ class CameraSnapshotWidget(MenpoWidget):
     thumbnails below the stream. The video stream can be interrupted by pressing
     the "Close" button.
     """
-    # Publish javascript
-    import os.path
-    from pathlib import Path
-    menpowidgets_path =  Path(os.path.abspath(__file__)).parent
-    with open(str(menpowidgets_path / 'js' / 'webcam.js'), 'r') as f:
-        display(Javascript(data=f.read()))
+    javascript_exported = False
 
     def __init__(self, canvas_width=640, hd=True, n_preview_windows=5,
                  preview_windows_margin=3, render_function=None,
                  style='minimal', preview_style='minimal'):
+        # Publish javascript - only occurs once on construction of first
+        # webcam widget
+        if not self.javascript_exported:
+            import os.path
+            from pathlib import Path
+            menpowidgets_path =  Path(os.path.abspath(__file__)).parent
+            with open(str(menpowidgets_path / 'js' / 'webcam.js'), 'r') as f:
+                display(Javascript(data=f.read()))
+            self.javascript_exported = True
+
         # Check arguments
         if n_preview_windows < 4:
             n_preview_windows = 4
