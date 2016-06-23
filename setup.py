@@ -14,5 +14,5 @@ setup(name='menpowidgets',
                         'traitlets>=4.1,<5.0',
                         'ipython>=4.0,<5.0',
                         'jupyter>=1.0,<2.0'],
-      package_data={'menpowidgets': ['logos/*']}
+      package_data={'menpowidgets': ['logos/*', 'js/*']}
       )
