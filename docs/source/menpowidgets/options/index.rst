@@ -13,6 +13,7 @@ and :ref:`api-menpofit-base-index`.
     :maxdepth: 1
 
     AnimationOptionsWidget
+    CameraSnapshotWidget
     ChannelOptionsWidget
     FeatureOptionsWidget
     LandmarkOptionsWidget

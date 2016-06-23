@@ -59,3 +59,12 @@ Features
     HOGOptionsWidget
     IGOOptionsWidget
     LBPOptionsWidget
+
+
+Webcam
+------
+
+.. toctree::
+    :maxdepth: 1
+    
+    CameraWidget

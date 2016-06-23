@@ -44,6 +44,7 @@ Various
 .. toctree::
     :maxdepth: 1
 
+    webcam_widget
     features_selection
     plot_graph
     save_matplotlib_figure
