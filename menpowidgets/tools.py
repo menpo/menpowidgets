@@ -5197,19 +5197,10 @@ class CameraWidget(ipywidgets.DOMWidget):
     take_snapshot = Bool(False).tag(sync=True)
     canvas_width = Int(640).tag(sync=True)
     hd = Bool(True).tag(sync=True)
-    error_occurred = Bool(False).tag(sync=True)
     snapshots = List().tag(sync=True)
 
     def __init__(self, canvas_width=640, hd=True, *args):
         super(CameraWidget, self).__init__(*args)
-        if self.error_occurred:
-            if hd:
-                raise ValueError("An error occurred! Either the camera is "
-                                 "not plugged or it doesn't support HD "
-                                 "resolution!")
-            else:
-                raise ValueError("An error occurred! Check that the camera is "
-                                 "plugged in!")
         # Set tait values
         self.canvas_width = canvas_width
         self.hd = hd
