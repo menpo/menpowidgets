@@ -10,7 +10,7 @@ from menpo.compatibility import unicode
 
 from .abstract import MenpoWidget
 from .tools import (IndexSliderWidget, IndexButtonsWidget, SlicingCommandWidget,
-                    LineOptionsWidget, MarkerOptionsWidget,
+                    LineOptionsWidget, MarkerOptionsWidget, LogoWidget,
                     NumberingOptionsWidget, LegendOptionsWidget,
                     ZoomOneScaleWidget, ZoomTwoScalesWidget, AxesOptionsWidget,
                     GridOptionsWidget, ImageOptionsWidget, CameraWidget,
@@ -5654,7 +5654,12 @@ class CameraSnapshotWidget(MenpoWidget):
             preview_windows_margin = 0
 
         # Create widgets
+        self.logo_wid = LogoWidget(style=style)
+        self.logo_wid.margin = '0.1cm'
         self.camera_wid = CameraWidget(canvas_width=canvas_width, hd=hd)
+        self.camera_wid.margin = '0.1cm'
+        self.camera_logo_box = ipywidgets.VBox(
+            children=[self.logo_wid, self.camera_wid], align='center')
         self.n_snapshots_text = ipywidgets.Latex(value='', margin=2,
                                                  visible=False)
         self.snapshot_but = ipywidgets.Button(
@@ -5668,7 +5673,7 @@ class CameraSnapshotWidget(MenpoWidget):
             icon='fa-close', description='  Close', tooltip='Close the widget',
             margin='0.1cm')
         self.zoom_widget = ZoomOneScaleWidget(
-            {'min': 0.1, 'max': 3., 'step': 0.1, 'zoom': 1.},
+            {'min': 0.1, 'max': 2.1, 'step': 0.05, 'zoom': 1.},
             continuous_update=False)
         self.zoom_widget.title.visible = False
         self.zoom_widget.zoom_text.visible = False
@@ -5688,7 +5693,7 @@ class CameraSnapshotWidget(MenpoWidget):
                                        visible=False)
 
         # Create final widget
-        children = [self.camera_wid, self.buttons_box, self.preview]
+        children = [self.camera_logo_box, self.buttons_box, self.preview]
         super(CameraSnapshotWidget, self).__init__(
             children, List, [], render_function=render_function,
             orientation='vertical', align='center')
@@ -5869,15 +5874,15 @@ class CameraSnapshotWidget(MenpoWidget):
         if style == 'minimal':
             self.snapshot_but.button_style = ''
             self.close_but.button_style = ''
-            self.zoom_widget.button_minus.button_style = 'warning'
-            self.zoom_widget.button_plus.button_style = 'warning'
+            self.zoom_widget.button_minus.button_style = ''
+            self.zoom_widget.button_plus.button_style = ''
             format_slider(self.zoom_widget.zoom_slider, slider_width='2cm',
                           slider_handle_colour=map_styles_to_hex_colours('minimal'),
                           slider_bar_colour=map_styles_to_hex_colours('minimal'),
                           slider_text_visible=False)
             self.style(box_style='', border_visible=True, border_colour='black',
                        border_style='solid', border_width=1, border_radius=0,
-                       padding='0.2cm', margin='0.5cm', font_family='',
+                       padding=0, margin=0, font_family='',
                        font_size=None, font_style='', font_weight='',
                        preview_box_style=preview_style,
                        preview_border_visible=preview_border_visible,
@@ -5898,7 +5903,7 @@ class CameraSnapshotWidget(MenpoWidget):
             self.style(box_style=style, border_visible=True,
                        border_colour=map_styles_to_hex_colours(style),
                        border_style='solid', border_width=1, border_radius=10,
-                       padding='0.2cm', margin='0.5cm', font_family='',
+                       padding=0, margin=0, font_family='',
                        font_size=None, font_style='', font_weight='',
                        preview_box_style=preview_style,
                        preview_border_visible=preview_border_visible,

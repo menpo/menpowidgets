@@ -13,7 +13,8 @@ from .options import (RendererOptionsWidget, TextPrintWidget,
                       SaveFigureOptionsWidget, AnimationOptionsWidget,
                       LandmarkOptionsWidget, ChannelOptionsWidget,
                       FeatureOptionsWidget, PlotOptionsWidget,
-                      PatchOptionsWidget, LinearModelParametersWidget)
+                      PatchOptionsWidget, LinearModelParametersWidget,
+                      CameraSnapshotWidget)
 from .style import format_box, map_styles_to_hex_colours
 from .tools import LogoWidget
 from .utils import (extract_group_labels_from_landmarks,
@@ -2244,3 +2245,50 @@ def visualize_patch_appearance_model(appearance_model, centers,
 
     # Trigger initial visualization
     render_function({})
+
+
+def webcam_widget(canvas_width=640, hd=True, n_preview_windows=5,
+                  style='coloured'):
+    r"""
+    Webcam widget for taking snapshots. The snapshots are dynamically previewed
+    in a FIFO stack of thumbnails.
+
+    Parameters
+    ----------
+    canvas_width : `int`, optional
+        The initial width of the rendered canvas. Note that this doesn't actually
+        change the webcam resolution. It simply rescales the rendered image, as
+        well as the size of the returned screenshots.
+    hd : `bool`, optional
+        If ``True``, then the webcam will be set to high definition (HD), i.e.
+        720 x 1280. Otherwise the default resolution will be used.
+    n_preview_windows : `int`, optional
+        The number of preview thumbnails that will be used as a FIFO stack to
+        show the captured screenshots. It must be at least 4.
+    style : ``{'coloured', 'minimal'}``, optional
+        If ``'coloured'``, then the style of the widget will be coloured. If
+        ``minimal``, then the style is simple using black and white colours.
+
+    Returns
+    -------
+    snapshots : `list` of `menpo.image.Image`
+        The list of captured images.
+    """
+    # Define the styling options
+    if style == 'coloured':
+        wid_style = 'danger'
+        preview_style = 'warning'
+    else:
+        wid_style = 'minimal'
+        preview_style = 'minimal'
+
+    # Create widgets
+    wid = CameraSnapshotWidget(
+        canvas_width=canvas_width, hd=hd, n_preview_windows=n_preview_windows,
+        preview_windows_margin=3, style=wid_style, preview_style=preview_style)
+
+    # Display widget
+    ipydisplay.display(wid)
+
+    # Return
+    return wid.selected_values
