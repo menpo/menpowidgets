@@ -1,6 +1,8 @@
 xref_map = {
 'AnimationOptionsWidget': ('class', 'menpowidgets.options.AnimationOptionsWidget'),
 'AxesOptionsWidget': ('class', 'menpowidgets.tools.AxesOptionsWidget'),
+'CameraSnapshotWidget': ('class', 'menpowidgets.options.CameraSnapshotWidget'),
+'CameraWidget': ('class', 'menpowidgets.tools.CameraWidget'),
 'ColourSelectionWidget': ('class', 'menpowidgets.tools.ColourSelectionWidget'),
 'DaisyOptionsWidget': ('class', 'menpowidgets.tools.DaisyOptionsWidget'),
 'DSIFTOptionsWidget': ('class', 'menpowidgets.tools.DSIFTOptionsWidget'),
