@@ -11,7 +11,7 @@ Logo
 ----
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     LogoWidget
 
@@ -20,7 +20,7 @@ Indexing
 --------
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     IndexSliderWidget
     IndexButtonsWidget
@@ -32,7 +32,7 @@ Rendering
 ---------
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     AxesLimitsWidget
     AxesOptionsWidget
@@ -52,7 +52,7 @@ Features
 --------
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     DaisyOptionsWidget
     DSIFTOptionsWidget
@@ -65,6 +65,6 @@ Webcam
 ------
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
     
     CameraWidget

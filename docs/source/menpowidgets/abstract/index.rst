@@ -5,6 +5,6 @@
 Main abstract class for defining a Menpo widget.
 
 .. toctree::
-  :maxdepth: 1
+  :maxdepth: 2
 
   MenpoWidget

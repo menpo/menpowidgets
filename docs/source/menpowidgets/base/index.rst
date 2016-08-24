@@ -10,7 +10,7 @@ Shapes
 ------
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     visualize_pointclouds
     visualize_landmarkgroups
@@ -21,7 +21,7 @@ Images
 ------
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     visualize_images
     visualize_patches
@@ -31,7 +31,7 @@ Models
 ------
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     visualize_shape_model
     visualize_appearance_model
@@ -42,7 +42,7 @@ Various
 -------
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     webcam_widget
     features_selection
