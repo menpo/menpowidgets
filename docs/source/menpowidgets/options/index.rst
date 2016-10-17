@@ -19,5 +19,5 @@ and :ref:`api-menpofit-base-index`.
     PatchOptionsWidget
     PlotOptionsWidget
     RendererOptionsWidget
-    SaveFigureOptionsWidget
+    SaveMatplotlibFigureOptionsWidget
     TextPrintWidget

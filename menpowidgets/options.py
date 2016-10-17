@@ -2665,7 +2665,7 @@ class RendererOptionsWidget(MenpoWidget):
             self.call_render_function(old_value, self.selected_values)
 
 
-class SaveFigureOptionsWidget(ipywidgets.FlexBox):
+class SaveMatplotlibFigureOptionsWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for saving a figure to file. The widget consists of the
     following objects from `ipywidgets` and :ref:`api-tools-index`:
@@ -2837,7 +2837,7 @@ class SaveFigureOptionsWidget(ipywidgets.FlexBox):
             children=[self.save_button, self.error_latex], align='center')
         self.options_box = ipywidgets.VBox(
             children=[self.options_tabs, self.save_box], align='center')
-        super(SaveFigureOptionsWidget, self).__init__(
+        super(SaveMatplotlibFigureOptionsWidget, self).__init__(
             children=[self.options_box])
         self.align = 'start'
 

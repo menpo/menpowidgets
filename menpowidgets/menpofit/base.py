@@ -24,7 +24,7 @@ from menpofit.error import (euclidean_bb_normalised_error,
                             root_mean_square_bb_normalised_error)
 
 from ..checks import check_n_parameters
-from ..options import (SaveFigureOptionsWidget, RendererOptionsWidget,
+from ..options import (SaveMatplotlibFigureOptionsWidget, RendererOptionsWidget,
                        ChannelOptionsWidget, PatchOptionsWidget,
                        LandmarkOptionsWidget, LinearModelParametersWidget,
                        PlotOptionsWidget, AnimationOptionsWidget,
@@ -312,8 +312,8 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             render_function=render_function, style=landmarks_style,
             renderer_widget=renderer_options_wid)
     info_wid = TextPrintWidget(text_per_line=[''] * 11, style=info_style)
-    save_figure_wid = SaveFigureOptionsWidget(renderer=None,
-                                              style=save_figure_style)
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
+                                                        style=save_figure_style)
 
     # Define function that updates options' widgets state
     def update_widgets(change):
@@ -644,8 +644,8 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     renderer_options_wid.options_widgets[0].interpolation_checkbox.value = True
     renderer_options_wid.add_render_function(render_function)
     info_wid = TextPrintWidget(text_per_line=[''] * 8, style=info_style)
-    save_figure_wid = SaveFigureOptionsWidget(renderer=None,
-                                              style=save_figure_style)
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
+                                                        style=save_figure_style)
 
     # Define function that updates options' widgets state
     def update_widgets(change):
@@ -943,8 +943,8 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
             render_function=render_function, style=landmarks_style,
             renderer_widget=renderer_options_wid)
     info_wid = TextPrintWidget(text_per_line=[''] * 10, style=info_style)
-    save_figure_wid = SaveFigureOptionsWidget(renderer=None,
-                                              style=save_figure_style)
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
+                                                        style=save_figure_style)
 
     # Define function that updates options' widgets state
     def update_widgets(change):
@@ -1208,8 +1208,8 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
     renderer_options_wid.options_widgets[0].interpolation_checkbox.value = True
     renderer_options_wid.add_render_function(render_function)
     info_wid = TextPrintWidget(text_per_line=[''] * 7, style=info_style)
-    save_figure_wid = SaveFigureOptionsWidget(renderer=None,
-                                              style=save_figure_style)
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
+                                                        style=save_figure_style)
 
     # Define function that updates options' widgets state
     def update_widgets(change):
@@ -1483,8 +1483,8 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
             axes_x_limits=None, axes_y_limits=None, render_function=None,
             style=renderer_style, tabs_style=renderer_tabs_style)
     info_wid = TextPrintWidget(text_per_line=[''] * 7, style=info_style)
-    save_figure_wid = SaveFigureOptionsWidget(renderer=None,
-                                              style=save_figure_style)
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
+                                                        style=save_figure_style)
 
     # Set default values
     patch_options_wid.bboxes_line_options_wid.line_colour_widget.set_colours(
@@ -1707,8 +1707,8 @@ def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(10, 8),
             axes_x_limits=None, axes_y_limits=None, render_function=None,
             style=renderer_style, tabs_style=renderer_tabs_style)
     info_wid = TextPrintWidget(text_per_line=[''] * 7, style=info_style)
-    save_figure_wid = SaveFigureOptionsWidget(renderer=None,
-                                              style=save_figure_style)
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
+                                                        style=save_figure_style)
 
     # Set default values
     patch_options_wid.bboxes_line_options_wid.line_colour_widget.set_colours(
@@ -1898,8 +1898,8 @@ def plot_ced(errors, legend_entries=None, error_range=None,
     wid = PlotOptionsWidget(legend_entries=legend_entries,
                             render_function=render_function,
                             style=widget_box_style, tabs_style=tabs_style)
-    save_figure_wid = SaveFigureOptionsWidget(renderer=None,
-                                              style=save_figure_style)
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
+                                                        style=save_figure_style)
 
     # Set values in plot widget
     wid.remove_render_function()
@@ -2277,8 +2277,8 @@ def visualize_fitting_result(fitting_results, figure_size=(10, 8), style='colour
                                      align='start')
 
     # Create save figure widget
-    save_figure_wid = SaveFigureOptionsWidget(renderer=None,
-                                              style=save_figure_style)
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
+                                                        style=save_figure_style)
 
     def update_renderer_options(change):
         # Get selected fitting result object

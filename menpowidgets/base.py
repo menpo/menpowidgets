@@ -10,7 +10,7 @@ from menpo.image import MaskedImage, Image
 from menpo.image.base import _convert_patches_list_to_single_array
 
 from .options import (RendererOptionsWidget, TextPrintWidget,
-                      SaveFigureOptionsWidget, AnimationOptionsWidget,
+                      SaveMatplotlibFigureOptionsWidget, AnimationOptionsWidget,
                       LandmarkOptionsWidget, ChannelOptionsWidget,
                       FeatureOptionsWidget, PlotOptionsWidget,
                       PatchOptionsWidget, LinearModelParametersWidget,
@@ -182,7 +182,7 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
         children=[axes_mode_wid, renderer_options_wid], align='center',
         margin='0.1cm')
     info_wid = TextPrintWidget(text_per_line=[''] * 5, style=info_style)
-    save_figure_wid = SaveFigureOptionsWidget(style=save_figure_style)
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget(style=save_figure_style)
 
     # Group widgets
     if n_pointclouds > 1:
@@ -388,8 +388,8 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8), style='coloure
         children=[axes_mode_wid, renderer_options_wid], align='center',
         margin='0.1cm')
     info_wid = TextPrintWidget(text_per_line=[''] * 5, style=info_style)
-    save_figure_wid = SaveFigureOptionsWidget(renderer=None,
-                                              style=save_figure_style)
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
+                                                        style=save_figure_style)
 
     # Group widgets
     if n_landmarkgroups > 1:
@@ -618,8 +618,8 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
         render_function=render_function, style=landmarks_style,
         renderer_widget=renderer_options_wid)
     info_wid = TextPrintWidget(text_per_line=[''] * 5, style=info_style)
-    save_figure_wid = SaveFigureOptionsWidget(renderer=None,
-                                              style=save_figure_style)
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
+                                                        style=save_figure_style)
 
     # Group widgets
     if n_landmarks > 1:
@@ -847,8 +847,8 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
         render_function=render_function, style=landmarks_style,
         renderer_widget=renderer_options_wid)
     info_wid = TextPrintWidget(text_per_line=[''], style=info_style)
-    save_figure_wid = SaveFigureOptionsWidget(renderer=None,
-                                              style=save_figure_style)
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
+                                                        style=save_figure_style)
 
     # Group widgets
     if n_images > 1:
@@ -1076,8 +1076,8 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8), style='colour
     renderer_options_wid.options_widgets[5].interpolation_checkbox.value = True
     renderer_options_wid.add_render_function(render_function)
     info_wid = TextPrintWidget(text_per_line=[''] * 3, style=info_style)
-    save_figure_wid = SaveFigureOptionsWidget(renderer=None,
-                                              style=save_figure_style)
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
+                                                        style=save_figure_style)
 
     # Group widgets
     if n_patches > 1:
@@ -1213,8 +1213,8 @@ def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(10, 6),
     wid = PlotOptionsWidget(legend_entries=legend_entries,
                             render_function=render_function,
                             style=widget_box_style, tabs_style=tabs_style)
-    save_figure_wid = SaveFigureOptionsWidget(renderer=None,
-                                              style=save_figure_style)
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
+                                                        style=save_figure_style)
 
     # Group widgets
     logo = LogoWidget(style=logo_style)
@@ -1259,7 +1259,7 @@ def save_matplotlib_figure(renderer, style='coloured'):
     if style == 'coloured':
         style = 'warning'
     logo_wid = LogoWidget(style='minimal')
-    save_figure_wid = SaveFigureOptionsWidget(renderer, style=style)
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer, style=style)
     save_figure_wid.margin = '0.1cm'
     logo_wid.margin = '0.1cm'
     wid = ipywidgets.HBox(children=[logo_wid, save_figure_wid])
@@ -1645,8 +1645,8 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
         children=[axes_mode_wid, renderer_options_wid], align='center',
         margin='0.1cm')
     info_wid = TextPrintWidget(text_per_line=[''] * 6, style=info_style)
-    save_figure_wid = SaveFigureOptionsWidget(renderer=None,
-                                              style=save_figure_style)
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
+                                                        style=save_figure_style)
 
     # Define function that updates options' widgets state
     def update_widgets(change):
@@ -1915,8 +1915,8 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
         render_function=render_function, style=landmarks_style,
         renderer_widget=renderer_options_wid)
     info_wid = TextPrintWidget(text_per_line=[''] * 8, style=info_style)
-    save_figure_wid = SaveFigureOptionsWidget(renderer=None,
-                                              style=save_figure_style)
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
+                                                        style=save_figure_style)
 
     # Define function that updates options' widgets state
     def update_widgets(change):
@@ -2182,8 +2182,8 @@ def visualize_patch_appearance_model(appearance_model, centers,
     renderer_options_wid.options_widgets[0].interpolation_checkbox.value = True
     renderer_options_wid.add_render_function(render_function)
     info_wid = TextPrintWidget(text_per_line=[''] * 8, style=info_style)
-    save_figure_wid = SaveFigureOptionsWidget(renderer=None,
-                                              style=save_figure_style)
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
+                                                        style=save_figure_style)
 
     # Define function that updates options' widgets state
     def update_widgets(change):
