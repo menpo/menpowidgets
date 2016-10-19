@@ -3018,6 +3018,313 @@ class SaveMatplotlibFigureOptionsWidget(ipywidgets.FlexBox):
                              'danger or warning')
 
 
+class SaveMayaviFigureOptionsWidget(ipywidgets.FlexBox):
+    r"""
+    Creates a widget for saving a figure to file. The widget consists of the
+    following objects from `ipywidgets` and :ref:`api-tools-index`:
+
+    == ============================ ====================== =====================
+    No Object                       Property (`self.`)     Description
+    == ============================ ====================== =====================
+    1  `Select`                     `file_format_select`   Image format selector
+    2  `FloatText`                  `dpi_text`             DPI selector
+    3  `Dropdown`                   `orientation_dropdown` Paper orientation
+    4  `Select`                     `papertype_select`     Paper type selector
+    5  `Checkbox`                   `transparent_checkbox` Transparency setter
+    6  :map:`ColourSelectionWidget` `facecolour_widget`    Face colour selector
+    7  :map:`ColourSelectionWidget` `edgecolour_widget`    Edge colour selector
+    8  `FloatText`                  `pad_inches_text`      Padding in inches
+    9  `Text`                       `filename_text`        Path and filename
+    10 `Checkbox`                   `overwrite_checkbox`   Overwrite flag
+    11 `Latex`                      `error_latex`          Error message area
+    12 `Button`                     `save_button`          Save button
+    13 `VBox`                       `path_box`             Contains 9, 1, 10, 4
+    14 `VBox`                       `page_box`             Contains 3, 2, 8
+    15 `VBox`                       `colour_box`           Contains 6, 7, 5
+    16 `Tab`                        `options_tabs`         Contains 13, 14, 15
+    17 `HBox`                       `save_box`             Contains 12, 11
+    18 `VBox`                       `options_box`          Contains 16, 17
+    == ============================ ====================== =====================
+
+    To set the styling of this widget please refer to the :meth:`style` and
+    :meth:`predefined_style` methods.
+
+    Parameters
+    ----------
+    renderer : `menpo.visualize.Renderer` or subclass or ``None``
+        The renderer object that was used to render the figure.
+    file_format : `str`, optional
+        The initial value of the file format.
+    dpi : `float` or ``None``, optional
+        The initial value of the dpi. If ``None``, then dpi is set to ``0``.
+    orientation : ``{'portrait', 'landscape'}``, optional
+        The initial value of the paper orientation.
+    paper_type : `str`, optional
+        The initial value of the paper type. Possible options are::
+
+            'letter', 'legal', 'executive', 'ledger', 'a0', 'a1', 'a2', 'a3',
+            'a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'a10', 'b0', 'b1', 'b2', 'b3',
+            'b4', 'b5', 'b6', 'b7', 'b8', 'b9', 'b10'
+
+    transparent : `bool`, optional
+        The initial value of the transparency flag.
+    face_colour : `str` or `list` of `float`, optional
+        The initial value of the face colour.
+    edge_colour : `str` or `list` of `float`, optional
+        The initial value of the edge colour.
+    pad_inches : `float`, optional
+        The initial value of the figure padding in inches.
+    overwrite : `bool`, optional
+        The initial value of the overwrite flag.
+    style : `str` (see below), optional
+        Sets a predefined style at the widget. Possible options are:
+
+            ============= ============================
+            Style         Description
+            ============= ============================
+            ``'minimal'`` Simple black and white style
+            ``'success'`` Green-based style
+            ``'info'``    Blue-based style
+            ``'warning'`` Yellow-based style
+            ``'danger'``  Red-based style
+            ``''``        No style
+            ============= ============================
+    """
+    def __init__(self, renderer=None, file_format='png', size=None,
+                 magnification='auto', overwrite=False, style='minimal'):
+        from os import getcwd
+        from os.path import join, splitext
+
+        # Create widgets
+        file_format_dict = OrderedDict()
+        file_format_dict['png'] = 'png'
+        file_format_dict['jpg'] = 'jpg'
+        file_format_dict['bmp'] = 'bmp'
+        file_format_dict['tiff'] = 'tiff'
+        file_format_dict['ps'] = 'ps'
+        file_format_dict['eps'] = 'eps'
+        file_format_dict['pdf'] = 'pdf'
+        file_format_dict['rib'] = 'rib'
+        file_format_dict['oogl'] = 'oogl'
+        file_format_dict['iv'] = 'iv'
+        file_format_dict['vrml'] = 'vrml'
+        file_format_dict['obj'] = 'obj'
+        self.file_format_select = ipywidgets.Select(
+            options=file_format_dict, value=file_format, description='Format',
+            width='3cm')
+        self.size_checkbox = ipywidgets.Checkbox(
+            value=size is not None, description='Resolution', margin='0.1cm')
+        self.size_height = ipywidgets.BoundedIntText(
+            value=640, min=0, max=10000, disabled=size is not None, width='2cm')
+        self.size_width = ipywidgets.BoundedIntText(
+            value=480, min=0, max=10000, disabled=size is not None, width='2cm')
+        self.size_height_width_box = ipywidgets.VBox(children=[self.size_height,
+                                                               self.size_width])
+        self.size_box = ipywidgets.HBox(
+            children=[self.size_checkbox, self.size_height_width_box],
+            margin='0.1cm', align='center')
+        self.magn_descr = ipywidgets.Latex(value='Magnification', margin='0.1cm')
+        self.magn_toggle = ipywidgets.ToggleButton(
+            value=magnification == 'auto', description='auto', margin='0.1cm')
+        self.magn_text = ipywidgets.BoundedFloatText(
+            value=1., min=0.0001, max=100., disabled=magnification == 'auto',
+            margin='0.1cm', width='2cm')
+        self.magn_box = ipywidgets.HBox(
+            children=[self.magn_descr, self.magn_toggle, self.magn_text],
+            align='center')
+        self.filename_text = ipywidgets.Text(
+            description='Path', value=join(getcwd(), 'Untitled.' + file_format),
+            width='10cm')
+        self.overwrite_checkbox = ipywidgets.Checkbox(
+            description='Overwrite if file exists', value=overwrite)
+        self.error_latex = ipywidgets.Latex(value="", font_weight='bold',
+                                            font_style='italic')
+        self.save_button = ipywidgets.Button(description='  Save',
+                                             icon='fa-floppy-o', margin='0.2cm')
+
+        # Group widgets
+        self.path_overwrite_box = ipywidgets.VBox(
+            children=[self.filename_text, self.overwrite_checkbox], align='end')
+        self.path_format_box = ipywidgets.HBox(
+            children=[self.path_overwrite_box, self.file_format_select])
+        self.sub_options_box = ipywidgets.VBox(
+            children=[self.path_format_box, self.size_box, self.magn_box],
+            border_width=1, border_color='black', margin='0.3cm',
+            padding='0.2cm')
+        self.save_box = ipywidgets.HBox(
+            children=[self.save_button, self.error_latex], align='center')
+        self.options_box = ipywidgets.VBox(
+            children=[self.sub_options_box, self.save_box], align='center')
+        super(SaveMayaviFigureOptionsWidget, self).__init__(
+            children=[self.options_box])
+        self.align = 'start'
+
+        # Assign renderer
+        if renderer is None:
+            from menpo3d.visualize.viewmayavi import MayaviViewer
+            renderer = MayaviViewer(figure_id=None, new_figure=True)
+        self.renderer = renderer
+
+        # Set style
+        self.predefined_style(style)
+
+        # Set functionality
+        def size_disable(change):
+            self.size_height.disabled = not change['new']
+            self.size_width.disabled = not change['new']
+        self.size_checkbox.observe(size_disable, names='value', type='change')
+        size_disable({'new': self.size_checkbox.value})
+
+        def magn_disable(change):
+            self.magn_text.disabled = change['new']
+        self.magn_toggle.observe(magn_disable, names='value', type='change')
+        magn_disable({'new': self.magn_toggle.value})
+
+        def set_extension(change):
+            file_name, file_extension = splitext(self.filename_text.value)
+            self.filename_text.value = file_name + '.' + change['new']
+        self.file_format_select.observe(set_extension, names='value',
+                                        type='change')
+
+        def save_function(name):
+            # set save button state
+            self.error_latex.value = ''
+            self.save_button.description = '  Saving...'
+            self.save_button.disabled = True
+
+            # save figure
+            selected_size = None
+            if self.size_checkbox.value:
+                selected_size = (int(self.size_height.value),
+                                 int(self.size_width.value))
+            selected_magn = 'auto'
+            if not self.magn_toggle.value:
+                selected_magn = float(self.magn_text.value)
+            print(selected_size, selected_magn)
+            try:
+                self.renderer.save_figure(
+                    filename=self.filename_text.value, size=selected_size,
+                    magnification=selected_magn,
+                    format=self.file_format_select.value,
+                    overwrite=self.overwrite_checkbox.value)
+                self.error_latex.value = ''
+            except ValueError as e:
+                e = str(e)
+                if (e == 'File already exists. Please set the overwrite kwarg '
+                         'if you wish to overwrite the file.'):
+                    self.error_latex.value = 'File exists! ' \
+                                             'Tick overwrite to replace it.'
+                else:
+                    self.error_latex.value = e
+
+            # set save button state
+            self.save_button.description = '  Save'
+            self.save_button.disabled = False
+        self.save_button.on_click(save_function)
+
+    def style(self, box_style=None, border_visible=False, border_colour='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
+              font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        box_style : `str` or ``None`` (see below), optional
+            Possible widget style options::
+
+                'success', 'info', 'warning', 'danger', '', None
+
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the border around the widget.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
+
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
+
+        font_size : `int`, optional
+            The font size.
+        font_style : `str` (see below), optional
+            The font style. Example options::
+
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
+        """
+        format_box(self, box_style, border_visible, border_colour, border_style,
+                   border_width, border_radius, padding, margin)
+        format_font(self, font_family, font_size, font_style, font_weight)
+        format_font(self.file_format_select, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.magn_toggle, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.filename_text, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.overwrite_checkbox, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.save_button, font_family, font_size, font_style,
+                    font_weight)
+
+    def predefined_style(self, style):
+        r"""
+        Function that sets a predefined style on the widget.
+
+        Parameters
+        ----------
+        style : `str` (see below)
+            Style options:
+
+                ============= ============================
+                Style         Description
+                ============= ============================
+                ``'minimal'`` Simple black and white style
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ============================
+        """
+        if style == 'minimal':
+            self.style(box_style='', border_visible=True, border_colour='black',
+                       border_style='solid', border_width=1, border_radius=0,
+                       padding='0.2cm', margin='0.3cm', font_family='',
+                       font_size=None, font_style='', font_weight='')
+            self.save_button.button_style = ''
+            self.save_button.font_weight = 'normal'
+        elif (style == 'info' or style == 'success' or style == 'danger' or
+                      style == 'warning'):
+            self.style(box_style=style, border_visible=True,
+                       border_colour= map_styles_to_hex_colours(style),
+                       border_style='solid', border_width=1, border_radius=10,
+                       padding='0.2cm', margin='0.3cm', font_family='',
+                       font_size=None, font_style='', font_weight='')
+            self.save_button.button_style = 'primary'
+            self.save_button.font_weight = 'bold'
+        else:
+            raise ValueError('style must be minimal or info or success or '
+                             'danger or warning')
+
+
 class FeatureOptionsWidget(ipywidgets.FlexBox):
     r"""
     Creates a widget for selecting feature options. The widget consists of the
