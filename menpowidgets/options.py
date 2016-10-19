@@ -2667,8 +2667,8 @@ class RendererOptionsWidget(MenpoWidget):
 
 class SaveMatplotlibFigureOptionsWidget(ipywidgets.FlexBox):
     r"""
-    Creates a widget for saving a figure to file. The widget consists of the
-    following objects from `ipywidgets` and :ref:`api-tools-index`:
+    Creates a widget for saving a Matplotlib figure to file. The widget consists
+    of the following objects from `ipywidgets`:
 
     == ============================ ====================== =====================
     No Object                       Property (`self.`)     Description
@@ -3020,60 +3020,53 @@ class SaveMatplotlibFigureOptionsWidget(ipywidgets.FlexBox):
 
 class SaveMayaviFigureOptionsWidget(ipywidgets.FlexBox):
     r"""
-    Creates a widget for saving a figure to file. The widget consists of the
-    following objects from `ipywidgets` and :ref:`api-tools-index`:
+    Creates a widget for saving a Mayavi figure to file. The widget consists of
+    the following objects from `ipywidgets`:
 
-    == ============================ ====================== =====================
+    == ============================ ====================== ======================
     No Object                       Property (`self.`)     Description
-    == ============================ ====================== =====================
+    == ============================ ====================== ======================
     1  `Select`                     `file_format_select`   Image format selector
-    2  `FloatText`                  `dpi_text`             DPI selector
-    3  `Dropdown`                   `orientation_dropdown` Paper orientation
-    4  `Select`                     `papertype_select`     Paper type selector
-    5  `Checkbox`                   `transparent_checkbox` Transparency setter
-    6  :map:`ColourSelectionWidget` `facecolour_widget`    Face colour selector
-    7  :map:`ColourSelectionWidget` `edgecolour_widget`    Edge colour selector
-    8  `FloatText`                  `pad_inches_text`      Padding in inches
-    9  `Text`                       `filename_text`        Path and filename
-    10 `Checkbox`                   `overwrite_checkbox`   Overwrite flag
-    11 `Latex`                      `error_latex`          Error message area
-    12 `Button`                     `save_button`          Save button
-    13 `VBox`                       `path_box`             Contains 9, 1, 10, 4
-    14 `VBox`                       `page_box`             Contains 3, 2, 8
-    15 `VBox`                       `colour_box`           Contains 6, 7, 5
-    16 `Tab`                        `options_tabs`         Contains 13, 14, 15
-    17 `HBox`                       `save_box`             Contains 12, 11
-    18 `VBox`                       `options_box`          Contains 16, 17
-    == ============================ ====================== =====================
+    2  `Checkbox`                   `overwrite_checkbox`   Overwrite flag
+    3  `Text`                       `filename_text`        Path and filename
+    4  `VBox`                       `path_overwrite_box`   Contains 3, 2
+    5  `HBox`                       `path_format_box`      Contains 4, 1
+    6  `Checkbox`                   `size_checkbox`        Whether to define size
+    7  `BoundedIntText`             `size_height`          The output height
+    8  `BoundedIntText`             `size_width`           The output width
+    9  `VBox`                       `size_height_width`    Contains 7, 8
+    10 `HBox`                       `size_box`             Contains 6, 9
+    11 `Latex`                      `magn_descr`           Magnification title
+    12 `ToggleButton`               `magn_toggle`          Magnification toggle
+    13 `BoundedFloatText`           `magn_text`            Magnification value
+    14 `HBox`                       `magn_box`             Contains 11, 12, 13
+    15 `Latex`                      `error_latex`          Error message area
+    16 `Button`                     `save_button`          Save button
+    17 `VBox`                       `sub_options_box`      Contains 5, 10, 14
+    18 `HBox`                       `save_box`             Contains 16, 15
+    19 `VBox`                       `options_box`          Contains 17, 18
+    == ============================ ====================== ======================
 
     To set the styling of this widget please refer to the :meth:`style` and
     :meth:`predefined_style` methods.
 
     Parameters
     ----------
-    renderer : `menpo.visualize.Renderer` or subclass or ``None``
+    renderer : `menpo3d.visualize.MayaviViewer` or subclass or ``None``
         The renderer object that was used to render the figure.
     file_format : `str`, optional
         The initial value of the file format.
-    dpi : `float` or ``None``, optional
-        The initial value of the dpi. If ``None``, then dpi is set to ``0``.
-    orientation : ``{'portrait', 'landscape'}``, optional
-        The initial value of the paper orientation.
-    paper_type : `str`, optional
-        The initial value of the paper type. Possible options are::
-
-            'letter', 'legal', 'executive', 'ledger', 'a0', 'a1', 'a2', 'a3',
-            'a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'a10', 'b0', 'b1', 'b2', 'b3',
-            'b4', 'b5', 'b6', 'b7', 'b8', 'b9', 'b10'
-
-    transparent : `bool`, optional
-        The initial value of the transparency flag.
-    face_colour : `str` or `list` of `float`, optional
-        The initial value of the face colour.
-    edge_colour : `str` or `list` of `float`, optional
-        The initial value of the edge colour.
-    pad_inches : `float`, optional
-        The initial value of the figure padding in inches.
+    size : `tuple` of `int` or ``None``, optional
+        The size of the image created (unless magnification is set, in which
+        case it is the size of the window used for rendering). If ``None``, then
+        the figure size is used.
+    magnification :	`double` or ``'auto'``, optional
+        The magnification is the scaling between the pixels on the screen, and
+        the pixels in the file saved. If you do not specify it, it will be
+        calculated so that the file is saved with the specified size. If you
+        specify a magnification, Mayavi will use the given size as a screen
+        size, and the file size will be ``magnification * size``. If ``'auto'``,
+        then the magnification will be set automatically.
     overwrite : `bool`, optional
         The initial value of the overwrite flag.
     style : `str` (see below), optional
