@@ -15,7 +15,8 @@ from .tools import (IndexSliderWidget, IndexButtonsWidget, SlicingCommandWidget,
                     ZoomOneScaleWidget, ZoomTwoScalesWidget, AxesOptionsWidget,
                     GridOptionsWidget, ImageOptionsWidget, CameraWidget,
                     ColourSelectionWidget, HOGOptionsWidget, DSIFTOptionsWidget,
-                    IGOOptionsWidget, LBPOptionsWidget, DaisyOptionsWidget)
+                    IGOOptionsWidget, LBPOptionsWidget, DaisyOptionsWidget,
+                    TriMeshOptionsWidget)
 from .style import (map_styles_to_hex_colours, format_box, format_font,
                     format_slider)
 from .utils import sample_colours_from_colourmap
@@ -1815,6 +1816,8 @@ class RendererOptionsWidget(MenpoWidget):
        :map:`LegendOptionsWidget`
 
        :map:`GridOptionsWidget`
+
+       :map:`TriMeshOptionsWidget`
     2  Tab                           `suboptions_tab`            Contains all 2
     == ============================= =========================== ================
 
@@ -1909,6 +1912,17 @@ class RendererOptionsWidget(MenpoWidget):
         - ``grid_line_width = 0.5``
         - ``grid_line_style = '--'``
 
+      * ``trimesh``
+
+        - ``mesh_type = 'wireframe'``
+        - ``line_width = 2``
+        - ``colour = 'red'``
+        - ``marker_style = 'sphere'``
+        - ``marker_size = 0.1``
+        - ``marker_resolution = 8``
+        - ``step = 1``
+        - ``alpha = 1.0``
+
     * To set the styling of this widget please refer to the :meth:`style` and
       :meth:`predefined_style` methods.
     * To update the handler callback function of the widget, please refer to the
@@ -1920,11 +1934,12 @@ class RendererOptionsWidget(MenpoWidget):
         `List` that defines the ordering of the options tabs. Possible values
         are:
 
-            =============== ========================
+            =============== =============================
             Value           Returned object
-            =============== ========================
+            =============== =============================
             ``'lines'``     :map:`LineOptionsWidget`
             ``'markers'``   :map:`MarkerOptionsWidget`
+            ``'trimesh'``   :map:`TriMeshOptionsWidget`
             ``'numbering'`` :map:`NumberingOptionsWidget`
             ``'zoom_one'``  :map:`ZoomOneScaleWidget`
             ``'zoom_two'``  :map:`ZoomTwoScalesWidget`
@@ -1932,7 +1947,7 @@ class RendererOptionsWidget(MenpoWidget):
             ``'grid'``      :map:`GridOptionsWidget`
             ``'image'``     :map:`ImageOptionsWidget`
             ``'axes'``      :map:`AxesOptionsWidget`
-            =============== ========================
+            =============== =============================
 
     labels : `list` or ``None``, optional
         The `list` of labels used in all :map:`ColourSelectionWidget` objects.
@@ -2060,6 +2075,10 @@ class RendererOptionsWidget(MenpoWidget):
                     renderer_options[o], render_function=None,
                     render_checkbox_title='Render markers', labels=labels))
                 self.tab_titles.append('Markers')
+            elif o == 'trimesh':
+                self.options_widgets.append(TriMeshOptionsWidget(
+                    self.global_options[o], render_function=None))
+                self.tab_titles.append('Mesh')
             elif o == 'image':
                 self.options_widgets.append(ImageOptionsWidget(
                     self.global_options[o], render_function=None))
@@ -2142,6 +2161,8 @@ class RendererOptionsWidget(MenpoWidget):
         # update global values
         if 'image' in self.options_tabs:
             self.global_options['image'] = self.selected_values['image']
+        if 'trimesh' in self.options_tabs:
+            self.global_options['trimesh'] = self.selected_values['trimesh']
         if 'numbering' in self.options_tabs:
             self.global_options['numbering'] = self.selected_values['numbering']
         if 'zoom_one' in self.options_tabs:
@@ -2337,6 +2358,11 @@ class RendererOptionsWidget(MenpoWidget):
                 self.global_options[o] = {
                     'interpolation': 'bilinear', 'cmap_name': None,
                     'alpha': 1.}
+            elif o == 'trimesh':
+                self.global_options[o] = {
+                    'mesh_type': 'wireframe', 'line_width': 2, 'colour': 'red',
+                    'marker_style': 'sphere', 'marker_size': 0.1,
+                    'marker_resolution': 8, 'step': 1, 'alpha': 1.0}
             elif o == 'numbering':
                 self.global_options[o] = {
                     'render_numbering': False,

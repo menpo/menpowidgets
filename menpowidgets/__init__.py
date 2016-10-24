@@ -4,6 +4,7 @@ from .base import (visualize_pointclouds, visualize_landmarkgroups,
                    visualize_appearance_model, visualize_patch_appearance_model,
                    visualize_shape_model, webcam_widget)
 from .menpofit import *
+from .menpo3d import *
 
 
 from ._version import get_versions

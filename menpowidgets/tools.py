@@ -5325,6 +5325,7 @@ class TriMeshOptionsWidget(MenpoWidget):
 
         # Create final widget
         children = [self.mesh_type_toggles, self.widgets_box_3]
+        mesh_options['colour'] = colour_converter.to_rgb(mesh_options['colour'])
         super(TriMeshOptionsWidget, self).__init__(
             children, Dict, mesh_options, render_function=render_function,
             orientation='vertical', align='start')

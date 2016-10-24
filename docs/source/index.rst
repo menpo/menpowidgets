@@ -31,13 +31,14 @@ should be easily accessible in any sensible IDE (or IPython) via tab completion.
 However, this section should make most of the core classes available for viewing online.
 
 Main Widgets  
-  Functions for visualizing the various Menpo and MenpoFit objects using interactive widgets.
+  Functions for visualizing the various Menpo, MenpoFit and Menpo3D objects using interactive widgets.
 
   .. toctree::
       :maxdepth: 2
 
       menpowidgets/base/index
       menpowidgets/menpofit/base/index
+      menpowidgets/menpo3d/base/index
 
 
 Options Widgets  
