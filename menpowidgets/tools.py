@@ -5430,7 +5430,7 @@ class TriMeshOptionsWidget(MenpoWidget):
     def set_widget_state(self, mesh_options, allow_callback=True):
         r"""
         Method that updates the state of the widget if the provided
-        `marker_options` are different than `self.selected_values`.
+        `mesh_options` are different than `self.selected_values`.
 
         Parameters
         ----------
@@ -5470,6 +5470,170 @@ class TriMeshOptionsWidget(MenpoWidget):
             self.alpha_slider.value = float(mesh_options['alpha'])
             self.colour_widget.set_widget_state(mesh_options['colour'],
                                                 allow_callback=False)
+
+            # re-assign render callback
+            self.add_render_function(render_function)
+
+            # trigger render function if allowed
+            if allow_callback:
+                self.call_render_function(old_value, self.selected_values)
+
+
+class ColouredTriMeshOptionsWidget(MenpoWidget):
+    r"""
+    Creates a widget for selecting coloured trimesh rendering options.
+
+    * The selected values are stored in the ``self.selected_values`` `trait`.
+    * To set the styling of this widget please refer to the :meth:`style` method.
+    * To update the state of the widget, please refer to the
+      :meth:`set_widget_state` method.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
+
+    Parameters
+    ----------
+    mesh_options : `dict`
+        The initial mesh options. It must be a `dict` with the following keys:
+
+        * ``mesh_type`` : (`str`) One of ('surface', 'wireframe')
+        * ``ambient_light`` : (`float`) The ambient light of the mesh.
+        * ``specular_light`` : (`float`) The specular light of the mesh.
+        * ``alpha`` : (`float`) The alpha (transparency) value.
+
+    render_function : `callable` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    """
+    def __init__(self, mesh_options, render_function=None):
+        # Create children
+        self.mesh_type_toggles = ipywidgets.ToggleButtons(
+            options=['surface', 'wireframe'], description='Type',
+            tooltip='Select the mesh type.', value=mesh_options['mesh_type'],
+            margin='0.1cm')
+        self.ambient_slider = ipywidgets.FloatSlider(
+            description='Ambient', value=mesh_options['ambient_light'],
+            min=0.0, max=1.0, step=0.05, width='4cm', continuous_update=False)
+        self.specular_slider = ipywidgets.FloatSlider(
+            description='Specular', value=mesh_options['specular_light'],
+            min=0.0, max=1.0, step=0.05, width='4cm', continuous_update=False)
+        self.alpha_slider = ipywidgets.FloatSlider(
+            description='Alpha', value=mesh_options['alpha'],
+            min=0.0, max=1.0, step=0.05, width='4cm', continuous_update=False)
+
+        # Create final widget
+        children = [self.mesh_type_toggles, self.ambient_slider,
+                    self.specular_slider, self.alpha_slider]
+        super(ColouredTriMeshOptionsWidget, self).__init__(
+            children, Dict, mesh_options, render_function=render_function,
+            orientation='vertical', align='start')
+
+        # Set functionality
+        def save_options(change):
+            self.selected_values = {
+                'coloured': True,
+                'mesh_type': self.mesh_type_toggles.value,
+                'ambient_light': float(self.ambient_slider.value),
+                'specular_light': float(self.specular_slider.value),
+                'alpha': float(self.alpha_slider.value)}
+        self.mesh_type_toggles.observe(save_options, names='value',
+                                       type='change')
+        self.ambient_slider.observe(save_options, names='value', type='change')
+        self.specular_slider.observe(save_options, names='value', type='change')
+        self.alpha_slider.observe(save_options, names='value', type='change')
+
+    def style(self, box_style=None, border_visible=False, border_colour='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
+              font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        box_style : `str` or ``None`` (see below), optional
+            Possible widget style options::
+
+                'success', 'info', 'warning', 'danger', '', None
+
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the border around the widget.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
+
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
+
+        font_size : `int`, optional
+            The font size.
+        font_style : `str` (see below), optional
+            The font style. Example options::
+
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
+
+        """
+        format_box(self, box_style, border_visible, border_colour, border_style,
+                   border_width, border_radius, padding, margin)
+        format_font(self, font_family, font_size, font_style, font_weight)
+        format_font(self.mesh_type_toggles, font_family, font_size,
+                    font_style, font_weight)
+        format_font(self.ambient_slider, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.specular_slider, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.alpha_slider, font_family, font_size, font_style,
+                    font_weight)
+
+    def set_widget_state(self, mesh_options, allow_callback=True):
+        r"""
+        Method that updates the state of the widget if the provided
+        `mesh_options` are different than `self.selected_values`.
+
+        Parameters
+        ----------
+        mesh_options : `dict`
+            The selected mesh options. It must be a `dict` with the following
+            keys:
+
+            * ``mesh_type`` : (`str`) One of ('surface', 'wireframe')
+            * ``ambient_light`` : (`float`) The ambient light of the mesh.
+            * ``specular_light`` : (`float`) The specular light of the mesh.
+            * ``alpha`` : (`float`) The alpha (transparency) value.
+
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        if self.selected_values != mesh_options:
+            # keep old value
+            old_value = self.selected_values
+
+            # temporarily remove render callback
+            render_function = self._render_function
+            self.remove_render_function()
+
+            # update
+            self.mesh_type_toggles.value = mesh_options['mesh_type']
+            self.ambient_slider.value = float(mesh_options['ambient_light'])
+            self.specular_slider.value = float(mesh_options['specular_light'])
+            self.alpha_slider.value = float(mesh_options['alpha'])
 
             # re-assign render callback
             self.add_render_function(render_function)
