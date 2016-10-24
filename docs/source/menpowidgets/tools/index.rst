@@ -44,6 +44,7 @@ Rendering
     LineOptionsWidget
     MarkerOptionsWidget
     NumberingOptionsWidget
+    TriMeshOptionsWidget
     ZoomOneScaleWidget
     ZoomTwoScalesWidget
 

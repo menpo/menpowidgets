@@ -5231,3 +5231,248 @@ class CameraWidget(ipywidgets.DOMWidget):
         im = PILImage.open(BytesIO(b64decode(data_uri)))
         self.snapshots.append(
             Image.init_from_channels_at_back(np.array(im)[..., :3]))
+
+
+class TriMeshOptionsWidget(MenpoWidget):
+    r"""
+    Creates a widget for selecting trimesh rendering options.
+
+    * The selected values are stored in the ``self.selected_values`` `trait`.
+    * To set the styling of this widget please refer to the :meth:`style` method.
+    * To update the state of the widget, please refer to the
+      :meth:`set_widget_state` method.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
+
+    Parameters
+    ----------
+    mesh_options : `dict`
+        The initial mesh options. It must be a `dict` with the following keys:
+
+        * ``mesh_type`` : (`str`) One of ('surface', 'wireframe', 'mesh',
+                                          'fancymesh', 'points')
+        * ``line_width`` : (`int`) The width of the rendered lines.
+        * ``colour`` : (`str`) The mesh colour (e.g. ``'red'`` or ``'#0d3c4e'``)
+        * ``marker_style`` : (`str`) The size of the markers. (e.g. ``'cube'``).
+        * ``marker_size`` : (`float`) The size of the markers (e.g. ``0.1``).
+        * ``marker_resolution`` : (`int`) The resolution of the markers.
+        * ``step`` : (`int`) The sampling step of the markers.
+        * ``alpha`` : (`float`) The alpha (transparency) value.
+
+    render_function : `callable` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    """
+    def __init__(self, mesh_options, render_function=None):
+        # Initialize color converter instance
+        from matplotlib.colors import ColorConverter
+        colour_converter = ColorConverter()
+
+        # Create children
+        self.mesh_type_toggles = ipywidgets.ToggleButtons(
+            options=['surface', 'wireframe', 'points', 'mesh', 'fancymesh'],
+            description='Type', tooltip='Select the mesh type.',
+            value=mesh_options['mesh_type'], margin='0.1cm')
+        self.colour_widget = ColourSelectionWidget(
+            mesh_options['colour'], description='Colour', render_function=None)
+        marker_style_dict = OrderedDict()
+        marker_style_dict['Sphere'] = 'sphere'
+        marker_style_dict['Cube'] = 'cube'
+        marker_style_dict['Cone'] = 'cone'
+        marker_style_dict['Cylinder'] = 'cylinder'
+        marker_style_dict['Arrow'] = 'arrow'
+        marker_style_dict['Axes'] = 'axes'
+        marker_style_dict['Point'] = 'point'
+        marker_style_dict['2D arrow'] = '2darrow'
+        marker_style_dict['2D circle'] = '2dcircle'
+        marker_style_dict['2D cross'] = '2dcross'
+        marker_style_dict['2D dash'] = '2ddash'
+        marker_style_dict['2D diamond'] = '2ddiamond'
+        marker_style_dict['2D hooked arrow'] = '2dhooked_arrow'
+        marker_style_dict['2D square'] = '2dsquare'
+        marker_style_dict['2D thick arrow'] = '2dthick_arrow'
+        marker_style_dict['2D thick cross'] = '2dthick_cross'
+        marker_style_dict['2D triangle'] = '2dtriangle'
+        marker_style_dict['2D vertex'] = '2dvertex'
+        self.marker_style_dropdown = ipywidgets.Dropdown(
+            options=marker_style_dict, value=mesh_options['marker_style'],
+            description='Marker style')
+        self.marker_size_text = ipywidgets.BoundedFloatText(
+            description='Marker size', value=mesh_options['marker_size'],
+            min=0.0, max=10**6, width='3cm')
+        self.marker_resolution_text = ipywidgets.BoundedIntText(
+            description='Marker resolution', width='3cm',
+            value=mesh_options['marker_resolution'], min=0, max=10**6)
+        self.line_width_text = ipywidgets.BoundedIntText(
+            description='Line width', value=mesh_options['line_width'], min=0,
+            max=10**6, width='3cm')
+        self.step_text = ipywidgets.BoundedIntText(
+            description='Step', value=mesh_options['step'], min=1, max=10**6,
+            width='3cm')
+        self.alpha_slider = ipywidgets.FloatSlider(
+            description='Alpha', value=mesh_options['alpha'],
+            min=0.0, max=1.0, step=0.1, width='3cm', continuous_update=False)
+
+        # Group widgets
+        self.widgets_box_1 = ipywidgets.VBox(
+            children=[self.colour_widget, self.marker_size_text,
+                      self.line_width_text, self.alpha_slider], margin='0.1cm')
+        self.widgets_box_2 = ipywidgets.VBox(
+            children=[self.marker_style_dropdown, self.marker_resolution_text,
+                      self.step_text], margin='0.1cm')
+        self.widgets_box_3 = ipywidgets.HBox(
+            children=[self.widgets_box_1, self.widgets_box_2], margin='0.1cm')
+
+        # Create final widget
+        children = [self.mesh_type_toggles, self.widgets_box_3]
+        super(TriMeshOptionsWidget, self).__init__(
+            children, Dict, mesh_options, render_function=render_function,
+            orientation='vertical', align='start')
+
+        # Set functionality
+        def save_options(change):
+            self.selected_values = {
+                'mesh_type': self.mesh_type_toggles.value,
+                'line_width': int(self.line_width_text.value),
+                'colour': colour_converter.to_rgb(
+                    self.colour_widget.selected_values[0]),
+                'marker_style': self.marker_style_dropdown.value,
+                'marker_size': float(self.marker_size_text.value),
+                'marker_resolution': int(self.marker_resolution_text.value),
+                'step': int(self.step_text.value),
+                'alpha': float(self.alpha_slider.value)}
+        self.mesh_type_toggles.observe(save_options, names='value',
+                                       type='change')
+        self.line_width_text.observe(save_options, names='value', type='change')
+        self.colour_widget.observe(save_options, names='selected_values',
+                                   type='change')
+        self.marker_style_dropdown.observe(save_options, names='value',
+                                           type='change')
+        self.marker_size_text.observe(save_options, names='value',
+                                      type='change')
+        self.marker_resolution_text.observe(save_options, names='value',
+                                            type='change')
+        self.step_text.observe(save_options, names='value', type='change')
+        self.alpha_slider.observe(save_options, names='value', type='change')
+
+    def style(self, box_style=None, border_visible=False, border_colour='black',
+              border_style='solid', border_width=1, border_radius=0, padding=0,
+              margin=0, font_family='', font_size=None, font_style='',
+              font_weight=''):
+        r"""
+        Function that defines the styling of the widget.
+
+        Parameters
+        ----------
+        box_style : `str` or ``None`` (see below), optional
+            Possible widget style options::
+
+                'success', 'info', 'warning', 'danger', '', None
+
+        border_visible : `bool`, optional
+            Defines whether to draw the border line around the widget.
+        border_colour : `str`, optional
+            The colour of the border around the widget.
+        border_style : `str`, optional
+            The line style of the border around the widget.
+        border_width : `float`, optional
+            The line width of the border around the widget.
+        border_radius : `float`, optional
+            The radius of the border around the widget.
+        padding : `float`, optional
+            The padding around the widget.
+        margin : `float`, optional
+            The margin around the widget.
+        font_family : `str` (see below), optional
+            The font family to be used. Example options::
+
+                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
+                'helvetica'
+
+        font_size : `int`, optional
+            The font size.
+        font_style : `str` (see below), optional
+            The font style. Example options::
+
+                'normal', 'italic', 'oblique'
+
+        font_weight : See Below, optional
+            The font weight. Example options::
+
+                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
+                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
+                'extra bold', 'black'
+
+        """
+        format_box(self, box_style, border_visible, border_colour, border_style,
+                   border_width, border_radius, padding, margin)
+        format_font(self, font_family, font_size, font_style, font_weight)
+        format_font(self.mesh_type_toggles, font_family, font_size,
+                    font_style, font_weight)
+        format_font(self.line_width_text, font_family, font_size,
+                    font_style, font_weight)
+        format_font(self.marker_size_text, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.marker_resolution_text, font_family, font_size,
+                    font_style, font_weight)
+        format_font(self.step_text, font_family, font_size, font_style,
+                    font_weight)
+        format_font(self.alpha_slider, font_family, font_size, font_style,
+                    font_weight)
+        self.colour_widget.style(
+            box_style=None, border_visible=False, font_family=font_family,
+            font_size=font_size, font_weight=font_weight, font_style=font_style,
+            label_colour=None, label_background_colour=None,
+            picker_colour=None, picker_background_colour=None,
+            apply_to_all_style='')
+
+    def set_widget_state(self, mesh_options, allow_callback=True):
+        r"""
+        Method that updates the state of the widget if the provided
+        `marker_options` are different than `self.selected_values`.
+
+        Parameters
+        ----------
+        mesh_options : `dict`
+            The selected mesh options. It must be a `dict` with the following
+            keys:
+
+            * ``mesh_type`` : (`str`) One of ('surface', 'wireframe', 'mesh',
+                                              'fancymesh', 'points')
+            * ``line_width`` : (`int`) The width of the rendered lines.
+            * ``colour`` : (`str`) The mesh colour (e.g. ``'red'`` or ``'#0d3c4e'``)
+            * ``marker_style`` : (`str`) The size of the markers. (e.g. ``'cube'``).
+            * ``marker_size`` : (`float`) The size of the markers (e.g. ``0.1``).
+            * ``marker_resolution`` : (`int`) The resolution of the markers.
+            * ``step`` : (`int`) The sampling step of the markers.
+            * ``alpha`` : (`float`) The alpha (transparency) value.
+
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        if self.selected_values != mesh_options:
+            # keep old value
+            old_value = self.selected_values
+
+            # temporarily remove render callback
+            render_function = self._render_function
+            self.remove_render_function()
+
+            # update
+            self.mesh_type_toggles.value = mesh_options['mesh_type']
+            self.line_width_text.value = int(mesh_options['line_width'])
+            self.marker_style_dropdown.value = mesh_options['marker_style']
+            self.marker_size_text.value = float(mesh_options['marker_size'])
+            self.marker_resolution_text.value = \
+                int(mesh_options['marker_resolution'])
+            self.step_text.value = int(mesh_options['step'])
+            self.alpha_slider.value = float(mesh_options['alpha'])
+            self.colour_widget.set_widget_state(mesh_options['colour'],
+                                                allow_callback=False)
+
+            # re-assign render callback
+            self.add_render_function(render_function)
+
+            # trigger render function if allowed
+            if allow_callback:
+                self.call_render_function(old_value, self.selected_values)

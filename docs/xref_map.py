@@ -20,6 +20,7 @@ xref_map = {
 'NumberingOptionsWidget': ('class', 'menpowidgets.tools.NumberingOptionsWidget'),
 'RendererOptionsWidget': ('class', 'menpowidgets.options.RendererOptionsWidget'),
 'SlicingCommandWidget': ('class', 'menpowidgets.tools.SlicingCommandWidget'),
+'TriMeshOptionsWidget': ('class', 'menpowidgets.tools.TriMeshOptionsWidget'),
 'ZoomOneScaleWidget': ('class', 'menpowidgets.tools.ZoomOneScaleWidget'),
 'ZoomTwoScalesWidget': ('class', 'menpowidgets.tools.ZoomTwoScalesWidget')
 }
