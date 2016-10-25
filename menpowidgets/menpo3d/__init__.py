@@ -1,1 +1,1 @@
-from .base import visualize_shape_model_3d
+from .base import visualize_shape_model_3d, visualize_mm

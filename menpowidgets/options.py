@@ -16,7 +16,7 @@ from .tools import (IndexSliderWidget, IndexButtonsWidget, SlicingCommandWidget,
                     GridOptionsWidget, ImageOptionsWidget, CameraWidget,
                     ColourSelectionWidget, HOGOptionsWidget, DSIFTOptionsWidget,
                     IGOOptionsWidget, LBPOptionsWidget, DaisyOptionsWidget,
-                    TriMeshOptionsWidget)
+                    TriMeshOptionsWidget, ColouredTriMeshOptionsWidget)
 from .style import (map_styles_to_hex_colours, format_box, format_font,
                     format_slider)
 from .utils import sample_colours_from_colourmap
@@ -1818,6 +1818,8 @@ class RendererOptionsWidget(MenpoWidget):
        :map:`GridOptionsWidget`
 
        :map:`TriMeshOptionsWidget`
+
+       :map:`ColouredTriMeshOptionsWidget`
     2  Tab                           `suboptions_tab`            Contains all 2
     == ============================= =========================== ================
 
@@ -1923,6 +1925,13 @@ class RendererOptionsWidget(MenpoWidget):
         - ``step = 1``
         - ``alpha = 1.0``
 
+      * ``coloured_trimesh``
+
+        - ``mesh_type = 'surface'``
+        - ``ambient_light = 0.0``
+        - ``specular_light = 0.0``
+        - ``alpha = 1.0``
+
     * To set the styling of this widget please refer to the :meth:`style` and
       :meth:`predefined_style` methods.
     * To update the handler callback function of the widget, please refer to the
@@ -1934,20 +1943,21 @@ class RendererOptionsWidget(MenpoWidget):
         `List` that defines the ordering of the options tabs. Possible values
         are:
 
-            =============== =============================
-            Value           Returned object
-            =============== =============================
-            ``'lines'``     :map:`LineOptionsWidget`
-            ``'markers'``   :map:`MarkerOptionsWidget`
-            ``'trimesh'``   :map:`TriMeshOptionsWidget`
-            ``'numbering'`` :map:`NumberingOptionsWidget`
-            ``'zoom_one'``  :map:`ZoomOneScaleWidget`
-            ``'zoom_two'``  :map:`ZoomTwoScalesWidget`
-            ``'legend'``    :map:`LegendOptionsWidget`
-            ``'grid'``      :map:`GridOptionsWidget`
-            ``'image'``     :map:`ImageOptionsWidget`
-            ``'axes'``      :map:`AxesOptionsWidget`
-            =============== =============================
+            ====================== ===================================
+            Value                  Returned object
+            ====================== ===================================
+            ``'lines'``            :map:`LineOptionsWidget`
+            ``'markers'``          :map:`MarkerOptionsWidget`
+            ``'trimesh'``          :map:`TriMeshOptionsWidget`
+            ``'coloured_trimesh'`` :map:`ColouredTriMeshOptionsWidget`
+            ``'numbering'``        :map:`NumberingOptionsWidget`
+            ``'zoom_one'``         :map:`ZoomOneScaleWidget`
+            ``'zoom_two'``         :map:`ZoomTwoScalesWidget`
+            ``'legend'``           :map:`LegendOptionsWidget`
+            ``'grid'``             :map:`GridOptionsWidget`
+            ``'image'``            :map:`ImageOptionsWidget`
+            ``'axes'``             :map:`AxesOptionsWidget`
+            ====================== ===================================
 
     labels : `list` or ``None``, optional
         The `list` of labels used in all :map:`ColourSelectionWidget` objects.
@@ -2079,6 +2089,10 @@ class RendererOptionsWidget(MenpoWidget):
                 self.options_widgets.append(TriMeshOptionsWidget(
                     self.global_options[o], render_function=None))
                 self.tab_titles.append('Mesh')
+            elif o =='coloured_trimesh':
+                self.options_widgets.append(ColouredTriMeshOptionsWidget(
+                    self.global_options[o], render_function=None))
+                self.tab_titles.append('Coloured Mesh')
             elif o == 'image':
                 self.options_widgets.append(ImageOptionsWidget(
                     self.global_options[o], render_function=None))
@@ -2163,6 +2177,9 @@ class RendererOptionsWidget(MenpoWidget):
             self.global_options['image'] = self.selected_values['image']
         if 'trimesh' in self.options_tabs:
             self.global_options['trimesh'] = self.selected_values['trimesh']
+        if 'coloured_trimesh' in self.options_tabs:
+            self.global_options['coloured_trimesh'] = \
+                self.selected_values['coloured_trimesh']
         if 'numbering' in self.options_tabs:
             self.global_options['numbering'] = self.selected_values['numbering']
         if 'zoom_one' in self.options_tabs:
@@ -2277,6 +2294,25 @@ class RendererOptionsWidget(MenpoWidget):
           - ``grid_line_width`` : (`int`) The line width.
           - ``grid_line_style`` : (`str`) The line style.
 
+        * ``trimesh`` : (`dict`) It has the following keys:
+
+          - ``mesh_type`` : (`str`) One of ('surface', 'wireframe', 'mesh',
+                                            'fancymesh', 'points')
+          - ``line_width`` : (`int`) The width of the rendered lines.
+          - ``colour`` : (`str`) The mesh colour (e.g. ``'red'``, ``'#0d3c4e'``)
+          - ``marker_style`` : (`str`) The size of the markers. (e.g. ``'cube'``)
+          - ``marker_size`` : (`float`) The size of the markers (e.g. ``0.1``).
+          - ``marker_resolution`` : (`int`) The resolution of the markers.
+          - ``step`` : (`int`) The sampling step of the markers.
+          - ``alpha`` : (`float`) The alpha (transparency) value.
+
+        * ``coloured_trimesh`` : (`dict`) It has the following keys:
+
+          - ``mesh_type`` : (`str`) One of ('surface', 'wireframe')
+          - ``ambient_light`` : (`float`) The ambient light of the mesh.
+          - ``specular_light`` : (`float`) The specular light of the mesh.
+          - ``alpha`` : (`float`) The alpha (transparency) value.
+
         If the object is not seen before by the widget, then it automatically
         gets the following default options:
 
@@ -2339,6 +2375,24 @@ class RendererOptionsWidget(MenpoWidget):
           - ``grid_line_width = 0.5``
           - ``grid_line_style = '--'``
 
+        * ``trimesh``
+
+          - ``mesh_type = 'wireframe'``
+          - ``line_width = 2``
+          - ``colour = 'red'``
+          - ``marker_style = 'sphere'``
+          - ``marker_size = 0.1``
+          - ``marker_resolution = 8``
+          - ``step = 1``
+          - ``alpha = 1.0``
+
+        * ``coloured_trimesh``
+
+          - ``mesh_type = 'surface'``
+          - ``ambient_light = 0.0``
+          - ``specular_light = 0.0``
+          - ``alpha = 1.0``
+
         Parameters
         ----------
         axes_x_limits : `float` or (`float`, `float`) or ``None``, optional
@@ -2363,6 +2417,10 @@ class RendererOptionsWidget(MenpoWidget):
                     'mesh_type': 'wireframe', 'line_width': 2, 'colour': 'red',
                     'marker_style': 'sphere', 'marker_size': 0.1,
                     'marker_resolution': 8, 'step': 1, 'alpha': 1.0}
+            elif o == 'coloured_trimesh':
+                self.global_options[o] = {
+                    'mesh_type': 'surface', 'ambient_light': 0.0,
+                    'specular_light': 0.0, 'alpha': 1.0}
             elif o == 'numbering':
                 self.global_options[o] = {
                     'render_numbering': False,
