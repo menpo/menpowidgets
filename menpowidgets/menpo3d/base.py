@@ -9,7 +9,6 @@ except ImportError:
 # Continue with imports if we have menpo3d
 import sys
 from collections import OrderedDict
-import mayavi.mlab as mlab
 import matplotlib.pyplot as plt
 
 import ipywidgets
@@ -221,9 +220,9 @@ def visualize_shape_model_3d(shape_model, n_parameters=5, mode='multiple',
     ipydisplay.clear_output()
 
 
-def visualize_mm(mm, n_shape_parameters=5, n_texture_parameters=5,
-                 mode='multiple', parameters_bounds=(-15.0, 15.0),
-                 style='coloured'):
+def visualize_morphable_model(mm, n_shape_parameters=5, n_texture_parameters=5,
+                              mode='multiple', parameters_bounds=(-15.0, 15.0),
+                              style='coloured'):
     r"""
     Widget that allows the dynamic visualization of a 3D Morphable Model.
 

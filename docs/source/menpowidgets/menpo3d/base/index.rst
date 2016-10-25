@@ -13,4 +13,4 @@ Morphable Model
     :maxdepth: 2
 
     visualize_shape_model_3d
-    visualize_mm
+    visualize_morphable_model
