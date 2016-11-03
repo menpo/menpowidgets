@@ -2414,7 +2414,7 @@ class RendererOptionsWidget(MenpoWidget):
                     'alpha': 1.}
             elif o == 'trimesh':
                 self.global_options[o] = {
-                    'mesh_type': 'wireframe', 'line_width': 2, 'colour': 'red',
+                    'mesh_type': 'surface', 'line_width': 2, 'colour': 'red',
                     'marker_style': 'sphere', 'marker_size': 0.1,
                     'marker_resolution': 8, 'step': 1, 'alpha': 1.0}
             elif o == 'coloured_trimesh':
