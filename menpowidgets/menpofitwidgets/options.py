@@ -76,7 +76,7 @@ class ResultOptionsWidget(MenpoWidget):
     Let's create a fitting result options widget and then update its state.
     Firstly, we need to import it:
 
-        >>> from menpowidgets.menpofit.options import ResultOptionsWidget
+        >>> from menpowidgets.menpofitwidgets.options import ResultOptionsWidget
 
     Now let's define a render function that will get called on every widget
     change and will dynamically print the selected options:
@@ -457,7 +457,7 @@ class IterativeResultOptionsWidget(MenpoWidget):
     Let's create an iterative result options widget and then update its state.
     Firstly, we need to import it:
 
-        >>> from menpowidgets.menpofit.options import IterativeResultOptionsWidget
+        >>> from menpowidgets.menpofitwidgets.options import IterativeResultOptionsWidget
 
     Now let's define a render function that will get called on every widget
     change and will print the selected options:

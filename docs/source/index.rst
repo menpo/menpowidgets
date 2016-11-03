@@ -37,8 +37,8 @@ Main Widgets
       :maxdepth: 2
 
       menpowidgets/base/index
-      menpowidgets/menpofit/base/index
-      menpowidgets/menpo3d/base/index
+      menpowidgets/menpofitwidgets/base/index
+      menpowidgets/menpo3dwidgets/base/index
 
 
 Options Widgets  
@@ -48,7 +48,7 @@ Options Widgets
       :maxdepth: 1
 
       menpowidgets/options/index
-      menpowidgets/menpofit/options/index
+      menpowidgets/menpofitwidgets/options/index
 
 
 Tools Widgets

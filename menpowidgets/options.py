@@ -1796,18 +1796,18 @@ class RendererOptionsWidget(MenpoWidget):
     Creates a widget for selecting rendering options. The widget consists of the
     following objects from `ipywidgets` and :ref:`api-tools-index`:
 
-    == ============================= =========================== ================
-    No Object                        Property (`self.`)          Description
-    == ============================= =========================== ================
-    1  :map:`LineOptionsWidget`      `options_widgets`           `list` that
+    == =================================== =========================== ==============
+    No Object                              Property (`self.`)          Description
+    == =================================== =========================== ==============
+    1  :map:`LineOptionsWidget`            `options_widgets`           `list` that
 
-       :map:`MarkerOptionsWidget`                                contains the
+       :map:`MarkerOptionsWidget`                                      contains the
 
-       :map:`ImageOptionsWidget`                                 rendering
+       :map:`ImageOptionsWidget`                                       rendering
 
-       :map:`NumberingOptionsWidget`                             sub-options
+       :map:`NumberingOptionsWidget`                                   sub-options
 
-       :map:`ZoomOneScaleWidget`                                 widgets
+       :map:`ZoomOneScaleWidget`                                       widgets
 
        :map:`ZoomTwoScalesWidget`
 
@@ -1820,8 +1820,8 @@ class RendererOptionsWidget(MenpoWidget):
        :map:`TriMeshOptionsWidget`
 
        :map:`ColouredTriMeshOptionsWidget`
-    2  Tab                           `suboptions_tab`            Contains all 2
-    == ============================= =========================== ================
+    2  Tab                                 `suboptions_tab`            Contains all 2
+    == =================================== =========================== ==============
 
     Note that:
 
