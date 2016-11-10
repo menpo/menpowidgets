@@ -296,9 +296,16 @@ def visualize_morphable_model(mm, n_shape_parameters=5, n_texture_parameters=5,
     def render_function(change):
         # Compute weights
         shape_weights = shape_model_parameters_wid.selected_values
+        shape_weights = (
+            shape_weights *
+            mm.shape_model.eigenvalues[:len(shape_weights)] ** 0.5)
         texture_weights = texture_model_parameters_wid.selected_values
+        texture_weights = (
+            texture_weights *
+            mm.texture_model.eigenvalues[:len(texture_weights)] ** 0.5)
         instance = mm.instance(shape_weights=shape_weights,
                                texture_weights=texture_weights)
+        instance = instance.with_clipped_texture()
 
         # Render shape instance with selected options
         options = renderer_options_wid.selected_values['coloured_trimesh']
