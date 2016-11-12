@@ -1,6 +1,5 @@
 from menpo.base import MenpoMissingDependencyError
 
-
 try:
     import menpo3d
 except ImportError:
@@ -126,6 +125,9 @@ def visualize_shape_model_3d(shape_model, n_parameters=5, mode='multiple',
 
         # Update info
         update_info(level, instance_range)
+
+        # Force rendering
+        renderer.force_draw()
 
     # Define function that updates the info text
     def update_info(level, instance_range):
@@ -322,6 +324,9 @@ def visualize_morphable_model(mm, n_shape_parameters=5, n_texture_parameters=5,
 
         # Update info
         update_info(mm, instance)
+
+        # Force rendering
+        renderer.force_draw()
 
     # Define function that updates the info text
     def update_info(mm, instance):
