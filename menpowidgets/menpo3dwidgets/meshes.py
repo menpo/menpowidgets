@@ -10,7 +10,7 @@ from menpowidgets.tools import LogoWidget
 
 
 def visualize_meshes(meshes, style='coloured', browser_style='buttons'):
-    # Ensure that the code is being run inside a Jupyter kernel!
+    # Ensure that the code is being run inside a Jupyter kernel!!
     from menpowidgets.utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
     print('Initializing...')
