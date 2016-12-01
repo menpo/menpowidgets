@@ -5479,9 +5479,9 @@ class TriMeshOptionsWidget(MenpoWidget):
                 self.call_render_function(old_value, self.selected_values)
 
 
-class ColouredTriMeshOptionsWidget(MenpoWidget):
+class TexturedTriMeshOptionsWidget(MenpoWidget):
     r"""
-    Creates a widget for selecting coloured trimesh rendering options.
+    Creates a widget for selecting textured trimesh rendering options.
 
     * The selected values are stored in the ``self.selected_values`` `trait`.
     * To set the styling of this widget please refer to the :meth:`style` method.
@@ -5495,21 +5495,31 @@ class ColouredTriMeshOptionsWidget(MenpoWidget):
     mesh_options : `dict`
         The initial mesh options. It must be a `dict` with the following keys:
 
+        * ``render_texture`` : (`bool`) Flag for enabling the texture rendering.
         * ``mesh_type`` : (`str`) One of ('surface', 'wireframe')
         * ``ambient_light`` : (`float`) The ambient light of the mesh.
         * ``specular_light`` : (`float`) The specular light of the mesh.
+        * ``line_width`` : (`float`) The line width in case of wireframe.
+        * ``colour`` : (`str`) The colour in case the texture is disabled.
         * ``alpha`` : (`float`) The alpha (transparency) value.
 
     render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
     """
-    def __init__(self, mesh_options, render_function=None):
+    def __init__(self, mesh_options, render_checkbox_title='Render texture',
+                 render_function=None):
         # Create children
+        self.render_texture_checkbox = ipywidgets.Checkbox(
+            description=render_checkbox_title,
+            value=mesh_options['render_texture'])
         self.mesh_type_toggles = ipywidgets.ToggleButtons(
             options=['surface', 'wireframe'], description='Type',
             tooltip='Select the mesh type.', value=mesh_options['mesh_type'],
             margin='0.1cm')
+        self.line_width_text = ipywidgets.FloatText(
+            description='Line width', value=float(mesh_options['line_width']),
+            margin='0.1cm', width='2cm')
         self.ambient_slider = ipywidgets.FloatSlider(
             description='Ambient', value=mesh_options['ambient_light'],
             min=0.0, max=1.0, step=0.05, width='4cm', continuous_update=False)
@@ -5519,27 +5529,56 @@ class ColouredTriMeshOptionsWidget(MenpoWidget):
         self.alpha_slider = ipywidgets.FloatSlider(
             description='Alpha', value=mesh_options['alpha'],
             min=0.0, max=1.0, step=0.05, width='4cm', continuous_update=False)
+        self.colour_widget = ColourSelectionWidget(
+            mesh_options['colour'], description='Colour', render_function=None)
+
+        # Group widgets
+        self.options_box_1 = ipywidgets.HBox(
+            children=[self.render_texture_checkbox, self.colour_widget])
+        self.options_box_2 = ipywidgets.HBox(
+            children=[self.mesh_type_toggles, self.line_width_text])
+        self.options_box_3 = ipywidgets.VBox(
+            children=[self.ambient_slider, self.specular_slider,
+                      self.alpha_slider])
 
         # Create final widget
-        children = [self.mesh_type_toggles, self.ambient_slider,
-                    self.specular_slider, self.alpha_slider]
-        super(ColouredTriMeshOptionsWidget, self).__init__(
+        children = [self.options_box_1, self.options_box_2, self.options_box_3]
+        super(TexturedTriMeshOptionsWidget, self).__init__(
             children, Dict, mesh_options, render_function=render_function,
             orientation='vertical', align='start')
 
         # Set functionality
+        def colour_visible(change):
+            self.colour_widget.visible = not change['new']
+        colour_visible({'new': mesh_options['render_texture']})
+        self.render_texture_checkbox.observe(colour_visible, names='value',
+                                             type='change')
+
+        def line_width_visible(change):
+            self.line_width_text.visible = change['new'] == 'wireframe'
+        line_width_visible({'new': mesh_options['mesh_type']})
+        self.mesh_type_toggles.observe(line_width_visible, names='value',
+                                       type='change')
+
         def save_options(change):
             self.selected_values = {
-                'coloured': True,
+                'render_texture': self.render_texture_checkbox.value,
                 'mesh_type': self.mesh_type_toggles.value,
+                'line_width': float(self.line_width_text.value),
                 'ambient_light': float(self.ambient_slider.value),
                 'specular_light': float(self.specular_slider.value),
-                'alpha': float(self.alpha_slider.value)}
+                'alpha': float(self.alpha_slider.value),
+                'colour': self.colour_widget.selected_values[0]}
+        self.render_texture_checkbox.observe(save_options, names='value',
+                                             type='change')
         self.mesh_type_toggles.observe(save_options, names='value',
                                        type='change')
         self.ambient_slider.observe(save_options, names='value', type='change')
         self.specular_slider.observe(save_options, names='value', type='change')
         self.alpha_slider.observe(save_options, names='value', type='change')
+        self.line_width_text.observe(save_options, names='value', type='change')
+        self.colour_widget.observe(save_options, names='selected_values',
+                                   type='change')
 
     def style(self, box_style=None, border_visible=False, border_colour='black',
               border_style='solid', border_width=1, border_radius=0, padding=0,
@@ -5595,12 +5634,22 @@ class ColouredTriMeshOptionsWidget(MenpoWidget):
         format_font(self, font_family, font_size, font_style, font_weight)
         format_font(self.mesh_type_toggles, font_family, font_size,
                     font_style, font_weight)
+        format_font(self.line_width_text, font_family, font_size,
+                    font_style, font_weight)
+        format_font(self.render_texture_checkbox, font_family, font_size,
+                    font_style, font_weight)
         format_font(self.ambient_slider, font_family, font_size, font_style,
                     font_weight)
         format_font(self.specular_slider, font_family, font_size, font_style,
                     font_weight)
         format_font(self.alpha_slider, font_family, font_size, font_style,
                     font_weight)
+        self.colour_widget.style(
+            box_style=None, border_visible=False, font_family=font_family,
+            font_size=font_size, font_weight=font_weight, font_style=font_style,
+            label_colour=None, label_background_colour=None,
+            picker_colour=None, picker_background_colour=None,
+            apply_to_all_style='')
 
     def set_widget_state(self, mesh_options, allow_callback=True):
         r"""
@@ -5630,10 +5679,14 @@ class ColouredTriMeshOptionsWidget(MenpoWidget):
             self.remove_render_function()
 
             # update
+            self.render_texture_checkbox.value = mesh_options['render_texture']
             self.mesh_type_toggles.value = mesh_options['mesh_type']
             self.ambient_slider.value = float(mesh_options['ambient_light'])
             self.specular_slider.value = float(mesh_options['specular_light'])
             self.alpha_slider.value = float(mesh_options['alpha'])
+            self.line_width_text.value = float(mesh_options['line_width'])
+            self.colour_widget.set_widget_state(mesh_options['colour'],
+                                                allow_callback=False)
 
             # re-assign render callback
             self.add_render_function(render_function)

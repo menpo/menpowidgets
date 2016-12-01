@@ -16,7 +16,7 @@ from .tools import (IndexSliderWidget, IndexButtonsWidget, SlicingCommandWidget,
                     GridOptionsWidget, ImageOptionsWidget, CameraWidget,
                     ColourSelectionWidget, HOGOptionsWidget, DSIFTOptionsWidget,
                     IGOOptionsWidget, LBPOptionsWidget, DaisyOptionsWidget,
-                    TriMeshOptionsWidget, ColouredTriMeshOptionsWidget)
+                    TriMeshOptionsWidget, TexturedTriMeshOptionsWidget)
 from .style import (map_styles_to_hex_colours, format_box, format_font,
                     format_slider)
 from .utils import sample_colours_from_colourmap
@@ -1819,7 +1819,7 @@ class RendererOptionsWidget(MenpoWidget):
 
        :map:`TriMeshOptionsWidget`
 
-       :map:`ColouredTriMeshOptionsWidget`
+       :map:`TexturedTriMeshOptionsWidget`
     2  Tab                                 `suboptions_tab`            Contains all 2
     == =================================== =========================== ==============
 
@@ -1949,7 +1949,7 @@ class RendererOptionsWidget(MenpoWidget):
             ``'lines'``            :map:`LineOptionsWidget`
             ``'markers'``          :map:`MarkerOptionsWidget`
             ``'trimesh'``          :map:`TriMeshOptionsWidget`
-            ``'coloured_trimesh'`` :map:`ColouredTriMeshOptionsWidget`
+            ``'coloured_trimesh'`` :map:`TexturedTriMeshOptionsWidget`
             ``'numbering'``        :map:`NumberingOptionsWidget`
             ``'zoom_one'``         :map:`ZoomOneScaleWidget`
             ``'zoom_two'``         :map:`ZoomTwoScalesWidget`
@@ -2090,7 +2090,7 @@ class RendererOptionsWidget(MenpoWidget):
                     self.global_options[o], render_function=None))
                 self.tab_titles.append('Mesh')
             elif o =='coloured_trimesh':
-                self.options_widgets.append(ColouredTriMeshOptionsWidget(
+                self.options_widgets.append(TexturedTriMeshOptionsWidget(
                     self.global_options[o], render_function=None))
                 self.tab_titles.append('Coloured Mesh')
             elif o == 'image':

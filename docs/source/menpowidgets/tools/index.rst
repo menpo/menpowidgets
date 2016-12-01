@@ -38,7 +38,7 @@ Rendering
     AxesOptionsWidget
     AxesTicksWidget
     ColourSelectionWidget
-    ColouredTriMeshOptionsWidget
+    TexturedTriMeshOptionsWidget
     GridOptionsWidget
     ImageOptionsWidget
     LegendOptionsWidget
