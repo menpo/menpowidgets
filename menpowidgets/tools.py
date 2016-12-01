@@ -5273,8 +5273,14 @@ class TriMeshOptionsWidget(MenpoWidget):
             options=['surface', 'wireframe', 'points', 'mesh', 'fancymesh'],
             description='Type', tooltip='Select the mesh type.',
             value=mesh_options['mesh_type'], margin='0.1cm')
+        self.line_width_text = ipywidgets.BoundedFloatText(
+            description='Line width', value=float(mesh_options['line_width']),
+            margin='0.1cm', width='1.2cm', min=0.0, max=10**6)
         self.colour_widget = ColourSelectionWidget(
             mesh_options['colour'], description='Colour', render_function=None)
+        self.alpha_slider = ipywidgets.FloatSlider(
+            description='Alpha', value=mesh_options['alpha'],
+            min=0.0, max=1.0, step=0.1, width='3cm', continuous_update=False)
         marker_style_dict = OrderedDict()
         marker_style_dict['Sphere'] = 'sphere'
         marker_style_dict['Cube'] = 'cube'
@@ -5296,45 +5302,60 @@ class TriMeshOptionsWidget(MenpoWidget):
         marker_style_dict['2D vertex'] = '2dvertex'
         self.marker_style_dropdown = ipywidgets.Dropdown(
             options=marker_style_dict, value=mesh_options['marker_style'],
-            description='Marker style')
+            description='Style')
         self.marker_size_text = ipywidgets.BoundedFloatText(
-            description='Marker size', value=mesh_options['marker_size'],
-            min=0.0, max=10**6, width='3cm')
+            description='Size', value=mesh_options['marker_size'],
+            min=0.0, max=10**6, width='2cm')
         self.marker_resolution_text = ipywidgets.BoundedIntText(
-            description='Marker resolution', width='3cm',
+            description='Resolution', width='2cm',
             value=mesh_options['marker_resolution'], min=0, max=10**6)
-        self.line_width_text = ipywidgets.BoundedIntText(
-            description='Line width', value=mesh_options['line_width'], min=0,
-            max=10**6, width='3cm')
         self.step_text = ipywidgets.BoundedIntText(
             description='Step', value=mesh_options['step'], min=1, max=10**6,
-            width='3cm')
-        self.alpha_slider = ipywidgets.FloatSlider(
-            description='Alpha', value=mesh_options['alpha'],
-            min=0.0, max=1.0, step=0.1, width='3cm', continuous_update=False)
+            width='2cm')
 
         # Group widgets
-        self.widgets_box_1 = ipywidgets.VBox(
-            children=[self.colour_widget, self.marker_size_text,
-                      self.line_width_text, self.alpha_slider], margin='0.1cm')
-        self.widgets_box_2 = ipywidgets.VBox(
-            children=[self.marker_style_dropdown, self.marker_resolution_text,
-                      self.step_text], margin='0.1cm')
-        self.widgets_box_3 = ipywidgets.HBox(
-            children=[self.widgets_box_1, self.widgets_box_2], margin='0.1cm')
+        self.marker_style_size_box = ipywidgets.VBox(
+            children=[self.marker_style_dropdown, self.marker_size_text],
+            margin='0.1cm')
+        self.marker_resolution_step_box = ipywidgets.VBox(
+            children=[self.marker_resolution_text, self.step_text],
+            margin='0.1cm')
+        self.marker_options_box = ipywidgets.HBox(
+            children=[self.marker_style_size_box,
+                      self.marker_resolution_step_box], margin='0.1cm')
+        self.colour_alpha_box = ipywidgets.VBox(
+            children=[self.colour_widget, self.alpha_slider], margin='0.1cm')
+        self.toggles_linewidth_box = ipywidgets.HBox(
+            children=[self.mesh_type_toggles, self.line_width_text],
+            margin='0.1cm')
 
         # Create final widget
-        children = [self.mesh_type_toggles, self.widgets_box_3]
+        children = [self.toggles_linewidth_box, self.colour_alpha_box,
+                    self.marker_options_box]
         mesh_options['colour'] = colour_converter.to_rgb(mesh_options['colour'])
         super(TriMeshOptionsWidget, self).__init__(
             children, Dict, mesh_options, render_function=render_function,
             orientation='vertical', align='start')
 
         # Set functionality
+        def marker_options_visible(change):
+            self.marker_options_box.visible = change['new'] == 'fancymesh'
+        marker_options_visible({'new': mesh_options['mesh_type']})
+        self.mesh_type_toggles.observe(marker_options_visible, names='value',
+                                       type='change')
+
+        def line_width_visible(change):
+            self.line_width_text.visible = change['new'] in ['wireframe',
+                                                             'mesh',
+                                                             'fancymesh']
+        line_width_visible({'new': mesh_options['mesh_type']})
+        self.mesh_type_toggles.observe(line_width_visible, names='value',
+                                       type='change')
+
         def save_options(change):
             self.selected_values = {
                 'mesh_type': self.mesh_type_toggles.value,
-                'line_width': int(self.line_width_text.value),
+                'line_width': float(self.line_width_text.value),
                 'colour': colour_converter.to_rgb(
                     self.colour_widget.selected_values[0]),
                 'marker_style': self.marker_style_dropdown.value,
@@ -5461,7 +5482,7 @@ class TriMeshOptionsWidget(MenpoWidget):
 
             # update
             self.mesh_type_toggles.value = mesh_options['mesh_type']
-            self.line_width_text.value = int(mesh_options['line_width'])
+            self.line_width_text.value = float(mesh_options['line_width'])
             self.marker_style_dropdown.value = mesh_options['marker_style']
             self.marker_size_text.value = float(mesh_options['marker_size'])
             self.marker_resolution_text.value = \
@@ -5509,6 +5530,10 @@ class TexturedTriMeshOptionsWidget(MenpoWidget):
     """
     def __init__(self, mesh_options, render_checkbox_title='Render texture',
                  render_function=None):
+        # Initialize color converter instance
+        from matplotlib.colors import ColorConverter
+        colour_converter = ColorConverter()
+
         # Create children
         self.render_texture_checkbox = ipywidgets.Checkbox(
             description=render_checkbox_title,
@@ -5517,9 +5542,9 @@ class TexturedTriMeshOptionsWidget(MenpoWidget):
             options=['surface', 'wireframe'], description='Type',
             tooltip='Select the mesh type.', value=mesh_options['mesh_type'],
             margin='0.1cm')
-        self.line_width_text = ipywidgets.FloatText(
+        self.line_width_text = ipywidgets.BoundedFloatText(
             description='Line width', value=float(mesh_options['line_width']),
-            margin='0.1cm', width='2cm')
+            margin='0.1cm', width='1.2cm', min=0.0, max=10**6)
         self.ambient_slider = ipywidgets.FloatSlider(
             description='Ambient', value=mesh_options['ambient_light'],
             min=0.0, max=1.0, step=0.05, width='4cm', continuous_update=False)
@@ -5543,6 +5568,7 @@ class TexturedTriMeshOptionsWidget(MenpoWidget):
 
         # Create final widget
         children = [self.options_box_1, self.options_box_2, self.options_box_3]
+        mesh_options['colour'] = colour_converter.to_rgb(mesh_options['colour'])
         super(TexturedTriMeshOptionsWidget, self).__init__(
             children, Dict, mesh_options, render_function=render_function,
             orientation='vertical', align='start')
@@ -5568,7 +5594,8 @@ class TexturedTriMeshOptionsWidget(MenpoWidget):
                 'ambient_light': float(self.ambient_slider.value),
                 'specular_light': float(self.specular_slider.value),
                 'alpha': float(self.alpha_slider.value),
-                'colour': self.colour_widget.selected_values[0]}
+                'colour': colour_converter.to_rgb(
+                    self.colour_widget.selected_values[0])}
         self.render_texture_checkbox.observe(save_options, names='value',
                                              type='change')
         self.mesh_type_toggles.observe(save_options, names='value',

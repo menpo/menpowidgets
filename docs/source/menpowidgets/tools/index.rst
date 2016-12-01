@@ -38,13 +38,13 @@ Rendering
     AxesOptionsWidget
     AxesTicksWidget
     ColourSelectionWidget
-    TexturedTriMeshOptionsWidget
     GridOptionsWidget
     ImageOptionsWidget
     LegendOptionsWidget
     LineOptionsWidget
     MarkerOptionsWidget
     NumberingOptionsWidget
+    TexturedTriMeshOptionsWidget
     TriMeshOptionsWidget
     ZoomOneScaleWidget
     ZoomTwoScalesWidget
