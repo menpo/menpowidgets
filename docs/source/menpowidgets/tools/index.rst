@@ -27,6 +27,7 @@ Low-Level
     ListWidget
     SlicingCommandWidget
     SwitchWidget
+    MultipleSelectionTogglesWidget
 
 
 Rendering

@@ -323,6 +323,136 @@ class ListWidget(MenpoWidget):
                 self.call_render_function(old_value, self.selected_values)
 
 
+class MultipleSelectionTogglesWidget(MenpoWidget):
+    r"""
+    Creates a widget for selecting multiple binary flags from toggle buttons.
+
+    * The selected values are stored in the ``self.selected_values`` `trait`.
+    * To update the state of the widget, please refer to the
+      :meth:`set_widget_state` method.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
+
+    Parameters
+    ----------
+    labels : `list`
+        The available options that are used as toggles' descriptions.
+    with_labels : `list` or ``None``, optional
+        The items from `labels` that will be selected by default.
+    description : `str`, optional
+        The description of the widget.
+    render_function : `callable` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    """
+    def __init__(self, labels, with_labels=None, description='Labels',
+                 render_function=None):
+        # Check with labels
+        if with_labels is None or len(with_labels) == 0:
+            with_labels = [l for l in labels]
+
+        # Create children
+        self.labels_title = ipywidgets.Label(value=description)
+        self.labels_toggles = []
+        for l in labels:
+            w = ipywidgets.ToggleButton(description=l, value=l in with_labels)
+            w.layout.width = '{}px'.format(len(l) * 15)
+            self.labels_toggles.append(w)
+
+        # Group widget
+        self.container = ipywidgets.HBox([self.labels_title] +
+                                         self.labels_toggles)
+        self.container.layout.align_items = 'center'
+
+        # Create final widget
+        super(MultipleSelectionTogglesWidget, self).__init__(
+            [self.container], List, with_labels,
+            render_function=render_function)
+
+        # Set property
+        self.labels = labels
+
+        # Set functionality
+        for w in self.labels_toggles:
+            w.observe(self._save_options, names='value', type='change')
+
+    def _save_options(self, _):
+        value = [w.description for w in self.labels_toggles if w.value]
+        if len(value) == 0:
+            value = []
+            for w in self.labels_toggles:
+                w.unobserve(self._save_options, names='value', type='change')
+                w.value = True
+                w.observe(self._save_options, names='value', type='change')
+                value.append(w.description)
+        self.selected_values = value
+
+    def set_widget_state(self, labels, with_labels=None, allow_callback=True):
+        r"""
+        Method that updates the state of the widget if the provided
+        `labels` or `with_labels` values are different than
+        `self.selected_values`.
+
+        Parameters
+        ----------
+        labels : `list`
+            The available options that are used as toggles' descriptions.
+        with_labels : `list` or ``None``, optional
+            The items from `labels` that will be selected by default.
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        # Check with_labels
+        if with_labels is None or len(with_labels) == 0:
+            with_labels = [l for l in labels]
+
+        # Keep old value
+        old_value = self.selected_values
+
+        # Update widget
+        if set(labels) == set(self.labels):
+            if set(with_labels) != set(self.selected_values):
+                for w in self.labels_toggles:
+                    w.unobserve(self._save_options, names='value',
+                                type='change')
+                    w.value = w.description in with_labels
+                    w.observe(self._save_options, names='value', type='change')
+
+                # temporarily remove render callback
+                render_function = self._render_function
+                self.remove_render_function()
+
+                # Assign with_labels
+                self.selected_values = with_labels
+
+                # re-assign render callback
+                self.add_render_function(render_function)
+        else:
+            self.labels_toggles = []
+            for l in labels:
+                w = ipywidgets.ToggleButton(description=l,
+                                            value=l in with_labels)
+                w.layout.width = '{}px'.format(len(l) * 15)
+                w.observe(self._save_options, names='value', type='change')
+                self.labels_toggles.append(w)
+            self.container.children = [self.labels_title] + self.labels_toggles
+            self.labels = labels
+
+            # temporarily remove render callback
+            render_function = self._render_function
+            self.remove_render_function()
+
+            # Assign with_labels
+            self.selected_values = with_labels
+
+            # re-assign render callback
+            self.add_render_function(render_function)
+
+        # trigger render function if allowed
+        if allow_callback:
+            self.call_render_function(old_value, self.selected_values)
+
+
 class SlicingCommandWidget(MenpoWidget):
     r"""
     Creates a widget for selecting a slicing command.
