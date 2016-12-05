@@ -12,9 +12,8 @@ from menpo.image.base import _convert_patches_list_to_single_array
 from .options import (RendererOptionsWidget, TextPrintWidget,
                       SaveMatplotlibFigureOptionsWidget, AnimationOptionsWidget,
                       LandmarkOptionsWidget, ChannelOptionsWidget,
-                      FeatureOptionsWidget, PlotOptionsWidget,
-                      PatchOptionsWidget, LinearModelParametersWidget,
-                      CameraSnapshotWidget)
+                      PlotOptionsWidget, PatchOptionsWidget,
+                      LinearModelParametersWidget, CameraSnapshotWidget)
 from .style import format_box, map_styles_to_hex_colours
 from .tools import LogoWidget
 from .utils import (extract_group_labels_from_landmarks,
@@ -1266,80 +1265,6 @@ def save_matplotlib_figure(renderer, style='coloured'):
 
     # Display widget
     ipydisplay.display(wid)
-
-
-def features_selection(style='coloured'):
-    r"""
-    Widget that allows selecting a features function and its options. The
-    widget supports all features from `menpo.feature` and has a preview tab.
-    It returns a `list` of length 1 with the selected features function closure.
-
-    Parameters
-    ----------
-    style : ``{'coloured', 'minimal'}``, optional
-        If ``'coloured'``, then the style of the widget will be coloured. If
-        ``minimal``, then the style is simple using black and white colours.
-
-    Returns
-    -------
-    features_function : `list` of length ``1``
-        The function closure of the features function using `functools.partial`.
-        So the function can be called as: ::
-
-            features_image = features_function[0](image)
-
-    """
-    # Ensure that the code is being run inside a Jupyter kernel!
-    from .utils import verify_ipython_and_kernel
-    verify_ipython_and_kernel()
-
-    # Styling options
-    if style == 'coloured':
-        logo_style = 'info'
-        outer_style = 'info'
-        inner_style = 'warning'
-        but_style = 'primary'
-        rad = 10
-    elif style == 'minimal':
-        logo_style = 'minimal'
-        outer_style = ''
-        inner_style = 'minimal'
-        but_style = ''
-        rad = 0
-    else:
-        raise ValueError('style must be either coloured or minimal')
-
-    # Create sub-widgets
-    logo_wid = LogoWidget(style=logo_style)
-    features_options_wid = FeatureOptionsWidget(style=inner_style)
-    select_but = ipywidgets.Button(description='Select')
-    features_wid = ipywidgets.VBox(children=[features_options_wid, select_but],
-                                   align='center')
-
-    # Create final widget
-    wid = ipywidgets.HBox(children=[logo_wid, features_wid])
-    format_box(wid, outer_style, True,
-               map_styles_to_hex_colours(outer_style), 'solid', 1, rad, 0, 0)
-    logo_wid.margin = '0.3cm'
-    features_options_wid.margin = '0.3cm'
-    select_but.margin = '0.2cm'
-    select_but.button_style = but_style
-
-    # function for select button
-    def select_function(name):
-        wid.close()
-        output.pop(0)
-        output.append(features_options_wid.function)
-    select_but.on_click(select_function)
-
-    # Display widget
-    ipydisplay.display(wid)
-
-    # Initialize output with empty list. It needs to be a list so that
-    # it's mutable and synchronizes with frontend.
-    output = [features_options_wid.function]
-
-    return output
 
 
 def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',

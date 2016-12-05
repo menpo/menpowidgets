@@ -1,7 +1,7 @@
-import ipywidgets
+from ipywidgets import Box
 
 
-class MenpoWidget(ipywidgets.FlexBox):
+class MenpoWidget(Box):
     r"""
     Base class for defining a Menpo widget.
 
@@ -14,7 +14,7 @@ class MenpoWidget(ipywidgets.FlexBox):
     ----------
     children : `list` of `ipywidgets`
         The `list` of `ipywidgets` objects to be set as children in the
-        `ipywidgets.FlexBox`.
+        `ipywidgets.Box`.
     trait : `traitlets.TraitType` subclass
         The type of the `selected_values` object that gets added as a trait
         in the widget. Possible options from `traitlets` are {``Int``, ``Float``,
@@ -34,17 +34,12 @@ class MenpoWidget(ipywidgets.FlexBox):
         - ``type`` : ``'change'``
 
         If ``None``, then nothing is added.
-    orientation : {``'horizontal'``, ``'vertical'``}, optional
-        The orientation of the `ipywidgets.FlexBox`.
-    align : {``'start'``, ``'center'``, ``'end'``}, optional
-        The alignment of the children of the `ipywidgets.FlexBox`.
     """
     def __init__(self, children, trait, trait_initial_value,
-                 render_function=None, orientation='vertical', align='start'):
+                 render_function=None):
         # Create box object
         super(MenpoWidget, self).__init__(children=children)
-        self.orientation = orientation
-        self.align = align
+        self.layout.display = 'flex'
 
         # Add trait for selected values
         selected_values = trait(default_value=trait_initial_value)

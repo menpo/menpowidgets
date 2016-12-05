@@ -16,8 +16,8 @@ Logo
     LogoWidget
 
 
-Indexing
---------
+Low-Level
+---------
 
 .. toctree::
     :maxdepth: 2
@@ -26,6 +26,7 @@ Indexing
     IndexButtonsWidget
     ListWidget
     SlicingCommandWidget
+    SwitchWidget
 
 
 Rendering
@@ -48,19 +49,6 @@ Rendering
     TriMeshOptionsWidget
     ZoomOneScaleWidget
     ZoomTwoScalesWidget
-
-
-Features
---------
-
-.. toctree::
-    :maxdepth: 2
-
-    DaisyOptionsWidget
-    DSIFTOptionsWidget
-    HOGOptionsWidget
-    IGOOptionsWidget
-    LBPOptionsWidget
 
 
 Webcam

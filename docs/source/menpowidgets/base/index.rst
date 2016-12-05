@@ -45,6 +45,5 @@ Various
     :maxdepth: 2
 
     webcam_widget
-    features_selection
     plot_graph
     save_matplotlib_figure

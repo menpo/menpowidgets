@@ -689,7 +689,7 @@ def list_has_constant_step(l):
         The step value. ``None`` if `has_constant_step` is ``False``.
     """
     if len(l) <= 1:
-        return False, None
+        return False, 1
     step = l[1] - l[0]
     s = step
     i = 2
@@ -699,7 +699,7 @@ def list_has_constant_step(l):
     if i == len(l) and s == step:
         return True, step
     else:
-        return False, None
+        return False, 1
 
 
 def sample_colours_from_colourmap(n_colours, colour_map):
