@@ -1,11 +1,12 @@
 from collections import OrderedDict
 import ipywidgets
 from traitlets.traitlets import List, Int, Float, Dict, Bool, Unicode
-from traitlets import link
+from traitlets import link, dlink
 from PIL import Image as PILImage
 from io import BytesIO
 import numpy as np
 from base64 import b64decode
+from IPython.display import HTML
 
 from menpo.compatibility import unicode
 from menpo.image import Image
@@ -587,26 +588,41 @@ class IndexSliderWidget(MenpoWidget):
         The render function that is executed when the index value changes.
         If ``None``, then nothing is assigned.
     """
-    def __init__(self, index, description='Index: ', continuous_update=False,
+    def __init__(self, index, description='Index', continuous_update=False,
                  render_function=None):
         # Create children
         self.slider_description = ipywidgets.Label(value=description)
         self.slider = ipywidgets.IntSlider(
             min=index['min'], max=index['max'], value=index['index'],
-            step=index['step'], readout=True, readout_format='i',
+            step=index['step'], readout=False,
             continuous_update=continuous_update)
-        self.slider.layout.width='8cm'
+        self.slider_text = ipywidgets.Text(value=str(index['index']))
+        self.slider.layout.width = '5cm'
+        self.slider_text.layout.width = '2cm'
 
         # Create final widget
-        self.container = ipywidgets.HBox([self.slider_description, self.slider])
+        self.container = ipywidgets.HBox([self.slider_description,
+                                          self.slider, self.slider_text])
         self.container.layout.align_items = 'center'
         super(IndexSliderWidget, self).__init__(
             [self.container], Int, index['index'],
             render_function=render_function)
 
         # Set functionality
+        def sync_value(_):
+            value = int(self.slider_text.value)
+            if value < self.slider.min:
+                value = self.slider.min
+                self.slider_text.value = str(value)
+            if value > self.slider.max:
+                value = self.slider.max
+                self.slider_text.value = str(value)
+            self.slider.value = value
+        self.slider_text.on_submit(sync_value)
+
         def save_index(change):
             self.selected_values = change['new']
+            self.slider_text.value = str(change['new'])
         self.slider.observe(save_index, names='value', type='change')
 
     def set_widget_state(self, index, allow_callback=True):
@@ -692,7 +708,7 @@ class IndexButtonsWidget(MenpoWidget):
     text_editable : `bool`, optional
         Flag that determines whether the index text will be editable.
     """
-    def __init__(self, index, render_function=None, description='Index: ',
+    def __init__(self, index, render_function=None, description='Index',
                  minus_description='fa-minus', plus_description='fa-plus',
                  loop_enabled=True, text_editable=True):
         # Create children
@@ -718,6 +734,7 @@ class IndexButtonsWidget(MenpoWidget):
                                       self.button_plus])
         self.box_1.layout.align_items = 'center'
         self.box_2 = ipywidgets.VBox([self.box_1, self.progress_bar])
+        self.box_2.layout.align_items = 'center'
         self.container = ipywidgets.HBox([self.title, self.box_2])
         self.container.layout.align_items = 'baseline'
         self.container.layout.justify_content = 'flex-start'
@@ -735,9 +752,9 @@ class IndexButtonsWidget(MenpoWidget):
         self.text_editable = text_editable
 
         # Set functionality
-        ipywidgets.jslink((self.index_text, 'value'),
-                          (self.progress_bar, 'value'))
-        def save_index(_):
+        dlink((self.index_text, 'value'), (self.progress_bar, 'value'))
+
+        def submit_index(_):
             try:
                 tmp_val = int(self.index_text.value)
                 if tmp_val < self.min:
@@ -749,9 +766,8 @@ class IndexButtonsWidget(MenpoWidget):
             except ValueError:
                 tmp_val = 0
                 self.index_text.value = '0'
-            #self.progress_bar.value = tmp_val
             self.selected_values = tmp_val
-        self.index_text.on_submit(save_index)
+        self.index_text.on_submit(submit_index)
 
         def value_plus(name):
             tmp_val = int(self.index_text.value) + self.step
@@ -762,7 +778,6 @@ class IndexButtonsWidget(MenpoWidget):
                     self.index_text.value = str(self.max)
             else:
                 self.index_text.value = str(tmp_val)
-            #self.progress_bar.value = int(self.index_text.value)
             self.selected_values = int(self.index_text.value)
         self.button_plus.on_click(value_plus)
 
@@ -775,9 +790,14 @@ class IndexButtonsWidget(MenpoWidget):
                     self.index_text.value = str(self.min)
             else:
                 self.index_text.value = str(tmp_val)
-            #self.progress_bar.value = int(self.index_text.value)
             self.selected_values = int(self.index_text.value)
         self.button_minus.on_click(value_minus)
+
+    def _change_bar_height(self):
+        HTML('<style> '
+             '.progress {height: 4px;} '
+             '.widget-hprogress {height: 5px;} '
+             '</style>')
 
     def set_widget_state(self, index, loop_enabled, text_editable,
                          allow_callback=True):
@@ -833,6 +853,9 @@ class IndexButtonsWidget(MenpoWidget):
             # trigger render function if allowed
             if allow_callback:
                 self.call_render_function(old_value, index['index'])
+
+            # Update selected_values
+            self.selected_values = index['index']
 
 
 class ColourSelectionWidget(MenpoWidget):

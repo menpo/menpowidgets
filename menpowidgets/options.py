@@ -23,28 +23,11 @@ from .utils import sample_colours_from_colourmap
 
 class AnimationOptionsWidget(MenpoWidget):
     r"""
-    Creates a widget for animating through a list of objects. The widget
-    consists of the following objects from `ipywidgets` and
-    :ref:`api-tools-index`:
-
-    == ========================= ====================== ====================
-    No Object                    Property (`self.`)     Description
-    == ========================= ====================== ====================
-    1  `ToggleButton`            `play_stop_toggle`     The play/stop button
-    2  `Button`                  `fast_forward_button`  Increase speed
-    3  `Button`                  `fast_backward_button` Decrease speed
-    4  `ToggleButton`            `loop_toggle`          Repeat mode
-    5  `HBox`                    `animation_box`        Contains 1, 2, 3, 4
-    8  :map:`IndexButtonsWidget` `index_wid`            The index selector
-
-       :map:`IndexSliderWidget`
-    == ========================= ====================== ====================
+    Creates a widget for animating through a list of objects.
 
     Note that:
 
     * The selected values are stored in the ``self.selected_values`` `trait`.
-    * To set the styling of this widget please refer to the :meth:`style` and
-      :meth:`predefined_style` methods.
     * To update the state of the widget, please refer to the
       :meth:`set_widget_state` method.
     * To update the handler callback function of the widget, please refer to the
@@ -137,14 +120,17 @@ class AnimationOptionsWidget(MenpoWidget):
         >>> wid.set_widget_state(new_options, allow_callback=False)
     """
     def __init__(self, index, render_function=None, index_style='buttons',
-                 interval=0.2, interval_step=0.05, description='Index: ',
-                 loop_enabled=True, style='minimal', continuous_update=False):
+                 interval=0.2, interval_step=0.05, description='Index',
+                 loop_enabled=True, continuous_update=False, style=''):
         from time import sleep
         from IPython import get_ipython
 
         # Get the kernel to use it later in order to make sure that the widgets'
         # traits changes are passed during a while-loop
         kernel = get_ipython().kernel
+
+        self._toggle_play_style = '' if style == '' else 'success'
+        self._toggle_stop_style = '' if style == '' else 'danger'
 
         # Create index widget
         if index_style == 'slider':
@@ -158,34 +144,39 @@ class AnimationOptionsWidget(MenpoWidget):
                 text_editable=True)
         else:
             raise ValueError('index_style should be either slider or buttons')
-        self.index_wid.style(box_style=None, border_visible=False,
-                             padding=0, margin='0.1cm')
 
         # Create other widgets
         self.play_stop_toggle = ipywidgets.ToggleButton(
-                icon='fa-play', description='', value=False, margin='0.1cm',
-                tooltip='Play animation')
-        self._toggle_play_style = '' if style == 'minimal' else 'success'
-        self._toggle_stop_style = '' if style == 'minimal' else 'danger'
+            icon='fa-play', description='', value=False,
+            tooltip='Play animation')
         self.fast_forward_button = ipywidgets.Button(
-                icon='fa-fast-forward', description='', margin='0.1cm',
-                tooltip='Increase animation speed')
+            icon='fa-fast-forward', description='',
+            tooltip='Increase animation speed')
         self.fast_backward_button = ipywidgets.Button(
-                icon='fa-fast-backward', description='', margin='0.1cm',
-                tooltip='Decrease animation speed')
+            icon='fa-fast-backward', description='',
+            tooltip='Decrease animation speed')
         loop_icon = 'fa-repeat' if loop_enabled else 'fa-long-arrow-right'
         self.loop_toggle = ipywidgets.ToggleButton(
-                icon=loop_icon, description='', value=loop_enabled,
-                margin='0.1cm', tooltip='Repeat animation')
-        self.animation_box = ipywidgets.HBox(
-            children=[self.play_stop_toggle, self.loop_toggle,
-                      self.fast_backward_button, self.fast_forward_button])
+            icon=loop_icon, description='', value=loop_enabled,
+            tooltip='Repeat animation')
+        self.play_stop_toggle.layout.width = '40px'
+        self.fast_forward_button.layout.width = '40px'
+        self.fast_backward_button.layout.width = '40px'
+        self.loop_toggle.layout.width = '40px'
+
+        # Group widgets
+        self.box_1 = ipywidgets.HBox([self.play_stop_toggle, self.loop_toggle,
+                                      self.fast_backward_button,
+                                      self.fast_forward_button])
+        self.box_1.layout.align_items = 'center'
+        self.box_1.layout.margin = '0px 0px 0px 10px'
+        self.container = ipywidgets.HBox([self.index_wid, self.box_1])
+        self.container.layout.align_items = 'flex-start'
 
         # Create final widget
-        children = [self.index_wid, self.animation_box]
         super(AnimationOptionsWidget, self).__init__(
-            children, Int, index['index'], render_function=render_function,
-            orientation='horizontal', align='start')
+            [self.container], Int, index['index'],
+            render_function=render_function)
 
         # Assign properties
         self.min = index['min']
@@ -210,6 +201,14 @@ class AnimationOptionsWidget(MenpoWidget):
                 # Change the icon and tooltip to Stop
                 self.play_stop_toggle.icon = 'fa-stop'
                 self.play_stop_toggle.tooltip = 'Stop animation'
+                # Disable index widget
+                if self.index_style == 'buttons':
+                    self.index_wid.index_text.disabled = True
+                    self.index_wid.button_plus.disabled = True
+                    self.index_wid.button_minus.disabled = True
+                else:
+                    self.index_wid.slider.disabled = True
+                    self.index_wid.slider_text.disabled = True
             else:
                 # Animation was playing, so Stop was pressed.
                 # Change the button style
@@ -217,6 +216,14 @@ class AnimationOptionsWidget(MenpoWidget):
                 # Change the icon and tooltip to Play
                 self.play_stop_toggle.icon = 'fa-play'
                 self.play_stop_toggle.tooltip = 'Play animation'
+                # Enable index widget
+                if self.index_style == 'buttons':
+                    self.index_wid.index_text.disabled = False
+                    self.index_wid.button_plus.disabled = False
+                    self.index_wid.button_minus.disabled = False
+                else:
+                    self.index_wid.slider.disabled = False
+                    self.index_wid.slider_text.disabled = False
         self.play_stop_toggle.observe(play_stop_pressed, names='value',
                                       type='change')
 
@@ -253,7 +260,11 @@ class AnimationOptionsWidget(MenpoWidget):
                 if index_style == 'slider':
                     self.index_wid.slider.value = i
                 else:
-                    self.index_wid.index_text.value = i
+                    self.index_wid.set_widget_state(
+                        {'min': self.min, 'max': self.max, 'step': self.step,
+                         'index': i},
+                        loop_enabled=self.loop_enabled, text_editable=False,
+                        allow_callback=True)
 
                 # Run IPython iteration.
                 # This is the code that makes this operation non-blocking.
@@ -276,129 +287,19 @@ class AnimationOptionsWidget(MenpoWidget):
         self.index_wid.observe(save_value, names='selected_values',
                                type='change')
 
-    def style(self, box_style=None, border_visible=False, border_colour='black',
-              border_style='solid', border_width=1, border_radius=0, padding=0,
-              margin=0, font_family='', font_size=None, font_style='',
-              font_weight=''):
-        r"""
-        Function that defines the styling of the widget.
-
-        Parameters
-        ----------
-        box_style : `str` or ``None`` (see below), optional
-            Possible widget style options::
-
-                'success', 'info', 'warning', 'danger', '', None
-
-        border_visible : `bool`, optional
-            Defines whether to draw the border line around the widget.
-        border_colour : `str`, optional
-            The colour of the border around the widget.
-        border_style : `str`, optional
-            The line style of the border around the widget.
-        border_width : `float`, optional
-            The line width of the border around the widget.
-        border_radius : `float`, optional
-            The radius of the border around the widget.
-        padding : `float`, optional
-            The padding around the widget.
-        margin : `float`, optional
-            The margin around the widget.
-        font_family : `str` (see below), optional
-            The font family to be used. Example options::
-
-                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
-                'helvetica'
-
-        font_size : `int`, optional
-            The font size.
-        font_style : `str` (see below), optional
-            The font style. Example options::
-
-                'normal', 'italic', 'oblique'
-
-        font_weight : See Below, optional
-            The font weight. Example options::
-
-                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
-                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
-                'extra bold', 'black'
-        """
-        format_box(self, box_style, border_visible, border_colour, border_style,
-                   border_width, border_radius, padding, margin)
-        format_font(self, font_family, font_size, font_style, font_weight)
-        if self.index_style == 'buttons':
-            self.index_wid.style(
-                box_style=None, border_visible=False, padding=0,
-                margin='0.1cm', font_family=font_family, font_size=font_size,
-                font_style=font_style, font_weight=font_weight)
-        else:
-            self.index_wid.style(
-                box_style=None, border_visible=False, padding=0,
-                margin='0.1cm', font_family=font_family, font_size=font_size,
-                font_style=font_style, font_weight=font_weight)
-
     def predefined_style(self, style):
-        r"""
-        Function that sets a predefined style on the widget.
-
-        Parameters
-        ----------
-        style : `str` (see below)
-            Style options:
-
-                ============= ============================
-                Style         Description
-                ============= ============================
-                ``'minimal'`` Simple black and white style
-                ``'success'`` Green-based style
-                ``'info'``    Blue-based style
-                ``'warning'`` Yellow-based style
-                ``'danger'``  Red-based style
-                ``''``        No style
-                ============= ============================
-        """
-        if style == 'minimal':
-            self.style(box_style='', border_visible=False)
-            self.play_stop_toggle.button_style = ''
-            self.fast_forward_button.button_style = ''
-            self.fast_backward_button.button_style = ''
-            self.loop_toggle.button_style = ''
-            if self.index_style == 'buttons':
-                self.index_wid.button_plus.button_style = ''
-                self.index_wid.button_plus.font_weight = 'normal'
-                self.index_wid.button_minus.button_style = ''
-                self.index_wid.button_minus.font_weight = 'normal'
-                self.index_wid.index_text.background_color = None
-            elif self.index_style == 'slider':
-                self.index_wid.slider.slider_color = None
-                self.index_wid.slider.background_color = None
-            self._toggle_play_style = ''
-            self._toggle_stop_style = ''
-        elif (style == 'info' or style == 'success' or style == 'danger' or
-              style == 'warning'):
-            self.style(box_style=style, border_visible=False)
-            self.play_stop_toggle.button_style = 'success'
+        if style != '':
+            self.container.box_style = style
+            self.play_stop_toggle.button_style = self._toggle_play_style
             self.fast_forward_button.button_style = 'info'
             self.fast_backward_button.button_style = 'info'
-            self.loop_toggle.button_style = 'info'
+            self.loop_toggle.button_style = 'warning'
             if self.index_style == 'buttons':
                 self.index_wid.button_plus.button_style = 'primary'
-                self.index_wid.button_plus.font_weight = 'bold'
                 self.index_wid.button_minus.button_style = 'primary'
-                self.index_wid.button_minus.font_weight = 'bold'
-                self.index_wid.index_text.background_color = \
-                    map_styles_to_hex_colours(style, True)
-            elif self.index_style == 'slider':
+            else:
                 self.index_wid.slider.slider_color = \
-                    map_styles_to_hex_colours(style)
-                self.index_wid.slider.background_color = \
-                    map_styles_to_hex_colours(style)
-            self._toggle_play_style = 'success'
-            self._toggle_stop_style = 'danger'
-        else:
-            raise ValueError('style must be minimal or info or success or '
-                             'danger or warning')
+                    map_styles_to_hex_colours(style, False)
 
     def set_widget_state(self, index, allow_callback=True):
         r"""
