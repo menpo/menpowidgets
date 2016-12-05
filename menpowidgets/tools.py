@@ -11,9 +11,7 @@ from menpo.compatibility import unicode
 from menpo.image import Image
 
 from .abstract import MenpoWidget
-from .style import (map_styles_to_hex_colours, convert_image_to_bytes,
-                    format_box, format_font, format_slider, format_text_box,
-                    parse_font_awesome_icon)
+from .style import convert_image_to_bytes, parse_font_awesome_icon
 from .utils import (lists_are_the_same, decode_colour, parse_slicing_command,
                     list_has_constant_step, parse_int_range_command,
                     parse_float_range_command)
