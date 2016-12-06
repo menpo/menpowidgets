@@ -863,6 +863,7 @@ class IndexButtonsWidget(MenpoWidget):
         self.button_plus.layout.width = '1cm'
         self.index_text.layout.width = '2cm'
         self.progress_bar.layout.width = '4.15cm'
+        self._change_bar_height()
 
         # Group widgets
         self.box_1 = ipywidgets.HBox([self.button_minus, self.index_text,
@@ -1853,9 +1854,10 @@ class ImageOptionsWidget(MenpoWidget):
                 self.call_render_function(old_value, self.selected_values)
 
 
-class LineOptionsWidget(MenpoWidget):
+class LineMatplotlibOptionsWidget(MenpoWidget):
     r"""
-    Creates a widget for selecting line rendering options.
+    Creates a widget for selecting line rendering options for a `matplotlib`
+    renderer.
 
     * The selected values are stored in the ``self.selected_values`` `trait`.
     * To update the state of the widget, please refer to the
@@ -1921,17 +1923,15 @@ class LineOptionsWidget(MenpoWidget):
         self.container = ipywidgets.VBox([self.render_lines_switch, self.box_4])
 
         # Create final widget
-        super(LineOptionsWidget, self).__init__(
+        super(LineMatplotlibOptionsWidget, self).__init__(
             [self.container], Dict, line_options,
             render_function=render_function)
 
         # Set functionality
-        def line_options_disable(change):
-            self.line_width_text.disabled = not change['new']
-            self.line_style_dropdown.disabled = not change['new']
-            self.line_colour_widget.disabled(not change['new'])
-        line_options_disable({'new': line_options['render_lines']})
-        self.render_lines_switch.observe(line_options_disable,
+        def line_options_visible(change):
+            self.box_4.layout.display = 'flex' if change['new'] else 'none'
+        line_options_visible({'new': line_options['render_lines']})
+        self.render_lines_switch.observe(line_options_visible,
                                          names='selected_values', type='change')
 
         def save_options(change):
@@ -1996,9 +1996,133 @@ class LineOptionsWidget(MenpoWidget):
                 self.call_render_function(old_value, self.selected_values)
 
 
-class MarkerOptionsWidget(MenpoWidget):
+class LineMayaviOptionsWidget(MenpoWidget):
     r"""
-    Creates a widget for selecting marker rendering options.
+    Creates a widget for selecting line rendering options for a `mayavi`
+    renderer.
+
+    * The selected values are stored in the ``self.selected_values`` `trait`.
+    * To update the state of the widget, please refer to the
+      :meth:`set_widget_state` method.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
+
+    Parameters
+    ----------
+    line_options : `dict`
+        The initial line options. It must be a `dict` with the following keys:
+
+        * ``render_lines`` : (`bool`) Flag for rendering the lines.
+        * ``line_width`` : ('float`) The width of the lines (e.g. ``1.``)
+        * ``line_colour`` : (`str`) The colour of the lines (e.g. ``'blue'``).
+
+    render_function : `callable` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    render_checkbox_title : `str`, optional
+        The description of the show line checkbox.
+    labels : `list` of `str` or ``None``, optional
+        A `list` with the labels' names that get passed in to the
+        `ColourSelectionWidget`. If ``None``, then a `list` of the form
+        ``label {}`` is automatically defined. Note that the labels are defined
+        only for the colour option and not the rest of the options.
+    """
+    def __init__(self, line_options, render_function=None,
+                 render_checkbox_title='Render lines', labels=None):
+        # Create children
+        self.render_lines_switch = SwitchWidget(
+            line_options['render_lines'], description=render_checkbox_title,
+            description_location='right')
+        self.render_lines_switch.layout.margin = '7px'
+        self.line_width_title = ipywidgets.Label(value='Width')
+        self.line_width_text = ipywidgets.BoundedFloatText(
+            value=line_options['line_width'], min=0., max=10**6, width='3cm')
+        self.line_colour_widget = ColourSelectionWidget(
+            line_options['line_colour'], description='Colour', labels=labels,
+            render_function=None)
+
+        # Group widgets
+        self.box_1 = ipywidgets.HBox([self.line_width_title,
+                                      self.line_width_text])
+        self.box_1.layout.align_items = 'center'
+        self.box_1.layout.margin = '0px 10px 0px 0px'
+        self.box_2 = ipywidgets.HBox([self.box_1, self.line_colour_widget])
+        self.box_2.layout.align_items = 'flex-start'
+        self.container = ipywidgets.VBox([self.render_lines_switch, self.box_2])
+
+        # Create final widget
+        super(LineMayaviOptionsWidget, self).__init__(
+            [self.container], Dict, line_options,
+            render_function=render_function)
+
+        # Set functionality
+        def line_options_visible(change):
+            self.box_2.layout.display = 'flex' if change['new'] else 'none'
+        line_options_visible({'new': line_options['render_lines']})
+        self.render_lines_switch.observe(line_options_visible,
+                                         names='selected_values', type='change')
+
+        def save_options(change):
+            self.selected_values = {
+                'render_lines': self.render_lines_switch.selected_values,
+                'line_width': float(self.line_width_text.value),
+                'line_colour': self.line_colour_widget.selected_values}
+        self.render_lines_switch.observe(save_options, names='selected_values',
+                                         type='change')
+        self.line_width_text.observe(save_options, names='value', type='change')
+        self.line_colour_widget.observe(save_options, names='selected_values',
+                                        type='change')
+
+    def set_widget_state(self, line_options, labels=None, allow_callback=True):
+        r"""
+        Method that updates the state of the widget if the provided
+        `line_options` are different than `self.selected_values`.
+
+        Parameters
+        ----------
+        line_options : `dict`
+            The selected line options. It must be a `dict` with the following
+            keys:
+
+            * ``render_lines`` : (`bool`) Flag for rendering the lines.
+            * ``line_width`` : ('float`) The width of the lines (e.g. ``1.``)
+            * ``line_colour`` : (`str`) The colour of the lines (e.g. ``'blue'``).
+
+        labels : `list` of `str` or ``None``, optional
+            A `list` with the labels' names that get passed in to the
+            `ColourSelectionWidget`. If ``None``, then a `list` of the form
+            ``label {}`` is automatically defined.
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        if self.selected_values != line_options:
+            # keep old value
+            old_value = self.selected_values
+
+            # temporarily remove render callback
+            render_function = self._render_function
+            self.remove_render_function()
+
+            # update
+            self.render_lines_switch.set_widget_state(
+                line_options['render_lines'], allow_callback=False)
+            self.line_width_text.value = float(line_options['line_width'])
+            self.line_colour_widget.set_widget_state(
+                line_options['line_colour'], labels=labels,
+                allow_callback=False)
+
+            # re-assign render callback
+            self.add_render_function(render_function)
+
+            # trigger render function if allowed
+            if allow_callback:
+                self.call_render_function(old_value, self.selected_values)
+
+
+class MarkerMatplotlibOptionsWidget(MenpoWidget):
+    r"""
+    Creates a widget for selecting marker rendering options for a `matplotlib`
+    renderer.
 
     * The selected values are stored in the ``self.selected_values`` `trait`.
     * To update the state of the widget, please refer to the
@@ -2017,8 +2141,8 @@ class MarkerOptionsWidget(MenpoWidget):
           (e.g. ``['red', 'blue']``).
         * ``marker_edge_colour`` : (`list`) The edge colours list.
           (e.g. ``['black', 'white']``).
-        * ``marker_style`` : (`str`) The size of the markers. (e.g. ``'o'``).
-        * ``marker_edge_width`` : (`int`) The esdge width of the markers.
+        * ``marker_style`` : (`str`) The style of the markers. (e.g. ``'o'``).
+        * ``marker_edge_width`` : (`int`) The edges width of the markers.
           (e.g. ``1``).
 
     render_function : `callable` or ``None``, optional
@@ -2099,20 +2223,16 @@ class MarkerOptionsWidget(MenpoWidget):
                                           self.box_5])
 
         # Create final widget
-        super(MarkerOptionsWidget, self).__init__(
+        super(MarkerMatplotlibOptionsWidget, self).__init__(
             [self.container], Dict, marker_options,
             render_function=render_function)
 
         # Set functionality
-        def marker_options_disable(change):
-            self.marker_size_text.disabled = not change['new']
-            self.marker_edge_width_text.disabled = not change['new']
-            self.marker_style_dropdown.disabled = not change['new']
-            self.marker_face_colour_widget.disabled(not change['new'])
-            self.marker_edge_colour_widget.disabled(not change['new'])
-        marker_options_disable({'new': marker_options['render_markers']})
+        def marker_options_visible(change):
+            self.box_5.layout.display = 'flex' if change['new'] else 'none'
+        marker_options_visible({'new': marker_options['render_markers']})
         self.render_markers_switch.observe(
-            marker_options_disable, names='selected_values', type='change')
+            marker_options_visible, names='selected_values', type='change')
 
         def save_options(change):
             self.selected_values = {
@@ -2185,6 +2305,179 @@ class MarkerOptionsWidget(MenpoWidget):
                 allow_callback=False)
             self.marker_edge_colour_widget.set_widget_state(
                 marker_options['marker_edge_colour'], labels=labels,
+                allow_callback=False)
+
+            # re-assign render callback
+            self.add_render_function(render_function)
+
+            # trigger render function if allowed
+            if allow_callback:
+                self.call_render_function(old_value, self.selected_values)
+
+
+class MarkerMayaviOptionsWidget(MenpoWidget):
+    r"""
+    Creates a widget for selecting marker rendering options for a `mayavi`
+    renderer.
+
+    * The selected values are stored in the ``self.selected_values`` `trait`.
+    * To update the state of the widget, please refer to the
+      :meth:`set_widget_state` method.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
+
+    Parameters
+    ----------
+    marker_options : `dict`
+        The initial marker options. It must be a `dict` with the following keys:
+
+        * ``render_markers`` : (`bool`) Flag for rendering the markers.
+        * ``marker_style`` : (`str`) The style of the markers. (e.g. ``'o'``).
+        * ``marker_size`` : (`float`) The size of the markers (e.g. ``1.``).
+        * ``marker_resolution`` : (`int`) The resolution of the markers (e.g. ``8``).
+        * ``marker_colour`` : (`list`) The colours list. (e.g. ``['red', 'blue']``).
+
+    render_function : `callable` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    render_checkbox_title : `str`, optional
+        The description of the render marker checkbox.
+    labels : `list` of `str` or ``None``, optional
+        A `list` with the labels' names that get passed in to the
+        `ColourSelectionWidget`. If ``None``, then a `list` of the form
+        ``label {}`` is automatically defined. Note that the labels are defined
+        only for the colour option and not the rest of the options.
+    """
+    def __init__(self, marker_options, render_function=None,
+                 render_checkbox_title='Render markers', labels=None):
+        # Create children
+        self.render_markers_switch = SwitchWidget(
+            marker_options['render_markers'], description=render_checkbox_title,
+            description_location='right')
+        self.render_markers_switch.layout.margin = '7px'
+        self.marker_size_title = ipywidgets.Label(value='Size')
+        self.marker_size_text = ipywidgets.BoundedFloatText(
+            value=marker_options['marker_size'], min=0, max=10**6, width='3cm')
+        self.marker_resolution_title = ipywidgets.Label(value='Resolution')
+        self.marker_resolution_text = ipywidgets.BoundedIntText(
+            value=marker_options['marker_resolution'], min=0., max=10**6,
+            width='3cm')
+        self.marker_style_title = ipywidgets.Label(value='Style')
+        marker_style_dict = OrderedDict()
+        marker_style_dict['Sphere'] = 'sphere'
+        marker_style_dict['Cube'] = 'cube'
+        marker_style_dict['Cone'] = 'cone'
+        marker_style_dict['Cylinder'] = 'cylinder'
+        marker_style_dict['Arrow'] = 'arrow'
+        marker_style_dict['Axes'] = 'axes'
+        marker_style_dict['Point'] = 'point'
+        marker_style_dict['2D arrow'] = '2darrow'
+        marker_style_dict['2D circle'] = '2dcircle'
+        marker_style_dict['2D cross'] = '2dcross'
+        marker_style_dict['2D dash'] = '2ddash'
+        marker_style_dict['2D diamond'] = '2ddiamond'
+        marker_style_dict['2D hooked arrow'] = '2dhooked_arrow'
+        marker_style_dict['2D square'] = '2dsquare'
+        marker_style_dict['2D thick arrow'] = '2dthick_arrow'
+        marker_style_dict['2D thick cross'] = '2dthick_cross'
+        marker_style_dict['2D triangle'] = '2dtriangle'
+        marker_style_dict['2D vertex'] = '2dvertex'
+        self.marker_style_dropdown = ipywidgets.Dropdown(
+            options=marker_style_dict, value=marker_options['marker_style'],
+            width='3cm')
+        self.marker_colour_widget = ColourSelectionWidget(
+            marker_options['marker_colour'], description='Colour',
+            labels=labels, render_function=None)
+
+        # Group widgets
+        self.box_1 = ipywidgets.HBox([self.marker_size_title,
+                                      self.marker_size_text])
+        self.box_1.layout.align_items = 'center'
+        self.box_2 = ipywidgets.HBox([self.marker_resolution_title,
+                                      self.marker_resolution_text])
+        self.box_2.layout.align_items = 'center'
+        self.box_3 = ipywidgets.HBox([self.marker_style_title,
+                                      self.marker_style_dropdown])
+        self.box_3.layout.align_items = 'center'
+        self.box_3 = ipywidgets.VBox([self.box_3, self.box_1, self.box_2])
+        self.box_3.layout.align_items = 'flex-end'
+        self.box_3.layout.margin = '0px 10px 0px 0px'
+        self.box_4 = ipywidgets.VBox([self.marker_colour_widget])
+        self.box_5 = ipywidgets.HBox([self.box_3, self.box_4])
+        self.container = ipywidgets.VBox([self.render_markers_switch,
+                                          self.box_5])
+
+        # Create final widget
+        super(MarkerMayaviOptionsWidget, self).__init__(
+            [self.container], Dict, marker_options,
+            render_function=render_function)
+
+        # Set functionality
+        def marker_options_visible(change):
+            self.box_5.layout.display = 'flex' if change['new'] else 'none'
+        marker_options_visible({'new': marker_options['render_markers']})
+        self.render_markers_switch.observe(
+            marker_options_visible, names='selected_values', type='change')
+
+        def save_options(change):
+            self.selected_values = {
+                'render_markers': self.render_markers_switch.selected_values,
+                'marker_size': float(self.marker_size_text.value),
+                'marker_colour': self.marker_colour_widget.selected_values,
+                'marker_resolution': int(self.marker_resolution_text.value),
+                'marker_style': self.marker_style_dropdown.value}
+        self.render_markers_switch.observe(
+            save_options, names='selected_values', type='change')
+        self.marker_size_text.observe(save_options, names='value', type='change')
+        self.marker_colour_widget.observe(
+                save_options, names='selected_values', type='change')
+        self.marker_style_dropdown.observe(save_options, names='value',
+                                           type='change')
+        self.marker_resolution_text.observe(save_options, names='value',
+                                            type='change')
+
+    def set_widget_state(self, marker_options, labels=None,
+                         allow_callback=True):
+        r"""
+        Method that updates the state of the widget if the provided
+        `marker_options` are different than `self.selected_values`.
+
+        Parameters
+        ----------
+        marker_options : `dict`
+            The seected marker options. It must be a `dict` with the following
+            keys:
+
+        * ``render_markers`` : (`bool`) Flag for rendering the markers.
+        * ``marker_style`` : (`str`) The style of the markers. (e.g. ``'o'``).
+        * ``marker_size`` : (`float`) The size of the markers (e.g. ``1.``).
+        * ``marker_resolution`` : (`int`) The resolution of the markers (e.g. ``8``).
+        * ``marker_colour`` : (`list`) The colours list. (e.g. ``['red', 'blue']``).
+
+        labels : `list` of `str` or ``None``, optional
+            A `list` with the labels' names that get passed in to the
+            `ColourSelectionWidget`. If ``None``, then a `list` of the form
+            ``label {}`` is automatically defined.
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        if self.selected_values != marker_options:
+            # keep old value
+            old_value = self.selected_values
+
+            # temporarily remove render callback
+            render_function = self._render_function
+            self.remove_render_function()
+
+            # update
+            self.render_markers_switch.set_widget_state(
+                marker_options['render_markers'], allow_callback=False)
+            self.marker_style_dropdown.value = marker_options['marker_style']
+            self.marker_size_text.value = float(marker_options['marker_size'])
+            self.marker_resolution_text.value = \
+                int(marker_options['marker_resolution'])
+            self.marker_colour_widget.set_widget_state(
+                marker_options['marker_colour'], labels=labels,
                 allow_callback=False)
 
             # re-assign render callback

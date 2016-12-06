@@ -43,8 +43,10 @@ Rendering
     GridOptionsWidget
     ImageOptionsWidget
     LegendOptionsWidget
-    LineOptionsWidget
-    MarkerOptionsWidget
+    LineMatplotlibOptionsWidget
+    LineMayaviOptionsWidget
+    MarkerMatplotlibOptionsWidget
+    MarkerMayaviOptionsWidget
     NumberingOptionsWidget
     TexturedTriMeshOptionsWidget
     TriMeshOptionsWidget
