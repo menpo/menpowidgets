@@ -10,9 +10,11 @@ from menpo.compatibility import unicode
 
 from .abstract import MenpoWidget
 from .tools import (IndexSliderWidget, IndexButtonsWidget, SlicingCommandWidget,
-                    LineOptionsWidget, MarkerOptionsWidget, LogoWidget,
-                    NumberingOptionsWidget, LegendOptionsWidget,
-                    ZoomOneScaleWidget, ZoomTwoScalesWidget, AxesOptionsWidget,
+                    LineMatplotlibOptionsWidget, MarkerMatplotlibOptionsWidget,
+                    LineMayaviOptionsWidget, MarkerMayaviOptionsWidget,
+                    LogoWidget, NumberingMatplotlibOptionsWidget,
+                    LegendOptionsWidget, ZoomOneScaleWidget,
+                    ZoomTwoScalesWidget, AxesOptionsWidget,
                     GridOptionsWidget, ImageOptionsWidget, CameraWidget,
                     ColourSelectionWidget, TriMeshOptionsWidget,
                     TexturedTriMeshOptionsWidget, SwitchWidget,
@@ -379,6 +381,93 @@ class AnimationOptionsWidget(MenpoWidget):
 
 
 class Shape2DOptionsWidget(MenpoWidget):
+    r"""
+    Creates a widget for selecting options for 2D shapes,
+    i.e. `menpo.shape.PointCloud`, `menpo.shape.PointGraph`,
+    `menpo.shape.LabelledPointGraph` and `menpo.shape.TriMesh`.
+
+    Note that:
+
+    * The selected values are stored in the ``self.selected_values`` `trait`.
+    * To update the state of the widget, please refer to the
+      :meth:`set_widget_state` method.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
+
+    Parameters
+    ----------
+    labels : `list` or ``None``
+        The `list` of labels. If ``None``, then it is assumed that there are
+        no labels.
+    render_function : `callable` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        It must have signature ``render_function(change)`` where ``change`` is
+        a `dict` with the following keys:
+
+        * ``type`` : The type of notification (normally ``'change'``).
+        * ``owner`` : the `HasTraits` instance
+        * ``old`` : the old value of the modified trait attribute
+        * ``new`` : the new value of the modified trait attribute
+        * ``name`` : the name of the modified trait attribute.
+
+        If ``None``, then nothing is assigned.
+    style : `str` (see below), optional
+        Sets a predefined style at the widget. Possible options are:
+
+            ============= ============================
+            Style         Description
+            ============= ============================
+            ``'success'`` Green-based style
+            ``'info'``    Blue-based style
+            ``'warning'`` Yellow-based style
+            ``'danger'``  Red-based style
+            ``''``        No style
+            ============= ============================
+
+    suboptions_style : `str` (see below), optional
+        Sets a predefined style at the widget's suboptions. Possible options
+        are:
+
+            ============= ============================
+            Style         Description
+            ============= ============================
+            ``'success'`` Green-based style
+            ``'info'``    Blue-based style
+            ``'warning'`` Yellow-based style
+            ``'danger'``  Red-based style
+            ``''``        No style
+            ============= ============================
+
+    Example
+    -------
+    Let's create a shape options widget and then update its state. Firstly,
+    we need to import it:
+
+        >>> from menpowidgets.options import Shape2DOptionsWidget
+
+    Now let's define a render function that will get called on every widget
+    change and will dynamically print the selected index:
+
+        >>> from menpo.visualize import print_dynamic
+        >>> def render_function(change):
+        >>>     s = "Selected index: {}".format(wid.selected_values)
+        >>>     print_dynamic(s)
+
+    Create the widget with some initial options and display it:
+
+        >>> labels = ['jaw', 'left_eye', 'right_eye', 'mouth', 'nose']
+        >>> wid = Shape2DOptionsWidget(labels, render_function=render_function,
+        >>>                            style='danger',
+        >>>                            suboptions_style='warning')
+        >>> wid
+
+    By pressing the buttons you can select various labels. Markers and lines
+    options are also available. Finally, let's change the widget status with a
+    new dictionary of options:
+
+        >>> labels = None
+        >>> wid.set_widget_state(labels, allow_callback=False)
+    """
     def __init__(self, labels, render_function=None, style='',
                  suboptions_style=''):
         # Initialize default options dictionary
@@ -395,10 +484,10 @@ class Shape2DOptionsWidget(MenpoWidget):
             selected_value=renderer_options['image_view'],
             description='Image coordinates', description_location='right')
         self.image_view_switch.layout.margin = '7px'
-        self.line_options_wid = LineOptionsWidget(
+        self.line_options_wid = LineMatplotlibOptionsWidget(
             renderer_options['lines'], render_function=None,
             render_checkbox_title='Render lines', labels=labels)
-        self.marker_options_wid = MarkerOptionsWidget(
+        self.marker_options_wid = MarkerMatplotlibOptionsWidget(
             renderer_options['markers'], render_function=None,
             render_checkbox_title='Render markers', labels=labels)
         buttons_style = ''
@@ -423,8 +512,9 @@ class Shape2DOptionsWidget(MenpoWidget):
         self.box_1.set_title(0, 'View')
         self.box_1.set_title(1, 'Markers')
         self.box_1.set_title(2, 'Lines')
-        self.box_2 = ipywidgets.HBox([self.box_1])
+        self.box_2 = ipywidgets.Box([self.box_1])
         self.box_2.layout.border = '2px solid'
+        self.box_2.layout.display = 'table'
         self.container = ipywidgets.VBox([self.labels_options_wid, self.box_2])
 
         # Set style
@@ -622,6 +712,338 @@ class Shape2DOptionsWidget(MenpoWidget):
             # Update subwidgets
             self.image_view_switch.set_widget_state(
                 renderer_options['image_view'], allow_callback=False)
+            self.line_options_wid.set_widget_state(
+                renderer_options['lines'], labels=labels, allow_callback=False)
+            self.marker_options_wid.set_widget_state(
+                renderer_options['markers'], labels=labels,
+                allow_callback=False)
+            if labels is not None:
+                self.labels_options_wid.set_widget_state(
+                    labels, with_labels=renderer_options['with_labels'],
+                    allow_callback=False)
+            else:
+                self.labels_options_wid.set_widget_state(
+                    [' '], with_labels=None, allow_callback=False)
+
+            # Get values
+            self._save_options({})
+
+            # Add callbacks
+            self.add_callbacks()
+            self.add_render_function(render_function)
+
+        # trigger render function if allowed
+        if allow_callback:
+            self.call_render_function(old_value, self.selected_values)
+
+
+class Shape3DOptionsWidget(MenpoWidget):
+    r"""
+    Creates a widget for selecting options for 3D shapes,
+    i.e. `menpo.shape.PointCloud`, `menpo.shape.PointGraph`,
+    and `menpo.shape.LabelledPointGraph`.
+
+    Note that:
+
+    * The selected values are stored in the ``self.selected_values`` `trait`.
+    * To update the state of the widget, please refer to the
+      :meth:`set_widget_state` method.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
+
+    Parameters
+    ----------
+    labels : `list` or ``None``
+        The `list` of labels. If ``None``, then it is assumed that there are
+        no labels.
+    render_function : `callable` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        It must have signature ``render_function(change)`` where ``change`` is
+        a `dict` with the following keys:
+
+        * ``type`` : The type of notification (normally ``'change'``).
+        * ``owner`` : the `HasTraits` instance
+        * ``old`` : the old value of the modified trait attribute
+        * ``new`` : the new value of the modified trait attribute
+        * ``name`` : the name of the modified trait attribute.
+
+        If ``None``, then nothing is assigned.
+    style : `str` (see below), optional
+        Sets a predefined style at the widget. Possible options are:
+
+            ============= ============================
+            Style         Description
+            ============= ============================
+            ``'success'`` Green-based style
+            ``'info'``    Blue-based style
+            ``'warning'`` Yellow-based style
+            ``'danger'``  Red-based style
+            ``''``        No style
+            ============= ============================
+
+    suboptions_style : `str` (see below), optional
+        Sets a predefined style at the widget's suboptions. Possible options
+        are:
+
+            ============= ============================
+            Style         Description
+            ============= ============================
+            ``'success'`` Green-based style
+            ``'info'``    Blue-based style
+            ``'warning'`` Yellow-based style
+            ``'danger'``  Red-based style
+            ``''``        No style
+            ============= ============================
+
+    Example
+    -------
+    Let's create a shape options widget and then update its state. Firstly,
+    we need to import it:
+
+        >>> from menpowidgets.options import Shape3DOptionsWidget
+
+    Now let's define a render function that will get called on every widget
+    change and will dynamically print the selected index:
+
+        >>> from menpo.visualize import print_dynamic
+        >>> def render_function(change):
+        >>>     s = "Selected index: {}".format(wid.selected_values)
+        >>>     print_dynamic(s)
+
+    Create the widget with some initial options and display it:
+
+        >>> labels = ['jaw', 'left_eye', 'right_eye', 'mouth', 'nose']
+        >>> wid = Shape3DOptionsWidget(labels, render_function=render_function,
+        >>>                            style='danger',
+        >>>                            suboptions_style='warning')
+        >>> wid
+
+    By pressing the buttons you can select various labels. Markers and lines
+    options are also available. Finally, let's change the widget status with a
+    new dictionary of options:
+
+        >>> labels = None
+        >>> wid.set_widget_state(labels, allow_callback=False)
+    """
+    def __init__(self, labels, render_function=None, style='',
+                 suboptions_style=''):
+        # Initialize default options dictionary
+        self.default_options = {}
+
+        # Assign properties
+        self.labels = labels
+
+        # Get initial options
+        renderer_options = self.get_default_options(labels)
+
+        # Create widgets
+        self.line_options_wid = LineMayaviOptionsWidget(
+            renderer_options['lines'], render_function=None,
+            render_checkbox_title='Render lines', labels=labels)
+        self.marker_options_wid = MarkerMayaviOptionsWidget(
+            renderer_options['markers'], render_function=None,
+            render_checkbox_title='Render markers', labels=labels)
+        buttons_style = ''
+        if style != '':
+            buttons_style = 'primary'
+        if labels is not None:
+            self.labels_options_wid = MultipleSelectionTogglesWidget(
+                labels=labels, with_labels=renderer_options['with_labels'],
+                render_function=None, description='Labels',
+                buttons_style=buttons_style)
+        else:
+            self.labels_options_wid = MultipleSelectionTogglesWidget(
+                labels=[' '], with_labels=None, render_function=None,
+                description='Labels', buttons_style=buttons_style)
+        self.labels_options_wid.layout.margin = '0px 0px 10px 0px'
+        self.labels_options_wid.container.layout.border = '2px solid'
+
+        # Group widgets
+        self.box_1 = ipywidgets.Tab([self.marker_options_wid,
+                                     self.line_options_wid])
+        self.box_1.set_title(0, 'Markers')
+        self.box_1.set_title(1, 'Lines')
+        self.box_2 = ipywidgets.Box([self.box_1])
+        self.box_2.layout.border = '2px solid'
+        self.box_2.layout.display = 'table'
+        self.container = ipywidgets.VBox([self.labels_options_wid, self.box_2])
+
+        # Set style
+        self.predefined_style(style, suboptions_style)
+
+        # Call superclass
+        initial_options = renderer_options.copy()
+        super(Shape3DOptionsWidget, self).__init__(
+            [self.container], Dict, initial_options,
+            render_function=render_function)
+
+        # Set visibility
+        self._set_visibility()
+
+        # Add callbacks
+        self.add_callbacks()
+
+    def _set_visibility(self):
+        self.labels_options_wid.layout.display = (
+            'none' if self.labels is None else 'flex')
+
+    def _save_options(self, change):
+        # update selected values
+        self.selected_values = {
+            'lines': self.line_options_wid.selected_values,
+            'markers': self.marker_options_wid.selected_values,
+            'with_labels': self.labels_options_wid.selected_values}
+        # update default values
+        current_key = self.get_key(self.labels)
+        self.default_options[current_key] = self.selected_values.copy()
+
+    def get_key(self, labels):
+        r"""
+        Function that returns a unique key based on the properties of the
+        provided shape object.
+
+        Parameters
+        ----------
+        labels : `list` or ``None``, optional
+            The `list` of labels. ``None`` if there are no labels.
+
+        Returns
+        -------
+        key : `str`
+            The key that has the format ``'{labels}'``.
+        """
+        return "{}".format(labels)
+
+    def get_default_options(self, labels):
+        r"""
+        Function that returns a `dict` with default options given a `list` of
+        labels. The function returns the `dict` of options but also updates the
+        ``self.default_options`` `dict`.
+
+        Parameters
+        ----------
+        labels : `list` or ``None``, optional
+            The `list` of labels. ``None`` if there are no labels.
+
+        Returns
+        -------
+        default_options : `dict`
+            A `dict` with the default options. It contains:
+
+              - ``render_lines`` : (`bool`) Whether to render the lines.
+              - ``line_width`` : (`float`) The width of the lines.
+              - ``line_colour`` : (`list`) The colour per label.
+              - ``render_markers`` : (`bool`) Whether to render the markers.
+              - ``marker_size`` : (`int`) The size of the markers.
+              - ``marker_style`` : (`str`) The style of the markers.
+              - ``marker_colour`` : (`list`) The colour per label.
+              - ``marker_resolution`` : (`list`) The resolution of the markers.
+              - ``with_labels`` : (`list`) The list of labels to render.
+
+            If the object is not seen before by the widget, then it automatically
+            gets the following default options:
+
+              - ``render_lines = True``
+              - ``line_width = 4``
+              - ``line_colour = ['red'] if labels is None else colours``
+              - ``render_markers = True``
+              - ``marker_size = 5``
+              - ``marker_style = 'sphere'``
+              - ``marker_colour = ['red'] if labels is None else colours``
+              - ``marker_resolution = 8``
+              - ``with_labels = labels if labels is not None``
+
+            where ``colours = sample_colours_from_colourmap(len(labels), 'jet')``
+        """
+        # create key
+        key = self.get_key(labels)
+        # if the key does not exist in the default options dict, then add it
+        if key not in self.default_options:
+            self.default_options[key] = {}
+
+            # Set lines options
+            lc = ['red']
+            if labels is not None:
+                lc = sample_colours_from_colourmap(len(labels), 'jet')
+            self.default_options[key]['lines'] = {
+                'line_colour': lc, 'render_lines': True, 'line_width': 1}
+
+            # Set markers options
+            mc = ['red']
+            if labels is not None and len(labels) > 1:
+                mc = sample_colours_from_colourmap(len(labels), 'jet')
+            self.default_options[key]['markers'] = {
+                'marker_colour': mc, 'render_markers': True,
+                'marker_size': 5, 'marker_style': 'sphere',
+                'marker_resolution': 8}
+
+            # Set labels
+            self.default_options[key]['with_labels'] = labels
+        return self.default_options[key]
+
+    def add_callbacks(self):
+        r"""
+        Function that adds the handler callback functions in all the widget
+        components, which are necessary for the internal functionality.
+        """
+        self.line_options_wid.observe(
+            self._save_options, names='selected_values', type='change')
+        self.marker_options_wid.observe(
+            self._save_options, names='selected_values', type='change')
+        self.labels_options_wid.observe(
+            self._save_options, names='selected_values', type='change')
+
+    def remove_callbacks(self):
+        r"""
+        Function that removes all the internal handler callback functions.
+        """
+        self.line_options_wid.unobserve(
+            self._save_options, names='selected_values', type='change')
+        self.marker_options_wid.unobserve(
+            self._save_options, names='selected_values', type='change')
+        self.labels_options_wid.unobserve(
+            self._save_options, names='selected_values', type='change')
+
+    def predefined_style(self, style, suboptions_style):
+        if style == '':
+            suboptions_style = ''
+        self.container.box_style = style
+        self.labels_options_wid.container.box_style = suboptions_style
+        self.box_2.box_style = suboptions_style
+
+    def set_widget_state(self, labels, allow_callback=True):
+        r"""
+        Method that updates the state of the widget, if the provided `labels`
+        are different than ``self.labels``.
+
+        Parameters
+        ----------
+        labels : `list` or ``None``, optional
+            The `list` of labels used in all :map:`ColourSelectionWidget` objects
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        # keep old value
+        old_value = self.selected_values
+
+        # check if updates are required
+        if (not self.default_options or
+                self.get_key(self.labels) != self.get_key(labels)):
+            # Temporarily remove callbacks
+            render_function = self._render_function
+            self.remove_render_function()
+            self.remove_callbacks()
+
+            # Get options
+            renderer_options = self.get_default_options(labels)
+
+            # Assign properties
+            self.labels = labels
+
+            # Set visibility
+            self._set_visibility()
+
+            # Update subwidgets
             self.line_options_wid.set_widget_state(
                 renderer_options['lines'], labels=labels, allow_callback=False)
             self.marker_options_wid.set_widget_state(
@@ -1986,13 +2408,13 @@ class RendererOptionsWidget(MenpoWidget):
     == =================================== =========================== ==============
     No Object                              Property (`self.`)          Description
     == =================================== =========================== ==============
-    1  :map:`LineOptionsWidget`            `options_widgets`           `list` that
+    1  :map:`LineMatplotlibOptionsWidget`            `options_widgets`           `list` that
 
-       :map:`MarkerOptionsWidget`                                      contains the
+       :map:`MarkerMatplotlibOptionsWidget`                                      contains the
 
        :map:`ImageOptionsWidget`                                       rendering
 
-       :map:`NumberingOptionsWidget`                                   sub-options
+       :map:`NumberingMatplotlibOptionsWidget`                                   sub-options
 
        :map:`ZoomOneScaleWidget`                                       widgets
 
@@ -2133,11 +2555,11 @@ class RendererOptionsWidget(MenpoWidget):
             ====================== ===================================
             Value                  Returned object
             ====================== ===================================
-            ``'lines'``            :map:`LineOptionsWidget`
-            ``'markers'``          :map:`MarkerOptionsWidget`
+            ``'lines'``            :map:`LineMatplotlibOptionsWidget`
+            ``'markers'``          :map:`MarkerMatplotlibOptionsWidget`
             ``'trimesh'``          :map:`TriMeshOptionsWidget`
             ``'coloured_trimesh'`` :map:`TexturedTriMeshOptionsWidget`
-            ``'numbering'``        :map:`NumberingOptionsWidget`
+            ``'numbering'``        :map:`NumberingMatplotlibOptionsWidget`
             ``'zoom_one'``         :map:`ZoomOneScaleWidget`
             ``'zoom_two'``         :map:`ZoomTwoScalesWidget`
             ``'legend'``           :map:`LegendOptionsWidget`
@@ -2263,12 +2685,12 @@ class RendererOptionsWidget(MenpoWidget):
         self.tab_titles = []
         for o in options_tabs:
             if o == 'lines':
-                self.options_widgets.append(LineOptionsWidget(
+                self.options_widgets.append(LineMatplotlibOptionsWidget(
                     renderer_options[o], render_function=None,
                     render_checkbox_title='Render lines', labels=labels))
                 self.tab_titles.append('Lines')
             elif o == 'markers':
-                self.options_widgets.append(MarkerOptionsWidget(
+                self.options_widgets.append(MarkerMatplotlibOptionsWidget(
                     renderer_options[o], render_function=None,
                     render_checkbox_title='Render markers', labels=labels))
                 self.tab_titles.append('Markers')
@@ -2285,7 +2707,7 @@ class RendererOptionsWidget(MenpoWidget):
                     self.global_options[o], render_function=None))
                 self.tab_titles.append('Image')
             elif o == 'numbering':
-                self.options_widgets.append(NumberingOptionsWidget(
+                self.options_widgets.append(NumberingMatplotlibOptionsWidget(
                     self.global_options[o], render_function=None,
                     render_checkbox_title='Render numbering'))
                 self.tab_titles.append('Numbering')
@@ -3604,7 +4026,7 @@ class PatchOptionsWidget(MenpoWidget):
     4  `ToggleButton`              `background_toggle`       Background colour
     5  `Latex`                     `background_title`        Background title
     6  :map:`SlicingCommandWidget` `slicing_wid`             Patch index selector
-    7  :map:`LineOptionsWidget`    `bboxes_line_options_wid` Bboxes options
+    7  :map:`LineMatplotlibOptionsWidget`    `bboxes_line_options_wid` Bboxes options
     8  `HBox`                      `background_box`          Contains 5, 4
     9  `Box`                       `render_checkboxes_box`   Contains 2, 3
     10 `HBox`                      `render_box`              Contains 8, 9
@@ -3775,7 +4197,7 @@ class PatchOptionsWidget(MenpoWidget):
             slice_options, description='Patches:',
             orientation='vertical', example_visible=True,
             continuous_update=False)
-        self.bboxes_line_options_wid = LineOptionsWidget(
+        self.bboxes_line_options_wid = LineMatplotlibOptionsWidget(
             {'render_lines': True, 'line_colour': ['red'], 'line_style': '-',
              'line_width': 1}, render_checkbox_title='Render bounding boxes')
 
@@ -4276,8 +4698,8 @@ class PlotOptionsWidget(MenpoWidget):
     == ========================== ====================== =====================
     No Object                     Property (`self.`)     Description
     == ========================== ====================== =====================
-    1  :map:`LineOptionsWidget`   `lines_wid`            Line options widget
-    2  :map:`MarkerOptionsWidget` `markers_wid`          Marker options widget
+    1  :map:`LineMatplotlibOptionsWidget`   `lines_wid`            Line options widget
+    2  :map:`MarkerMatplotlibOptionsWidget` `markers_wid`          Marker options widget
     3  `Dropdown`                 `curves_dropdown`      Curve selector
     4  `Tab`                      `lines_markers_tab`    Contains 1, 2
     5  `VBox`                     `lines_markers_box`    Contains 3, 4
@@ -4392,14 +4814,14 @@ class PlotOptionsWidget(MenpoWidget):
         default_options = self.create_default_options()
 
         # Create children
-        self.lines_wid = LineOptionsWidget(
+        self.lines_wid = LineMatplotlibOptionsWidget(
             {'render_lines': default_options['render_lines'][0],
              'line_width': default_options['line_width'][0],
              'line_colour': [default_options['line_colour'][0]],
              'line_style': default_options['line_style'][0]},
             render_function=None, render_checkbox_title='Render lines',
             labels=None)
-        self.markers_wid = MarkerOptionsWidget(
+        self.markers_wid = MarkerMatplotlibOptionsWidget(
             {'render_markers': default_options['render_markers'][0],
              'marker_style': default_options['marker_style'][0],
              'marker_size': default_options['marker_size'][0],
