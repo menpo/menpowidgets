@@ -15,7 +15,8 @@ from .tools import (IndexSliderWidget, IndexButtonsWidget, SlicingCommandWidget,
                     ZoomOneScaleWidget, ZoomTwoScalesWidget, AxesOptionsWidget,
                     GridOptionsWidget, ImageOptionsWidget, CameraWidget,
                     ColourSelectionWidget, TriMeshOptionsWidget,
-                    TexturedTriMeshOptionsWidget)
+                    TexturedTriMeshOptionsWidget, SwitchWidget,
+                    MultipleSelectionTogglesWidget)
 from .style import (map_styles_to_hex_colours, format_box, format_font,
                     format_slider)
 from .utils import sample_colours_from_colourmap
@@ -69,25 +70,23 @@ class AnimationOptionsWidget(MenpoWidget):
         If ``True``, then after reach the minimum (maximum) index values, the
         counting will continue from the end (beginning). If ``False``, the
         counting will stop at the minimum (maximum) value.
+    continuous_update : `bool`, optional
+        If ``True`` and `index_style` is set to ``'slider'``, then the render
+        and update functions are called while moving the slider's handle. If
+        ``False``, then the the functions are called only when the handle
+        (mouse click) is released.
     style : `str` (see below), optional
         Sets a predefined style at the widget. Possible options are:
 
             ============= ============================
             Style         Description
             ============= ============================
-            ``'minimal'`` Simple black and white style
             ``'success'`` Green-based style
             ``'info'``    Blue-based style
             ``'warning'`` Yellow-based style
             ``'danger'``  Red-based style
             ``''``        No style
             ============= ============================
-
-    continuous_update : `bool`, optional
-        If ``True`` and `index_style` is set to ``'slider'``, then the render
-        and update functions are called while moving the slider's handle. If
-        ``False``, then the the functions are called only when the handle
-        (mouse click) is released.
 
     Example
     -------
@@ -173,11 +172,6 @@ class AnimationOptionsWidget(MenpoWidget):
         self.container = ipywidgets.HBox([self.index_wid, self.box_1])
         self.container.layout.align_items = 'flex-start'
 
-        # Create final widget
-        super(AnimationOptionsWidget, self).__init__(
-            [self.container], Int, index['index'],
-            render_function=render_function)
-
         # Assign properties
         self.min = index['min']
         self.max = index['max']
@@ -190,6 +184,11 @@ class AnimationOptionsWidget(MenpoWidget):
 
         # Set style
         self.predefined_style(style)
+
+        # Create final widget
+        super(AnimationOptionsWidget, self).__init__(
+            [self.container], Int, index['index'],
+            render_function=render_function)
 
         # Set functionality
         def play_stop_pressed(change):
@@ -288,6 +287,25 @@ class AnimationOptionsWidget(MenpoWidget):
                                type='change')
 
     def predefined_style(self, style):
+        r"""
+        Sets a predefined style to the widget.
+
+        Parameters
+        ----------
+        style : `str` (see below)
+            Possible options are:
+
+                ============= ============================
+                Style         Description
+                ============= ============================
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ============================
+
+        """
         if style != '':
             self.container.box_style = style
             self.play_stop_toggle.button_style = self._toggle_play_style
@@ -358,6 +376,275 @@ class AnimationOptionsWidget(MenpoWidget):
         ``self.play_stop_toggle.value = False``.
         """
         self.play_stop_toggle.value = False
+
+
+class Shape2DOptionsWidget(MenpoWidget):
+    def __init__(self, labels, render_function=None, style='',
+                 suboptions_style=''):
+        # Initialize default options dictionary
+        self.default_options = {}
+
+        # Assign properties
+        self.labels = labels
+
+        # Get initial options
+        renderer_options = self.get_default_options(labels)
+
+        # Create widgets
+        self.image_view_switch = SwitchWidget(
+            selected_value=renderer_options['image_view'],
+            description='Image coordinates', description_location='right')
+        self.image_view_switch.layout.margin = '7px'
+        self.line_options_wid = LineOptionsWidget(
+            renderer_options['lines'], render_function=None,
+            render_checkbox_title='Render lines', labels=labels)
+        self.marker_options_wid = MarkerOptionsWidget(
+            renderer_options['markers'], render_function=None,
+            render_checkbox_title='Render markers', labels=labels)
+        buttons_style = ''
+        if style != '':
+            buttons_style = 'primary'
+        if labels is not None:
+            self.labels_options_wid = MultipleSelectionTogglesWidget(
+                labels=labels, with_labels=renderer_options['with_labels'],
+                render_function=None, description='Labels',
+                buttons_style=buttons_style)
+        else:
+            self.labels_options_wid = MultipleSelectionTogglesWidget(
+                labels=[' '], with_labels=None, render_function=None,
+                description='Labels', buttons_style=buttons_style)
+        self.labels_options_wid.layout.margin = '0px 0px 10px 0px'
+        self.labels_options_wid.container.layout.border = '2px solid'
+
+        # Group widgets
+        self.box_1 = ipywidgets.Tab([self.image_view_switch,
+                                     self.marker_options_wid,
+                                     self.line_options_wid])
+        self.box_1.set_title(0, 'View')
+        self.box_1.set_title(1, 'Markers')
+        self.box_1.set_title(2, 'Lines')
+        self.box_2 = ipywidgets.HBox([self.box_1])
+        self.box_2.layout.border = '2px solid'
+        self.container = ipywidgets.VBox([self.labels_options_wid, self.box_2])
+
+        # Set style
+        self.predefined_style(style, suboptions_style)
+
+        # Call superclass
+        initial_options = renderer_options.copy()
+        super(Shape2DOptionsWidget, self).__init__(
+            [self.container], Dict, initial_options,
+            render_function=render_function)
+
+        # Set visibility
+        self._set_visibility()
+
+        # Add callbacks
+        self.add_callbacks()
+
+    def _set_visibility(self):
+        self.labels_options_wid.layout.display = (
+            'none' if self.labels is None else 'flex')
+
+    def _save_options(self, change):
+        # update selected values
+        self.selected_values = {
+            'image_view': self.image_view_switch.selected_values,
+            'lines': self.line_options_wid.selected_values,
+            'markers': self.marker_options_wid.selected_values,
+            'with_labels': self.labels_options_wid.selected_values}
+        # update default values
+        current_key = self.get_key(self.labels)
+        self.default_options[current_key] = self.selected_values.copy()
+
+    def get_key(self, labels):
+        r"""
+        Function that returns a unique key based on the properties of the
+        provided shape object.
+
+        Parameters
+        ----------
+        labels : `list` or ``None``, optional
+            The `list` of labels. ``None`` if there are no labels.
+
+        Returns
+        -------
+        key : `str`
+            The key that has the format ``'{labels}'``.
+        """
+        return "{}".format(labels)
+
+    def get_default_options(self, labels):
+        r"""
+        Function that returns a `dict` with default options given a `list` of
+        labels. The function returns the `dict` of options but also updates the
+        ``self.default_options`` `dict`.
+
+        Parameters
+        ----------
+        labels : `list` or ``None``, optional
+            The `list` of labels. ``None`` if there are no labels.
+
+        Returns
+        -------
+        default_options : `dict`
+            A `dict` with the default options. It contains:
+
+              - ``image_view`` : (`bool`) Whether to use image coordinate system
+              - ``render_lines`` : (`bool`) Whether to render the lines.
+              - ``line_width`` : (`float`) The width of the lines.
+              - ``line_style`` : (`str`) The style of the lines.
+              - ``line_colour`` : (`list`) The colour per label.
+              - ``render_markers`` : (`bool`) Whether to render the markers.
+              - ``marker_size`` : (`int`) The size of the markers.
+              - ``marker_style`` : (`str`) The style of the markers.
+              - ``marker_face_colour`` : (`list`) The face colour per label.
+              - ``marker_edge_colour`` : (`list`) The edge colour per label.
+              - ``marker_edge_width`` : (`float`) The edge width of the markers.
+              - ``with_labels`` : (`list`) The list of labels to render.
+
+            If the object is not seen before by the widget, then it automatically
+            gets the following default options:
+
+              - ``image_view = True``
+              - ``render_lines = True``
+              - ``line_width = 1``
+              - ``line_style = '-``
+              - ``line_colour = ['red'] if labels is None else colours``
+              - ``render_markers = True``
+              - ``marker_size = 5``
+              - ``marker_style = 'o'``
+              - ``marker_face_colour = ['red'] if labels is None else colours``
+              - ``marker_edge_colour = ['black'] if labels is None else colours``
+              - ``marker_edge_width = 1``
+              - ``with_labels = labels if labels is not None``
+
+            where ``colours = sample_colours_from_colourmap(len(labels), 'jet')``
+        """
+        # create key
+        key = self.get_key(labels)
+        # if the key does not exist in the default options dict, then add it
+        if key not in self.default_options:
+            self.default_options[key] = {}
+
+            # Set image view
+            self.default_options[key]['image_view'] = True
+
+            # Set lines options
+            lc = ['red']
+            if labels is not None:
+                lc = sample_colours_from_colourmap(len(labels), 'jet')
+            self.default_options[key]['lines'] = {
+                'line_colour': lc, 'render_lines': True, 'line_width': 1,
+                'line_style': '-'}
+
+            # Set markers options
+            fc = ['red']
+            ec = ['black']
+            if labels is not None and len(labels) > 1:
+                fc = sample_colours_from_colourmap(len(labels), 'jet')
+                ec = sample_colours_from_colourmap(len(labels), 'jet')
+            self.default_options[key]['markers'] = {
+                'marker_face_colour': fc, 'marker_edge_colour': ec,
+                'render_markers': True, 'marker_size': 5, 'marker_style': 'o',
+                'marker_edge_width': 1}
+
+            # Set labels
+            self.default_options[key]['with_labels'] = labels
+        return self.default_options[key]
+
+    def add_callbacks(self):
+        r"""
+        Function that adds the handler callback functions in all the widget
+        components, which are necessary for the internal functionality.
+        """
+        self.image_view_switch.observe(
+            self._save_options, names='selected_values', type='change')
+        self.line_options_wid.observe(
+            self._save_options, names='selected_values', type='change')
+        self.marker_options_wid.observe(
+            self._save_options, names='selected_values', type='change')
+        self.labels_options_wid.observe(
+            self._save_options, names='selected_values', type='change')
+
+    def remove_callbacks(self):
+        r"""
+        Function that removes all the internal handler callback functions.
+        """
+        self.image_view_switch.unobserve(
+            self._save_options, names='selected_values', type='change')
+        self.line_options_wid.unobserve(
+            self._save_options, names='selected_values', type='change')
+        self.marker_options_wid.unobserve(
+            self._save_options, names='selected_values', type='change')
+        self.labels_options_wid.unobserve(
+            self._save_options, names='selected_values', type='change')
+
+    def predefined_style(self, style, suboptions_style):
+        if style == '':
+            suboptions_style = ''
+        self.container.box_style = style
+        self.labels_options_wid.container.box_style = suboptions_style
+        self.box_2.box_style = suboptions_style
+
+    def set_widget_state(self, labels, allow_callback=True):
+        r"""
+        Method that updates the state of the widget, if the provided `labels`
+        are different than ``self.labels``.
+
+        Parameters
+        ----------
+        labels : `list` or ``None``, optional
+            The `list` of labels used in all :map:`ColourSelectionWidget` objects
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        # keep old value
+        old_value = self.selected_values
+
+        # check if updates are required
+        if (not self.default_options or
+                self.get_key(self.labels) != self.get_key(labels)):
+            # Temporarily remove callbacks
+            render_function = self._render_function
+            self.remove_render_function()
+            self.remove_callbacks()
+
+            # Get options
+            renderer_options = self.get_default_options(labels)
+
+            # Assign properties
+            self.labels = labels
+
+            # Set visibility
+            self._set_visibility()
+
+            # Update subwidgets
+            self.image_view_switch.set_widget_state(
+                renderer_options['image_view'], allow_callback=False)
+            self.line_options_wid.set_widget_state(
+                renderer_options['lines'], labels=labels, allow_callback=False)
+            self.marker_options_wid.set_widget_state(
+                renderer_options['markers'], labels=labels,
+                allow_callback=False)
+            if labels is not None:
+                self.labels_options_wid.set_widget_state(
+                    labels, with_labels=renderer_options['with_labels'],
+                    allow_callback=False)
+            else:
+                self.labels_options_wid.set_widget_state(
+                    [' '], with_labels=None, allow_callback=False)
+
+            # Get values
+            self._save_options({})
+
+            # Add callbacks
+            self.add_callbacks()
+            self.add_render_function(render_function)
+
+        # trigger render function if allowed
+        if allow_callback:
+            self.call_render_function(old_value, self.selected_values)
 
 
 class ChannelOptionsWidget(MenpoWidget):

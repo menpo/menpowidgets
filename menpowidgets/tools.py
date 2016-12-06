@@ -346,7 +346,7 @@ class MultipleSelectionTogglesWidget(MenpoWidget):
         If ``None``, then nothing is assigned.
     """
     def __init__(self, labels, with_labels=None, description='Labels',
-                 render_function=None):
+                 render_function=None, buttons_style=''):
         # Check with labels
         if with_labels is None or len(with_labels) == 0:
             with_labels = [l for l in labels]
@@ -356,12 +356,15 @@ class MultipleSelectionTogglesWidget(MenpoWidget):
         self.labels_toggles = []
         for l in labels:
             w = ipywidgets.ToggleButton(description=l, value=l in with_labels)
+            w.button_style = buttons_style
             w.layout.width = '{}px'.format(len(l) * 15)
             self.labels_toggles.append(w)
 
         # Group widget
-        self.container = ipywidgets.HBox([self.labels_title] +
-                                         self.labels_toggles)
+        self.box_1 = ipywidgets.HBox(self.labels_toggles)
+        self.box_1.layout.flex_flow = 'row wrap'
+        self.box_1.layout.align_items = 'center'
+        self.container = ipywidgets.HBox([self.labels_title, self.box_1])
         self.container.layout.align_items = 'center'
 
         # Create final widget
@@ -371,6 +374,7 @@ class MultipleSelectionTogglesWidget(MenpoWidget):
 
         # Set property
         self.labels = labels
+        self.buttons_style = buttons_style
 
         # Set functionality
         for w in self.labels_toggles:
@@ -432,10 +436,11 @@ class MultipleSelectionTogglesWidget(MenpoWidget):
             for l in labels:
                 w = ipywidgets.ToggleButton(description=l,
                                             value=l in with_labels)
+                w.button_style = self.buttons_style
                 w.layout.width = '{}px'.format(len(l) * 15)
                 w.observe(self._save_options, names='value', type='change')
                 self.labels_toggles.append(w)
-            self.container.children = [self.labels_title] + self.labels_toggles
+            self.box_1.children = self.labels_toggles
             self.labels = labels
 
             # temporarily remove render callback
@@ -1236,6 +1241,19 @@ class ColourSelectionWidget(MenpoWidget):
         if allow_callback:
             self.call_render_function(old_value, self.selected_values)
 
+    def disabled(self, value):
+        r"""
+        Method for disabling the widget.
+
+        Parameters
+        ----------
+        value : `bool`
+            The disability flag.
+        """
+        self.label_dropdown.disabled = value
+        self.colour_widget.disabled = value
+        self.apply_to_all_button.disabled = value
+
 
 class ZoomOneScaleWidget(MenpoWidget):
     r"""
@@ -1875,7 +1893,7 @@ class LineOptionsWidget(MenpoWidget):
         self.render_lines_switch.layout.margin = '7px'
         self.line_width_title = ipywidgets.Label(value='Width')
         self.line_width_text = ipywidgets.BoundedFloatText(
-            value=line_options['line_width'], min=0., max=10**6)
+            value=line_options['line_width'], min=0., max=10**6, width='3cm')
         self.line_style_title = ipywidgets.Label(value='Style')
         line_style_dict = OrderedDict()
         line_style_dict['solid'] = '-'
@@ -1883,12 +1901,11 @@ class LineOptionsWidget(MenpoWidget):
         line_style_dict['dash-dot'] = '-.'
         line_style_dict['dotted'] = ':'
         self.line_style_dropdown = ipywidgets.Dropdown(
-            options=line_style_dict, value=line_options['line_style'])
+            options=line_style_dict, value=line_options['line_style'],
+            width='3cm')
         self.line_colour_widget = ColourSelectionWidget(
             line_options['line_colour'], description='Colour', labels=labels,
             render_function=None)
-        self.line_width_text.layout.width = '3cm'
-        self.line_style_dropdown.layout.width = '3cm'
 
         # Group widgets
         self.box_1 = ipywidgets.HBox([self.line_width_title,
@@ -1909,10 +1926,12 @@ class LineOptionsWidget(MenpoWidget):
             render_function=render_function)
 
         # Set functionality
-        def line_options_visible(change):
-            self.box_4.layout.display = 'flex' if change['new'] else 'none'
-        line_options_visible({'new': line_options['render_lines']})
-        self.render_lines_switch.observe(line_options_visible,
+        def line_options_disable(change):
+            self.line_width_text.disabled = not change['new']
+            self.line_style_dropdown.disabled = not change['new']
+            self.line_colour_widget.disabled(not change['new'])
+        line_options_disable({'new': line_options['render_lines']})
+        self.render_lines_switch.observe(line_options_disable,
                                          names='selected_values', type='change')
 
         def save_options(change):
@@ -2022,10 +2041,11 @@ class MarkerOptionsWidget(MenpoWidget):
         self.render_markers_switch.layout.margin = '7px'
         self.marker_size_title = ipywidgets.Label(value='Size')
         self.marker_size_text = ipywidgets.BoundedIntText(
-            value=marker_options['marker_size'], min=0, max=10**6)
+            value=marker_options['marker_size'], min=0, max=10**6, width='3cm')
         self.marker_edge_width_title = ipywidgets.Label(value='Edge width')
         self.marker_edge_width_text = ipywidgets.BoundedFloatText(
-            value=marker_options['marker_edge_width'], min=0., max=10**6)
+            value=marker_options['marker_edge_width'], min=0., max=10**6,
+            width='3cm')
         self.marker_style_title = ipywidgets.Label(value='Style')
         marker_style_dict = OrderedDict()
         marker_style_dict['point'] = '.'
@@ -2050,16 +2070,14 @@ class MarkerOptionsWidget(MenpoWidget):
         marker_style_dict['diamond'] = 'D'
         marker_style_dict['thin diamond'] = 'd'
         self.marker_style_dropdown = ipywidgets.Dropdown(
-            options=marker_style_dict, value=marker_options['marker_style'])
+            options=marker_style_dict, value=marker_options['marker_style'],
+            width='3cm')
         self.marker_face_colour_widget = ColourSelectionWidget(
             marker_options['marker_face_colour'], description='Face colour',
             labels=labels, render_function=None)
         self.marker_edge_colour_widget = ColourSelectionWidget(
             marker_options['marker_edge_colour'], description='Edge colour',
             labels=labels, render_function=None)
-        self.marker_size_text.layout.width = '3cm'
-        self.marker_edge_width_text.layout.width = '3cm'
-        self.marker_style_dropdown.layout.width = '3cm'
 
         # Group widgets
         self.box_1 = ipywidgets.HBox([self.marker_size_title,
@@ -2086,11 +2104,15 @@ class MarkerOptionsWidget(MenpoWidget):
             render_function=render_function)
 
         # Set functionality
-        def marker_options_visible(change):
-            self.box_5.layout.display = 'flex' if change['new'] else 'none'
-        marker_options_visible({'new': marker_options['render_markers']})
+        def marker_options_disable(change):
+            self.marker_size_text.disabled = not change['new']
+            self.marker_edge_width_text.disabled = not change['new']
+            self.marker_style_dropdown.disabled = not change['new']
+            self.marker_face_colour_widget.disabled(not change['new'])
+            self.marker_edge_colour_widget.disabled(not change['new'])
+        marker_options_disable({'new': marker_options['render_markers']})
         self.render_markers_switch.observe(
-            marker_options_visible, names='selected_values', type='change')
+            marker_options_disable, names='selected_values', type='change')
 
         def save_options(change):
             self.selected_values = {

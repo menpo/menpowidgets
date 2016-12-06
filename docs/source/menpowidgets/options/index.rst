@@ -20,4 +20,5 @@ and :ref:`api-menpofit-base-index`.
     RendererOptionsWidget
     SaveMatplotlibFigureOptionsWidget
     SaveMayaviFigureOptionsWidget
+    Shape2DOptionsWidget
     TextPrintWidget
