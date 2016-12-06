@@ -2488,9 +2488,10 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
                 self.call_render_function(old_value, self.selected_values)
 
 
-class NumberingOptionsWidget(MenpoWidget):
+class NumberingMatplotlibOptionsWidget(MenpoWidget):
     r"""
-    Creates a widget for selecting numbering rendering options.
+    Creates a widget for selecting numbering rendering options for
+    `matplotlib` renderers.
 
     * The selected values are stored in the ``self.selected_values`` `trait`.
     * To update the state of the widget, please refer to the
@@ -2628,7 +2629,7 @@ class NumberingOptionsWidget(MenpoWidget):
                                           self.box_9])
 
         # Create final widget
-        super(NumberingOptionsWidget, self).__init__(
+        super(NumberingMatplotlibOptionsWidget, self).__init__(
             [self.container], Dict, numbers_options,
             render_function=render_function)
 
@@ -2722,6 +2723,126 @@ class NumberingOptionsWidget(MenpoWidget):
             self.numbers_font_colour_widget.set_widget_state(
                 numbers_options['numbers_font_colour'],
                 allow_callback=False)
+
+            # re-assign render callback
+            self.add_render_function(render_function)
+
+            # trigger render function if allowed
+            if allow_callback:
+                self.call_render_function(old_value, self.selected_values)
+
+
+class NumberingMayaviOptionsWidget(MenpoWidget):
+    r"""
+    Creates a widget for selecting numbering rendering options for a `mayavi`
+    renderer.
+
+    * The selected values are stored in the ``self.selected_values`` `trait`.
+    * To update the state of the widget, please refer to the
+      :meth:`set_widget_state` method.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
+
+    Parameters
+    ----------
+    numbers_options : `dict`
+        The initial numbering options. It must be a `dict` with the following
+        keys:
+
+        * ``render_numbering`` : (`bool`) Flag for rendering the numbers.
+        * ``numbers_size`` : (`float`) The font size (e.g. ``10.``).
+        * ``numbers_colour`` : (`str`) The font colour (e.g. ``'black'``)
+
+    render_function : `callable` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        If ``None``, then nothing is assigned.
+    render_checkbox_title : `str`, optional
+        The description of the show numbering checkbox.
+    """
+    def __init__(self, numbers_options, render_function=None,
+                 render_checkbox_title='Render numbering'):
+        # Create children
+        self.render_numbering_switch = SwitchWidget(
+            numbers_options['render_numbering'],
+            description=render_checkbox_title, description_location='right')
+        self.render_numbering_switch.layout.margin = '7px'
+        self.numbers_size_title = ipywidgets.Label(value='Size')
+        self.numbers_size_text = ipywidgets.BoundedFloatText(
+            value=numbers_options['numbers_size'], min=0., max=10**6,
+            width='3cm')
+        self.numbers_colour_widget = ColourSelectionWidget(
+            numbers_options['numbers_colour'], description='Colour',
+            render_function=None)
+
+        # Group widgets
+        self.box_1 = ipywidgets.HBox([self.numbers_size_title,
+                                      self.numbers_size_text])
+        self.box_1.layout.align_items = 'center'
+        self.box_1.layout.margin = '0px 10px 0px 0px'
+        self.box_2 = ipywidgets.HBox([self.box_1, self.numbers_colour_widget])
+        self.box_2.layout.align_items = 'flex-start'
+        self.container = ipywidgets.VBox([self.render_numbering_switch,
+                                          self.box_2])
+
+        # Create final widget
+        super(NumberingMayaviOptionsWidget, self).__init__(
+            [self.container], Dict, numbers_options,
+            render_function=render_function)
+
+        # Set functionality
+        def numbering_options_visible(change):
+            self.box_2.layout.display = 'flex' if change['new'] else 'none'
+        numbering_options_visible({'new': numbers_options['render_numbering']})
+        self.render_numbering_switch.observe(numbering_options_visible,
+                                             names='selected_values',
+                                             type='change')
+
+        def save_options(change):
+            self.selected_values = {
+                'render_numbering': self.render_numbering_switch.selected_values,
+                'numbers_size': float(self.numbers_size_text.value),
+                'numbers_colour': self.numbers_colour_widget.selected_values[0]}
+        self.render_numbering_switch.observe(save_options,
+                                             names='selected_values',
+                                             type='change')
+        self.numbers_size_text.observe(save_options, names='value',
+                                       type='change')
+        self.numbers_colour_widget.observe(save_options,
+                                           names='selected_values',
+                                           type='change')
+
+    def set_widget_state(self, numbers_options, allow_callback=True):
+        r"""
+        Method that updates the state of the widget if the provided
+        `line_options` are different than `self.selected_values`.
+
+        Parameters
+        ----------
+        numbers_options : `dict`
+            The selected numbering options. It must be a `dict` with the
+            following keys:
+
+            * ``render_numbering`` : (`bool`) Flag for rendering the numbers.
+            * ``numbers_size`` : (`float`) The font size (e.g. ``10.``).
+            * ``numbers_colour`` : (`str`) The font colour (e.g. ``'black'``)
+
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        if self.selected_values != numbers_options:
+            # keep old value
+            old_value = self.selected_values
+
+            # temporarily remove render callback
+            render_function = self._render_function
+            self.remove_render_function()
+
+            # update
+            self.render_numbering_switch.set_widget_state(
+                numbers_options['render_numbering'], allow_callback=False)
+            self.numbers_size_text.value = float(numbers_options['numbers_size'])
+            self.numbers_colour_widget.set_widget_state(
+                numbers_options['numbers_colour'], allow_callback=False)
 
             # re-assign render callback
             self.add_render_function(render_function)

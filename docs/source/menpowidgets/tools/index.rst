@@ -47,7 +47,8 @@ Rendering
     LineMayaviOptionsWidget
     MarkerMatplotlibOptionsWidget
     MarkerMayaviOptionsWidget
-    NumberingOptionsWidget
+    NumberingMatplotlibOptionsWidget
+    NumberingMayaviOptionsWidget
     TexturedTriMeshOptionsWidget
     TriMeshOptionsWidget
     ZoomOneScaleWidget
