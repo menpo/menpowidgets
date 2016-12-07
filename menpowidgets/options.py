@@ -13,8 +13,8 @@ from .tools import (IndexSliderWidget, IndexButtonsWidget, SlicingCommandWidget,
                     LineMatplotlibOptionsWidget, MarkerMatplotlibOptionsWidget,
                     LineMayaviOptionsWidget, MarkerMayaviOptionsWidget,
                     LogoWidget, NumberingMatplotlibOptionsWidget,
-                    LegendOptionsWidget, ZoomOneScaleWidget,
-                    ZoomTwoScalesWidget, AxesOptionsWidget,
+                    NumberingMayaviOptionsWidget, LegendOptionsWidget,
+                    ZoomOneScaleWidget, ZoomTwoScalesWidget, AxesOptionsWidget,
                     GridOptionsWidget, ImageOptionsWidget, CameraWidget,
                     ColourSelectionWidget, TriMeshOptionsWidget,
                     TexturedTriMeshOptionsWidget, SwitchWidget,
@@ -35,6 +35,8 @@ class AnimationOptionsWidget(MenpoWidget):
       :meth:`set_widget_state` method.
     * To update the handler callback function of the widget, please refer to the
       :meth:`replace_render_function` method.
+    * To set the styling of this widget please refer to the
+      :meth:`predefined_style` method.
 
     Parameters
     ----------
@@ -393,6 +395,8 @@ class Shape2DOptionsWidget(MenpoWidget):
       :meth:`set_widget_state` method.
     * To update the handler callback function of the widget, please refer to the
       :meth:`replace_render_function` method.
+    * To set the styling of this widget please refer to the
+      :meth:`predefined_style` method.
 
     Parameters
     ----------
@@ -676,6 +680,12 @@ class Shape2DOptionsWidget(MenpoWidget):
         self.container.box_style = style
         self.labels_options_wid.container.box_style = suboptions_style
         self.box_2.box_style = suboptions_style
+        tmp = self.marker_options_wid.marker_face_colour_widget
+        tmp.apply_to_all_button.button_style = suboptions_style
+        tmp = self.marker_options_wid.marker_edge_colour_widget
+        tmp.apply_to_all_button.button_style = suboptions_style
+        tmp = self.line_options_wid.line_colour_widget
+        tmp.apply_to_all_button.button_style = suboptions_style
 
     def set_widget_state(self, labels, allow_callback=True):
         r"""
@@ -750,6 +760,8 @@ class Shape3DOptionsWidget(MenpoWidget):
       :meth:`set_widget_state` method.
     * To update the handler callback function of the widget, please refer to the
       :meth:`replace_render_function` method.
+    * To set the styling of this widget please refer to the
+      :meth:`predefined_style` method.
 
     Parameters
     ----------
@@ -966,7 +978,7 @@ class Shape3DOptionsWidget(MenpoWidget):
             if labels is not None:
                 lc = sample_colours_from_colourmap(len(labels), 'jet')
             self.default_options[key]['lines'] = {
-                'line_colour': lc, 'render_lines': True, 'line_width': 1}
+                'line_colour': lc, 'render_lines': True, 'line_width': 4.}
 
             # Set markers options
             mc = ['red']
@@ -974,7 +986,7 @@ class Shape3DOptionsWidget(MenpoWidget):
                 mc = sample_colours_from_colourmap(len(labels), 'jet')
             self.default_options[key]['markers'] = {
                 'marker_colour': mc, 'render_markers': True,
-                'marker_size': 5, 'marker_style': 'sphere',
+                'marker_size': 0.1, 'marker_style': 'sphere',
                 'marker_resolution': 8}
 
             # Set labels
@@ -1010,6 +1022,10 @@ class Shape3DOptionsWidget(MenpoWidget):
         self.container.box_style = style
         self.labels_options_wid.container.box_style = suboptions_style
         self.box_2.box_style = suboptions_style
+        tmp = self.marker_options_wid.marker_colour_widget
+        tmp.apply_to_all_button.button_style = suboptions_style
+        tmp = self.line_options_wid.line_colour_widget
+        tmp.apply_to_all_button.button_style = suboptions_style
 
     def set_widget_state(self, labels, allow_callback=True):
         r"""
@@ -1056,6 +1072,590 @@ class Shape3DOptionsWidget(MenpoWidget):
             else:
                 self.labels_options_wid.set_widget_state(
                     [' '], with_labels=None, allow_callback=False)
+
+            # Get values
+            self._save_options({})
+
+            # Add callbacks
+            self.add_callbacks()
+            self.add_render_function(render_function)
+
+        # trigger render function if allowed
+        if allow_callback:
+            self.call_render_function(old_value, self.selected_values)
+
+
+class RendererOptionsWidget(MenpoWidget):
+    r"""
+    Creates a widget for selecting rendering options.
+
+    Note that:
+
+    * To update the state of the widget, please refer to the
+      :meth:`set_widget_state` method.
+    * The widget has **memory** about the properties of the objects that are
+      passed into it through :meth:`set_widget_state`. Each object has a unique
+      key id assigned through :meth:`get_key`. Then, the options that correspond
+      to each key are stored in the ``self.default_options`` `dict`.
+    * The selected values of the current object object are stored in the
+      ``self.selected_values`` `trait`.
+    * To set the styling of this widget please refer to the
+      :meth:`predefined_style` method.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
+
+    Parameters
+    ----------
+    options_tabs : `list` of `str`
+        `List` that defines the ordering of the options tabs. Possible values
+        are:
+
+            ========================== =======================================
+            Value                      Returned object
+            ========================== =======================================
+            ``'lines_matplotlib'``     :map:`LineMatplotlibOptionsWidget`
+            ``'lines_mayavi'``         :map:`LineMayaviOptionsWidget`
+            ``'markers_matplotlib'``   :map:`MarkerMatplotlibOptionsWidget`
+            ``'markers_mayavi'``       :map:`MarkerMayaviOptionsWidget`
+            ``'numbering_matplotlib'`` :map:`NumberingMatplotlibOptionsWidget`
+            ``'numbering_mayavi'``     :map:`NumberingMayaviOptionsWidget`
+            ``'zoom_one'``             :map:`ZoomOneScaleWidget`
+            ``'zoom_two'``             :map:`ZoomTwoScalesWidget`
+            ``'legend'``               :map:`LegendOptionsWidget`
+            ``'grid'``                 :map:`GridOptionsWidget`
+            ``'image'``                :map:`ImageOptionsWidget`
+            ``'axes'``                 :map:`AxesOptionsWidget`
+            ``'trimesh'``              :map:`TriMeshOptionsWidget`
+            ``'coloured_trimesh'``     :map:`TexturedTriMeshOptionsWidget`
+            ========================== =======================================
+
+    labels : `list` or ``None``, optional
+        The `list` of labels used in all :map:`ColourSelectionWidget` objects.
+    axes_x_limits : `float` or (`float`, `float`) or ``None``, optional
+        The limits of the x axis. If `float`, then it sets padding on the right
+        and left as a percentage of the rendered object's width. If `tuple` or
+        `list`, then it defines the axis limits. If ``None``, then the limits
+        are set automatically.
+    axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
+        The limits of the y axis. If `float`, then it sets padding on the
+        top and bottom as a percentage of the rendered object's height. If
+        `tuple` or `list`, then it defines the axis limits. If ``None``, then
+        the limits are set automatically.
+    render_function : `callable` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        It must have signature ``render_function(change)`` where ``change`` is
+        a `dict` with the following keys:
+
+        * ``type`` : The type of notification (normally ``'change'``).
+        * ``owner`` : the `HasTraits` instance
+        * ``old`` : the old value of the modified trait attribute
+        * ``new`` : the new value of the modified trait attribute
+        * ``name`` : the name of the modified trait attribute.
+
+        If ``None``, then nothing is assigned.
+    style : `str` (see below), optional
+        Sets a predefined style at the widget. Possible options are:
+
+            ============= ==================
+            Style         Description
+            ============= ==================
+            ``'success'`` Green-based style
+            ``'info'``    Blue-based style
+            ``'warning'`` Yellow-based style
+            ``'danger'``  Red-based style
+            ``''``        No style
+            ============= ==================
+
+    Example
+    -------
+    Let's create a rendering options widget and then update its state. Firstly,
+    we need to import it:
+
+        >>> from menpowidgets.options import RendererOptionsWidget
+
+    Let's set some initial options:
+
+        >>> options_tabs = ['markers', 'lines', 'grid']
+        >>> labels = ['jaw', 'eyes']
+
+    Now let's define a render function that will get called on every widget
+    change and will dynamically print the selected marker face colour and line
+    width:
+
+        >>> from menpo.visualize import print_dynamic
+        >>> def render_function(change):
+        >>>     s = "Marker face colour: {}, Line width: {}".format(
+        >>>         wid.selected_values['markers']['marker_face_colour'],
+        >>>         wid.selected_values['lines']['line_width'])
+        >>>     print_dynamic(s)
+
+    Create the widget with the initial options and display it:
+
+        >>> wid = RendererOptionsWidget(options_tabs, labels=labels,
+        >>>                             render_function=render_function,
+        >>>                             style='info')
+        >>> wid
+
+    By playing around, the printed message gets updated. The style of the widget
+    can be changed as:
+
+        >>> wid.predefined_style('minimal', 'info')
+
+    Finally, let's change the widget status with a new set of labels:
+
+        >>> wid.set_widget_state(labels=['1'], allow_callback=True)
+
+    Remember that the widget is **mnemonic**, i.e. it remembers the objects it
+    has seen and their corresponding options. These can be retrieved as:
+
+        >>> wid.default_options
+
+    """
+    def __init__(self, options_tabs, labels, axes_x_limits=None,
+                 axes_y_limits=None, render_function=None, style=''):
+        # Initialise default options dictionary
+        self.default_options = {}
+        self.global_options = {}
+
+        # Assign properties
+        self.labels = labels
+        self.options_tabs = options_tabs
+
+        # Get initial options
+        self.initialise_global_options(axes_x_limits, axes_y_limits)
+        renderer_options = self.get_default_options(labels)
+
+        # Create children
+        self.options_widgets = []
+        self.tab_titles = []
+        for o in options_tabs:
+            if o == 'lines_matplotlib':
+                self.options_widgets.append(LineMatplotlibOptionsWidget(
+                    renderer_options[o], render_function=None,
+                    render_checkbox_title='Render lines', labels=labels))
+                self.tab_titles.append('Lines')
+            elif o == 'lines_mayavi':
+                self.options_widgets.append(LineMayaviOptionsWidget(
+                    renderer_options[o], render_function=None,
+                    render_checkbox_title='Render lines', labels=labels))
+                self.tab_titles.append('Lines')
+            elif o == 'markers_matplotlib':
+                self.options_widgets.append(MarkerMatplotlibOptionsWidget(
+                    renderer_options[o], render_function=None,
+                    render_checkbox_title='Render markers', labels=labels))
+                self.tab_titles.append('Markers')
+            elif o == 'markers_mayavi':
+                self.options_widgets.append(MarkerMayaviOptionsWidget(
+                    renderer_options[o], render_function=None,
+                    render_checkbox_title='Render markers', labels=labels))
+                self.tab_titles.append('Markers')
+            elif o == 'trimesh':
+                self.options_widgets.append(TriMeshOptionsWidget(
+                    self.global_options[o], render_function=None))
+                self.tab_titles.append('Mesh')
+            elif o == 'textured_trimesh':
+                self.options_widgets.append(TexturedTriMeshOptionsWidget(
+                    self.global_options[o], render_function=None))
+                self.tab_titles.append('Textured Mesh')
+            elif o == 'image':
+                self.options_widgets.append(ImageOptionsWidget(
+                    self.global_options[o], render_function=None))
+                self.tab_titles.append('Image')
+            elif o == 'numbering_matplotlib':
+                self.options_widgets.append(NumberingMatplotlibOptionsWidget(
+                    self.global_options[o], render_function=None,
+                    render_checkbox_title='Render numbering'))
+                self.tab_titles.append('Numbering')
+            elif o == 'numbering_mayavi':
+                self.options_widgets.append(NumberingMayaviOptionsWidget(
+                    self.global_options[o], render_function=None,
+                    render_checkbox_title='Render numbering'))
+                self.tab_titles.append('Numbering')
+            elif o == 'zoom_two':
+                tmp = {'min': 0.1, 'max': 4., 'step': 0.05,
+                       'zoom': self.global_options[o],
+                       'lock_aspect_ratio': False}
+                self.options_widgets.append(ZoomTwoScalesWidget(
+                    tmp, render_function=None,
+                    description='Scale: ',
+                    minus_description='fa-search-minus',
+                    plus_description='fa-search-plus',
+                    continuous_update=False))
+                self.tab_titles.append('Zoom')
+            elif o == 'zoom_one':
+                tmp = {'min': 0.1, 'max': 4., 'step': 0.05,
+                       'zoom': self.global_options[o]}
+                self.options_widgets.append(ZoomOneScaleWidget(
+                    tmp, render_function=None,
+                    description='Scale: ',
+                    minus_description='fa-search-minus',
+                    plus_description='fa-search-plus',
+                    continuous_update=False))
+                self.tab_titles.append('Zoom')
+            elif o == 'axes':
+                self.options_widgets.append(AxesOptionsWidget(
+                    self.global_options[o], render_function=None,
+                    render_checkbox_title='Render axes'))
+                self.tab_titles.append('Axes')
+            elif o == 'legend':
+                self.options_widgets.append(LegendOptionsWidget(
+                    self.global_options[o], render_function=None,
+                    render_checkbox_title='Render legend'))
+                self.tab_titles.append('Legend')
+            elif o == 'grid':
+                self.options_widgets.append(GridOptionsWidget(
+                    self.global_options[o], render_function=None,
+                    render_checkbox_title='Render grid'))
+                self.tab_titles.append('Grid')
+        self.suboptions_tab = ipywidgets.Tab(children=self.options_widgets)
+        # set titles
+        for (k, tl) in enumerate(self.tab_titles):
+            self.suboptions_tab.set_title(k, tl)
+
+        # Create final widget
+        initial_options = renderer_options.copy()
+        initial_options.update(self.global_options)
+        self.container = ipywidgets.VBox([self.suboptions_tab])
+        super(RendererOptionsWidget, self).__init__(
+            [self.container], Dict, initial_options,
+            render_function=render_function)
+
+        # Set values
+        self.set_widget_state(labels, allow_callback=False)
+
+        # Set style
+        self.predefined_style(style)
+
+        # Add callbacks
+        self.add_callbacks()
+
+    def _save_options(self, change):
+        # update selected values
+        self.selected_values = {o: self.options_widgets[i].selected_values
+                                for i, o in enumerate(self.options_tabs)}
+        # update default values
+        current_key = self.get_key(self.labels)
+        if 'lines_matplotlib' in self.options_tabs:
+            self.default_options[current_key]['lines_matplotlib'] = \
+                self.selected_values['lines_matplotlib'].copy()
+        if 'lines_mayavi' in self.options_tabs:
+            self.default_options[current_key]['lines_mayavi'] = \
+                self.selected_values['lines_mayavi'].copy()
+        if 'markers_matplotlib' in self.options_tabs:
+            self.default_options[current_key]['markers_matplotlib'] = \
+                self.selected_values['markers_matplotlib'].copy()
+        if 'markers_mayavi' in self.options_tabs:
+            self.default_options[current_key]['markers_mayavi'] = \
+                self.selected_values['markers_mayavi'].copy()
+        # update global values
+        if 'image' in self.options_tabs:
+            self.global_options['image'] = self.selected_values['image']
+        if 'trimesh' in self.options_tabs:
+            self.global_options['trimesh'] = self.selected_values['trimesh']
+        if 'textured_trimesh' in self.options_tabs:
+            self.global_options['textured_trimesh'] = \
+                self.selected_values['textured_trimesh']
+        if 'numbering_matplotlib' in self.options_tabs:
+            self.global_options['numbering_matplotlib'] = \
+                self.selected_values['numbering_matplotlib']
+        if 'numbering_mayavi' in self.options_tabs:
+            self.global_options['numbering_mayavi'] = \
+                self.selected_values['numbering_mayavi']
+        if 'zoom_one' in self.options_tabs:
+            self.global_options['zoom_one'] = self.selected_values['zoom_one']
+        if 'zoom_two' in self.options_tabs:
+            self.global_options['zoom_two'] = self.selected_values['zoom_two']
+        if 'grid' in self.options_tabs:
+            self.global_options['grid'] = self.selected_values['grid']
+        if 'legend' in self.options_tabs:
+            self.global_options['legend'] = self.selected_values['legend']
+        if 'axes' in self.options_tabs:
+            self.global_options['axes'] = self.selected_values['axes']
+
+    def add_callbacks(self):
+        r"""
+        Function that adds the handler callback functions in all the widget
+        components, which are necessary for the internal functionality.
+        """
+        for wid in self.options_widgets:
+            wid.observe(self._save_options, names='selected_values',
+                        type='change')
+
+    def remove_callbacks(self):
+        r"""
+        Function that removes all the internal handler callback functions.
+        """
+        for wid in self.options_widgets:
+            wid.unobserve(self._save_options, names='selected_values',
+                          type='change')
+
+    def get_key(self, labels):
+        r"""
+        Function that returns a unique key based on the provided labels.
+
+        Parameters
+        ----------
+        labels : `list` or ``None``, optional
+            The `list` of labels used in all :map:`ColourSelectionWidget` objects
+
+        Returns
+        -------
+        key : `str`
+            The key that has the format ``'{labels}'``.
+        """
+        return "{}".format(labels)
+
+    def initialise_global_options(self, axes_x_limits, axes_y_limits):
+        r"""
+        Function that returns a `dict` with global options, i.e. options that do
+        not depend on `labels`.  The functions updates ``self.global_options``
+        `dict`.
+
+        Parameters
+        ----------
+        axes_x_limits : `float` or (`float`, `float`) or ``None``, optional
+            The limits of the x axis. If `float`, then it sets padding on the
+            right and left as a percentage of the rendered object's width. If
+            `tuple` or `list`, then it defines the axis limits. If ``None``,
+            then the limits are set automatically.
+        axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
+            The limits of the y axis. If `float`, then it sets padding on the
+            top and bottom as a percentage of the rendered object's height. If
+            `tuple` or `list`, then it defines the axis limits. If ``None``, then
+            the limits are set automatically.
+        """
+        self.global_options = {}
+        for o in self.options_tabs:
+            if o == 'image':
+                self.global_options[o] = {
+                    'interpolation': 'bilinear', 'cmap_name': None,
+                    'alpha': 1.}
+            elif o == 'trimesh':
+                self.global_options[o] = {
+                    'mesh_type': 'surface', 'line_width': 2, 'colour': 'red',
+                    'marker_style': 'sphere', 'marker_size': 0.1,
+                    'marker_resolution': 8, 'step': 1, 'alpha': 1.0}
+            elif o == 'textured_trimesh':
+                self.global_options[o] = {
+                    'render_texture': True, 'mesh_type': 'surface',
+                    'ambient_light': 0.0, 'specular_light': 0.0, 'alpha': 1.0,
+                    'line_width': 2., 'colour': 'red'}
+            elif o == 'numbering_matplotlib':
+                self.global_options[o] = {
+                    'render_numbering': False,
+                    'numbers_font_name': 'sans-serif',
+                    'numbers_font_size': 10, 'numbers_font_style': 'normal',
+                    'numbers_font_weight': 'normal',
+                    'numbers_font_colour': 'black',
+                    'numbers_horizontal_align': 'center',
+                    'numbers_vertical_align': 'bottom'}
+            elif o == 'numbering_mayavi':
+                self.global_options[o] = {
+                    'render_numbering': False,
+                    'numbers_size': 1.,
+                    'numbers_colour': 'black'}
+            elif o == 'zoom_one':
+                self.global_options[o] = 1.
+            elif o == 'zoom_two':
+                self.global_options[o] = [1., 1.]
+            elif o == 'axes':
+                self.global_options[o] = {
+                    'render_axes': False, 'axes_font_name': 'sans-serif',
+                    'axes_font_size': 10, 'axes_font_style': 'normal',
+                    'axes_font_weight': 'normal',
+                    'axes_x_limits': axes_x_limits,
+                    'axes_y_limits': axes_y_limits,
+                    'axes_x_ticks': None, 'axes_y_ticks': None}
+            elif o == 'legend':
+                self.global_options[o] = {
+                    'render_legend': False, 'legend_title': '',
+                    'legend_font_name': 'sans-serif',
+                    'legend_font_style': 'normal', 'legend_font_size': 10,
+                    'legend_font_weight': 'normal',
+                    'legend_marker_scale': 1., 'legend_location': 2,
+                    'legend_bbox_to_anchor': (1.05, 1.),
+                    'legend_border_axes_pad': 1., 'legend_n_columns': 1,
+                    'legend_horizontal_spacing': 1.,
+                    'legend_vertical_spacing': 1., 'legend_border': True,
+                    'legend_border_padding': 0.5, 'legend_shadow': False,
+                    'legend_rounded_corners': False}
+            elif o == 'grid':
+                self.global_options[o] = {
+                    'render_grid': False, 'grid_line_style': '--',
+                    'grid_line_width': 0.5}
+
+    def get_default_options(self, labels):
+        r"""
+        Function that returns a `dict` with default options given a `list` of
+        labels. The function returns the `dict` of options but also updates the
+        ``self.default_options`` `dict`.
+
+        Parameters
+        ----------
+        labels : `list` or ``None``, optional
+            The `list` of labels used in all :map:`ColourSelectionWidget` objects
+
+        Returns
+        -------
+        default_options : `dict`
+            A `dict` with the default options.
+        """
+        # create key
+        key = self.get_key(labels)
+        # if the key does not exist in the default options dict, then add it
+        if key not in self.default_options:
+            self.default_options[key] = {}
+            if 'lines_matplotlib' in self.options_tabs:
+                lc = ['red']
+                if labels is not None:
+                    lc = sample_colours_from_colourmap(len(labels), 'jet')
+                self.default_options[key]['lines_matplotlib'] = {
+                    'render_lines': True, 'line_width': 1,
+                    'line_colour': lc, 'line_style': '-'}
+            if 'lines_mayavi' in self.options_tabs:
+                lc = ['red']
+                if labels is not None:
+                    lc = sample_colours_from_colourmap(len(labels), 'jet')
+                self.default_options[key]['lines_mayavi'] = {
+                    'render_lines': True, 'line_width': 4., 'line_colour': lc}
+            if 'markers_matplotlib' in self.options_tabs:
+                fc = ['red']
+                ec = ['black']
+                if labels is not None and len(labels) > 1:
+                    fc = sample_colours_from_colourmap(len(labels), 'jet')
+                    ec = sample_colours_from_colourmap(len(labels), 'jet')
+                self.default_options[key]['markers_matplotlib'] = {
+                    'render_markers': True, 'marker_size': 5,
+                    'marker_face_colour': fc, 'marker_edge_colour': ec,
+                    'marker_style': 'o', 'marker_edge_width': 1}
+            if 'markers_mayavi' in self.options_tabs:
+                mc = ['red']
+                if labels is not None and len(labels) > 1:
+                    mc = sample_colours_from_colourmap(len(labels), 'jet')
+                self.default_options[key]['markers_mayavi'] = {
+                    'marker_colour': mc, 'render_markers': True,
+                    'marker_size': 0.1, 'marker_style': 'sphere',
+                    'marker_resolution': 8}
+        return self.default_options[key]
+
+    def predefined_style(self, style):
+        r"""
+        Function that sets a predefined style on the widget.
+
+        Parameters
+        ----------
+        style : `str` (see below)
+            Style options:
+
+                ============= ============================
+                Style         Description
+                ============= ============================
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ============================
+
+        """
+        for w in self.options_widgets:
+            w.box_style = style
+        self.container.box_style = style
+        for i, o in enumerate(self.options_tabs):
+            if o == 'lines_matplotlib':
+                tmp = self.options_widgets[i].line_colour_widget
+                tmp.apply_to_all_button.button_style = style
+            elif o == 'lines_mayavi':
+                tmp = self.options_widgets[i].line_colour_widget
+                tmp.apply_to_all_button.button_style = style
+            elif o == 'markers_matplotlib':
+                tmp = self.options_widgets[i].marker_face_colour_widget
+                tmp.apply_to_all_button.button_style = style
+                tmp = self.options_widgets[i].marker_edge_colour_widget
+                tmp.apply_to_all_button.button_style = style
+            elif o == 'markers_mayavi':
+                tmp = self.options_widgets[i].marker_colour_widget
+                tmp.apply_to_all_button.button_style = style
+            elif o == 'trimesh':
+                self.options_widgets[i].alpha_slider.slider_color = \
+                    map_styles_to_hex_colours(style)
+            elif o =='textured_trimesh':
+                self.options_widgets[i].ambient_slider.slider_color = \
+                    map_styles_to_hex_colours(style)
+                self.options_widgets[i].specular_slider.slider_color = \
+                    map_styles_to_hex_colours(style)
+                self.options_widgets[i].alpha_slider.slider_color = \
+                    map_styles_to_hex_colours(style)
+            elif o == 'image':
+                self.options_widgets[i].alpha_slider.slider_color = \
+                    map_styles_to_hex_colours(style)
+            elif o == 'zoom_two':
+                self.options_widgets[i].x_button_minus.button_style = 'primary'
+                self.options_widgets[i].x_button_plus.button_style = 'primary'
+                self.options_widgets[i].y_button_minus.button_style = 'primary'
+                self.options_widgets[i].y_button_plus.button_style = 'primary'
+                self.options_widgets[i].x_zoom_slider.slider_color = \
+                    map_styles_to_hex_colours('primary')
+                self.options_widgets[i].y_zoom_slider.slider_color = \
+                    map_styles_to_hex_colours('primary')
+                self.options_widgets[i].lock_aspect_button.button_style = \
+                    'warning'
+            elif o == 'zoom_one':
+                self.options_widgets[i].button_minus.button_style = 'primary'
+                self.options_widgets[i].button_plus.button_style = 'primary'
+                self.options_widgets[i].zoom_slider.slider_color = \
+                    map_styles_to_hex_colours('primary')
+
+    def set_widget_state(self, labels, allow_callback=True):
+        r"""
+        Method that updates the state of the widget, if the provided `labels`
+        are different than ``self.labels``.
+
+        Parameters
+        ----------
+        labels : `list` or ``None``, optional
+            The `list` of labels used in all :map:`ColourSelectionWidget` objects
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        # keep old value
+        old_value = self.selected_values
+
+        # check if updates are required
+        if (not self.default_options or
+                self.get_key(self.labels) != self.get_key(labels)):
+            # Temporarily remove callbacks
+            render_function = self._render_function
+            self.remove_render_function()
+            self.remove_callbacks()
+
+            # Get options
+            renderer_options = self.get_default_options(labels)
+
+            # Assign properties
+            self.labels = labels
+
+            # Update subwidgets
+            if 'lines_matplotlib' in self.options_tabs:
+                i = self.options_tabs.index('lines_matplotlib')
+                self.options_widgets[i].set_widget_state(
+                    renderer_options['lines_matplotlib'], labels=labels,
+                    allow_callback=False)
+            if 'lines_mayavi' in self.options_tabs:
+                i = self.options_tabs.index('lines_mayavi')
+                self.options_widgets[i].set_widget_state(
+                    renderer_options['lines_mayavi'], labels=labels,
+                    allow_callback=False)
+            if 'markers_matplotlib' in self.options_tabs:
+                i = self.options_tabs.index('markers_matplotlib')
+                self.options_widgets[i].set_widget_state(
+                    renderer_options['markers_matplotlib'], labels=labels,
+                    allow_callback=False)
+            if 'markers_mayavi' in self.options_tabs:
+                i = self.options_tabs.index('markers_mayavi')
+                self.options_widgets[i].set_widget_state(
+                    renderer_options['markers_mayavi'], labels=labels,
+                    allow_callback=False)
 
             # Get values
             self._save_options({})
@@ -2398,964 +2998,6 @@ class TextPrintWidget(ipywidgets.FlexBox):
                 self.latex_texts[i].value = text_per_line[i]
         self.n_lines = n_lines
         self.text_per_line = text_per_line
-
-
-class RendererOptionsWidget(MenpoWidget):
-    r"""
-    Creates a widget for selecting rendering options. The widget consists of the
-    following objects from `ipywidgets` and :ref:`api-tools-index`:
-
-    == =================================== =========================== ==============
-    No Object                              Property (`self.`)          Description
-    == =================================== =========================== ==============
-    1  :map:`LineMatplotlibOptionsWidget`            `options_widgets`           `list` that
-
-       :map:`MarkerMatplotlibOptionsWidget`                                      contains the
-
-       :map:`ImageOptionsWidget`                                       rendering
-
-       :map:`NumberingMatplotlibOptionsWidget`                                   sub-options
-
-       :map:`ZoomOneScaleWidget`                                       widgets
-
-       :map:`ZoomTwoScalesWidget`
-
-       :map:`AxesOptionsWidget`
-
-       :map:`LegendOptionsWidget`
-
-       :map:`GridOptionsWidget`
-
-       :map:`TriMeshOptionsWidget`
-
-       :map:`TexturedTriMeshOptionsWidget`
-    2  Tab                                 `suboptions_tab`            Contains all 2
-    == =================================== =========================== ==============
-
-    Note that:
-
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * The widget has **memory** about the properties of the objects that are
-      passed into it through :meth:`set_widget_state`. Each object has a unique
-      key id assigned through :meth:`get_key`. Then, the options that correspond
-      to each key are stored in the ``self.default_options`` `dict`.
-    * The selected values of the current object object are stored in the
-      ``self.selected_values`` `trait`.
-    * When an unseen image object is passed in (i.e. a key that is not included
-      in the ``self.default_options`` `dict`), it gets the following initial
-      options by default:
-
-      * ``lines``
-
-        - ``render_lines = True``
-        - ``line_width = 1``
-        - ``line_style = '-``
-        - ``line_colour = ['red'] if labels is None else colours``
-
-      * ``markers``
-
-        - ``render_markers = True``
-        - ``marker_size = 5``
-        - ``marker_style = 'o'``
-        - ``marker_face_colour = ['red'] if labels is None else colours``
-        - ``marker_edge_colour = ['black'] if labels is None else colours``
-        - ``marker_edge_width = 1``
-
-      where ``colours = sample_colours_from_colourmap(len(labels), 'jet')``
-
-      * ``image``
-
-        - ``interpolation = 'bilinear'``
-        - ``cmap_name = None``
-        - ``alpha = 1.``
-
-      * ``numbering``
-
-        - ``render_numbering = False``
-        - ``numbers_font_name = 'sans-serif'``
-        - ``numbers_font_size = 10``
-        - ``numbers_font_style = 'normal'``
-        - ``numbers_font_weight = 'normal'``
-        - ``numbers_font_colour = ['black']``
-        - ``numbers_horizontal_align = 'center'``
-        - ``numbers_vertical_align = 'bottom'``
-
-      * ``zoom_one = 1.``
-
-      * ``zoom_two = [1., 1.]``
-
-      * ``axes``
-
-        - ``render_axes = False``
-        - ``axes_font_name = 'sans-serif'``
-        - ``axes_font_size = 10``
-        - ``axes_font_style = 'normal'``
-        - ``axes_font_weight = 'normal'``
-        - ``axes_x_ticks = None``
-        - ``axes_y_ticks = None``
-        - ``axes_x_limits = axes_x_limits``
-        - ``axes_y_limits = axes_y_limits``
-
-      * ``legend``
-
-        - ``render_legend = False``
-        - ``legend_title = ''``
-        - ``legend_font_name = 'sans-serif'``
-        - ``legend_font_style = 'normal'``
-        - ``legend_font_size = 10``
-        - ``legend_font_weight = 'normal'``
-        - ``legend_marker_scale = 1.``
-        - ``legend_location = 2``
-        - ``legend_bbox_to_anchor = (1.05, 1.)``
-        - ``legend_border_axes_pad = 1.``
-        - ``legend_n_columns = 1``
-        - ``legend_horizontal_spacing = 1.``
-        - ``legend_vertical_spacing = 1.``
-        - ``legend_border = True``
-        - ``legend_border_padding = 0.5``
-        - ``legend_shadow = False``
-        - ``legend_rounded_corners = False``
-
-      * ``grid``
-
-        - ``render_grid = False``
-        - ``grid_line_width = 0.5``
-        - ``grid_line_style = '--'``
-
-      * ``trimesh``
-
-        - ``mesh_type = 'wireframe'``
-        - ``line_width = 2``
-        - ``colour = 'red'``
-        - ``marker_style = 'sphere'``
-        - ``marker_size = 0.1``
-        - ``marker_resolution = 8``
-        - ``step = 1``
-        - ``alpha = 1.0``
-
-      * ``coloured_trimesh``
-
-        - ``mesh_type = 'surface'``
-        - ``ambient_light = 0.0``
-        - ``specular_light = 0.0``
-        - ``alpha = 1.0``
-
-    * To set the styling of this widget please refer to the :meth:`style` and
-      :meth:`predefined_style` methods.
-    * To update the handler callback function of the widget, please refer to the
-      :meth:`replace_render_function` method.
-
-    Parameters
-    ----------
-    options_tabs : `list` of `str`
-        `List` that defines the ordering of the options tabs. Possible values
-        are:
-
-            ====================== ===================================
-            Value                  Returned object
-            ====================== ===================================
-            ``'lines'``            :map:`LineMatplotlibOptionsWidget`
-            ``'markers'``          :map:`MarkerMatplotlibOptionsWidget`
-            ``'trimesh'``          :map:`TriMeshOptionsWidget`
-            ``'coloured_trimesh'`` :map:`TexturedTriMeshOptionsWidget`
-            ``'numbering'``        :map:`NumberingMatplotlibOptionsWidget`
-            ``'zoom_one'``         :map:`ZoomOneScaleWidget`
-            ``'zoom_two'``         :map:`ZoomTwoScalesWidget`
-            ``'legend'``           :map:`LegendOptionsWidget`
-            ``'grid'``             :map:`GridOptionsWidget`
-            ``'image'``            :map:`ImageOptionsWidget`
-            ``'axes'``             :map:`AxesOptionsWidget`
-            ====================== ===================================
-
-    labels : `list` or ``None``, optional
-        The `list` of labels used in all :map:`ColourSelectionWidget` objects.
-    axes_x_limits : `float` or (`float`, `float`) or ``None``, optional
-        The limits of the x axis. If `float`, then it sets padding on the right
-        and left as a percentage of the rendered object's width. If `tuple` or
-        `list`, then it defines the axis limits. If ``None``, then the limits
-        are set automatically.
-    axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
-        The limits of the y axis. If `float`, then it sets padding on the
-        top and bottom as a percentage of the rendered object's height. If
-        `tuple` or `list`, then it defines the axis limits. If ``None``, then
-        the limits are set automatically.
-    render_function : `callable` or ``None``, optional
-        The render function that is executed when a widgets' value changes.
-        It must have signature ``render_function(change)`` where ``change`` is
-        a `dict` with the following keys:
-
-        * ``type`` : The type of notification (normally ``'change'``).
-        * ``owner`` : the `HasTraits` instance
-        * ``old`` : the old value of the modified trait attribute
-        * ``new`` : the new value of the modified trait attribute
-        * ``name`` : the name of the modified trait attribute.
-
-        If ``None``, then nothing is assigned.
-    style : `str` (see below), optional
-        Sets a predefined style at the widget. Possible options are:
-
-            ============= ============================
-            Style         Description
-            ============= ============================
-            ``'minimal'`` Simple black and white style
-            ``'success'`` Green-based style
-            ``'info'``    Blue-based style
-            ``'warning'`` Yellow-based style
-            ``'danger'``  Red-based style
-            ``''``        No style
-            ============= ============================
-
-    tabs_style : `str` (see below), optional
-        Sets a predefined style at the tabs of the widget. Possible options are:
-
-            ============= ============================
-            Style         Description
-            ============= ============================
-            ``'minimal'`` Simple black and white style
-            ``'success'`` Green-based style
-            ``'info'``    Blue-based style
-            ``'warning'`` Yellow-based style
-            ``'danger'``  Red-based style
-            ``''``        No style
-            ============= ============================
-
-    Example
-    -------
-    Let's create a rendering options widget and then update its state. Firstly,
-    we need to import it:
-
-        >>> from menpowidgets.options import RendererOptionsWidget
-
-    Let's set some initial options:
-
-        >>> options_tabs = ['markers', 'lines', 'grid']
-        >>> labels = ['jaw', 'eyes']
-
-    Now let's define a render function that will get called on every widget
-    change and will dynamically print the selected marker face colour and line
-    width:
-
-        >>> from menpo.visualize import print_dynamic
-        >>> def render_function(change):
-        >>>     s = "Marker face colour: {}, Line width: {}".format(
-        >>>         wid.selected_values['markers']['marker_face_colour'],
-        >>>         wid.selected_values['lines']['line_width'])
-        >>>     print_dynamic(s)
-
-    Create the widget with the initial options and display it:
-
-        >>> wid = RendererOptionsWidget(options_tabs, labels=labels,
-        >>>                             render_function=render_function,
-        >>>                             style='info')
-        >>> wid
-
-    By playing around, the printed message gets updated. The style of the widget
-    can be changed as:
-
-        >>> wid.predefined_style('minimal', 'info')
-
-    Finally, let's change the widget status with a new set of labels:
-
-        >>> wid.set_widget_state(labels=['1'], allow_callback=True)
-
-    Remember that the widget is **mnemonic**, i.e. it remembers the objects it
-    has seen and their corresponding options. These can be retrieved as:
-
-        >>> wid.default_options
-
-    """
-    def __init__(self, options_tabs, labels, axes_x_limits=None,
-                 axes_y_limits=None, render_function=None, style='minimal',
-                 tabs_style='minimal'):
-        # Initialise default options dictionary
-        self.default_options = {}
-        self.global_options = {}
-
-        # Assign properties
-        self.labels = labels
-        self.options_tabs = options_tabs
-
-        # Get initial options
-        self.initialise_global_options(axes_x_limits, axes_y_limits)
-        renderer_options = self.get_default_options(labels)
-
-        # Create children
-        self.options_widgets = []
-        self.tab_titles = []
-        for o in options_tabs:
-            if o == 'lines':
-                self.options_widgets.append(LineMatplotlibOptionsWidget(
-                    renderer_options[o], render_function=None,
-                    render_checkbox_title='Render lines', labels=labels))
-                self.tab_titles.append('Lines')
-            elif o == 'markers':
-                self.options_widgets.append(MarkerMatplotlibOptionsWidget(
-                    renderer_options[o], render_function=None,
-                    render_checkbox_title='Render markers', labels=labels))
-                self.tab_titles.append('Markers')
-            elif o == 'trimesh':
-                self.options_widgets.append(TriMeshOptionsWidget(
-                    self.global_options[o], render_function=None))
-                self.tab_titles.append('Mesh')
-            elif o =='coloured_trimesh':
-                self.options_widgets.append(TexturedTriMeshOptionsWidget(
-                    self.global_options[o], render_function=None))
-                self.tab_titles.append('Coloured Mesh')
-            elif o == 'image':
-                self.options_widgets.append(ImageOptionsWidget(
-                    self.global_options[o], render_function=None))
-                self.tab_titles.append('Image')
-            elif o == 'numbering':
-                self.options_widgets.append(NumberingMatplotlibOptionsWidget(
-                    self.global_options[o], render_function=None,
-                    render_checkbox_title='Render numbering'))
-                self.tab_titles.append('Numbering')
-            elif o == 'zoom_two':
-                tmp = {'min': 0.1, 'max': 4., 'step': 0.05,
-                       'zoom': self.global_options[o],
-                       'lock_aspect_ratio': False}
-                self.options_widgets.append(ZoomTwoScalesWidget(
-                    tmp, render_function=None,
-                    description='Scale: ',
-                    minus_description='fa-search-minus',
-                    plus_description='fa-search-plus',
-                    continuous_update=False))
-                self.tab_titles.append('Zoom')
-            elif o == 'zoom_one':
-                tmp = {'min': 0.1, 'max': 4., 'step': 0.05,
-                       'zoom': self.global_options[o]}
-                self.options_widgets.append(ZoomOneScaleWidget(
-                    tmp, render_function=None,
-                    description='Scale: ',
-                    minus_description='fa-search-minus',
-                    plus_description='fa-search-plus',
-                    continuous_update=False))
-                self.tab_titles.append('Zoom')
-            elif o == 'axes':
-                self.options_widgets.append(AxesOptionsWidget(
-                    self.global_options[o], render_function=None,
-                    render_checkbox_title='Render axes'))
-                self.tab_titles.append('Axes')
-            elif o == 'legend':
-                self.options_widgets.append(LegendOptionsWidget(
-                    self.global_options[o], render_function=None,
-                    render_checkbox_title='Render legend'))
-                self.tab_titles.append('Legend')
-            elif o == 'grid':
-                self.options_widgets.append(GridOptionsWidget(
-                    self.global_options[o], render_function=None,
-                    render_checkbox_title='Render grid'))
-                self.tab_titles.append('Grid')
-        self.suboptions_tab = ipywidgets.Tab(children=self.options_widgets)
-        # set titles
-        for (k, tl) in enumerate(self.tab_titles):
-            self.suboptions_tab.set_title(k, tl)
-
-        # Create final widget
-        initial_options = renderer_options.copy()
-        initial_options.update(self.global_options)
-        children = [self.suboptions_tab]
-        super(RendererOptionsWidget, self).__init__(
-            children, Dict, initial_options, render_function=render_function,
-            orientation='vertical', align='start')
-
-        # Set values
-        self.set_widget_state(labels, allow_callback=False)
-
-        # Set style
-        self.predefined_style(style, tabs_style)
-
-        # Add callbacks
-        self.add_callbacks()
-
-    def _save_options(self, change):
-        # update selected values
-        self.selected_values = {o: self.options_widgets[i].selected_values
-                                for i, o in enumerate(self.options_tabs)}
-        # update default values
-        current_key = self.get_key(self.labels)
-        if 'lines' in self.options_tabs:
-            self.default_options[current_key]['lines'] = \
-                self.selected_values['lines'].copy()
-        if 'markers' in self.options_tabs:
-            self.default_options[current_key]['markers'] = \
-                self.selected_values['markers'].copy()
-        # update global values
-        if 'image' in self.options_tabs:
-            self.global_options['image'] = self.selected_values['image']
-        if 'trimesh' in self.options_tabs:
-            self.global_options['trimesh'] = self.selected_values['trimesh']
-        if 'coloured_trimesh' in self.options_tabs:
-            self.global_options['coloured_trimesh'] = \
-                self.selected_values['coloured_trimesh']
-        if 'numbering' in self.options_tabs:
-            self.global_options['numbering'] = self.selected_values['numbering']
-        if 'zoom_one' in self.options_tabs:
-            self.global_options['zoom_one'] = self.selected_values['zoom_one']
-        if 'zoom_two' in self.options_tabs:
-            self.global_options['zoom_two'] = self.selected_values['zoom_two']
-        if 'grid' in self.options_tabs:
-            self.global_options['grid'] = self.selected_values['grid']
-        if 'legend' in self.options_tabs:
-            self.global_options['legend'] = self.selected_values['legend']
-        if 'axes' in self.options_tabs:
-            self.global_options['axes'] = self.selected_values['axes']
-
-    def add_callbacks(self):
-        r"""
-        Function that adds the handler callback functions in all the widget
-        components, which are necessary for the internal functionality.
-        """
-        for wid in self.options_widgets:
-            wid.observe(self._save_options, names='selected_values',
-                        type='change')
-
-    def remove_callbacks(self):
-        r"""
-        Function that removes all the internal handler callback functions.
-        """
-        for wid in self.options_widgets:
-            wid.unobserve(self._save_options, names='selected_values',
-                          type='change')
-
-    def get_key(self, labels):
-        r"""
-        Function that returns a unique key based on the provided labels.
-
-        Parameters
-        ----------
-        labels : `list` or ``None``, optional
-            The `list` of labels used in all :map:`ColourSelectionWidget` objects
-
-        Returns
-        -------
-        key : `str`
-            The key that has the format ``'{labels}'``.
-        """
-        return "{}".format(labels)
-
-    def initialise_global_options(self, axes_x_limits, axes_y_limits):
-        r"""
-        Function that returns a `dict` with global options, i.e. options that do
-        not depend on `labels`.  The functions updates ``self.global_options``
-        `dict` with:
-
-        * ``image`` : (`dict`) It has the following keys:
-
-          - ``interpolation`` : (`str`) The interpolation method.
-          - ``cmap_name`` : (`str`) The colourmap.
-          - ``alpha`` : (`float`) The alpha transparency value.
-
-        * ``numbering`` : (`dict`) It has the following keys:
-
-          - ``render_numbering`` : (`bool`) Flag for rendering the numbers.
-          - ``numbers_font_name`` : (`str`) The font name.
-          - ``numbers_font_size`` : (`int`) The font size.
-          - ``numbers_font_style`` : (`str`) The font style.
-          - ``numbers_font_weight`` : (`str`) The font weight.
-          - ``numbers_font_colour`` : (`list`) The font colour.
-          - ``numbers_horizontal_align`` : (`str`) The horizontal alignment.
-          - ``numbers_vertical_align`` : (`str`) The vertical alignment.
-
-        * ``zoom_one`` : (`float`) The zoom value.
-
-        * ``zoom_two`` : (`list` of `float`) The zoom values.
-
-        * ``axes`` : (`dict`) It has the following keys:
-
-          - ``render_axes`` : (`bool`) Flag for rendering the axes.
-          - ``axes_font_name`` : (`str`) The axes font name.
-          - ``axes_font_size`` : (`int`) The axes font size.
-          - ``axes_font_style`` : (`str`) The axes font style
-          - ``axes_font_weight`` : (`str`) The font weight.
-          - ``axes_x_ticks`` : (`list` or ``None``) The x ticks.
-          - ``axes_y_ticks`` : (`list` or ``None``) The y ticks.
-          - ``axes_x_limits`` : (`float` or [`float`, `float`] or ``None``)
-            The x limits.
-          - ``axes_y_limits`` : (`float` or [`float`, `float`] or ``None``)
-            The y limits.
-
-        * ``legend`` : (`dict`) It has the following keys:
-
-          - ``render_legend`` : (`bool`) Flag for rendering the legend.
-          - ``legend_title`` : (`str`) The legend title.
-          - ``legend_font_name`` : (`str`) The font name.
-          - ``legend_font_style`` : (`str`) The font style.
-          - ``legend_font_size`` : (`str`) The font size.
-          - ``legend_font_weight`` : (`str`) The font weight.
-          - ``legend_marker_scale`` : (`float`) The marker scale.
-          - ``legend_location`` : (`int`) The legend location.
-          - ``legend_bbox_to_anchor`` : (`tuple`) Bbox to anchor.
-          - ``legend_border_axes_pad`` : (`float`) Border axes pad.
-          - ``legend_n_columns`` : (`int`) The number of columns.
-          - ``legend_horizontal_spacing`` : (`float`) Horizontal spacing.
-          - ``legend_vertical_spacing`` : (`float`) Vetical spacing.
-          - ``legend_border`` : (`bool`) Flag for adding border to the legend
-          - ``legend_border_padding`` : (`float`) The border padding
-          - ``legend_shadow`` : (`bool`) Flag for adding shadow to the legend
-          - ``legend_rounded_corners`` : (`bool`) Flag for adding rounded
-            corners to the legend.
-
-        * ``gird`` : (`dict`) It has the following keys:
-
-          - ``render_grid`` : (`bool`) Flag for rendering the grid.
-          - ``grid_line_width`` : (`int`) The line width.
-          - ``grid_line_style`` : (`str`) The line style.
-
-        * ``trimesh`` : (`dict`) It has the following keys:
-
-          - ``mesh_type`` : (`str`) One of ('surface', 'wireframe', 'mesh',
-                                            'fancymesh', 'points')
-          - ``line_width`` : (`int`) The width of the rendered lines.
-          - ``colour`` : (`str`) The mesh colour (e.g. ``'red'``, ``'#0d3c4e'``)
-          - ``marker_style`` : (`str`) The size of the markers. (e.g. ``'cube'``)
-          - ``marker_size`` : (`float`) The size of the markers (e.g. ``0.1``).
-          - ``marker_resolution`` : (`int`) The resolution of the markers.
-          - ``step`` : (`int`) The sampling step of the markers.
-          - ``alpha`` : (`float`) The alpha (transparency) value.
-
-        * ``coloured_trimesh`` : (`dict`) It has the following keys:
-
-          - ``mesh_type`` : (`str`) One of ('surface', 'wireframe')
-          - ``ambient_light`` : (`float`) The ambient light of the mesh.
-          - ``specular_light`` : (`float`) The specular light of the mesh.
-          - ``alpha`` : (`float`) The alpha (transparency) value.
-
-        If the object is not seen before by the widget, then it automatically
-        gets the following default options:
-
-        * ``image``
-
-          - ``interpolation = 'bilinear'``
-          - ``cmap_name = None``
-          - ``alpha = 1.``
-
-        * ``numbering``
-
-          - ``render_numbering = False``
-          - ``numbers_font_name = 'sans-serif'``
-          - ``numbers_font_size = 10``
-          - ``numbers_font_style = 'normal'``
-          - ``numbers_font_weight = 'normal'``
-          - ``numbers_font_colour = ['black']``
-          - ``numbers_horizontal_align = 'center'``
-          - ``numbers_vertical_align = 'bottom'``
-
-        * ``zoom_one = 1.``
-
-        * ``zoom_two = [1., 1.]``
-
-        * ``axes``
-
-          - ``render_axes = False``
-          - ``axes_font_name = 'sans-serif'``
-          - ``axes_font_size = 10``
-          - ``axes_font_style = 'normal'``
-          - ``axes_font_weight = 'normal'``
-          - ``axes_x_ticks = None``
-          - ``axes_y_ticks = None``
-          - ``axes_x_limits = axes_x_limits``
-          - ``axes_y_limits = axes_y_limits``
-
-        * ``legend``
-
-          - ``render_legend = False``
-          - ``legend_title = ''``
-          - ``legend_font_name = 'sans-serif'``
-          - ``legend_font_style = 'normal'``
-          - ``legend_font_size = 10``
-          - ``legend_font_weight = 'normal'``
-          - ``legend_marker_scale = 1.``
-          - ``legend_location = 2``
-          - ``legend_bbox_to_anchor = (1.05, 1.)``
-          - ``legend_border_axes_pad = 1.``
-          - ``legend_n_columns = 1``
-          - ``legend_horizontal_spacing = 1.``
-          - ``legend_vertical_spacing = 1.``
-          - ``legend_border = True``
-          - ``legend_border_padding = 0.5``
-          - ``legend_shadow = False``
-          - ``legend_rounded_corners = False``
-
-        * ``grid``
-
-          - ``render_grid = False``
-          - ``grid_line_width = 0.5``
-          - ``grid_line_style = '--'``
-
-        * ``trimesh``
-
-          - ``mesh_type = 'wireframe'``
-          - ``line_width = 2``
-          - ``colour = 'red'``
-          - ``marker_style = 'sphere'``
-          - ``marker_size = 0.1``
-          - ``marker_resolution = 8``
-          - ``step = 1``
-          - ``alpha = 1.0``
-
-        * ``coloured_trimesh``
-
-          - ``mesh_type = 'surface'``
-          - ``ambient_light = 0.0``
-          - ``specular_light = 0.0``
-          - ``alpha = 1.0``
-
-        Parameters
-        ----------
-        axes_x_limits : `float` or (`float`, `float`) or ``None``, optional
-            The limits of the x axis. If `float`, then it sets padding on the
-            right and left as a percentage of the rendered object's width. If
-            `tuple` or `list`, then it defines the axis limits. If ``None``,
-            then the limits are set automatically.
-        axes_y_limits : (`float`, `float`) `tuple` or ``None``, optional
-            The limits of the y axis. If `float`, then it sets padding on the
-            top and bottom as a percentage of the rendered object's height. If
-            `tuple` or `list`, then it defines the axis limits. If ``None``, then
-            the limits are set automatically.
-        """
-        self.global_options = {}
-        for o in self.options_tabs:
-            if o == 'image':
-                self.global_options[o] = {
-                    'interpolation': 'bilinear', 'cmap_name': None,
-                    'alpha': 1.}
-            elif o == 'trimesh':
-                self.global_options[o] = {
-                    'mesh_type': 'surface', 'line_width': 2, 'colour': 'red',
-                    'marker_style': 'sphere', 'marker_size': 0.1,
-                    'marker_resolution': 8, 'step': 1, 'alpha': 1.0}
-            elif o == 'coloured_trimesh':
-                self.global_options[o] = {
-                    'mesh_type': 'surface', 'ambient_light': 0.0,
-                    'specular_light': 0.0, 'alpha': 1.0}
-            elif o == 'numbering':
-                self.global_options[o] = {
-                    'render_numbering': False,
-                    'numbers_font_name': 'sans-serif',
-                    'numbers_font_size': 10, 'numbers_font_style': 'normal',
-                    'numbers_font_weight': 'normal',
-                    'numbers_font_colour': 'black',
-                    'numbers_horizontal_align': 'center',
-                    'numbers_vertical_align': 'bottom'}
-            elif o == 'zoom_one':
-                self.global_options[o] = 1.
-            elif o == 'zoom_two':
-                self.global_options[o] = [1., 1.]
-            elif o == 'axes':
-                self.global_options[o] = {
-                    'render_axes': False, 'axes_font_name': 'sans-serif',
-                    'axes_font_size': 10, 'axes_font_style': 'normal',
-                    'axes_font_weight': 'normal',
-                    'axes_x_limits': axes_x_limits,
-                    'axes_y_limits': axes_y_limits,
-                    'axes_x_ticks': None, 'axes_y_ticks': None}
-            elif o == 'legend':
-                self.global_options[o] = {
-                    'render_legend': False, 'legend_title': '',
-                    'legend_font_name': 'sans-serif',
-                    'legend_font_style': 'normal', 'legend_font_size': 10,
-                    'legend_font_weight': 'normal',
-                    'legend_marker_scale': 1., 'legend_location': 2,
-                    'legend_bbox_to_anchor': (1.05, 1.),
-                    'legend_border_axes_pad': 1., 'legend_n_columns': 1,
-                    'legend_horizontal_spacing': 1.,
-                    'legend_vertical_spacing': 1., 'legend_border': True,
-                    'legend_border_padding': 0.5, 'legend_shadow': False,
-                    'legend_rounded_corners': False}
-            elif o == 'grid':
-                self.global_options[o] = {
-                    'render_grid': False, 'grid_line_style': '--',
-                    'grid_line_width': 0.5}
-
-    def get_default_options(self, labels):
-        r"""
-        Function that returns a `dict` with default options given a `list` of
-        labels. The function returns the `dict` of options but also updates the
-        ``self.default_options`` `dict`.
-
-        Parameters
-        ----------
-        labels : `list` or ``None``, optional
-            The `list` of labels used in all :map:`ColourSelectionWidget` objects
-
-        Returns
-        -------
-        default_options : `dict`
-            A `dict` with the default options. It contains:
-
-            * ``lines`` : (`dict`) It has the following keys:
-
-              - ``render_lines`` : (`bool`) Whether to render the lines.
-              - ``line_width`` : (`float`) The width of the lines.
-              - ``line_style`` : (`str`) The style of the lines.
-              - ``line_colour`` : (`list`) The colour per label.
-
-            * ``markers`` : (`dict`) It has the following keys:
-
-              - ``render_markers`` : (`bool`) Whether to render the markers.
-              - ``marker_size`` : (`int`) The size of the markers.
-              - ``marker_style`` : (`str`) The style of the markers.
-              - ``marker_face_colour`` : (`list`) The face colour per label.
-              - ``marker_edge_colour`` : (`list`) The edge colour per label.
-              - ``marker_edge_width`` : (`float`) The edge width of the markers.
-
-            If the object is not seen before by the widget, then it automatically
-            gets the following default options:
-
-            * ``lines``
-
-              - ``render_lines = True``
-              - ``line_width = 1``
-              - ``line_style = '-``
-              - ``line_colour = ['red'] if labels is None else colours``
-
-            * ``markers``
-
-              - ``render_markers = True``
-              - ``marker_size = 5``
-              - ``marker_style = 'o'``
-              - ``marker_face_colour = ['red'] if labels is None else colours``
-              - ``marker_edge_colour = ['black'] if labels is None else colours``
-              - ``marker_edge_width = 1``
-
-            where ``colours = sample_colours_from_colourmap(len(labels), 'jet')``
-        """
-        # create key
-        key = self.get_key(labels)
-        # if the key does not exist in the default options dict, then add it
-        if key not in self.default_options:
-            self.default_options[key] = {}
-            if 'lines' in self.options_tabs:
-                lc = ['red']
-                if labels is not None:
-                    lc = sample_colours_from_colourmap(len(labels), 'jet')
-                self.default_options[key]['lines'] = {
-                    'render_lines': True, 'line_width': 1,
-                    'line_colour': lc, 'line_style': '-'}
-            if 'markers' in self.options_tabs:
-                fc = ['red']
-                ec = ['black']
-                if labels is not None and len(labels) > 1:
-                    fc = sample_colours_from_colourmap(len(labels), 'jet')
-                    ec = sample_colours_from_colourmap(len(labels), 'jet')
-                self.default_options[key]['markers'] = {
-                    'render_markers': True, 'marker_size': 5,
-                    'marker_face_colour': fc, 'marker_edge_colour': ec,
-                    'marker_style': 'o', 'marker_edge_width': 1}
-        return self.default_options[key]
-
-    def style(self, box_style=None, border_visible=False, border_colour='black',
-              border_style='solid', border_width=1, border_radius=0,
-              padding='0.2cm', margin=0, tabs_box_style=None,
-              tabs_border_visible=True, tabs_border_colour='black',
-              tabs_border_style='solid', tabs_border_width=1,
-              tabs_border_radius=1, tabs_padding=0, tabs_margin=0,
-              font_family='', font_size=None, font_style='', font_weight=''):
-        r"""
-        Function that defines the styling of the widget.
-
-        Parameters
-        ----------
-        box_style : `str` or ``None`` (see below), optional
-            Possible widget style options::
-
-                'success', 'info', 'warning', 'danger', '', None
-
-        border_visible : `bool`, optional
-            Defines whether to draw the border line around the widget.
-        border_colour : `str`, optional
-            The colour of the border around the widget.
-        border_style : `str`, optional
-            The line style of the border around the widget.
-        border_width : `float`, optional
-            The line width of the border around the widget.
-        border_radius : `float`, optional
-            The radius of the border around the widget.
-        padding : `float`, optional
-            The padding around the widget.
-        margin : `float`, optional
-            The margin around the widget.
-        tabs_box_style : `str` or ``None`` (see below), optional
-            Possible tab widgets style options::
-
-                'success', 'info', 'warning', 'danger', '', None
-
-        tabs_border_visible : `bool`, optional
-            Defines whether to draw the border line around the tab widgets.
-        tabs_border_colour : `str`, optional
-            The color of the border around the tab widgets.
-        tabs_border_style : `str`, optional
-            The line style of the border around the tab widgets.
-        tabs_border_width : `float`, optional
-            The line width of the border around the tab widgets.
-        tabs_border_radius : `float`, optional
-            The radius of the corners of the box of the tab widgets.
-        tabs_padding : `float`, optional
-            The padding around the tab widgets.
-        tabs_margin : `float`, optional
-            The margin around the tab widgets.
-        font_family : `str` (see below), optional
-            The font family to be used. Example options::
-
-                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
-                'helvetica'
-
-        font_size : `int`, optional
-            The font size.
-        font_style : `str` (see below), optional
-            The font style. Example options::
-
-                'normal', 'italic', 'oblique'
-
-        font_weight : See Below, optional
-            The font weight. Example options::
-
-                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
-                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
-                'extra bold', 'black'
-        """
-        format_box(self, box_style, border_visible, border_colour, border_style,
-                   border_width, border_radius, padding, margin)
-        for wid in self.options_widgets:
-            wid.style(box_style=tabs_box_style,
-                      border_visible=tabs_border_visible,
-                      border_colour=tabs_border_colour,
-                      border_style=tabs_border_style,
-                      border_width=tabs_border_width,
-                      border_radius=tabs_border_radius, padding=tabs_padding,
-                      margin=tabs_margin, font_family=font_family,
-                      font_size=font_size, font_style=font_style,
-                      font_weight=font_weight)
-        format_font(self, font_family, font_size, font_style, font_weight)
-
-    def predefined_style(self, style, tabs_style='minimal'):
-        r"""
-        Function that sets a predefined style on the widget.
-
-        Parameters
-        ----------
-        style : `str` (see below)
-            Style options:
-
-                ============= ============================
-                Style         Description
-                ============= ============================
-                ``'minimal'`` Simple black and white style
-                ``'success'`` Green-based style
-                ``'info'``    Blue-based style
-                ``'warning'`` Yellow-based style
-                ``'danger'``  Red-based style
-                ``''``        No style
-                ============= ============================
-
-        tabs_style : `str` (see below)
-            Tabs style options:
-
-                ============= ============================
-                Style         Description
-                ============= ============================
-                ``'minimal'`` Simple black and white style
-                ``'success'`` Green-based style
-                ``'info'``    Blue-based style
-                ``'warning'`` Yellow-based style
-                ``'danger'``  Red-based style
-                ``''``        No style
-                ============= ============================
-        """
-        if tabs_style == 'minimal' or tabs_style == '':
-            tabs_style = ''
-            tabs_border_visible = False
-            tabs_border_colour = 'black'
-            tabs_border_radius = 0
-            tabs_padding = 0
-        else:
-            tabs_style = tabs_style
-            tabs_border_visible = not style == tabs_style
-            tabs_border_colour = map_styles_to_hex_colours(tabs_style)
-            tabs_border_radius = 10
-            tabs_padding = '0.3cm'
-
-        if style == 'minimal':
-            self.style(box_style='', border_visible=True, border_colour='black',
-                       border_style='solid', border_width=1, border_radius=0,
-                       padding='0.2cm', margin='0.5cm', font_family='',
-                       font_size=None, font_style='', font_weight='',
-                       tabs_box_style=tabs_style,
-                       tabs_border_visible=tabs_border_visible,
-                       tabs_border_colour=tabs_border_colour,
-                       tabs_border_style='solid', tabs_border_width=1,
-                       tabs_border_radius=tabs_border_radius,
-                       tabs_padding=tabs_padding, tabs_margin='0.1cm')
-        elif (style == 'info' or style == 'success' or style == 'danger' or
-                      style == 'warning'):
-            self.style(box_style=style, border_visible=True,
-                       border_colour=map_styles_to_hex_colours(style),
-                       border_style='solid', border_width=1, border_radius=10,
-                       padding='0.2cm', margin='0.5cm', font_family='',
-                       font_size=None, font_style='', font_weight='',
-                       tabs_box_style=tabs_style,
-                       tabs_border_visible=tabs_border_visible,
-                       tabs_border_colour=tabs_border_colour,
-                       tabs_border_style='solid', tabs_border_width=1,
-                       tabs_border_radius=tabs_border_radius,
-                       tabs_padding=tabs_padding, tabs_margin='0.1cm')
-        else:
-            raise ValueError('style must be minimal or info or success or '
-                             'danger or warning')
-
-    def set_widget_state(self, labels, allow_callback=True):
-        r"""
-        Method that updates the state of the widget, if the provided `labels`
-        are different than ``self.labels``.
-
-        Parameters
-        ----------
-        labels : `list` or ``None``, optional
-            The `list` of labels used in all :map:`ColourSelectionWidget` objects
-        allow_callback : `bool`, optional
-            If ``True``, it allows triggering of any callback functions.
-        """
-        # keep old value
-        old_value = self.selected_values
-
-        # check if updates are required
-        if (not self.default_options or
-                self.get_key(self.labels) != self.get_key(labels)):
-            # Temporarily remove callbacks
-            render_function = self._render_function
-            self.remove_render_function()
-            self.remove_callbacks()
-
-            # Get options
-            renderer_options = self.get_default_options(labels)
-
-            # Assign properties
-            self.labels = labels
-
-            # Update subwidgets
-            if 'lines' in self.options_tabs:
-                i = self.options_tabs.index('lines')
-                self.options_widgets[i].set_widget_state(
-                    renderer_options['lines'], labels=labels,
-                    allow_callback=False)
-            if 'markers' in self.options_tabs:
-                i = self.options_tabs.index('markers')
-                self.options_widgets[i].set_widget_state(
-                    renderer_options['markers'], labels=labels,
-                    allow_callback=False)
-
-            # Get values
-            self._save_options({})
-
-            # Add callbacks
-            self.add_callbacks()
-            self.add_render_function(render_function)
-
-        # trigger render function if allowed
-        if allow_callback:
-            self.call_render_function(old_value, self.selected_values)
 
 
 class SaveMatplotlibFigureOptionsWidget(ipywidgets.FlexBox):

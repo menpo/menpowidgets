@@ -357,7 +357,7 @@ class MultipleSelectionTogglesWidget(MenpoWidget):
         for l in labels:
             w = ipywidgets.ToggleButton(description=l, value=l in with_labels)
             w.button_style = buttons_style
-            w.layout.width = '{}px'.format(len(l) * 15)
+            w.layout.width = '{}px'.format((len(l) + 2) * 9)
             self.labels_toggles.append(w)
 
         # Group widget
@@ -437,7 +437,7 @@ class MultipleSelectionTogglesWidget(MenpoWidget):
                 w = ipywidgets.ToggleButton(description=l,
                                             value=l in with_labels)
                 w.button_style = self.buttons_style
-                w.layout.width = '{}px'.format(len(l) * 15)
+                w.layout.width = '{}px'.format((len(l) + 2) * 9)
                 w.observe(self._save_options, names='value', type='change')
                 self.labels_toggles.append(w)
             self.box_1.children = self.labels_toggles
@@ -3990,10 +3990,11 @@ class GridOptionsWidget(MenpoWidget):
         self.box_1 = ipywidgets.HBox([self.grid_line_width_title,
                                       self.grid_line_width_text])
         self.box_1.layout.align_items = 'center'
+        self.box_1.layout.margin = '0px 10px 0px 0px'
         self.box_2 = ipywidgets.HBox([self.grid_line_style_title,
                                       self.grid_line_style_dropdown])
         self.box_2.layout.align_items = 'center'
-        self.box_3 = ipywidgets.VBox([self.box_1, self.box_2])
+        self.box_3 = ipywidgets.HBox([self.box_1, self.box_2])
         self.box_3.layout.align_items = 'flex-end'
         self.container = ipywidgets.VBox([self.render_grid_switch, self.box_3])
 
