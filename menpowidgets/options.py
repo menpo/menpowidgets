@@ -1671,28 +1671,7 @@ class RendererOptionsWidget(MenpoWidget):
 
 class ChannelOptionsWidget(MenpoWidget):
     r"""
-    Creates a widget for selecting channel options for rendering an image. The
-    widget consists of the following objects from `ipywidgets` and
-    :ref:`api-tools-index`:
-
-    == =========================== ======================== =====================
-    No Object                      Property (`self.`)       Description
-    == =========================== ======================== =====================
-    1  :map:`SlicingCommandWidget` `channels_wid`           The channels selector
-    2  `Checkbox`                  `masked_checkbox`        Controls masked mode
-    3  `Checkbox`                  `rgb_checkbox`           View as RGB
-    4  `Checkbox`                  `sum_checkbox`           View sum of channels
-    5  `Checkbox`                  `glyph_checkbox`         View glyph
-    6  `BoundedIntText`            `glyph_block_size_text`  Glyph block size
-    7  `Checkbox`                  `glyph_use_neg_checkbox` Use negative values
-    8  `Latex`                     `no_options_latex`       No options message
-    9  `VBox`                      `glyph_options_box`      Contains 6, 7
-    10 `HBox`                      `glyph_box`              Contains 5, 9
-    11 `HBox`                      `rgb_masked_options_box` Contains 3, 2
-    12 `HBox`                      `glyph_sum_options_box`  Contains 4, 10
-    13 `VBox`                      `checkboxes_box`         Contains 11, 12
-    == =========================== ======================== =====================
-
+    Creates a widget for selecting channel options for rendering an image.
     Note that:
 
     * To update the state of the widget, please refer to the
@@ -1702,28 +1681,12 @@ class ChannelOptionsWidget(MenpoWidget):
       unique key id assigned through :meth:`get_key`. Then, the options that
       correspond to each key are stored in the ``self.default_options`` `dict`.
     * The selected values of the current image object are stored in the
-      ``self.selected_values`` `trait`. It is a `dict` with the following keys:
-
-      * ``channels`` : (`list`) The selected channels.
-      * ``glyph_enabled`` : (`bool`) Whether to render as glyph.
-      * ``glyph_block_size`` : (`int`) The glyph's block size.
-      * ``glyph_use_negative`` : (`bool`) Whether to use negative values in glyph
-      * ``sum_enabled`` : (`bool`) Whether to render as sum of channels.
-      * ``masked_enabled`` : (`bool`) Whether to render as masked.
-
+      ``self.selected_values`` `trait`.
     * When an unseen image object is passed in (i.e. a key that is not included
-      in the ``self.default_options`` `dict`), it gets the following initial
-      options by default:
-
-      * ``channels = [0] if n_channels == 3 else None``
-      * ``glyph_enabled = False``
-      * ``glyph_block_size = 3``
-      * ``glyph_use_negative = False``
-      * ``sum_enabled = False``
-      * ``masked_enabled = image_is_masked``
-
-    * To set the styling of this widget please refer to the :meth:`style` and
-      :meth:`predefined_style` methods.
+      in the ``self.default_options`` `dict`), it gets some pre-defined
+      default options.
+    * To set the styling of this widget please refer to the
+    :meth:`predefined_style` method.
     * To update the handler callback function of the widget, please refer to the
       :meth:`replace_render_function` method.
 
@@ -1752,7 +1715,6 @@ class ChannelOptionsWidget(MenpoWidget):
             ============= ============================
             Style         Description
             ============= ============================
-            ``'minimal'`` Simple black and white style
             ``'success'`` Green-based style
             ``'info'``    Blue-based style
             ``'warning'`` Yellow-based style
@@ -1812,42 +1774,35 @@ class ChannelOptionsWidget(MenpoWidget):
         self.channels_wid = SlicingCommandWidget(
             slice_options, description='Channels:', render_function=None,
             example_visible=True, continuous_update=False,
-            orientation='horizontal')
-        self.masked_checkbox = ipywidgets.Checkbox(description='Masked',
-                                                   margin='0.1cm')
-        self.rgb_checkbox = ipywidgets.Checkbox(description='RGB',
-                                                margin='0.1cm')
-        self.sum_checkbox = ipywidgets.Checkbox(description='Sum',
-                                                margin='0.1cm')
-        self.glyph_checkbox = ipywidgets.Checkbox(description='Glyph',
-                                                  margin='0.1cm')
-        self.glyph_block_size_text = ipywidgets.BoundedIntText(
-            description='Block size', min=1, max=25, width='1.5cm')
+            orientation='vertical')
+        self.masked_checkbox = ipywidgets.Checkbox(description='Masked')
+        self.rgb_checkbox = ipywidgets.Checkbox(description='RGB')
+        self.sum_checkbox = ipywidgets.Checkbox(description='Sum')
+        self.glyph_checkbox = ipywidgets.Checkbox(description='Glyph')
+        self.glyph_block_size_title = ipywidgets.Label(value='Block size')
+        self.glyph_block_size_text = ipywidgets.BoundedIntText(min=1, max=25,
+                                                               width='1.5cm')
         self.glyph_use_negative_checkbox = ipywidgets.Checkbox(
             description='Negative')
-        self.no_options_latex = ipywidgets.Latex(value='No options available')
+        self.no_options_label = ipywidgets.Label(value='No options available')
 
         # Group widgets
-        self.glyph_options_box = ipywidgets.VBox(
-            children=[self.glyph_block_size_text,
-                      self.glyph_use_negative_checkbox], margin='0.1cm',
-            visible=False)
-        self.glyph_box = ipywidgets.HBox(children=[self.glyph_checkbox,
-                                                   self.glyph_options_box],
-                                         align='start')
-        self.rgb_masked_options_box = ipywidgets.HBox(
-            children=[self.rgb_checkbox, self.masked_checkbox])
-        self.glyph_sum_options_box = ipywidgets.HBox(
-            children=[self.sum_checkbox, self.glyph_box])
-        self.checkboxes_box = ipywidgets.VBox(
-            children=[self.rgb_masked_options_box, self.glyph_sum_options_box])
+        self.box_1 = ipywidgets.HBox([self.glyph_block_size_title,
+                                      self.glyph_block_size_text])
+        self.box_1.layout.align_items = 'center'
+        self.box_2 = ipywidgets.VBox([self.box_1,
+                                      self.glyph_use_negative_checkbox])
+        self.box_2.layout.display = 'none'
+        self.box_3 = ipywidgets.HBox([self.glyph_checkbox, self.box_2])
+        self.box_4 = ipywidgets.HBox([self.rgb_checkbox, self.masked_checkbox])
+        self.box_5 = ipywidgets.HBox([self.sum_checkbox, self.box_3])
+        self.box_6 = ipywidgets.VBox([self.box_4, self.box_5])
+        self.container = ipywidgets.HBox([self.channels_wid, self.box_6,
+                                          self.no_options_label])
 
         # Create final widget
-        children = [self.channels_wid, self.checkboxes_box,
-                    self.no_options_latex]
         super(ChannelOptionsWidget, self).__init__(
-            children, Dict, {}, render_function=render_function,
-            orientation='horizontal', align='start')
+            [self.container], Dict, {}, render_function=render_function)
 
         # Set values
         self.set_widget_state(n_channels, image_is_masked, allow_callback=False)
@@ -1941,7 +1896,7 @@ class ChannelOptionsWidget(MenpoWidget):
 
             # set glyph to False
             self.glyph_checkbox.value = False
-            self.glyph_options_box.visible = False
+            self.box_2.layout.display = 'none'
 
             # re-assign glyph callback
             self.glyph_checkbox.observe(self._save_glyph, names='value',
@@ -1961,7 +1916,7 @@ class ChannelOptionsWidget(MenpoWidget):
             self.sum_checkbox.observe(self._save_sum, names='value',
                                       type='change')
         # set visibility
-        self.glyph_options_box.visible = change['new']
+        self.box_2.layout.display = 'flex' if change['new'] else 'none'
         self._save_options({})
 
     def set_visibility(self):
@@ -1970,13 +1925,18 @@ class ChannelOptionsWidget(MenpoWidget):
         widget, depending on the properties of the current image object, i.e.
         ``self.n_channels`` and ``self.image_is_masked``.
         """
-        self.channels_wid.visible = self.n_channels > 1
-        self.glyph_sum_options_box.visible = self.n_channels > 1
-        self.rgb_checkbox.visible = self.n_channels == 3
-        self.masked_checkbox.visible = self.image_is_masked
-        self.no_options_latex.visible = (self.n_channels == 1 and
-                                         not self.image_is_masked)
-        self.glyph_options_box.visible = self.glyph_checkbox.value
+        self.channels_wid.layout.display = ('flex' if self.n_channels > 1
+                                            else 'none')
+        self.box_5.layout.display = 'flex' if self.n_channels > 1 else 'none'
+        self.rgb_checkbox.layout.display = ('inline' if self.n_channels == 3
+                                            else 'none')
+        self.masked_checkbox.layout.display = ('inline' if self.image_is_masked
+                                               else 'none')
+        self.no_options_label.layout.display = (
+            'inline' if self.n_channels == 1 and not self.image_is_masked
+            else 'none')
+        self.box_2.layout.display = ('flex' if self.glyph_checkbox.value else
+                                     'none')
 
     def get_key(self, n_channels, image_is_masked):
         r"""
@@ -2051,7 +2011,9 @@ class ChannelOptionsWidget(MenpoWidget):
                                          'glyph_block_size': 3,
                                          'glyph_use_negative': False,
                                          'sum_enabled': False,
-                                         'masked_enabled': masked_enabled}
+                                         'masked_enabled': masked_enabled,
+                                         'interpolation': 'bilinear',
+                                         'cmap_name': None}
         return self.default_options[key]
 
     def _parse_channels_value(self, channels):
@@ -2061,82 +2023,6 @@ class ChannelOptionsWidget(MenpoWidget):
             return str(channels).strip('[]')
         else:
             return str(channels)
-
-    def style(self, box_style=None, border_visible=False, border_colour='black',
-              border_style='solid', border_width=1, border_radius=0, padding=0,
-              margin=0, font_family='', font_size=None, font_style='',
-              font_weight='', slider_width='4cm'):
-        r"""
-        Function that defines the styling of the widget.
-
-        Parameters
-        ----------
-        box_style : `str` or ``None`` (see below), optional
-            Possible widget style options::
-
-                'success', 'info', 'warning', 'danger', '', None
-
-        border_visible : `bool`, optional
-            Defines whether to draw the border line around the widget.
-        border_colour : `str`, optional
-            The colour of the border around the widget.
-        border_style : `str`, optional
-            The line style of the border around the widget.
-        border_width : `float`, optional
-            The line width of the border around the widget.
-        border_radius : `float`, optional
-            The radius of the border around the widget.
-        padding : `float`, optional
-            The padding around the widget.
-        margin : `float`, optional
-            The margin around the widget.
-        font_family : `str` (see below), optional
-            The font family to be used. Example options::
-
-                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
-                'helvetica'
-
-        font_size : `int`, optional
-            The font size.
-        font_style : `str` (see below), optional
-            The font style. Example options::
-
-                'normal', 'italic', 'oblique'
-
-        font_weight : See Below, optional
-            The font weight. Example options::
-
-                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
-                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
-                'extra bold', 'black'
-
-        slider_width : `str`, optional
-            The width of the slider.
-        """
-        format_box(self, box_style, border_visible, border_colour, border_style,
-                   border_width, border_radius, padding, margin)
-        self.channels_wid.single_slider.width = slider_width
-        self.channels_wid.multiple_slider.width = slider_width
-        format_font(self, font_family, font_size, font_style, font_weight)
-        format_font(self.rgb_checkbox, font_family, font_size, font_style,
-                    font_weight)
-        format_font(self.masked_checkbox, font_family, font_size, font_style,
-                    font_weight)
-        format_font(self.sum_checkbox, font_family, font_size, font_style,
-                    font_weight)
-        format_font(self.glyph_checkbox, font_family, font_size, font_style,
-                    font_weight)
-        format_font(self.glyph_block_size_text, font_family, font_size,
-                    font_style, font_weight)
-        format_font(self.glyph_use_negative_checkbox, font_family, font_size,
-                    font_style, font_weight)
-        format_font(self.no_options_latex, font_family, font_size, font_style,
-                    font_weight)
-        self.channels_wid.style(
-            box_style=box_style, border_visible=False, text_box_style=None,
-            text_box_background_colour=None, text_box_width=None,
-            font_family=font_family, font_size=font_size, font_style=font_style,
-            font_weight=font_weight)
 
     def predefined_style(self, style):
         r"""
@@ -2158,32 +2044,7 @@ class ChannelOptionsWidget(MenpoWidget):
                 ``''``        No style
                 ============= ============================
         """
-        if style == 'minimal':
-            self.style(box_style=None, border_visible=True,
-                       border_colour='black', border_style='solid',
-                       border_width=1, border_radius=0, padding='0.2cm',
-                       margin='0.3cm', font_family='', font_size=None,
-                       font_style='', font_weight='', slider_width='4cm')
-            format_box(self.glyph_options_box, box_style='',
-                       border_visible=False, border_colour='',
-                       border_style='solid', border_width=1, border_radius=0,
-                       padding='0.1cm', margin=0)
-        elif (style == 'info' or style == 'success' or style == 'danger' or
-                      style == 'warning'):
-            self.style(box_style=style, border_visible=True,
-                       border_colour=map_styles_to_hex_colours(style),
-                       border_style='solid', border_width=1, border_radius=10,
-                       padding='0.2cm', margin='0.3cm', font_family='',
-                       font_size=None, font_style='', font_weight='',
-                       slider_width='4cm')
-            format_box(self.glyph_options_box, box_style=style,
-                       border_visible=True,
-                       border_colour=map_styles_to_hex_colours(style),
-                       border_style='solid', border_width=1, border_radius=10,
-                       padding='0.1cm', margin=0)
-        else:
-            raise ValueError('style must be minimal or info or success or '
-                             'danger or warning')
+        pass
 
     def set_widget_state(self, n_channels, image_is_masked, allow_callback=True):
         r"""
