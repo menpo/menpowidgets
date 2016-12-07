@@ -986,7 +986,7 @@ class Shape3DOptionsWidget(MenpoWidget):
                 mc = sample_colours_from_colourmap(len(labels), 'jet')
             self.default_options[key]['markers'] = {
                 'marker_colour': mc, 'render_markers': True,
-                'marker_size': 0.1, 'marker_style': 'sphere',
+                'marker_size': None, 'marker_style': 'sphere',
                 'marker_resolution': 8}
 
             # Set labels
@@ -1432,8 +1432,8 @@ class RendererOptionsWidget(MenpoWidget):
                     'alpha': 1.}
             elif o == 'trimesh':
                 self.global_options[o] = {
-                    'mesh_type': 'surface', 'line_width': 2, 'colour': 'red',
-                    'marker_style': 'sphere', 'marker_size': 0.1,
+                    'mesh_type': 'wireframe', 'line_width': 2., 'colour': 'red',
+                    'marker_style': 'sphere', 'marker_size': None,
                     'marker_resolution': 8, 'step': 1, 'alpha': 1.0}
             elif o == 'textured_trimesh':
                 self.global_options[o] = {
@@ -1452,7 +1452,7 @@ class RendererOptionsWidget(MenpoWidget):
             elif o == 'numbering_mayavi':
                 self.global_options[o] = {
                     'render_numbering': False,
-                    'numbers_size': 1.,
+                    'numbers_size': None,
                     'numbers_colour': 'black'}
             elif o == 'zoom_one':
                 self.global_options[o] = 1.

@@ -201,9 +201,12 @@ class ListWidget(MenpoWidget):
     example_visible : `bool`, optional
         If `True`, then a line with command examples is printed below the
         main text box.
+    width : `int`, optional
+        The width of the command box in pixels. It includes the status icon
+        but not the description.
     """
     def __init__(self, selected_list, mode='float', description='Command:',
-                 render_function=None, example_visible=True):
+                 render_function=None, example_visible=True, width=260):
         # Create children
         selected_cmd = ''
         example_str = ''
@@ -225,7 +228,8 @@ class ListWidget(MenpoWidget):
             raise ValueError("mode must be either int or float.")
         self.cmd_description = ipywidgets.Label(value=description)
         self.cmd_text = ipywidgets.Text(value=selected_cmd[:-2],
-                                        placeholder='Type command')
+                                        placeholder='Type command',
+                                        width='{}px'.format(width - 16))
         self.example = ipywidgets.HTML(value=example_str)
         self.error_msg = ipywidgets.HTML(value='')
         self.state_icon = ipywidgets.HTML(
@@ -268,8 +272,9 @@ class ListWidget(MenpoWidget):
             except ValueError as e:
                 self.state_icon.value = \
                     '<i class="fa fa-times" style="color:red"></i>'
-                self.error_msg.value = ('<p style="color:#FF0000";><em>' +
-                                        str(e) + '</em></p>')
+                self.error_msg.value = (
+                    '<p style="color:#FF0000";><font size="2"><em>' + str(e)
+                    + '</em></font size></p>')
                 self.error_msg.layout.display = 'inline'
         self.cmd_text.on_submit(save_cmd)
 
@@ -490,16 +495,20 @@ class SlicingCommandWidget(MenpoWidget):
         called only when the handle (mouse click) is released.
     orientation : ``{'horizontal', 'vertical'}``, optional
         The orientation between the command text box and the sliders.
+    width : `int`, optional
+        The width of the command box in pixels. It includes the status icon
+        but not the description.
     """
     def __init__(self, slice_options, description='Command:',
                  render_function=None, example_visible=True,
-                 continuous_update=False, orientation='horizontal'):
+                 continuous_update=False, orientation='horizontal', width=260):
         # Create children
         indices = parse_slicing_command(slice_options['command'],
                                         slice_options['length'])
         self.cmd_description = ipywidgets.Label(value=description)
         self.cmd_text = ipywidgets.Text(value=slice_options['command'],
-                                        placeholder='Type command', width='8cm')
+                                        placeholder='Type command',
+                                        width='{}px'.format(width-16))
         self.error_msg = ipywidgets.HTML(value='')
         self.state_icon = ipywidgets.HTML(
             value='<i class="fa fa-check" style="color:green"></i>')
@@ -510,12 +519,13 @@ class SlicingCommandWidget(MenpoWidget):
             example_str = self._example_str(slice_options['length'])
         self.example = ipywidgets.HTML(value=example_str)
         self.single_slider = ipywidgets.IntSlider(
-            min=0, max=slice_options['length'] - 1, value=0, width='8cm',
-            readout=False, continuous_update=continuous_update)
+            min=0, max=slice_options['length'] - 1, value=0,
+            width='{}px'.format(width-16), readout=False,
+            continuous_update=continuous_update)
         self.multiple_slider = ipywidgets.IntRangeSlider(
             min=0, max=slice_options['length'] - 1,
-            value=(indices[0], indices[-1]), width='8cm', readout=False,
-            continuous_update=continuous_update)
+            value=(indices[0], indices[-1]), width='{}px'.format(width-16),
+            readout=False, continuous_update=continuous_update)
 
         # Group widgets
         self.box_1 = ipywidgets.HBox([self.cmd_text, self.state_icon])
@@ -2356,8 +2366,17 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
             description_location='right')
         self.render_markers_switch.layout.margin = '7px'
         self.marker_size_title = ipywidgets.Label(value='Size')
+        m1 = marker_options['marker_size']
+        m2 = False
+        m_icon = 'fa-keyboard-o'
+        if marker_options['marker_size'] is None:
+            m1 = 0.1
+            m2 = True
+            m_icon = 'fa-times'
         self.marker_size_text = ipywidgets.BoundedFloatText(
-            value=marker_options['marker_size'], min=0, max=10**6, width='3cm')
+            value=m1, disabled=m2, min=0, max=10**6, width='1.9cm')
+        self.marker_size_none = ipywidgets.Button(
+            description='', icon=m_icon, width='1.0cm', height='0.8cm')
         self.marker_resolution_title = ipywidgets.Label(value='Resolution')
         self.marker_resolution_text = ipywidgets.BoundedIntText(
             value=marker_options['marker_resolution'], min=0., max=10**6,
@@ -2391,7 +2410,8 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
 
         # Group widgets
         self.box_1 = ipywidgets.HBox([self.marker_size_title,
-                                      self.marker_size_text])
+                                      self.marker_size_text,
+                                      self.marker_size_none])
         self.box_1.layout.align_items = 'center'
         self.box_2 = ipywidgets.HBox([self.marker_resolution_title,
                                       self.marker_resolution_text])
@@ -2420,9 +2440,12 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
             marker_options_visible, names='selected_values', type='change')
 
         def save_options(change):
+            marker_size = None
+            if not self.marker_size_text.disabled:
+                marker_size = float(self.marker_size_text.value)
             self.selected_values = {
                 'render_markers': self.render_markers_switch.selected_values,
-                'marker_size': float(self.marker_size_text.value),
+                'marker_size': marker_size,
                 'marker_colour': self.marker_colour_widget.selected_values,
                 'marker_resolution': int(self.marker_resolution_text.value),
                 'marker_style': self.marker_style_dropdown.value}
@@ -2435,6 +2458,16 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
                                            type='change')
         self.marker_resolution_text.observe(save_options, names='value',
                                             type='change')
+
+        def button_icon(_):
+            if self.marker_size_text.disabled:
+                self.marker_size_none.icon = 'fa-keyboard-o'
+                self.marker_size_text.disabled = False
+            else:
+                self.marker_size_none.icon = 'fa-times'
+                self.marker_size_text.disabled = True
+            save_options({})
+        self.marker_size_none.on_click(button_icon)
 
     def set_widget_state(self, marker_options, labels=None,
                          allow_callback=True):
@@ -2473,7 +2506,13 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
             self.render_markers_switch.set_widget_state(
                 marker_options['render_markers'], allow_callback=False)
             self.marker_style_dropdown.value = marker_options['marker_style']
-            self.marker_size_text.value = float(marker_options['marker_size'])
+            if marker_options['marker_size'] is None:
+                self.marker_size_text.disabled = True
+                self.marker_size_none.icon = 'fa-times'
+            else:
+                self.marker_size_text.disabled = False
+                self.marker_size_none.icon = 'fa-keyboard-o'
+                self.marker_size_text.value = float(marker_options['marker_size'])
             self.marker_resolution_text.value = \
                 int(marker_options['marker_resolution'])
             self.marker_colour_widget.set_widget_state(
@@ -2767,16 +2806,25 @@ class NumberingMayaviOptionsWidget(MenpoWidget):
             description=render_checkbox_title, description_location='right')
         self.render_numbering_switch.layout.margin = '7px'
         self.numbers_size_title = ipywidgets.Label(value='Size')
+        n1 = numbers_options['numbers_size']
+        n2 = False
+        n_icon = 'fa-keyboard-o'
+        if numbers_options['numbers_size'] is None:
+            n1 = 0.1
+            n2 = True
+            n_icon = 'fa-times'
         self.numbers_size_text = ipywidgets.BoundedFloatText(
-            value=numbers_options['numbers_size'], min=0., max=10**6,
-            width='3cm')
+            value=n1, disabled=n2, min=0., max=10**6, width='1.9cm')
+        self.numbers_size_none = ipywidgets.Button(
+            description='', icon=n_icon, width='1.0cm', height='0.8cm')
         self.numbers_colour_widget = ColourSelectionWidget(
             numbers_options['numbers_colour'], description='Colour',
             render_function=None)
 
         # Group widgets
         self.box_1 = ipywidgets.HBox([self.numbers_size_title,
-                                      self.numbers_size_text])
+                                      self.numbers_size_text,
+                                      self.numbers_size_none])
         self.box_1.layout.align_items = 'center'
         self.box_1.layout.margin = '0px 10px 0px 0px'
         self.box_2 = ipywidgets.HBox([self.box_1, self.numbers_colour_widget])
@@ -2798,9 +2846,12 @@ class NumberingMayaviOptionsWidget(MenpoWidget):
                                              type='change')
 
         def save_options(change):
+            numbers_size = None
+            if not self.numbers_size_text.disabled:
+                numbers_size = float(self.numbers_size_text.value)
             self.selected_values = {
                 'render_numbering': self.render_numbering_switch.selected_values,
-                'numbers_size': float(self.numbers_size_text.value),
+                'numbers_size': numbers_size,
                 'numbers_colour': self.numbers_colour_widget.selected_values[0]}
         self.render_numbering_switch.observe(save_options,
                                              names='selected_values',
@@ -2810,6 +2861,16 @@ class NumberingMayaviOptionsWidget(MenpoWidget):
         self.numbers_colour_widget.observe(save_options,
                                            names='selected_values',
                                            type='change')
+
+        def button_icon(_):
+            if self.numbers_size_text.disabled:
+                self.numbers_size_none.icon = 'fa-keyboard-o'
+                self.numbers_size_text.disabled = False
+            else:
+                self.numbers_size_none.icon = 'fa-times'
+                self.numbers_size_text.disabled = True
+            save_options({})
+        self.numbers_size_none.on_click(button_icon)
 
     def set_widget_state(self, numbers_options, allow_callback=True):
         r"""
@@ -2840,7 +2901,13 @@ class NumberingMayaviOptionsWidget(MenpoWidget):
             # update
             self.render_numbering_switch.set_widget_state(
                 numbers_options['render_numbering'], allow_callback=False)
-            self.numbers_size_text.value = float(numbers_options['numbers_size'])
+            if numbers_options['numbers_size'] is None:
+                self.numbers_size_text.disabled = True
+                self.numbers_size_none.icon = 'fa-times'
+            else:
+                self.numbers_size_text.disabled = False
+                self.numbers_size_none.icon = 'fa-keyboard-o'
+                self.numbers_size_text.value = float(numbers_options['numbers_size'])
             self.numbers_colour_widget.set_widget_state(
                 numbers_options['numbers_colour'], allow_callback=False)
 
@@ -2899,16 +2966,14 @@ class AxesLimitsWidget(MenpoWidget):
             options=['auto', 'percentage', 'range'])
         self.axes_x_limits_percentage = ListWidget(
             percentage_initial_value, mode='float', description='',
-            render_function=None, example_visible=False)
+            render_function=None, example_visible=False, width=120)
         self.axes_x_limits_percentage.layout.display = (
             'flex' if percentage_visible else 'none')
         self.axes_x_limits_range = ListWidget(
             range_initial_value, mode='float', description='',
-            render_function=None, example_visible=False)
+            render_function=None, example_visible=False, width=120)
         self.axes_x_limits_range.layout.display = (
             'flex' if range_visible else 'none')
-        self.axes_x_limits_percentage.cmd_text.layout.width = '3cm'
-        self.axes_x_limits_range.cmd_text.layout.width = '3cm'
 
         # y limits
         if axes_y_limits is None:
@@ -2935,16 +3000,14 @@ class AxesLimitsWidget(MenpoWidget):
             options=['auto', 'percentage', 'range'])
         self.axes_y_limits_percentage = ListWidget(
             percentage_initial_value, mode='float', description='',
-            render_function=None, example_visible=False)
+            render_function=None, example_visible=False, width=120)
         self.axes_y_limits_percentage.layout.display = (
             'flex' if percentage_visible else 'none')
         self.axes_y_limits_range = ListWidget(
             range_initial_value, mode='float', description='',
-            render_function=None, example_visible=False)
+            render_function=None, example_visible=False, width=120)
         self.axes_y_limits_range.layout.display = (
             'flex' if range_visible else 'none')
-        self.axes_y_limits_percentage.cmd_text.layout.width = '3cm'
-        self.axes_y_limits_range.cmd_text.layout.width = '3cm'
 
         # Group widgets
         self.box_1 = ipywidgets.HBox([self.axes_x_limits_title,
@@ -4149,14 +4212,16 @@ class TriMeshOptionsWidget(MenpoWidget):
             tooltip='Select the mesh type.', value=mesh_options['mesh_type'])
         self.line_width_title = ipywidgets.Label(value='Line width')
         self.line_width_text = ipywidgets.BoundedFloatText(
-            value=float(mesh_options['line_width']), min=0.0, max=10**6)
+            value=float(mesh_options['line_width']), min=0.0, max=10**6,
+            width='1.1cm')
         self.colour_widget = ColourSelectionWidget(
             mesh_options['colour'], description='Colour', render_function=None)
         self.alpha_title = ipywidgets.Label(value='Alpha')
         self.alpha_slider = ipywidgets.FloatSlider(
             value=mesh_options['alpha'], min=0.0, max=1.0, step=0.1,
-            continuous_update=False, readout=False)
-        self.alpha_text = ipywidgets.Label(value=str(mesh_options['alpha']))
+            continuous_update=False, readout=False, width='2.3cm')
+        self.alpha_text = ipywidgets.Label(value=str(mesh_options['alpha']),
+                                           width='0.6cm')
         self.marker_style_title = ipywidgets.Label(value='Style')
         marker_style_dict = OrderedDict()
         marker_style_dict['Sphere'] = 'sphere'
@@ -4178,23 +4243,27 @@ class TriMeshOptionsWidget(MenpoWidget):
         marker_style_dict['2D triangle'] = '2dtriangle'
         marker_style_dict['2D vertex'] = '2dvertex'
         self.marker_style_dropdown = ipywidgets.Dropdown(
-            options=marker_style_dict, value=mesh_options['marker_style'])
+            options=marker_style_dict, value=mesh_options['marker_style'],
+            width='3cm')
         self.marker_size_title = ipywidgets.Label(value='Style')
+        m1 = mesh_options['marker_size']
+        m2 = False
+        m_icon = 'fa-keyboard-o'
+        if mesh_options['marker_size'] is None:
+            m1 = 0.1
+            m2 = True
+            m_icon = 'fa-times'
         self.marker_size_text = ipywidgets.BoundedFloatText(
-            value=mesh_options['marker_size'], min=0.0, max=10**6)
+            value=m1, disabled=m2, min=0.0, max=10**6, width='1.9cm')
+        self.marker_size_none = ipywidgets.Button(
+            description='', icon=m_icon, width='1.0cm', height='0.8cm')
         self.marker_resolution_title = ipywidgets.Label(value='Resolution')
         self.marker_resolution_text = ipywidgets.BoundedIntText(
-            value=mesh_options['marker_resolution'], min=0, max=10**6)
+            value=mesh_options['marker_resolution'], min=0, max=10**6,
+            width='3cm')
         self.step_title = ipywidgets.Label(value='Step')
-        self.step_text = ipywidgets.BoundedIntText(value=mesh_options['step'],
-                                                   min=1, max=10**6)
-        self.line_width_text.layout.width = '1.1cm'
-        self.marker_style_dropdown.layout.width = '3cm'
-        self.marker_size_text.layout.width = '3cm'
-        self.marker_resolution_text.layout.width = '3cm'
-        self.step_text.layout.width = '3cm'
-        self.alpha_text.layout.width = '0.6cm'
-        self.alpha_slider.layout.width = '2.3cm'
+        self.step_text = ipywidgets.BoundedIntText(
+            value=mesh_options['step'], min=1, max=10**6, width='3cm')
 
         # Group widgets
         self.box_1 = ipywidgets.HBox([self.mesh_type_title,
@@ -4212,7 +4281,8 @@ class TriMeshOptionsWidget(MenpoWidget):
                                       self.marker_style_dropdown])
         self.box_4.layout.align_items = 'center'
         self.box_5 = ipywidgets.HBox([self.marker_size_title,
-                                      self.marker_size_text])
+                                      self.marker_size_text,
+                                      self.marker_size_none])
         self.box_5.layout.align_items = 'center'
         self.box_6 = ipywidgets.HBox([self.marker_resolution_title,
                                       self.marker_resolution_text])
@@ -4260,13 +4330,16 @@ class TriMeshOptionsWidget(MenpoWidget):
                                        type='change')
 
         def save_options(change):
+            marker_size = None
+            if not self.marker_size_text.disabled:
+                marker_size = float(self.marker_size_text.value)
             self.selected_values = {
                 'mesh_type': self.mesh_type_toggles.value,
                 'line_width': float(self.line_width_text.value),
                 'colour': colour_converter.to_rgb(
                     self.colour_widget.selected_values[0]),
                 'marker_style': self.marker_style_dropdown.value,
-                'marker_size': float(self.marker_size_text.value),
+                'marker_size': marker_size,
                 'marker_resolution': int(self.marker_resolution_text.value),
                 'step': int(self.step_text.value),
                 'alpha': float(self.alpha_slider.value)}
@@ -4283,6 +4356,16 @@ class TriMeshOptionsWidget(MenpoWidget):
                                             type='change')
         self.step_text.observe(save_options, names='value', type='change')
         self.alpha_slider.observe(save_options, names='value', type='change')
+
+        def button_icon(_):
+            if self.marker_size_text.disabled:
+                self.marker_size_none.icon = 'fa-keyboard-o'
+                self.marker_size_text.disabled = False
+            else:
+                self.marker_size_none.icon = 'fa-times'
+                self.marker_size_text.disabled = True
+            save_options({})
+        self.marker_size_none.on_click(button_icon)
 
     def set_widget_state(self, mesh_options, allow_callback=True):
         r"""
@@ -4320,7 +4403,13 @@ class TriMeshOptionsWidget(MenpoWidget):
             self.mesh_type_toggles.value = mesh_options['mesh_type']
             self.line_width_text.value = float(mesh_options['line_width'])
             self.marker_style_dropdown.value = mesh_options['marker_style']
-            self.marker_size_text.value = float(mesh_options['marker_size'])
+            if mesh_options['marker_size'] is None:
+                self.marker_size_text.disabled = True
+                self.marker_size_none.icon = 'fa-times'
+            else:
+                self.marker_size_text.disabled = False
+                self.marker_size_none.icon = 'fa-keyboard-o'
+                self.marker_size_text.value = float(mesh_options['marker_size'])
             self.marker_resolution_text.value = \
                 int(mesh_options['marker_resolution'])
             self.step_text.value = int(mesh_options['step'])
@@ -4378,6 +4467,7 @@ class TexturedTriMeshOptionsWidget(MenpoWidget):
         self.mesh_type_toggles = ipywidgets.ToggleButtons(
             options=['surface', 'wireframe'], tooltip='Select the mesh type.',
             value=mesh_options['mesh_type'])
+        self.mesh_type_toggles.layout.margin = '0px 10px 0px 0px'
         self.line_width_title = ipywidgets.Label(value='Line width')
         self.line_width_text = ipywidgets.BoundedFloatText(
             value=float(mesh_options['line_width']), min=0.0, max=10**6)
