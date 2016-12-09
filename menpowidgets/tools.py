@@ -105,22 +105,34 @@ class SwitchWidget(MenpoWidget):
         The description of the check box.
     description_location : {`left`, `right`}, optional
         The location of the description relative to the check box.
+    switch_type : {``checkbox``, ``toggle``}, optional
+        The type of the switch. If ``checkbox``, then `ipywidgets.Checkbox`
+        is used. if ``toggle``, then an `ipywidgets.ToggleButton` with
+        customized appearance is used.
     render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
     """
     def __init__(self, selected_value, description='Check me',
-                 description_location='right', render_function=None):
+                 description_location='right', switch_type='checkbox',
+                 render_function=None):
         # Create children
         self.description_wid = ipywidgets.Label(value=description)
-        self.button_wid = ipywidgets.ToggleButton(value=selected_value)
-        self.button_wid.layout.width = '10px'
-        self.button_wid.layout.height = '10px'
-        self.button_wid.layout.border = '3px solid black'
-        if selected_value:
-            self.button_wid.button_style = 'success'
+        if switch_type == 'toggle':
+            self.button_wid = ipywidgets.ToggleButton(value=selected_value)
+            self.button_wid.layout.width = '10px'
+            self.button_wid.layout.height = '10px'
+            self.button_wid.layout.border = '3px solid black'
+            if selected_value:
+                self.button_wid.button_style = 'success'
+            else:
+                self.button_wid.button_style = 'danger'
+        elif switch_type == 'checkbox':
+            self.button_wid = ipywidgets.Checkbox(value=selected_value)
+            self.button_wid.layout.width = '14px'
         else:
-            self.button_wid.button_style = 'danger'
+            raise ValueError("switch_type can be either 'toggle' or 'checkbox'")
+        self.switch_type = switch_type
         if description_location == 'left':
             self.container = ipywidgets.HBox([self.description_wid,
                                               self.button_wid])
@@ -138,10 +150,11 @@ class SwitchWidget(MenpoWidget):
 
         # Set functionality
         def save_value(change):
-            if change['new']:
-                self.button_wid.button_style = 'success'
-            else:
-                self.button_wid.button_style = 'danger'
+            if self.switch_type == 'toggle':
+                if change['new']:
+                    self.button_wid.button_style = 'success'
+                else:
+                    self.button_wid.button_style = 'danger'
             self.selected_values = change['new']
         self.button_wid.observe(save_value, names='value', type='change')
 
@@ -1679,9 +1692,9 @@ class ZoomTwoScalesWidget(MenpoWidget):
                 self.call_render_function(old_value, self.selected_values)
 
 
-class ImageOptionsWidget(MenpoWidget):
+class ImageMatplotlibOptionsWidget(MenpoWidget):
     r"""
-    Creates a widget for selecting image rendering options.
+    Creates a widget for selecting image rendering options with `matplotlib`.
 
     * The selected values are stored in the ``self.selected_values`` `trait`.
     * To update the state of the widget, please refer to the
@@ -1704,18 +1717,17 @@ class ImageOptionsWidget(MenpoWidget):
     """
     def __init__(self, image_options, render_function=None):
         # Create children
-        self.interpolation_checkbox = ipywidgets.Checkbox(
-            description='Pixelated',
-            value=image_options['interpolation'] == 'none')
+        self.interpolation_checkbox = SwitchWidget(
+            selected_value=image_options['interpolation'] == 'none',
+            description='Interpolation', description_location='right',
+            switch_type='checkbox', render_function=None)
         self.alpha_title = ipywidgets.Label(value='Transparency')
         self.alpha_slider = ipywidgets.FloatSlider(
             value=image_options['alpha'],
             min=0.0, max=1.0, step=0.05, continuous_update=False,
-            readout=False)
+            readout=False, width='3.5cm')
         self.alpha_text = ipywidgets.Label(
-            value="{:.2f}".format(image_options['alpha']))
-        self.alpha_slider.layout.width = '4cm'
-        self.alpha_text.layout.width = '1.1cm'
+            value="{:.2f}".format(image_options['alpha']), width='0.9cm')
         cmap_dict = OrderedDict()
         cmap_dict['None'] = None
         cmap_dict['afmhot'] = 'afmhot'
@@ -1792,37 +1804,26 @@ class ImageOptionsWidget(MenpoWidget):
         self.container.layout.align_items = 'flex-start'
 
         # Create final widget
-        super(ImageOptionsWidget, self).__init__(
+        super(ImageMatplotlibOptionsWidget, self).__init__(
             [self.container], Dict, image_options,
             render_function=render_function)
 
+        ipywidgets.jslink((self.alpha_slider, 'value'),
+                          (self.alpha_text, 'value'))
+
         # Set functionality
-        def save_interpolation(change):
-            if change['new']:
-                interpolation = 'none'
-            else:
-                interpolation = 'bilinear'
-            tmp = self.selected_values
-            self.selected_values = {'interpolation': interpolation,
-                                    'alpha': tmp['alpha'],
-                                    'cmap_name': tmp['cmap_name']}
-        self.interpolation_checkbox.observe(save_interpolation, names='value',
-                                            type='change')
-
-        def save_alpha(change):
-            self.alpha_text.value = "{:.2f}".format(change['new'])
-            tmp = self.selected_values
-            self.selected_values = {'interpolation': tmp['interpolation'],
-                                    'alpha': change['new'],
-                                    'cmap_name': tmp['cmap_name']}
-        self.alpha_slider.observe(save_alpha, names='value', type='change')
-
-        def save_cmap(change):
-            tmp = self.selected_values
-            self.selected_values = {'interpolation': tmp['interpolation'],
-                                    'alpha': tmp['alpha'],
-                                    'cmap_name': change['new']}
-        self.cmap_select.observe(save_cmap, names='value', type='change')
+        def save_options(change):
+            interpolation = ('bilinear'
+                             if self.interpolation_checkbox.selected_values
+                             else 'none')
+            self.selected_values = {
+                'interpolation': interpolation,
+                'alpha': self.alpha_slider.value,
+                'cmap_name': self.cmap_select.value}
+        self.interpolation_checkbox.observe(
+            save_options, names='selected_values', type='change')
+        self.alpha_slider.observe(save_options, names='value', type='change')
+        self.cmap_select.observe(save_options, names='value', type='change')
 
     def set_widget_state(self, image_options, allow_callback=True):
         r"""
@@ -1852,8 +1853,9 @@ class ImageOptionsWidget(MenpoWidget):
 
             # update
             self.alpha_slider.value = image_options['alpha']
-            self.interpolation_checkbox.value = \
-                image_options['interpolation'] == 'none'
+            self.interpolation_checkbox.set_widget_state(
+                image_options['interpolation'] == 'bilinear',
+                allow_callback=False)
             self.cmap_select.value = image_options['cmap_name']
 
             # re-assign render callback
@@ -1890,6 +1892,10 @@ class LineMatplotlibOptionsWidget(MenpoWidget):
         If ``None``, then nothing is assigned.
     render_checkbox_title : `str`, optional
         The description of the show line checkbox.
+    render_checkbox_type : {``checkbox``, ``toggle``}, optional
+        The type of the rendering switch. If ``checkbox``, then
+        `ipywidgets.Checkbox` is used. if ``toggle``, then an
+        `ipywidgets.ToggleButton` with customized appearance is used.
     labels : `list` of `str` or ``None``, optional
         A `list` with the labels' names that get passed in to the
         `ColourSelectionWidget`. If ``None``, then a `list` of the form
@@ -1897,11 +1903,12 @@ class LineMatplotlibOptionsWidget(MenpoWidget):
         only for the colour option and not the rest of the options.
     """
     def __init__(self, line_options, render_function=None,
+                 render_checkbox_type='toggle',
                  render_checkbox_title='Render lines', labels=None):
         # Create children
         self.render_lines_switch = SwitchWidget(
             line_options['render_lines'], description=render_checkbox_title,
-            description_location='right')
+            description_location='right', switch_type=render_checkbox_type)
         self.render_lines_switch.layout.margin = '7px'
         self.line_width_title = ipywidgets.Label(value='Width')
         self.line_width_text = ipywidgets.BoundedFloatText(
@@ -2031,6 +2038,10 @@ class LineMayaviOptionsWidget(MenpoWidget):
         If ``None``, then nothing is assigned.
     render_checkbox_title : `str`, optional
         The description of the show line checkbox.
+    render_checkbox_type : {``checkbox``, ``toggle``}, optional
+        The type of the rendering switch. If ``checkbox``, then
+        `ipywidgets.Checkbox` is used. if ``toggle``, then an
+        `ipywidgets.ToggleButton` with customized appearance is used.
     labels : `list` of `str` or ``None``, optional
         A `list` with the labels' names that get passed in to the
         `ColourSelectionWidget`. If ``None``, then a `list` of the form
@@ -2038,11 +2049,12 @@ class LineMayaviOptionsWidget(MenpoWidget):
         only for the colour option and not the rest of the options.
     """
     def __init__(self, line_options, render_function=None,
+                 render_checkbox_type='toggle',
                  render_checkbox_title='Render lines', labels=None):
         # Create children
         self.render_lines_switch = SwitchWidget(
             line_options['render_lines'], description=render_checkbox_title,
-            description_location='right')
+            description_location='right', switch_type=render_checkbox_type)
         self.render_lines_switch.layout.margin = '7px'
         self.line_width_title = ipywidgets.Label(value='Width')
         self.line_width_text = ipywidgets.BoundedFloatText(
@@ -2160,6 +2172,10 @@ class MarkerMatplotlibOptionsWidget(MenpoWidget):
         If ``None``, then nothing is assigned.
     render_checkbox_title : `str`, optional
         The description of the render marker checkbox.
+    render_checkbox_type : {``checkbox``, ``toggle``}, optional
+        The type of the rendering switch. If ``checkbox``, then
+        `ipywidgets.Checkbox` is used. if ``toggle``, then an
+        `ipywidgets.ToggleButton` with customized appearance is used.
     labels : `list` of `str` or ``None``, optional
         A `list` with the labels' names that get passed in to the
         `ColourSelectionWidget`. If ``None``, then a `list` of the form
@@ -2167,11 +2183,12 @@ class MarkerMatplotlibOptionsWidget(MenpoWidget):
         only for the colour option and not the rest of the options.
     """
     def __init__(self, marker_options, render_function=None,
+                 render_checkbox_type='toggle',
                  render_checkbox_title='Render markers', labels=None):
         # Create children
         self.render_markers_switch = SwitchWidget(
             marker_options['render_markers'], description=render_checkbox_title,
-            description_location='right')
+            description_location='right', switch_type=render_checkbox_type)
         self.render_markers_switch.layout.margin = '7px'
         self.marker_size_title = ipywidgets.Label(value='Size')
         self.marker_size_text = ipywidgets.BoundedIntText(
@@ -2352,6 +2369,10 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
         If ``None``, then nothing is assigned.
     render_checkbox_title : `str`, optional
         The description of the render marker checkbox.
+    render_checkbox_type : {``checkbox``, ``toggle``}, optional
+        The type of the rendering switch. If ``checkbox``, then
+        `ipywidgets.Checkbox` is used. if ``toggle``, then an
+        `ipywidgets.ToggleButton` with customized appearance is used.
     labels : `list` of `str` or ``None``, optional
         A `list` with the labels' names that get passed in to the
         `ColourSelectionWidget`. If ``None``, then a `list` of the form
@@ -2359,11 +2380,12 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
         only for the colour option and not the rest of the options.
     """
     def __init__(self, marker_options, render_function=None,
+                 render_checkbox_type='toggle',
                  render_checkbox_title='Render markers', labels=None):
         # Create children
         self.render_markers_switch = SwitchWidget(
             marker_options['render_markers'], description=render_checkbox_title,
-            description_location='right')
+            description_location='right', switch_type=render_checkbox_type)
         self.render_markers_switch.layout.margin = '7px'
         self.marker_size_title = ipywidgets.Label(value='Size')
         m1 = marker_options['marker_size']
@@ -2560,13 +2582,19 @@ class NumberingMatplotlibOptionsWidget(MenpoWidget):
         If ``None``, then nothing is assigned.
     render_checkbox_title : `str`, optional
         The description of the render numbering checkbox.
+    render_checkbox_type : {``checkbox``, ``toggle``}, optional
+        The type of the rendering switch. If ``checkbox``, then
+        `ipywidgets.Checkbox` is used. if ``toggle``, then an
+        `ipywidgets.ToggleButton` with customized appearance is used.
     """
     def __init__(self, numbers_options, render_function=None,
+                 render_checkbox_type='toggle',
                  render_checkbox_title='Render numbering'):
         # Create children
         self.render_numbering_switch = SwitchWidget(
             numbers_options['render_numbering'],
-            description=render_checkbox_title, description_location='right')
+            description=render_checkbox_title, description_location='right',
+            switch_type=render_checkbox_type)
         self.render_numbering_switch.layout.margin = '7px'
         self.numbers_font_name_title = ipywidgets.Label(value='Font')
         numbers_font_name_dict = OrderedDict()
@@ -2797,13 +2825,19 @@ class NumberingMayaviOptionsWidget(MenpoWidget):
         If ``None``, then nothing is assigned.
     render_checkbox_title : `str`, optional
         The description of the show numbering checkbox.
+    render_checkbox_type : {``checkbox``, ``toggle``}, optional
+        The type of the rendering switch. If ``checkbox``, then
+        `ipywidgets.Checkbox` is used. if ``toggle``, then an
+        `ipywidgets.ToggleButton` with customized appearance is used.
     """
     def __init__(self, numbers_options, render_function=None,
+                 render_checkbox_type='toggle',
                  render_checkbox_title='Render numbering'):
         # Create children
         self.render_numbering_switch = SwitchWidget(
             numbers_options['render_numbering'],
-            description=render_checkbox_title, description_location='right')
+            description=render_checkbox_title, description_location='right',
+            switch_type=render_checkbox_type)
         self.render_numbering_switch.layout.margin = '7px'
         self.numbers_size_title = ipywidgets.Label(value='Size')
         n1 = numbers_options['numbers_size']
@@ -3326,14 +3360,19 @@ class AxesOptionsWidget(MenpoWidget):
         If ``None``, then nothing is assigned.
     render_checkbox_title : `str`, optional
         The description of the show line checkbox.
+    render_checkbox_type : {``checkbox``, ``toggle``}, optional
+        The type of the rendering switch. If ``checkbox``, then
+        `ipywidgets.Checkbox` is used. if ``toggle``, then an
+        `ipywidgets.ToggleButton` with customized appearance is used.
     """
     def __init__(self, axes_options, render_function=None,
+                 render_checkbox_type='toggle',
                  render_checkbox_title='Render axes'):
         # Create children
         # render checkbox
         self.render_axes_switch = SwitchWidget(
             axes_options['render_axes'], description=render_checkbox_title,
-            description_location='right')
+            description_location='right', switch_type=render_checkbox_type)
         self.render_axes_switch.layout.margin = '7px'
         # axes font options
         self.axes_font_name_title = ipywidgets.Label(value='Font')
@@ -3563,14 +3602,19 @@ class LegendOptionsWidget(MenpoWidget):
         If ``None``, then nothing is assigned.
     render_checkbox_title : `str`, optional
         The description of the render legend checkbox.
+    render_checkbox_type : {``checkbox``, ``toggle``}, optional
+        The type of the rendering switch. If ``checkbox``, then
+        `ipywidgets.Checkbox` is used. if ``toggle``, then an
+        `ipywidgets.ToggleButton` with customized appearance is used.
     """
     def __init__(self, legend_options, render_function=None,
+                 render_checkbox_type='toggle',
                  render_checkbox_title='Render legend'):
         # Create children
         # render checkbox
         self.render_legend_switch = SwitchWidget(
             legend_options['render_legend'], description=render_checkbox_title,
-            description_location='right')
+            description_location='right', switch_type=render_checkbox_type)
         self.render_legend_switch.layout.margin = '7px'
 
         # font-related options and title
@@ -4027,13 +4071,18 @@ class GridOptionsWidget(MenpoWidget):
         If ``None``, then nothing is assigned.
     render_checkbox_title : `str`, optional
         The description of the show line checkbox.
+    render_checkbox_type : {``checkbox``, ``toggle``}, optional
+        The type of the rendering switch. If ``checkbox``, then
+        `ipywidgets.Checkbox` is used. if ``toggle``, then an
+        `ipywidgets.ToggleButton` with customized appearance is used.
     """
     def __init__(self, grid_options, render_function=None,
+                 render_checkbox_type='toggle',
                  render_checkbox_title='Render grid'):
         # Create children
         self.render_grid_switch = SwitchWidget(
             grid_options['render_grid'], description=render_checkbox_title,
-            description_location='right')
+            description_location='right', switch_type=render_checkbox_type)
         self.render_grid_switch.layout.margin = '7px'
         self.grid_line_width_title = ipywidgets.Label(value='Width')
         self.grid_line_width_text = ipywidgets.BoundedFloatText(
@@ -4451,9 +4500,15 @@ class TexturedTriMeshOptionsWidget(MenpoWidget):
     render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
+    render_checkbox_type : {``checkbox``, ``toggle``}, optional
+        The type of the rendering switch. If ``checkbox``, then
+        `ipywidgets.Checkbox` is used. if ``toggle``, then an
+        `ipywidgets.ToggleButton` with customized appearance is used.
+    render_checkbox_title : `str`, optional
+        The description of the show line checkbox.
     """
-    def __init__(self, mesh_options, render_checkbox_title='Render texture',
-                 render_function=None):
+    def __init__(self, mesh_options, render_checkbox_type='toggle',
+                 render_checkbox_title='Render texture', render_function=None):
         # Initialize color converter instance
         from matplotlib.colors import ColorConverter
         colour_converter = ColorConverter()
@@ -4461,7 +4516,7 @@ class TexturedTriMeshOptionsWidget(MenpoWidget):
         # Create children
         self.render_texture_switch = SwitchWidget(
             mesh_options['render_texture'], description=render_checkbox_title,
-            description_location='right')
+            description_location='right', switch_type=render_checkbox_type)
         self.render_texture_switch.layout.margin = '0px 10px 0px 0px'
         self.mesh_type_title = ipywidgets.Label(value='Type')
         self.mesh_type_toggles = ipywidgets.ToggleButtons(
