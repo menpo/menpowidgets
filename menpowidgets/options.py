@@ -2668,15 +2668,13 @@ class LandmarkOptionsWidget(MenpoWidget):
             self.call_render_function(old_value, self.selected_values)
 
 
-class TextPrintWidget(ipywidgets.FlexBox):
+class TextPrintWidget(ipywidgets.Box):
     r"""
-    Creates a widget for printing text. Specifically, it consists of a `list`
-    of `ipywidgets.Latex` objects, i.e. one per text line.
+    Creates a widget for printing text.
 
     Note that:
 
-    * To set the styling please refer to the :meth:`style` and
-      :meth:`predefined_style` methods.
+    * To set the styling please refer to the :meth:`predefined_style` method.
     * To update the state of the widget, please refer to the
       :meth:`set_widget_state` method.
 
@@ -2687,16 +2685,15 @@ class TextPrintWidget(ipywidgets.FlexBox):
     style : `str` (see below), optional
         Sets a predefined style at the widget. Possible options are:
 
-            ============= ============================
+            ============= ==================
             Style         Description
-            ============= ============================
-            ``'minimal'`` Simple black and white style
+            ============= ==================
             ``'success'`` Green-based style
             ``'info'``    Blue-based style
             ``'warning'`` Yellow-based style
             ``'danger'``  Red-based style
             ``''``        No style
-            ============= ============================
+            ============= ==================
 
     Example
     -------
@@ -2719,74 +2716,18 @@ class TextPrintWidget(ipywidgets.FlexBox):
 
         >>> wid.set_widget_state(['M', 'E', 'N', 'P', 'O'])
     """
-    def __init__(self, text_per_line, style='minimal'):
-        n_lines = len(text_per_line)
-        self.latex_texts = [ipywidgets.Latex(value=text_per_line[i])
-                            for i in range(n_lines)]
-        super(TextPrintWidget, self).__init__(children=self.latex_texts)
-        self.align = 'start'
+    def __init__(self, text_per_line, style=''):
+        self.label_texts = [ipywidgets.Label(value=t) for t in text_per_line]
+        self.container = ipywidgets.VBox(self.label_texts)
+        super(TextPrintWidget, self).__init__([self.container])
+        self.layout.display = 'flex'
 
         # Assign options
-        self.n_lines = n_lines
+        self.n_lines = len(text_per_line)
         self.text_per_line = text_per_line
 
         # Set style
         self.predefined_style(style)
-
-    def style(self, box_style=None, border_visible=False, border_colour='black',
-              border_style='solid', border_width=1, border_radius=0, padding=0,
-              margin=0, font_family='', font_size=None, font_style='',
-              font_weight=''):
-        r"""
-        Function that defines the styling of the widget.
-
-        Parameters
-        ----------
-        box_style : `str` or ``None`` (see below), optional
-            Possible widget style options::
-
-                'success', 'info', 'warning', 'danger', '', None
-
-        border_visible : `bool`, optional
-            Defines whether to draw the border line around the widget.
-        border_colour : `str`, optional
-            The colour of the border around the widget.
-        border_style : `str`, optional
-            The line style of the border around the widget.
-        border_width : `float`, optional
-            The line width of the border around the widget.
-        border_radius : `float`, optional
-            The radius of the border around the widget.
-        padding : `float`, optional
-            The padding around the widget.
-        margin : `float`, optional
-            The margin around the widget.
-        font_family : `str` (see below), optional
-            The font family to be used. Example options::
-
-                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
-                'helvetica'
-
-        font_size : `int`, optional
-            The font size.
-        font_style : `str` (see below), optional
-            The font style. Example options::
-
-                'normal', 'italic', 'oblique'
-
-        font_weight : See Below, optional
-            The font weight. Example options::
-
-                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
-                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
-                'extra bold', 'black'
-        """
-        format_box(self, box_style, border_visible, border_colour, border_style,
-                   border_width, border_radius, padding, margin)
-        format_font(self, font_family, font_size, font_style, font_weight)
-        for i in range(self.n_lines):
-            format_font(self.latex_texts[i], font_family, font_size,
-                        font_style, font_weight)
 
     def predefined_style(self, style):
         r"""
@@ -2797,33 +2738,18 @@ class TextPrintWidget(ipywidgets.FlexBox):
         style : `str` (see below)
             Style options:
 
-                ============= ============================
+                ============= ==================
                 Style         Description
-                ============= ============================
-                ``'minimal'`` Simple black and white style
+                ============= ==================
                 ``'success'`` Green-based style
                 ``'info'``    Blue-based style
                 ``'warning'`` Yellow-based style
                 ``'danger'``  Red-based style
                 ``''``        No style
-                ============= ============================
+                ============= ==================
         """
-        if style == 'minimal':
-            self.style(box_style=None, border_visible=True,
-                       border_colour='black', border_style='solid',
-                       border_width=1, border_radius=0, padding='0.1cm',
-                       margin='0.3cm', font_family='', font_size=None,
-                       font_style='', font_weight='')
-        elif (style == 'info' or style == 'success' or style == 'danger' or
-                      style == 'warning'):
-            self.style(box_style=style, border_visible=True,
-                       border_colour=map_styles_to_hex_colours(style),
-                       border_style='solid', border_width=1, border_radius=10,
-                       padding='0.1cm', margin='0.3cm', font_family='',
-                       font_size=None, font_style='', font_weight='')
-        else:
-            raise ValueError('style must be minimal or info or success or '
-                             'danger or warning')
+        self.container.box_style = style
+        self.container.border = '2px solid'
 
     def set_widget_state(self, text_per_line):
         r"""
@@ -2837,12 +2763,12 @@ class TextPrintWidget(ipywidgets.FlexBox):
         # Check if n_lines has changed
         n_lines = len(text_per_line)
         if n_lines != self.n_lines:
-            self.latex_texts = [ipywidgets.Latex(value=text_per_line[i])
-                                for i in range(n_lines)]
-            self.children = self.latex_texts
+            self.label_texts = [ipywidgets.Label(value=t)
+                                for t in text_per_line]
+            self.container.children = self.label_texts
         else:
-            for i in range(n_lines):
-                self.latex_texts[i].value = text_per_line[i]
+            for i, t in enumerate(text_per_line):
+                self.latex_texts[i].value = t
         self.n_lines = n_lines
         self.text_per_line = text_per_line
 
