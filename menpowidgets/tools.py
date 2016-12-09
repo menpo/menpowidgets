@@ -373,9 +373,9 @@ class MultipleSelectionTogglesWidget(MenpoWidget):
         self.labels_title = ipywidgets.Label(value=description)
         self.labels_toggles = []
         for l in labels:
-            w = ipywidgets.ToggleButton(description=l, value=l in with_labels)
+            w = ipywidgets.ToggleButton(description=l, value=l in with_labels,
+                                        width='{}px'.format((len(l) + 2) * 9))
             w.button_style = buttons_style
-            w.layout.width = '{}px'.format((len(l) + 2) * 9)
             self.labels_toggles.append(w)
 
         # Group widget
@@ -450,15 +450,17 @@ class MultipleSelectionTogglesWidget(MenpoWidget):
                 # re-assign render callback
                 self.add_render_function(render_function)
         else:
+            self.box_1.layout.visibility = 'hidden'
             self.labels_toggles = []
             for l in labels:
-                w = ipywidgets.ToggleButton(description=l,
-                                            value=l in with_labels)
+                w = ipywidgets.ToggleButton(
+                    description=l, value=l in with_labels,
+                    width='{}px'.format((len(l) + 2) * 9))
                 w.button_style = self.buttons_style
-                w.layout.width = '{}px'.format((len(l) + 2) * 9)
                 w.observe(self._save_options, names='value', type='change')
                 self.labels_toggles.append(w)
             self.box_1.children = self.labels_toggles
+            self.box_1.layout.visibility = ''
             self.labels = labels
 
             # temporarily remove render callback
@@ -474,6 +476,30 @@ class MultipleSelectionTogglesWidget(MenpoWidget):
         # trigger render function if allowed
         if allow_callback:
             self.call_render_function(old_value, self.selected_values)
+
+    def set_buttons_style(self, buttons_style):
+        r"""
+        Method that sets the styling of the toggle buttons.
+
+        Parameters
+        ----------
+        buttons_style : `str` (see below), optional
+            Sets a style on the widget's buttons. Possible options are:
+
+                ============= ==================
+                Style         Description
+                ============= ==================
+                ``'primary'`` Blue-based style
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ==================
+        """
+        self.buttons_style = buttons_style
+        for w in self.labels_toggles:
+            w.button_style = buttons_style
 
 
 class SlicingCommandWidget(MenpoWidget):

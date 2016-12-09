@@ -21,7 +21,7 @@ from .tools import (IndexSliderWidget, IndexButtonsWidget, SlicingCommandWidget,
                     MultipleSelectionTogglesWidget)
 from .style import (map_styles_to_hex_colours, format_box, format_font,
                     format_slider)
-from .utils import sample_colours_from_colourmap
+from .utils import sample_colours_from_colourmap, lists_are_the_same
 
 
 class AnimationOptionsWidget(MenpoWidget):
@@ -506,18 +506,18 @@ class Shape2DOptionsWidget(MenpoWidget):
         self.marker_options_wid = MarkerMatplotlibOptionsWidget(
             renderer_options['markers'], render_function=None,
             render_checkbox_title='Render markers', labels=labels)
-        buttons_style = ''
-        if style != '':
-            buttons_style = 'primary'
+        self.buttons_style = ''
+        if style != '' or suboptions_style != '':
+            self.buttons_style = 'primary'
         if labels is not None:
             self.labels_options_wid = MultipleSelectionTogglesWidget(
                 labels=labels, with_labels=renderer_options['with_labels'],
                 render_function=None, description='Labels',
-                buttons_style=buttons_style)
+                buttons_style=self.buttons_style)
         else:
             self.labels_options_wid = MultipleSelectionTogglesWidget(
                 labels=[' '], with_labels=None, render_function=None,
-                description='Labels', buttons_style=buttons_style)
+                description='Labels', buttons_style=self.buttons_style)
         self.labels_options_wid.layout.margin = '0px 0px 10px 0px'
         self.labels_options_wid.container.layout.border = '2px solid'
 
@@ -594,38 +594,7 @@ class Shape2DOptionsWidget(MenpoWidget):
         Returns
         -------
         default_options : `dict`
-            A `dict` with the default options. It contains:
-
-              - ``image_view`` : (`bool`) Whether to use image coordinate system
-              - ``render_lines`` : (`bool`) Whether to render the lines.
-              - ``line_width`` : (`float`) The width of the lines.
-              - ``line_style`` : (`str`) The style of the lines.
-              - ``line_colour`` : (`list`) The colour per label.
-              - ``render_markers`` : (`bool`) Whether to render the markers.
-              - ``marker_size`` : (`int`) The size of the markers.
-              - ``marker_style`` : (`str`) The style of the markers.
-              - ``marker_face_colour`` : (`list`) The face colour per label.
-              - ``marker_edge_colour`` : (`list`) The edge colour per label.
-              - ``marker_edge_width`` : (`float`) The edge width of the markers.
-              - ``with_labels`` : (`list`) The list of labels to render.
-
-            If the object is not seen before by the widget, then it automatically
-            gets the following default options:
-
-              - ``image_view = True``
-              - ``render_lines = True``
-              - ``line_width = 1``
-              - ``line_style = '-``
-              - ``line_colour = ['red'] if labels is None else colours``
-              - ``render_markers = True``
-              - ``marker_size = 5``
-              - ``marker_style = 'o'``
-              - ``marker_face_colour = ['red'] if labels is None else colours``
-              - ``marker_edge_colour = ['black'] if labels is None else colours``
-              - ``marker_edge_width = 1``
-              - ``with_labels = labels if labels is not None``
-
-            where ``colours = sample_colours_from_colourmap(len(labels), 'jet')``
+            A `dict` with the default options.
         """
         # create key
         key = self.get_key(labels)
@@ -687,10 +656,42 @@ class Shape2DOptionsWidget(MenpoWidget):
             self._save_options, names='selected_values', type='change')
 
     def predefined_style(self, style, suboptions_style):
-        if style == '':
-            suboptions_style = ''
+        r"""
+        Sets a predefined style to the widget.
+
+        Parameters
+        ----------
+        style : `str` (see below)
+            The style of the widget. Possible options are:
+
+                ============= ============================
+                Style         Description
+                ============= ============================
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ============================
+
+        suboptions_style : `str` (see below)
+            The style of the widget's sub-options. Possible options are:
+
+                ============= ============================
+                Style         Description
+                ============= ============================
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ============================
+
+        """
         self.container.box_style = style
         self.labels_options_wid.container.box_style = suboptions_style
+        if suboptions_style != '' or style != '':
+            self.labels_options_wid.set_buttons_style('primary')
         self.box_2.box_style = suboptions_style
         tmp = self.marker_options_wid.marker_face_colour_widget
         tmp.apply_to_all_button.button_style = suboptions_style
@@ -952,32 +953,7 @@ class Shape3DOptionsWidget(MenpoWidget):
         Returns
         -------
         default_options : `dict`
-            A `dict` with the default options. It contains:
-
-              - ``render_lines`` : (`bool`) Whether to render the lines.
-              - ``line_width`` : (`float`) The width of the lines.
-              - ``line_colour`` : (`list`) The colour per label.
-              - ``render_markers`` : (`bool`) Whether to render the markers.
-              - ``marker_size`` : (`int`) The size of the markers.
-              - ``marker_style`` : (`str`) The style of the markers.
-              - ``marker_colour`` : (`list`) The colour per label.
-              - ``marker_resolution`` : (`list`) The resolution of the markers.
-              - ``with_labels`` : (`list`) The list of labels to render.
-
-            If the object is not seen before by the widget, then it automatically
-            gets the following default options:
-
-              - ``render_lines = True``
-              - ``line_width = 4``
-              - ``line_colour = ['red'] if labels is None else colours``
-              - ``render_markers = True``
-              - ``marker_size = 5``
-              - ``marker_style = 'sphere'``
-              - ``marker_colour = ['red'] if labels is None else colours``
-              - ``marker_resolution = 8``
-              - ``with_labels = labels if labels is not None``
-
-            where ``colours = sample_colours_from_colourmap(len(labels), 'jet')``
+            A `dict` with the default options.
         """
         # create key
         key = self.get_key(labels)
@@ -1029,6 +1005,38 @@ class Shape3DOptionsWidget(MenpoWidget):
             self._save_options, names='selected_values', type='change')
 
     def predefined_style(self, style, suboptions_style):
+        r"""
+        Sets a predefined style to the widget.
+
+        Parameters
+        ----------
+        style : `str` (see below)
+            The style of the widget. Possible options are:
+
+                ============= ============================
+                Style         Description
+                ============= ============================
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ============================
+
+        suboptions_style : `str` (see below)
+            The style of the widget's sub-options. Possible options are:
+
+                ============= ============================
+                Style         Description
+                ============= ============================
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ============================
+
+        """
         if style == '':
             suboptions_style = ''
         self.container.box_style = style
@@ -2068,6 +2076,8 @@ class ImageOptionsWidget(MenpoWidget):
         self.masked_checkbox.layout.display = ('flex' if self.image_is_masked
                                                else 'none')
         self.box_8.layout.display = 'flex' if self.n_channels > 1 else 'none'
+        self.box_4.layout.display = (
+            'flex' if self.glyph_checkbox.selected_values else 'none')
 
     def get_key(self, n_channels, image_is_masked):
         r"""
@@ -2163,7 +2173,8 @@ class ImageOptionsWidget(MenpoWidget):
         self.channels_wid.multiple_slider.slider_color = \
             map_styles_to_hex_colours(style)
 
-    def set_widget_state(self, n_channels, image_is_masked, allow_callback=True):
+    def set_widget_state(self, n_channels, image_is_masked,
+                         allow_callback=True):
         r"""
         Method that updates the state of the widget, if the key generated with
         :meth:`get_key` based on the provided `n_channels` and `image_is_masked`
@@ -2246,28 +2257,9 @@ class ImageOptionsWidget(MenpoWidget):
             self.call_render_function(old_value, self.selected_values)
 
 
-class LandmarkOptionsWidget(MenpoWidget):
+class Landmark2DOptionsWidget(MenpoWidget):
     r"""
-    Creates a widget for selecting landmark options. The widget consists of the
-    following objects from `ipywidgets`:
-
-    == =============== =========================== ==============================
-    No Object          Property (`self.`)          Description
-    == =============== =========================== ==============================
-    1  `Latex`         `no_landmarks_msg`          No landmarks available msg.
-    2  `Checkbox`      `render_landmarks_checkbox` Render landmarks checkbox
-    3  `Latex`         `group_description`         Landmark group title
-    4  `IntSlider`     `group_slider`              Landmark group selector
-    5  `Dropdown`      `group_dropdown`            Landmark group selector
-    6  `Latex`         `group_latex`               Landmark group text
-    7  `HBox`          `group_selection_box`       Contains 3, 4, 5, 6
-    8  `Latex`         `labels_text`               Labels title
-    9  `ToggleButtons` `labels_toggles`            list with the labels per group
-    10 `HBox`          `labels_box`                Contains all 9
-    11 `HBox`          `labels_and_text_box`       Contains 8 and 10
-    12 `VBox`          `options_box`               Contains 7, 11
-    13 `HBox`          `render_and_options_box`    Contains 2, 12
-    == =============== =========================== ==============================
+    Creates a widget for selecting landmark options.
 
     Note that:
 
@@ -2278,22 +2270,12 @@ class LandmarkOptionsWidget(MenpoWidget):
       a unique key id assigned through :meth:`get_key`. Then, the options that
       correspond to each key are stored in the ``self.default_options`` `dict`.
     * The selected values of the current landmarks object are stored in the
-      ``self.selected_values`` `trait`. It is a `dict` with the following keys:
-
-      * ``group`` : (`str` or ``None``) The selected group.
-      * ``with_labels`` : (`list` or ``None``) The selected labels.
-      * ``render_landmarks`` : (`bool`) Whether to render the landmarks.
-
+      ``self.selected_values`` `trait`.
     * When an unseen landmarks object is passed in (i.e. a key that is not
-      included in the ``self.default_options`` `dict`), it gets the following
-      initial options by default:
-
-      * ``group = None if group_keys is None else group_keys[0]``
-      * ``with_labels = None if group_keys is None else labels_keys[0]``
-      * ``render_landmarks = False if group_keys is None else True``
-
-    * To set the styling of this widget please refer to the :meth:`style` and
-      :meth:`predefined_style` methods.
+      included in the ``self.default_options`` `dict`), it gets some default
+      initial options.
+    * To set the styling of this widget please refer to the
+      :meth:`predefined_style` method.
     * To update the handler callback function of the widget, please refer to the
       :meth:`replace_render_function` method.
 
@@ -2317,16 +2299,12 @@ class LandmarkOptionsWidget(MenpoWidget):
         * ``name`` : the name of the modified trait attribute.
 
         If ``None``, then nothing is assigned.
-    renderer_widget : :map:`RendererOptionsWidget` or ``None``, optional
-        The :map:`RendererOptionsWidget` that is created and needs to be linked
-        with this widget. If ``None``, then nothing is assigned.
     style : `str` (see below), optional
         Sets a predefined style at the widget. Possible options are:
 
             ============= ============================
             Style         Description
             ============= ============================
-            ``'minimal'`` Simple black and white style
             ``'success'`` Green-based style
             ``'info'``    Blue-based style
             ``'warning'`` Yellow-based style
@@ -2373,157 +2351,147 @@ class LandmarkOptionsWidget(MenpoWidget):
 
     """
     def __init__(self, group_keys, labels_keys, render_function=None,
-                 renderer_widget=None, style='minimal'):
+                 style='', suboptions_style=''):
         # Initialise default options dictionary
         self.default_options = {}
 
         # Assign properties
-        self.renderer_widget = renderer_widget
-        self.style_option = style
-        self.group_keys = []
-        self.labels_keys = []
+        self.group_keys = group_keys
+        self.labels_keys = labels_keys
 
         # Create children
-        # Render landmarks checkbox and no landmarks message
-        self.no_landmarks_msg = ipywidgets.Latex(
+        # Render landmarks switch and no landmarks message
+        self.no_landmarks_msg = ipywidgets.Label(
             value='No landmarks available.')
-        self.render_landmarks_checkbox = ipywidgets.Checkbox(
-            description='Render landmarks', margin='0.3cm')
+        self.render_landmarks_switch = SwitchWidget(
+            selected_value=True, description='Render landmarks',
+            description_location='right', switch_type='toggle')
         # Create group description, dropdown and slider
-        self.group_description = ipywidgets.Latex(value='Group', margin='0.1cm')
+        self.group_title = ipywidgets.Label(value='Group')
         self.group_slider = ipywidgets.IntSlider(
-            margin='0.1cm', readout=False, width='3cm', value=0,
-            continuous_update=False, min=0)
+            readout=False, width='4cm', value=0, continuous_update=False, min=0)
         self.group_dropdown = ipywidgets.Dropdown(
-            options={'0': 0}, description='', margin='0.1cm', value=0)
-        self.group_latex = ipywidgets.Latex(padding='0.2cm')
-        self.group_selection_box = ipywidgets.HBox(
-            children=[self.group_description, self.group_slider,
-                      self.group_dropdown, self.group_latex], align='center')
-        # Link the values of group dropdown and slider
-        self.link_group_dropdown_and_slider = link(
-            (self.group_dropdown, 'value'), (self.group_slider, 'value'))
-        # Create labels
-        self.labels_toggles = [[]]
-        self.labels_text = ipywidgets.Latex(value='Labels')
-        self.labels_box = ipywidgets.HBox(children=self.labels_toggles[0],
-                                          padding='0.3cm')
-        self.labels_and_text_box = ipywidgets.HBox(
-            children=[self.labels_text, self.labels_box], align='center')
-        self.options_box = ipywidgets.VBox(
-            children=[self.group_selection_box, self.labels_and_text_box],
-            margin='0.2cm')
-        self.render_and_options_box = ipywidgets.HBox(
-            children=[self.render_landmarks_checkbox, self.options_box])
+            options={'0': '0'}, description='', value='0', width='4cm')
+        self.group_label = ipywidgets.Label()
+        # Shape 2D options widget
+        self.shape_options_wid = Shape2DOptionsWidget([' '])
+
+        # Group widgets
+        self.box_1 = ipywidgets.HBox([self.group_title, self.group_dropdown])
+        self.box_1.layout.align_items = 'center'
+        self.box_2 = ipywidgets.VBox([self.box_1, self.group_slider])
+        self.box_2.layout.align_items = 'flex-end'
+        self.box_3 = ipywidgets.VBox([self.box_2, self.group_label])
+        self.box_3.layout.margin = '0px 10px 0px 0px'
+        self.box_3.layout.border = '2px solid'
+        self.box_3.layout.display = 'table'
+        self.box_4 = ipywidgets.HBox([self.box_3, self.shape_options_wid])
+        self.box_4.layout.margin = '10px 0px 0px 0px'
+        self.box_5 = ipywidgets.VBox([self.box_4, self.no_landmarks_msg])
+        self.container = ipywidgets.VBox([self.render_landmarks_switch,
+                                         self.box_5])
 
         # Create final widget
-        children = [self.render_and_options_box, self.no_landmarks_msg]
-        super(LandmarkOptionsWidget, self).__init__(
-            children, Dict, {}, render_function=render_function,
-            orientation='horizontal', align='start')
+        super(Landmark2DOptionsWidget, self).__init__(
+            [self.container], Dict, {}, render_function=render_function)
 
         # Set values, add callbacks before setting widget state
+        link((self.group_dropdown, 'value'), (self.group_slider, 'value'))
         self.add_callbacks()
         self.set_widget_state(group_keys, labels_keys, allow_callback=False)
 
         # Set style
-        self.predefined_style(style)
+        self.predefined_style(style, suboptions_style)
+
+        # Set visibility
+        self.set_visibility()
 
     def add_callbacks(self):
         r"""
         Function that adds the handler callback functions in all the widget
         components, which are necessary for the internal functionality.
         """
-        self.render_landmarks_checkbox.observe(
-            self._render_landmarks_fun, names='value', type='change')
         self.group_dropdown.observe(self._group_fun, names='value',
                                     type='change')
-        self._add_function_to_labels_toggles(self._labels_fun)
+        self.shape_options_wid.add_render_function(self._save_options)
+        self.render_landmarks_switch.add_render_function(
+            self._render_landmarks_fun)
 
     def remove_callbacks(self):
         r"""
         Function that removes all the internal handler callback functions.
         """
-        self.render_landmarks_checkbox.unobserve(
-            self._render_landmarks_fun, names='value', type='change')
         self.group_dropdown.unobserve(self._group_fun, names='value',
                                       type='change')
-        self._remove_function_from_labels_toggles(self._labels_fun)
+        self.shape_options_wid.remove_render_function()
+        self.render_landmarks_switch.remove_render_function()
+
+    def _group_fun(self, change):
+        idx = self.group_dropdown.value
+        self.shape_options_wid.set_widget_state(self.labels_keys[idx],
+                                                allow_callback=False)
+        self._save_options({})
+
+    def _render_landmarks_fun(self, change):
+        self.box_5.layout.display = 'flex' if change['new'] else 'none'
+        self._save_options({})
 
     def _save_options(self, change):
         if self.group_keys is None:
             self.selected_values = {
-                'group': None, 'render_landmarks': False, 'with_labels': None}
+                'group': None,
+                'render_landmarks': False,
+                'with_labels': None}
         else:
-            tmp_labels = self._get_with_labels()
             self.selected_values = {
-                'group': self.group_keys[self.group_dropdown.value],
-                'render_landmarks': self.render_landmarks_checkbox.value,
-                'with_labels': tmp_labels}
-            # update default values
-            current_key = self.get_key(self.group_keys, self.labels_keys)
-            self.default_options[current_key] = self.selected_values
+                'landmarks': {
+                    'render_landmarks':
+                        self.render_landmarks_switch.selected_values,
+                    'group':
+                        self.group_keys[self.group_dropdown.value],
+                    'with_labels':
+                        self.shape_options_wid.selected_values['with_labels']},
+                'lines': self.shape_options_wid.selected_values['lines'],
+                'markers': self.shape_options_wid.selected_values['markers']}
 
-    def _render_landmarks_fun(self, change):
-        # If render is True, then check whether all the labels are disabled.
-        # If they are, then enable all of them
-        if change['new']:
-            if len(self._get_with_labels()) == 0:
-                for ww in self.labels_box.children:
-                    # temporarily remove render function
-                    ww.unobserve(self._labels_fun, names='value', type='change')
-                    # set value
-                    ww.value = True
-                    # re-add render function
-                    ww.observe(self._labels_fun, names='value', type='change')
-        # set visibility
-        self.options_box.visible = change['new']
-        # save options
-        self._save_options({})
-
-    def _group_fun(self, change):
-        value = change['new']
-        # assign the correct children to the labels toggles
-        self.labels_box.children = self.labels_toggles[value]
-        # if a renderer widget was provided, update it
-        if self.renderer_widget is not None:
-            self.renderer_widget.set_widget_state(self.labels_keys[value],
-                                                  allow_callback=False)
-        # save options
-        self._save_options({})
-
-    def _labels_fun(self, change):
-        # if all labels toggles are False, set render landmarks checkbox to
-        # False
-        if len(self._get_with_labels()) == 0:
-            # temporarily remove render function
-            self.render_landmarks_checkbox.unobserve(
-                self._render_landmarks_fun, names='value', type='change')
-            # set value
-            self.render_landmarks_checkbox.value = False
-            # set visibility
-            self.options_box.visible = False
-            # re-add render function
-            self.render_landmarks_checkbox.observe(
-                self._render_landmarks_fun, names='value', type='change')
-        # save options
-        self._save_options({})
-
-    def set_visibility(self):
+    def predefined_style(self, style, suboptions_style):
         r"""
-        Function that sets the visibility of the various components of the
-        widget, depending on the properties of the current landmarks, i.e.
-        ``self.group_keys``.
+        Sets a predefined style to the widget.
+
+        Parameters
+        ----------
+        style : `str` (see below)
+            The style of the widget. Possible options are:
+
+                ============= ============================
+                Style         Description
+                ============= ============================
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ============================
+
+        suboptions_style : `str` (see below)
+            The style of the widget's sub-options. Possible options are:
+
+                ============= ============================
+                Style         Description
+                ============= ============================
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ============================
+
         """
-        self.no_landmarks_msg.visible = self.group_keys is None
-        self.render_and_options_box.visible = self.group_keys is not None
-        if self.group_keys is not None:
-            # control group visibility
-            self.group_slider.visible = len(self.group_keys) > 1
-            self.group_dropdown.visible = len(self.group_keys) > 1
-            self.group_latex.visible = len(self.group_keys) == 1
-            # render_landmarks visibility
-            self.options_box.visible = self.selected_values['render_landmarks']
+        self.container.box_style = style
+        self.shape_options_wid.predefined_style('', suboptions_style)
+        self.box_3.box_style = suboptions_style
+        self.group_slider.slider_color = map_styles_to_hex_colours(
+            suboptions_style)
 
     def get_key(self, group_keys, labels_keys):
         r"""
@@ -2564,165 +2532,54 @@ class LandmarkOptionsWidget(MenpoWidget):
         Returns
         -------
         default_options : `dict`
-            A `dict` with the default options. It contains:
-
-            * ``group`` : (`str` or ``None``) The selected group.
-            * ``with_labels`` : (`list` or ``None``) The selected labels.
-            * ``render_landmarks`` : (`bool`) Whether to render the landmarks.
-
-            If the object is not seen before by the widget, then it automatically
-            gets the following default options:
-
-            * ``group = None if group_keys is None else group_keys[0]``
-            * ``with_labels = None if group_keys is None else labels_keys[0]``
-            * ``render_landmarks = False if group_keys is None else True``
-
+            A `dict` with the default options.
         """
         # create key
         key = self.get_key(group_keys, labels_keys)
         # if the key does not exist in the default options dict, then add it
         if key not in self.default_options:
             if group_keys is None:
-                self.default_options[key] = {'group': None,
-                                             'with_labels': None,
-                                             'render_landmarks': False}
+                self.default_options[key] = {
+                    'landmarks': {
+                        'group': None,
+                        'with_labels': None,
+                        'render_landmarks': False}
+                }
             else:
-                self.default_options[key] = {'group': group_keys[0],
-                                             'with_labels': labels_keys[0],
-                                             'render_landmarks': True}
+                self.default_options[key] = {
+                    'landmarks': {
+                        'group': group_keys[0],
+                        'with_labels': labels_keys[0],
+                        'render_landmarks': True}
+                }
+                tmp = self.shape_options_wid.get_default_options(labels_keys)
+                self.default_options[key]['lines'] = tmp['lines']
+                self.default_options[key]['markers'] = tmp['markers']
         return self.default_options[key]
 
-    def _get_with_labels(self):
-        with_labels = []
-        for ww in self.labels_box.children:
-            if ww.value:
-                with_labels.append(str(ww.description))
-        return with_labels
-
-    def _add_function_to_labels_toggles(self, fun):
-        for s_group in self.labels_toggles:
-            for w in s_group:
-                w.observe(fun, names='value', type='change')
-
-    def _remove_function_from_labels_toggles(self, fun):
-        for s_group in self.labels_toggles:
-            for w in s_group:
-                w.unobserve(fun, names='value', type='change')
-
-    def _set_labels_toggles_values(self, with_labels):
-        for w in self.labels_box.children:
-            w.value = w.description in with_labels
-
-    def style(self, box_style=None, border_visible=False, border_colour='black',
-              border_style='solid', border_width=1, border_radius=0, padding=0,
-              margin=0, font_family='', font_size=None, font_style='',
-              font_weight='', labels_buttons_style=''):
-        r"""
-        Function that defines the styling of the widget.
-
-        Parameters
-        ----------
-        box_style : `str` or ``None`` (see below), optional
-            Possible widget style options::
-
-                'success', 'info', 'warning', 'danger', '', None
-
-        border_visible : `bool`, optional
-            Defines whether to draw the border line around the widget.
-        border_colour : `str`, optional
-            The colour of the border around the widget.
-        border_style : `str`, optional
-            The line style of the border around the widget.
-        border_width : `float`, optional
-            The line width of the border around the widget.
-        border_radius : `float`, optional
-            The radius of the border around the widget.
-        padding : `float`, optional
-            The padding around the widget.
-        margin : `float`, optional
-            The margin around the widget.
-        font_family : `str` (see below), optional
-            The font family to be used. Example options::
-
-                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
-                'helvetica'
-
-        font_size : `int`, optional
-            The font size.
-        font_style : `str` (see below), optional
-            The font style. Example options::
-
-                'normal', 'italic', 'oblique'
-
-        font_weight : See Below, optional
-            The font weight. Example options::
-
-                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
-                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
-                'extra bold', 'black'
-
-        labels_buttons_style : `str` or ``None`` (see below), optional
-            Style options:
-
-                'success', 'info', 'warning', 'danger', 'primary', '', None
-        """
-        format_box(self, box_style, border_visible, border_colour, border_style,
-                   border_width, border_radius, padding, margin)
-        format_font(self, font_family, font_size, font_style, font_weight)
-        format_font(self.render_landmarks_checkbox, font_family, font_size,
-                    font_style, font_weight)
-        format_font(self.group_dropdown, font_family, font_size, font_style,
-                    font_weight)
-        format_font(self.group_description, font_family, font_size, font_style,
-                    font_weight)
-        for s_group in self.labels_toggles:
-            for w in s_group:
-                format_font(w, font_family, font_size, font_style, font_weight)
-                w.button_style = labels_buttons_style
-        format_font(self.labels_text, font_family, font_size, font_style,
-                    font_weight)
-        self.group_slider.slider_color = map_styles_to_hex_colours(
-            box_style, background=False)
-        self.group_slider.background_color = map_styles_to_hex_colours(
-            box_style, background=False)
-
-    def predefined_style(self, style):
-        r"""
-        Function that sets a predefined style on the widget.
-
-        Parameters
-        ----------
-        style : `str` (see below)
-            Style options:
-
-                ============= ============================
-                Style         Description
-                ============= ============================
-                ``'minimal'`` Simple black and white style
-                ``'success'`` Green-based style
-                ``'info'``    Blue-based style
-                ``'warning'`` Yellow-based style
-                ``'danger'``  Red-based style
-                ``''``        No style
-                ============= ============================
-        """
-        if style == 'minimal':
-            self.style(box_style=None, border_visible=True,
-                       border_colour='black', border_style='solid',
-                       border_width=1, border_radius=0, padding='0.2cm',
-                       margin='0.3cm', font_family='', font_size=None,
-                       font_style='', font_weight='', labels_buttons_style='')
-        elif (style == 'info' or style == 'success' or style == 'danger' or
-                      style == 'warning'):
-            self.style(box_style=style, border_visible=True,
-                       border_colour=map_styles_to_hex_colours(style),
-                       border_style='solid', border_width=1, border_radius=10,
-                       padding='0.2cm', margin='0.3cm', font_family='',
-                       font_size=None, font_style='', font_weight='',
-                       labels_buttons_style='primary')
+    def _parse_group_keys_labels_keys(self, group_keys, labels_keys):
+        if group_keys is None or len(group_keys) == 0:
+            return [' '], [[' ']], True
         else:
-            raise ValueError('style must be minimal or info or success or '
-                             'danger or warning')
+            return group_keys, labels_keys, False
+
+    def set_visibility(self):
+        r"""
+        Function that sets the visibility of the various components of the
+        widget, depending on the properties of the current image object, i.e.
+        ``self.group_keys`` and ``self.labels_keys``.
+        """
+        self.box_4.layout.display = (
+            'none' if self.group_keys is None else 'flex')
+        self.render_landmarks_switch.layout.display = (
+            'none' if self.group_keys is None else 'flex')
+        self.no_landmarks_msg.layout.display = (
+            'inline' if self.group_keys is None else 'none')
+        if self.group_keys is not None:
+            self.group_label.layout.display = (
+                'inline' if len(self.group_keys) == 1 else 'none')
+            self.box_2.layout.display = (
+                'none' if len(self.group_keys) == 1 else 'flex')
 
     def set_widget_state(self, group_keys, labels_keys, allow_callback=True):
         r"""
@@ -2769,8 +2626,9 @@ class LandmarkOptionsWidget(MenpoWidget):
                 for gn, gk in enumerate(group_keys):
                     dropdown_dict[gk] = gn
                 self.group_dropdown.options = dropdown_dict
-                self.group_latex.value = group_keys[0]
-                group_idx = group_keys.index(landmark_options['group'])
+                self.group_label.value = 'Group: {}'.format(group_keys[0])
+                group_idx = group_keys.index(
+                    landmark_options['landmarks']['group'])
                 if (group_idx == self.group_dropdown.value and
                         len(group_keys) > 1):
                     if self.group_dropdown.value == 0:
@@ -2778,26 +2636,17 @@ class LandmarkOptionsWidget(MenpoWidget):
                     else:
                         self.group_dropdown.value = 0
                 self.group_dropdown.value = group_idx
-                self.labels_toggles = [
-                    [ipywidgets.ToggleButton(description=k, value=True)
-                     for k in s_keys] for s_keys in labels_keys]
-                self.labels_box.children = self.labels_toggles[group_idx]
-                self._set_labels_toggles_values(landmark_options['with_labels'])
-                self.render_landmarks_checkbox.value = \
-                    landmark_options['render_landmarks']
-                # if a renderer widget was provided, update it
-                if self.renderer_widget is not None:
-                    self.renderer_widget.set_widget_state(
-                        self.labels_keys[group_idx], allow_callback=False)
+                self.render_landmarks_switch.set_widget_state(
+                    landmark_options['landmarks']['render_landmarks'],
+                    allow_callback=False)
+                self.shape_options_wid.set_widget_state(
+                    self.labels_keys[group_idx], allow_callback=False)
 
             # Get values
             self._save_options({})
 
             # Set widget's visibility
             self.set_visibility()
-
-            # Set style
-            self.predefined_style(self.style_option)
 
             # Re-assign callbacks
             self.add_callbacks()
