@@ -26,7 +26,7 @@ from menpofit.error import (euclidean_bb_normalised_error,
 from ..checks import check_n_parameters
 from ..options import (SaveMatplotlibFigureOptionsWidget, RendererOptionsWidget,
                        ImageOptionsWidget, PatchOptionsWidget,
-                       Landmark2DOptionsWidget, LinearModelParametersWidget,
+                       LandmarkOptionsWidget, LinearModelParametersWidget,
                        PlotOptionsWidget, AnimationOptionsWidget,
                        TextPrintWidget)
 from ..style import map_styles_to_hex_colours
@@ -307,7 +307,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             axes_x_limits=None, axes_y_limits=None,
             render_function=render_function,  style=renderer_style,
             tabs_style=renderer_tabs_style)
-    landmark_options_wid = Landmark2DOptionsWidget(
+    landmark_options_wid = LandmarkOptionsWidget(
             group_keys=groups_keys, labels_keys=labels_keys,
             render_function=render_function, style=landmarks_style,
             renderer_widget=renderer_options_wid)
@@ -938,7 +938,7 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
             axes_x_limits=None, axes_y_limits=None,
             render_function=render_function,  style=renderer_style,
             tabs_style=renderer_tabs_style)
-    landmark_options_wid = Landmark2DOptionsWidget(
+    landmark_options_wid = LandmarkOptionsWidget(
             group_keys=groups_keys, labels_keys=labels_keys,
             render_function=render_function, style=landmarks_style,
             renderer_widget=renderer_options_wid)

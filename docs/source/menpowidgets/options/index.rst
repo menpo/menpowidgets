@@ -13,7 +13,7 @@ and :ref:`api-menpofit-base-index`.
     AnimationOptionsWidget
     CameraSnapshotWidget
     ImageOptionsWidget
-    Landmark2DOptionsWidget
+    LandmarkOptionsWidget
     LinearModelParametersWidget
     PatchOptionsWidget
     PlotOptionsWidget

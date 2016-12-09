@@ -11,7 +11,7 @@ from menpo.image.base import _convert_patches_list_to_single_array
 
 from .options import (RendererOptionsWidget, TextPrintWidget,
                       SaveMatplotlibFigureOptionsWidget, AnimationOptionsWidget,
-                      ImageOptionsWidget, Landmark2DOptionsWidget,
+                      ImageOptionsWidget, LandmarkOptionsWidget,
                       PlotOptionsWidget, PatchOptionsWidget,
                       LinearModelParametersWidget, CameraSnapshotWidget)
 from .style import format_box, map_styles_to_hex_colours
@@ -370,7 +370,7 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8), style='coloure
         info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Create widgets
-    landmark_options_wid = Landmark2DOptionsWidget(
+    landmark_options_wid = LandmarkOptionsWidget(
         group_keys=['  '], labels_keys=[landmarkgroups[0].labels],
         render_function=render_function, style=landmarks_style)
     axes_mode_wid = ipywidgets.RadioButtons(
@@ -612,7 +612,7 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
     renderer_options_box = ipywidgets.VBox(
         children=[axes_mode_wid, renderer_options_wid], align='center',
         margin='0.1cm')
-    landmark_options_wid = Landmark2DOptionsWidget(
+    landmark_options_wid = LandmarkOptionsWidget(
         group_keys=groups_keys, labels_keys=labels_keys,
         render_function=render_function, style=landmarks_style,
         renderer_widget=renderer_options_wid)
@@ -841,7 +841,7 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
         axes_x_limits=None, axes_y_limits=None,
         render_function=render_function,  style=renderer_style,
         tabs_style=renderer_tabs_style)
-    landmark_options_wid = Landmark2DOptionsWidget(
+    landmark_options_wid = LandmarkOptionsWidget(
         group_keys=groups_keys, labels_keys=labels_keys,
         render_function=render_function, style=landmarks_style,
         renderer_widget=renderer_options_wid)
@@ -1835,7 +1835,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
         axes_x_limits=None, axes_y_limits=None,
         render_function=render_function,  style=renderer_style,
         tabs_style=renderer_tabs_style)
-    landmark_options_wid = Landmark2DOptionsWidget(
+    landmark_options_wid = LandmarkOptionsWidget(
         group_keys=groups_keys, labels_keys=labels_keys,
         render_function=render_function, style=landmarks_style,
         renderer_widget=renderer_options_wid)

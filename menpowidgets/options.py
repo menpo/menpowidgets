@@ -868,14 +868,14 @@ class Shape3DOptionsWidget(MenpoWidget):
         self.marker_options_wid = MarkerMayaviOptionsWidget(
             renderer_options['markers'], render_function=None,
             render_checkbox_title='Render markers', labels=labels)
-        buttons_style = ''
+        self.buttons_style = ''
         if style != '':
-            buttons_style = 'primary'
+            self.buttons_style = 'primary'
         if labels is not None:
             self.labels_options_wid = MultipleSelectionTogglesWidget(
                 labels=labels, with_labels=renderer_options['with_labels'],
                 render_function=None, description='Labels',
-                buttons_style=buttons_style)
+                buttons_style=self.buttons_style)
         else:
             self.labels_options_wid = MultipleSelectionTogglesWidget(
                 labels=[' '], with_labels=None, render_function=None,
@@ -1037,10 +1037,10 @@ class Shape3DOptionsWidget(MenpoWidget):
                 ============= ============================
 
         """
-        if style == '':
-            suboptions_style = ''
         self.container.box_style = style
         self.labels_options_wid.container.box_style = suboptions_style
+        if suboptions_style != '' or style != '':
+            self.labels_options_wid.set_buttons_style('primary')
         self.box_2.box_style = suboptions_style
         tmp = self.marker_options_wid.marker_colour_widget
         tmp.apply_to_all_button.button_style = suboptions_style
@@ -2257,9 +2257,9 @@ class ImageOptionsWidget(MenpoWidget):
             self.call_render_function(old_value, self.selected_values)
 
 
-class Landmark2DOptionsWidget(MenpoWidget):
+class LandmarkOptionsWidget(MenpoWidget):
     r"""
-    Creates a widget for selecting landmark options.
+    Creates a widget for selecting 2D or 3D landmark options.
 
     Note that:
 
@@ -2287,6 +2287,8 @@ class Landmark2DOptionsWidget(MenpoWidget):
     labels_keys : `list` of `list` of `str` or ``None``
         The `list` of labels per landmark group. If ``None``, then no labels are
         available.
+    type : {``2D``, ``3D``}
+        Whether the landmarks are 2D or 3D.
     render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         It must have signature ``render_function(change)`` where ``change`` is
@@ -2325,8 +2327,8 @@ class Landmark2DOptionsWidget(MenpoWidget):
         >>> from menpo.visualize import print_dynamic
         >>> def render_function(change):
         >>>     s = "Group: {}, Labels: {}".format(
-        >>>         wid.selected_values['group'],
-        >>>         wid.selected_values['with_labels'])
+        >>>         wid.selected_values['landmarks']['group'],
+        >>>         wid.selected_values['landmarks']['with_labels'])
         >>>     print_dynamic(s)
 
     Create the widget with some initial options and display it:
@@ -2334,7 +2336,8 @@ class Landmark2DOptionsWidget(MenpoWidget):
         >>> wid = LandmarkOptionsWidget(
         >>>             group_keys=['PTS', 'ibug_face_68'],
         >>>             labels_keys=[['all'], ['jaw', 'eye', 'mouth']],
-        >>>             render_function=render_function, style='danger')
+        >>>             type='2D', render_function=render_function,
+        >>>             style='info', suboptions_style='danger')
         >>> wid
 
     By playing around with the widget, the printed message gets updated.
@@ -2350,7 +2353,7 @@ class Landmark2DOptionsWidget(MenpoWidget):
         >>> wid.default_options
 
     """
-    def __init__(self, group_keys, labels_keys, render_function=None,
+    def __init__(self, group_keys, labels_keys, type, render_function=None,
                  style='', suboptions_style=''):
         # Initialise default options dictionary
         self.default_options = {}
@@ -2374,7 +2377,12 @@ class Landmark2DOptionsWidget(MenpoWidget):
             options={'0': '0'}, description='', value='0', width='4cm')
         self.group_label = ipywidgets.Label()
         # Shape 2D options widget
-        self.shape_options_wid = Shape2DOptionsWidget([' '])
+        if type == '2D':
+            self.shape_options_wid = Shape2DOptionsWidget([' '])
+        elif type == '3D':
+            self.shape_options_wid = Shape3DOptionsWidget([' '])
+        else:
+            raise ValueError("type must be either '2D' or '3D'")
 
         # Group widgets
         self.box_1 = ipywidgets.HBox([self.group_title, self.group_dropdown])
@@ -2392,7 +2400,7 @@ class Landmark2DOptionsWidget(MenpoWidget):
                                          self.box_5])
 
         # Create final widget
-        super(Landmark2DOptionsWidget, self).__init__(
+        super(LandmarkOptionsWidget, self).__init__(
             [self.container], Dict, {}, render_function=render_function)
 
         # Set values, add callbacks before setting widget state
@@ -2439,9 +2447,12 @@ class Landmark2DOptionsWidget(MenpoWidget):
     def _save_options(self, change):
         if self.group_keys is None:
             self.selected_values = {
-                'group': None,
-                'render_landmarks': False,
-                'with_labels': None}
+                'landmarks': {
+                    'group': None,
+                    'render_landmarks': False,
+                    'with_labels': None},
+                'lines': self.shape_options_wid.selected_values['lines'],
+                'markers': self.shape_options_wid.selected_values['markers']}
         else:
             self.selected_values = {
                 'landmarks': {
