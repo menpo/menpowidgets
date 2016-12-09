@@ -11,7 +11,7 @@ from menpo.image.base import _convert_patches_list_to_single_array
 
 from .options import (RendererOptionsWidget, TextPrintWidget,
                       SaveMatplotlibFigureOptionsWidget, AnimationOptionsWidget,
-                      LandmarkOptionsWidget, ChannelOptionsWidget,
+                      LandmarkOptionsWidget, ImageOptionsWidget,
                       PlotOptionsWidget, PatchOptionsWidget,
                       LinearModelParametersWidget, CameraSnapshotWidget)
 from .style import format_box, map_styles_to_hex_colours
@@ -831,7 +831,7 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
     # Create widgets
     groups_keys, labels_keys = extract_groups_labels_from_image(images[0])
     first_label = labels_keys[0] if labels_keys else None
-    channel_options_wid = ChannelOptionsWidget(
+    channel_options_wid = ImageOptionsWidget(
         n_channels=images[0].n_channels,
         image_is_masked=isinstance(images[0], MaskedImage),
         render_function=render_function, style=channels_style)
@@ -1063,7 +1063,7 @@ def visualize_patches(patches, patch_centers, figure_size=(10, 8), style='colour
         n_patches=patches[0].shape[0], n_offsets=patches[0].shape[1],
         render_function=render_function, style=patches_style,
         subwidgets_style=patches_subwidgets_style)
-    channel_options_wid = ChannelOptionsWidget(
+    channel_options_wid = ImageOptionsWidget(
         n_channels=patches[0].shape[2], image_is_masked=False,
         render_function=render_function, style=channels_style)
     renderer_options_wid = RendererOptionsWidget(
@@ -1825,7 +1825,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
     groups_keys, labels_keys = extract_groups_labels_from_image(
         appearance_model[0].mean())
     first_label = labels_keys[0] if labels_keys else None
-    channel_options_wid = ChannelOptionsWidget(
+    channel_options_wid = ImageOptionsWidget(
         n_channels=appearance_model[0].mean().n_channels,
         image_is_masked=isinstance(appearance_model[0].mean(), MaskedImage),
         render_function=render_function, style=channels_style)
@@ -2094,7 +2094,7 @@ def visualize_patch_appearance_model(appearance_model, centers,
         n_offsets=appearance_model[0].mean().pixels.shape[1],
         render_function=render_function, style=patches_style,
         subwidgets_style=patches_subwidgets_style)
-    channel_options_wid = ChannelOptionsWidget(
+    channel_options_wid = ImageOptionsWidget(
         n_channels=appearance_model[0].mean().pixels.shape[2],
         image_is_masked=False, render_function=render_function,
         style=channels_style)

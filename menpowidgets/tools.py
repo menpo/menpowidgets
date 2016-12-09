@@ -671,6 +671,9 @@ class SlicingCommandWidget(MenpoWidget):
         indices = parse_slicing_command(slice_options['command'],
                                         slice_options['length'])
 
+        # Update example str
+        self.example.value = self._example_str(slice_options['length'])
+
         if not lists_are_the_same(indices, self.selected_values):
             # Keep old value
             old_value = self.selected_values
@@ -700,9 +703,6 @@ class SlicingCommandWidget(MenpoWidget):
 
             # update command text
             self.cmd_text.value = slice_options['command']
-
-            # Update example str
-            self.example.value = self._example_str(slice_options['length'])
 
             # reset status
             self.state_icon.value = \

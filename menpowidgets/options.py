@@ -15,8 +15,8 @@ from .tools import (IndexSliderWidget, IndexButtonsWidget, SlicingCommandWidget,
                     LogoWidget, NumberingMatplotlibOptionsWidget,
                     NumberingMayaviOptionsWidget, LegendOptionsWidget,
                     ZoomOneScaleWidget, ZoomTwoScalesWidget, AxesOptionsWidget,
-                    GridOptionsWidget, ImageOptionsWidget, CameraWidget,
-                    ColourSelectionWidget, TriMeshOptionsWidget,
+                    GridOptionsWidget, ImageMatplotlibOptionsWidget,
+                    CameraWidget, ColourSelectionWidget, TriMeshOptionsWidget,
                     TexturedTriMeshOptionsWidget, SwitchWidget,
                     MultipleSelectionTogglesWidget)
 from .style import (map_styles_to_hex_colours, format_box, format_font,
@@ -310,8 +310,8 @@ class AnimationOptionsWidget(MenpoWidget):
                 ============= ============================
 
         """
+        self.container.box_style = style
         if style != '':
-            self.container.box_style = style
             self.play_stop_toggle.button_style = self._toggle_play_style
             self.fast_forward_button.button_style = 'info'
             self.fast_backward_button.button_style = 'info'
@@ -322,6 +322,17 @@ class AnimationOptionsWidget(MenpoWidget):
             else:
                 self.index_wid.slider.slider_color = \
                     map_styles_to_hex_colours(style, False)
+        else:
+            self.play_stop_toggle.button_style = ''
+            self.fast_forward_button.button_style = ''
+            self.fast_backward_button.button_style = ''
+            self.loop_toggle.button_style = ''
+            if self.index_style == 'buttons':
+                self.index_wid.button_plus.button_style = ''
+                self.index_wid.button_minus.button_style = ''
+            else:
+                self.index_wid.slider.slider_color = \
+                    map_styles_to_hex_colours('', False)
 
     def set_widget_state(self, index, allow_callback=True):
         r"""
@@ -486,7 +497,8 @@ class Shape2DOptionsWidget(MenpoWidget):
         # Create widgets
         self.image_view_switch = SwitchWidget(
             selected_value=renderer_options['image_view'],
-            description='Image coordinates', description_location='right')
+            description='Image coordinates', description_location='right',
+            switch_type='checkbox')
         self.image_view_switch.layout.margin = '7px'
         self.line_options_wid = LineMatplotlibOptionsWidget(
             renderer_options['lines'], render_function=None,
@@ -1123,10 +1135,10 @@ class RendererOptionsWidget(MenpoWidget):
             ``'zoom_two'``             :map:`ZoomTwoScalesWidget`
             ``'legend'``               :map:`LegendOptionsWidget`
             ``'grid'``                 :map:`GridOptionsWidget`
-            ``'image'``                :map:`ImageOptionsWidget`
+            ``'image_matplotlib'``     :map:`ImageMatplotlibOptionsWidget`
             ``'axes'``                 :map:`AxesOptionsWidget`
             ``'trimesh'``              :map:`TriMeshOptionsWidget`
-            ``'coloured_trimesh'``     :map:`TexturedTriMeshOptionsWidget`
+            ``'textured_trimesh'``     :map:`TexturedTriMeshOptionsWidget`
             ========================== =======================================
 
     labels : `list` or ``None``, optional
@@ -1257,8 +1269,8 @@ class RendererOptionsWidget(MenpoWidget):
                 self.options_widgets.append(TexturedTriMeshOptionsWidget(
                     self.global_options[o], render_function=None))
                 self.tab_titles.append('Textured Mesh')
-            elif o == 'image':
-                self.options_widgets.append(ImageOptionsWidget(
+            elif o == 'image_matplotlib':
+                self.options_widgets.append(ImageMatplotlibOptionsWidget(
                     self.global_options[o], render_function=None))
                 self.tab_titles.append('Image')
             elif o == 'numbering_matplotlib':
@@ -1348,8 +1360,9 @@ class RendererOptionsWidget(MenpoWidget):
             self.default_options[current_key]['markers_mayavi'] = \
                 self.selected_values['markers_mayavi'].copy()
         # update global values
-        if 'image' in self.options_tabs:
-            self.global_options['image'] = self.selected_values['image']
+        if 'image_matplotlib' in self.options_tabs:
+            self.global_options['image_matplotlib'] = \
+                self.selected_values['image_matplotlib']
         if 'trimesh' in self.options_tabs:
             self.global_options['trimesh'] = self.selected_values['trimesh']
         if 'textured_trimesh' in self.options_tabs:
@@ -1426,7 +1439,7 @@ class RendererOptionsWidget(MenpoWidget):
         """
         self.global_options = {}
         for o in self.options_tabs:
-            if o == 'image':
+            if o == 'image_matplotlib':
                 self.global_options[o] = {
                     'interpolation': 'bilinear', 'cmap_name': None,
                     'alpha': 1.}
@@ -1579,14 +1592,14 @@ class RendererOptionsWidget(MenpoWidget):
             elif o == 'trimesh':
                 self.options_widgets[i].alpha_slider.slider_color = \
                     map_styles_to_hex_colours(style)
-            elif o =='textured_trimesh':
+            elif o == 'textured_trimesh':
                 self.options_widgets[i].ambient_slider.slider_color = \
                     map_styles_to_hex_colours(style)
                 self.options_widgets[i].specular_slider.slider_color = \
                     map_styles_to_hex_colours(style)
                 self.options_widgets[i].alpha_slider.slider_color = \
                     map_styles_to_hex_colours(style)
-            elif o == 'image':
+            elif o == 'image_matplotlib':
                 self.options_widgets[i].alpha_slider.slider_color = \
                     map_styles_to_hex_colours(style)
             elif o == 'zoom_two':
@@ -1669,10 +1682,9 @@ class RendererOptionsWidget(MenpoWidget):
             self.call_render_function(old_value, self.selected_values)
 
 
-class ChannelOptionsWidget(MenpoWidget):
+class ImageOptionsWidget(MenpoWidget):
     r"""
-    Creates a widget for selecting channel options for rendering an image.
-    Note that:
+    Creates a widget for selecting options for rendering an image. Note that:
 
     * To update the state of the widget, please refer to the
       :meth:`set_widget_state` method.
@@ -1686,7 +1698,7 @@ class ChannelOptionsWidget(MenpoWidget):
       in the ``self.default_options`` `dict`), it gets some pre-defined
       default options.
     * To set the styling of this widget please refer to the
-    :meth:`predefined_style` method.
+      :meth:`predefined_style` method.
     * To update the handler callback function of the widget, please refer to the
       :meth:`replace_render_function` method.
 
@@ -1724,13 +1736,13 @@ class ChannelOptionsWidget(MenpoWidget):
 
     Example
     -------
-    Let's create a channels widget and then update its state. Firstly, we need
-    to import it:
+    Let's create an image options widget and then update its state. Firstly,
+    we need to import it:
 
-        >>> from menpowidgets.options import ChannelOptionsWidget
+        >>> from menpowidgets.options import ImageOptionsWidget
 
     Now let's define a render function that will get called on every widget
-    change and will dynamically print the selected channels and masked flag:
+    change and will dynamically print the selected options:
 
         >>> from menpo.visualize import print_dynamic
         >>> def render_function(change):
@@ -1743,9 +1755,9 @@ class ChannelOptionsWidget(MenpoWidget):
 
     Create the widget with some initial options and display it:
 
-        >>> wid = ChannelOptionsWidget(n_channels=30, image_is_masked=True,
-        >>>                            render_function=render_function,
-        >>>                            style='warning')
+        >>> wid = ImageOptionsWidget(n_channels=30, image_is_masked=True,
+        >>>                          render_function=render_function,
+        >>>                          style='warning')
         >>> wid
 
     By playing around with the widget, printed message gets updated. Finally,
@@ -1775,37 +1787,137 @@ class ChannelOptionsWidget(MenpoWidget):
             slice_options, description='Channels:', render_function=None,
             example_visible=True, continuous_update=False,
             orientation='vertical')
-        self.masked_checkbox = ipywidgets.Checkbox(description='Masked')
-        self.rgb_checkbox = ipywidgets.Checkbox(description='RGB')
-        self.sum_checkbox = ipywidgets.Checkbox(description='Sum')
-        self.glyph_checkbox = ipywidgets.Checkbox(description='Glyph')
+        self.masked_checkbox = SwitchWidget(
+            False, description='Masked', description_location='right',
+            switch_type='checkbox')
+        self.rgb_checkbox = SwitchWidget(
+            False, description='RGB', description_location='right',
+            switch_type='checkbox')
+        self.sum_checkbox = SwitchWidget(
+            False, description='Sum', description_location='right',
+            switch_type='checkbox')
+        self.glyph_checkbox = SwitchWidget(
+            False, description='Glyph', description_location='right',
+            switch_type='checkbox')
         self.glyph_block_size_title = ipywidgets.Label(value='Block size')
         self.glyph_block_size_text = ipywidgets.BoundedIntText(min=1, max=25,
-                                                               width='1.5cm')
-        self.glyph_use_negative_checkbox = ipywidgets.Checkbox(
-            description='Negative')
-        self.no_options_label = ipywidgets.Label(value='No options available')
+                                                               width='1cm')
+        self.glyph_use_negative_checkbox = SwitchWidget(
+            False, description='Negative', description_location='right',
+            switch_type='checkbox')
+        self.interpolation_checkbox = SwitchWidget(
+            False, description='Interpolation', description_location='right',
+            switch_type='checkbox')
+        self.alpha_title = ipywidgets.Label(value='Transparency')
+        self.alpha_slider = ipywidgets.FloatSlider(
+            value=1.0, min=0.0, max=1.0, step=0.05, continuous_update=False,
+            readout=False, width='2.1cm')
+        self.alpha_text = ipywidgets.Label(value="{:.2f}".format(1.0),
+                                           width='0.75cm')
+        self.cmap_title = ipywidgets.Label(value='Colour map')
+        cmap_dict = OrderedDict()
+        cmap_dict['None'] = None
+        cmap_dict['afmhot'] = 'afmhot'
+        cmap_dict['autumn'] = 'autumn'
+        cmap_dict['binary'] = 'binary'
+        cmap_dict['bone'] = 'bone'
+        cmap_dict['brg'] = 'brg'
+        cmap_dict['bwr'] = 'bwr'
+        cmap_dict['cool'] = 'cool'
+        cmap_dict['coolwarm'] = 'coolwarm'
+        cmap_dict['copper'] = 'copper'
+        cmap_dict['cubehelix']= 'cubehelix'
+        cmap_dict['flag'] = 'flag'
+        cmap_dict['gist_earth'] = 'gist_earth'
+        cmap_dict['gist_heat'] = 'gist_heat'
+        cmap_dict['gist_gray'] = 'gist_gray'
+        cmap_dict['gist_ncar'] = 'gist_ncar'
+        cmap_dict['gist_rainbow'] = 'gist_rainbow'
+        cmap_dict['gist_stern'] = 'gist_stern'
+        cmap_dict['gist_yarg'] = 'gist_yarg'
+        cmap_dict['gnuplot'] = 'gnuplot'
+        cmap_dict['gnuplot2'] = 'gnuplot2'
+        cmap_dict['gray'] = 'gray'
+        cmap_dict['hot'] = 'hot'
+        cmap_dict['hsv'] = 'hsv'
+        cmap_dict['inferno'] = 'inferno'
+        cmap_dict['jet'] = 'jet'
+        cmap_dict['magma'] = 'magma'
+        cmap_dict['nipy_spectral'] = 'nipy_spectral'
+        cmap_dict['ocean'] = 'ocean'
+        cmap_dict['pink'] = 'pink'
+        cmap_dict['plasma'] = 'plasma'
+        cmap_dict['prism'] = 'prism'
+        cmap_dict['rainbow'] = 'rainbow'
+        cmap_dict['seismic'] = 'seismic'
+        cmap_dict['spectral'] = 'spectral'
+        cmap_dict['spring'] = 'spring'
+        cmap_dict['summer'] = 'summer'
+        cmap_dict['terrain'] = 'terrain'
+        cmap_dict['viridis'] = 'viridis'
+        cmap_dict['winter'] = 'winter'
+        cmap_dict['Blues'] = 'Blues'
+        cmap_dict['BuGn'] = 'BuGn'
+        cmap_dict['BuPu'] = 'BuPu'
+        cmap_dict['GnBu'] = 'GnBu'
+        cmap_dict['Greens'] = 'Greens'
+        cmap_dict['Greys'] = 'Greys'
+        cmap_dict['Oranges'] = 'Oranges'
+        cmap_dict['OrRd'] = 'OrRd'
+        cmap_dict['PuBu'] = 'PuBu'
+        cmap_dict['PuBuGn'] = 'PuBuGn'
+        cmap_dict['PuRd'] = 'PuRd'
+        cmap_dict['Purples'] = 'Purples'
+        cmap_dict['RdPu'] = 'RdPu'
+        cmap_dict['Reds'] = 'Reds'
+        cmap_dict['YlGn'] = 'YlGn'
+        cmap_dict['YlGnBu'] = 'YlGnBu'
+        cmap_dict['YlOrBr'] = 'YlOrBr'
+        cmap_dict['YlOrRd'] = 'YlOrRd'
+        self.cmap_select = ipywidgets.Dropdown(options=cmap_dict, value=None,
+                                               width='3cm')
 
         # Group widgets
         self.box_1 = ipywidgets.HBox([self.glyph_block_size_title,
                                       self.glyph_block_size_text])
         self.box_1.layout.align_items = 'center'
-        self.box_2 = ipywidgets.VBox([self.box_1,
+        self.box_2 = ipywidgets.HBox([self.cmap_title, self.cmap_select])
+        self.box_2.layout.align_items = 'center'
+        self.box_3 = ipywidgets.HBox(([self.alpha_title, self.alpha_slider,
+                                       self.alpha_text]))
+        self.box_3.layout.align_items = 'center'
+        self.box_4 = ipywidgets.VBox([self.box_1,
                                       self.glyph_use_negative_checkbox])
-        self.box_2.layout.display = 'none'
-        self.box_3 = ipywidgets.HBox([self.glyph_checkbox, self.box_2])
-        self.box_4 = ipywidgets.HBox([self.rgb_checkbox, self.masked_checkbox])
-        self.box_5 = ipywidgets.HBox([self.sum_checkbox, self.box_3])
-        self.box_6 = ipywidgets.VBox([self.box_4, self.box_5])
-        self.container = ipywidgets.HBox([self.channels_wid, self.box_6,
-                                          self.no_options_label])
+        self.box_4.layout.display = 'none'
+        self.box_4.layout.border = '1px solid'
+        self.box_5 = ipywidgets.VBox([self.interpolation_checkbox,
+                                      self.masked_checkbox, self.rgb_checkbox])
+        self.box_5.layout.margin = '0px 10px 0px 0px'
+        self.box_6 = ipywidgets.VBox([self.box_2, self.box_3])
+        self.box_6.layout.align_items = 'flex-end'
+        self.glyph_checkbox.layout.margin = '0px 10px 0px 0px'
+        self.box_7 = ipywidgets.HBox([self.glyph_checkbox, self.box_4])
+        self.box_7.layout.align_items = 'flex-start'
+        self.sum_checkbox.layout.margin = '0px 10px 0px 0px'
+        self.box_8 = ipywidgets.HBox([self.sum_checkbox, self.box_7])
+        self.box_8.layout.align_items = 'flex-start'
+        self.box_9 = ipywidgets.VBox([self.box_6, self.box_8])
+        self.box_9.layout.align_items = 'flex-start'
+        self.channels_wid.layout.margin = '0px 10px 0px 0px'
+        self.container = ipywidgets.HBox([self.channels_wid,
+                                          self.box_5, self.box_9])
 
         # Create final widget
-        super(ChannelOptionsWidget, self).__init__(
+        super(ImageOptionsWidget, self).__init__(
             [self.container], Dict, {}, render_function=render_function)
 
         # Set values
         self.set_widget_state(n_channels, image_is_masked, allow_callback=False)
+
+        # Set slider update
+        def slider_sync(change):
+            self.alpha_text.value = '{:.2f}'.format(float(change['new']))
+        self.alpha_slider.observe(slider_sync, names='value', type='change')
 
         # Set style
         self.predefined_style(style)
@@ -1815,49 +1927,73 @@ class ChannelOptionsWidget(MenpoWidget):
         Function that adds the handler callback functions in all the widget
         components, which are necessary for the internal functionality.
         """
-        self.glyph_block_size_text.observe(self._save_options, names='value',
-                                           type='change')
+        self.channels_wid.observe(
+            self._save_channels, names='selected_values', type='change')
+        self.interpolation_checkbox.observe(
+            self._save_options, names='selected_values', type='change')
+        self.masked_checkbox.observe(
+            self._save_options, names='selected_values', type='change')
+        self.rgb_checkbox.observe(
+            self._save_rgb, names='selected_values', type='change')
+        self.sum_checkbox.observe(
+            self._save_sum, names='selected_values', type='change')
+        self.glyph_checkbox.observe(
+            self._save_glyph, names='selected_values', type='change')
+        self.cmap_select.observe(
+            self._save_options, names='value', type='change')
+        self.alpha_slider.observe(
+            self._save_options, names='value', type='change')
+        self.glyph_block_size_text.observe(
+            self._save_options, names='value', type='change')
         self.glyph_use_negative_checkbox.observe(
-                self._save_options, names='value', type='change')
-        self.masked_checkbox.observe(self._save_options, names='value',
-                                     type='change')
-        self.channels_wid.observe(self._save_channels, names='selected_values',
-                                  type='change')
-        self.rgb_checkbox.observe(self._save_rgb, names='value', type='change')
-        self.sum_checkbox.observe(self._save_sum, names='value', type='change')
-        self.glyph_checkbox.observe(self._save_glyph, names='value',
-                                    type='change')
+            self._save_options, names='selected_values', type='change')
 
     def remove_callbacks(self):
         r"""
         Function that removes all the internal handler callback functions.
         """
-        self.glyph_block_size_text.unobserve(self._save_options, names='value',
-                                             type='change')
+        self.channels_wid.unobserve(
+            self._save_channels, names='selected_values', type='change')
+        self.interpolation_checkbox.unobserve(
+            self._save_options, names='selected_values', type='change')
+        self.masked_checkbox.unobserve(
+            self._save_options, names='selected_values', type='change')
+        self.rgb_checkbox.unobserve(
+            self._save_rgb, names='selected_values', type='change')
+        self.sum_checkbox.unobserve(
+            self._save_sum, names='selected_values', type='change')
+        self.glyph_checkbox.unobserve(
+            self._save_glyph, names='selected_values', type='change')
+        self.cmap_select.unobserve(
+            self._save_options, names='value', type='change')
+        self.alpha_slider.unobserve(
+            self._save_options, names='value', type='change')
+        self.glyph_block_size_text.unobserve(
+            self._save_options, names='value', type='change')
         self.glyph_use_negative_checkbox.unobserve(
-                self._save_options, names='value', type='change')
-        self.masked_checkbox.unobserve(self._save_options, names='value',
-                                       type='change')
-        self.channels_wid.unobserve(self._save_channels, names='selected_values',
-                                    type='change')
-        self.rgb_checkbox.unobserve(self._save_rgb, names='value', type='change')
-        self.sum_checkbox.unobserve(self._save_sum, names='value', type='change')
-        self.glyph_checkbox.unobserve(self._save_glyph, names='value',
-                                      type='change')
+            self._save_options, names='selected_values', type='change')
 
     def _save_options(self, change):
         # get channels value
         channels_val = self.channels_wid.selected_values
-        if self.rgb_checkbox.value:
+        if self.rgb_checkbox.selected_values and self.n_channels == 3:
             channels_val = None
+        # get interpolation value
+        interpolation = ('bilinear'
+                         if self.interpolation_checkbox.selected_values
+                         else 'none')
         # update selected values
         self.selected_values = {
             'channels': channels_val,
-            'glyph_enabled': self.glyph_checkbox.value,
+            'glyph_enabled': self.glyph_checkbox.selected_values,
             'glyph_block_size': self.glyph_block_size_text.value,
-            'glyph_use_negative': self.glyph_use_negative_checkbox.value,
-            'sum_enabled': self.sum_checkbox.value,
-            'masked_enabled': self.masked_checkbox.value}
+            'glyph_use_negative':
+                self.glyph_use_negative_checkbox.selected_values,
+            'sum_enabled': self.sum_checkbox.selected_values,
+            'masked_enabled': self.masked_checkbox.selected_values,
+            'alpha': self.alpha_slider.value,
+            'cmap_name': self.cmap_select.value,
+            'interpolation': interpolation}
         # update default values
         current_key = self.get_key(self.n_channels, self.image_is_masked)
         self.default_options[current_key] = self.selected_values
@@ -1868,7 +2004,7 @@ class ChannelOptionsWidget(MenpoWidget):
             self.rgb_checkbox.unobserve(self._save_rgb, names='value',
                                         type='change')
             # set value
-            self.rgb_checkbox.value = False
+            self.rgb_checkbox.set_widget_state(False, allow_callback=False)
             # re-assign rgb callback
             self.rgb_checkbox.observe(self._save_rgb, names='value',
                                       type='change')
@@ -1889,14 +2025,14 @@ class ChannelOptionsWidget(MenpoWidget):
         self._save_options({})
 
     def _save_sum(self, change):
-        if change['new'] and self.glyph_checkbox.value:
+        if change['new'] and self.glyph_checkbox.selected_values:
             # temporarily remove glyph callback
             self.glyph_checkbox.unobserve(self._save_glyph, names='value',
                                           type='change')
 
             # set glyph to False
-            self.glyph_checkbox.value = False
-            self.box_2.layout.display = 'none'
+            self.glyph_checkbox.set_widget_state(False, allow_callback=False)
+            self.box_4.layout.display = 'none'
 
             # re-assign glyph callback
             self.glyph_checkbox.observe(self._save_glyph, names='value',
@@ -1904,19 +2040,19 @@ class ChannelOptionsWidget(MenpoWidget):
         self._save_options({})
 
     def _save_glyph(self, change):
-        if change['new'] and self.sum_checkbox.value:
+        if change['new'] and self.sum_checkbox.selected_values:
             # temporarily remove sum callback
             self.sum_checkbox.unobserve(self._save_sum, names='value',
                                         type='change')
 
             # set glyph to false
-            self.sum_checkbox.value = False
+            self.sum_checkbox.set_widget_state(False, allow_callback=False)
 
             # re-assign sum callback
             self.sum_checkbox.observe(self._save_sum, names='value',
                                       type='change')
         # set visibility
-        self.box_2.layout.display = 'flex' if change['new'] else 'none'
+        self.box_4.layout.display = 'flex' if change['new'] else 'none'
         self._save_options({})
 
     def set_visibility(self):
@@ -1927,16 +2063,11 @@ class ChannelOptionsWidget(MenpoWidget):
         """
         self.channels_wid.layout.display = ('flex' if self.n_channels > 1
                                             else 'none')
-        self.box_5.layout.display = 'flex' if self.n_channels > 1 else 'none'
-        self.rgb_checkbox.layout.display = ('inline' if self.n_channels == 3
+        self.rgb_checkbox.layout.display = ('flex' if self.n_channels == 3
                                             else 'none')
-        self.masked_checkbox.layout.display = ('inline' if self.image_is_masked
+        self.masked_checkbox.layout.display = ('flex' if self.image_is_masked
                                                else 'none')
-        self.no_options_label.layout.display = (
-            'inline' if self.n_channels == 1 and not self.image_is_masked
-            else 'none')
-        self.box_2.layout.display = ('flex' if self.glyph_checkbox.value else
-                                     'none')
+        self.box_8.layout.display = 'flex' if self.n_channels > 1 else 'none'
 
     def get_key(self, n_channels, image_is_masked):
         r"""
@@ -1976,25 +2107,7 @@ class ChannelOptionsWidget(MenpoWidget):
         Returns
         -------
         default_options : `dict`
-            A `dict` with the default options. It contains:
-
-            * ``channels`` : (`list`) The selected channels.
-            * ``glyph_enabled`` : (`bool`) Whether to render as glyph.
-            * ``glyph_block_size`` : (`int`) The glyph's block size.
-            * ``glyph_use_negative`` : (`bool`) Whether to use negative values.
-            * ``sum_enabled`` : (`bool`) Whether to render as sum of channels.
-            * ``masked_enabled`` : (`bool`) Whether to render as masked.
-
-            If the object is not seen before by the widget, then it automatically
-            gets the following default options:
-
-            * ``channels = [0] if n_channels == 3 else None``
-            * ``glyph_enabled = False``
-            * ``glyph_block_size = 3``
-            * ``glyph_use_negative = False``
-            * ``sum_enabled = False``
-            * ``masked_enabled = image_is_masked``
-
+            A `dict` with the default options.
         """
         # create key
         key = self.get_key(n_channels, image_is_masked)
@@ -2012,6 +2125,7 @@ class ChannelOptionsWidget(MenpoWidget):
                                          'glyph_use_negative': False,
                                          'sum_enabled': False,
                                          'masked_enabled': masked_enabled,
+                                         'alpha': 1.0,
                                          'interpolation': 'bilinear',
                                          'cmap_name': None}
         return self.default_options[key]
@@ -2036,7 +2150,6 @@ class ChannelOptionsWidget(MenpoWidget):
                 ============= ============================
                 Style         Description
                 ============= ============================
-                ``'minimal'`` Simple black and white style
                 ``'success'`` Green-based style
                 ``'info'``    Blue-based style
                 ``'warning'`` Yellow-based style
@@ -2044,7 +2157,11 @@ class ChannelOptionsWidget(MenpoWidget):
                 ``''``        No style
                 ============= ============================
         """
-        pass
+        self.container.box_style = style
+        self.channels_wid.single_slider.slider_color = \
+            map_styles_to_hex_colours(style)
+        self.channels_wid.multiple_slider.slider_color = \
+            map_styles_to_hex_colours(style)
 
     def set_widget_state(self, n_channels, image_is_masked, allow_callback=True):
         r"""
@@ -2088,22 +2205,31 @@ class ChannelOptionsWidget(MenpoWidget):
 
             # Set both sum and glyph to False, to make sure that there is no
             # conflict
-            self.sum_checkbox.value = False
-            self.glyph_checkbox.value = False
+            self.sum_checkbox.set_widget_state(False, allow_callback=False)
+            self.glyph_checkbox.set_widget_state(False, allow_callback=False)
 
             # Update widgets' state
             slice_options = {'command': channels, 'length': self.n_channels}
             self.channels_wid.set_widget_state(slice_options,
                                                allow_callback=False)
-            self.masked_checkbox.value = channel_options['masked_enabled']
-            self.rgb_checkbox.value = (self.n_channels == 3 and
-                                       channel_options['channels'] is None)
-            self.sum_checkbox.value = channel_options['sum_enabled']
-            self.glyph_checkbox.value = channel_options['glyph_enabled']
+            self.masked_checkbox.set_widget_state(
+                channel_options['masked_enabled'], allow_callback=False)
+            self.rgb_checkbox.set_widget_state(
+                self.n_channels == 3 and channel_options['channels'] is None,
+                allow_callback=False)
+            self.sum_checkbox.set_widget_state(channel_options['sum_enabled'],
+                                               allow_callback=False)
+            self.glyph_checkbox.set_widget_state(
+                channel_options['glyph_enabled'], allow_callback=False)
             self.glyph_block_size_text.value = \
                 channel_options['glyph_block_size']
-            self.glyph_use_negative_checkbox.value = \
-                channel_options['glyph_use_negative']
+            self.glyph_use_negative_checkbox.set_widget_state(
+                channel_options['glyph_use_negative'], allow_callback=False)
+            self.interpolation_checkbox.set_widget_state(
+                channel_options['interpolation'] == 'bilinear',
+                allow_callback=False)
+            self.alpha_slider.value = channel_options['alpha']
+            self.cmap_select.value = channel_options['cmap_name']
 
             # Set widget's visibility
             self.set_visibility()

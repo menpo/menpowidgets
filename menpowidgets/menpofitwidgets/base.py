@@ -25,7 +25,7 @@ from menpofit.error import (euclidean_bb_normalised_error,
 
 from ..checks import check_n_parameters
 from ..options import (SaveMatplotlibFigureOptionsWidget, RendererOptionsWidget,
-                       ChannelOptionsWidget, PatchOptionsWidget,
+                       ImageOptionsWidget, PatchOptionsWidget,
                        LandmarkOptionsWidget, LinearModelParametersWidget,
                        PlotOptionsWidget, AnimationOptionsWidget,
                        TextPrintWidget)
@@ -297,7 +297,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             loop_enabled=True)
     groups_keys, labels_keys = extract_groups_labels_from_image(
             aam.appearance_models[0].mean())
-    channel_options_wid = ChannelOptionsWidget(
+    channel_options_wid = ImageOptionsWidget(
             n_channels=aam.appearance_models[0].mean().n_channels,
             image_is_masked=isinstance(aam.appearance_models[0].mean(), MaskedImage),
             render_function=render_function, style=channels_style)
@@ -631,7 +631,7 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             n_offsets=aam.appearance_models[0].mean().pixels.shape[1],
             render_function=render_function, style=patches_style,
             subwidgets_style=patches_subwidgets_style)
-    channel_options_wid = ChannelOptionsWidget(
+    channel_options_wid = ImageOptionsWidget(
             n_channels=aam.appearance_models[0].mean().pixels.shape[2],
             image_is_masked=False, render_function=render_function,
             style=channels_style)
@@ -928,7 +928,7 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
             loop_enabled=True)
     groups_keys, labels_keys = extract_groups_labels_from_image(
             atm.warped_templates[0])
-    channel_options_wid = ChannelOptionsWidget(
+    channel_options_wid = ImageOptionsWidget(
             n_channels=atm.warped_templates[0].n_channels,
             image_is_masked=isinstance(atm.warped_templates[0], MaskedImage),
             render_function=render_function, style=channels_style)
@@ -1195,7 +1195,7 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
             n_offsets=atm.warped_templates[0].pixels.shape[1],
             render_function=render_function, style=patches_style,
             subwidgets_style=patches_subwidgets_style)
-    channel_options_wid = ChannelOptionsWidget(
+    channel_options_wid = ImageOptionsWidget(
             n_channels=atm.warped_templates[0].pixels.shape[2],
             image_is_masked=False, render_function=render_function,
             style=channels_style)
@@ -1473,7 +1473,7 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
             value='spatial', margin='0.3cm')
     experts_box = ipywidgets.VBox(children=[domain_toggles, patch_options_wid],
                                   align='start')
-    channel_options_wid = ChannelOptionsWidget(
+    channel_options_wid = ImageOptionsWidget(
             n_channels=clm.expert_ensembles[0].spatial_filter_images[0].n_channels,
             image_is_masked=False, render_function=render_function,
             style=channels_style)
@@ -1697,7 +1697,7 @@ def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(10, 8),
     domain_toggles = ipywidgets.ToggleButtons(
             description='Domain:', options=['spatial', 'frequency'],
             value='spatial', margin='0.1cm')
-    channel_options_wid = ChannelOptionsWidget(
+    channel_options_wid = ImageOptionsWidget(
             n_channels=expert_ensemble[0].spatial_filter_images[0].n_channels,
             image_is_masked=False, render_function=render_function,
             style=channels_style)
