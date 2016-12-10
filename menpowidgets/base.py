@@ -12,7 +12,7 @@ from menpo.image.base import _convert_patches_list_to_single_array
 from .options import (RendererOptionsWidget, TextPrintWidget,
                       SaveMatplotlibFigureOptionsWidget, AnimationOptionsWidget,
                       ImageOptionsWidget, LandmarkOptionsWidget,
-                      PlotOptionsWidget, PatchOptionsWidget,
+                      PlotMatplotlibOptionsWidget, PatchOptionsWidget,
                       LinearModelParametersWidget, CameraSnapshotWidget)
 from .style import format_box, map_styles_to_hex_colours
 from .tools import LogoWidget
@@ -1209,9 +1209,9 @@ def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(10, 6),
         save_figure_wid.renderer = renderer
 
     # Create widgets
-    wid = PlotOptionsWidget(legend_entries=legend_entries,
-                            render_function=render_function,
-                            style=widget_box_style, tabs_style=tabs_style)
+    wid = PlotMatplotlibOptionsWidget(legend_entries=legend_entries,
+                                      render_function=render_function,
+                                      style=widget_box_style, tabs_style=tabs_style)
     save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
                                                         style=save_figure_style)
 

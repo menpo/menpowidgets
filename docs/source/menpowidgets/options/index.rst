@@ -16,7 +16,7 @@ and :ref:`api-menpofit-base-index`.
     LandmarkOptionsWidget
     LinearModelParametersWidget
     PatchOptionsWidget
-    PlotOptionsWidget
+    PlotMatplotlibOptionsWidget
     RendererOptionsWidget
     SaveMatplotlibFigureOptionsWidget
     SaveMayaviFigureOptionsWidget

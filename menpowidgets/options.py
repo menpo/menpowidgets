@@ -1219,7 +1219,7 @@ class RendererOptionsWidget(MenpoWidget):
     By playing around, the printed message gets updated. The style of the widget
     can be changed as:
 
-        >>> wid.predefined_style('minimal', 'info')
+        >>> wid.predefined_style('', 'info')
 
     Finally, let's change the widget status with a new set of labels:
 
@@ -1781,7 +1781,7 @@ class ImageOptionsWidget(MenpoWidget):
 
     """
     def __init__(self, n_channels, image_is_masked, render_function=None,
-                 style='minimal'):
+                 style=''):
         # Initialise default options dictionary
         self.default_options = {}
 
@@ -3078,7 +3078,7 @@ class SaveMayaviFigureOptionsWidget(ipywidgets.Box):
             ============= ==================
     """
     def __init__(self, renderer=None, file_format='png', size=None,
-                 magnification='auto', overwrite=False, style='minimal'):
+                 magnification='auto', overwrite=False, style=''):
         from os import getcwd
         from os.path import join
         from pathlib import Path
@@ -3655,31 +3655,10 @@ class PatchOptionsWidget(MenpoWidget):
             self.call_render_function(old_value, self.selected_values)
 
 
-class PlotOptionsWidget(MenpoWidget):
+class PlotMatplotlibOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting options for rendering various curves in a
-    graph. The widget consists of the following objects from `ipywidgets` and
-    :ref:`api-tools-index`:
-
-    == ========================== ====================== =====================
-    No Object                     Property (`self.`)     Description
-    == ========================== ====================== =====================
-    1  :map:`LineMatplotlibOptionsWidget`   `lines_wid`            Line options widget
-    2  :map:`MarkerMatplotlibOptionsWidget` `markers_wid`          Marker options widget
-    3  `Dropdown`                 `curves_dropdown`      Curve selector
-    4  `Tab`                      `lines_markers_tab`    Contains 1, 2
-    5  `VBox`                     `lines_markers_box`    Contains 3, 4
-    6  :map:`LegendOptionsWidget` `legend_wid`           Legend options widget
-    7  :map:`AxesOptionsWidget`   `axes_wid`             Axes options widget
-    8  :map:`ZoomTwoScalesWidget` `zoom_wid`             Zoom options widget
-    9  :map:`GridOptionsWidget`   `grid_wid`             Grid options widget
-    10 `Text`                     `x_label`              X label text
-    11 `Text`                     `y_label`              Y label text
-    12 `Text`                     `title`                Title text
-    13 `Textarea`                 `legend_entries_text`  Legend entries text
-    14 `VBox`                     `plot_related_options` Contains 10 - 13
-    15 `Tab`                      `options_tab`          Contains 14, 5 - 9
-    == ========================== ====================== =====================
+    graph.
 
     Note that:
 
@@ -3687,8 +3666,8 @@ class PlotOptionsWidget(MenpoWidget):
       passed into it through `legend_entries`.
     * The selected values of the current object object are stored in the
       ``self.selected_values`` `trait`.
-    * To set the styling of this widget please refer to the :meth:`style` and
-      :meth:`predefined_style` methods.
+    * To set the styling of this widget please refer to the
+      :meth:`predefined_style` method.
     * To update the handler callback function of the widget, please refer to the
       :meth:`replace_render_function` method.
 
@@ -3711,36 +3690,34 @@ class PlotOptionsWidget(MenpoWidget):
     style : `str` (see below), optional
         Sets a predefined style at the widget. Possible options are:
 
-            ============= ============================
+            ============= ==================
             Style         Description
-            ============= ============================
-            ``'minimal'`` Simple black and white style
+            ============= ==================
             ``'success'`` Green-based style
             ``'info'``    Blue-based style
             ``'warning'`` Yellow-based style
             ``'danger'``  Red-based style
             ``''``        No style
-            ============= ============================
+            ============= ==================
 
-    tabs_style : `str` (see below), optional
+    suboptions_style : `str` (see below), optional
         Sets a predefined style at the tabs of the widget. Possible options are:
 
-            ============= ============================
+            ============= ==================
             Style         Description
-            ============= ============================
-            ``'minimal'`` Simple black and white style
+            ============= ==================
             ``'success'`` Green-based style
             ``'info'``    Blue-based style
             ``'warning'`` Yellow-based style
             ``'danger'``  Red-based style
             ``''``        No style
-            ============= ============================
+            ============= ==================
 
     Example
     -------
     Let's create a plot options widget. Firstly, we need to import it:
 
-        >>> from menpowidgets.options import PlotOptionsWidget
+        >>> from menpowidgets.options import PlotMatplotlibOptionsWidget
 
     Let's set some legend entries:
 
@@ -3759,19 +3736,19 @@ class PlotOptionsWidget(MenpoWidget):
 
     Create the widget with the initial options and display it:
 
-        >>> wid = PlotOptionsWidget(legend_entries,
+        >>> wid = PlotMatplotlibOptionsWidget(legend_entries,
         >>>                         render_function=render_function,
-        >>>                         style='danger', tabs_style='info')
+        >>>                         style='danger', suboptions_style='info')
         >>> wid
 
     By playing around, the printed message gets updated. The style of the widget
     can be changed as:
 
-        >>> wid.predefined_style('minimal', 'info')
+        >>> wid.predefined_style('', 'info')
 
     """
-    def __init__(self, legend_entries, render_function=None, style='minimal',
-                 tabs_style='minimal'):
+    def __init__(self, legend_entries, render_function=None, style='',
+                 suboptions_style=''):
         # Assign properties
         self.legend_entries = legend_entries
         self.n_curves = len(legend_entries)
@@ -3785,8 +3762,7 @@ class PlotOptionsWidget(MenpoWidget):
              'line_width': default_options['line_width'][0],
              'line_colour': [default_options['line_colour'][0]],
              'line_style': default_options['line_style'][0]},
-            render_function=None, render_checkbox_title='Render lines',
-            labels=None)
+            render_checkbox_title='Render lines')
         self.markers_wid = MarkerMatplotlibOptionsWidget(
             {'render_markers': default_options['render_markers'][0],
              'marker_style': default_options['marker_style'][0],
@@ -3794,20 +3770,23 @@ class PlotOptionsWidget(MenpoWidget):
              'marker_face_colour': [default_options['marker_face_colour'][0]],
              'marker_edge_colour': [default_options['marker_edge_colour'][0]],
              'marker_edge_width': default_options['marker_edge_width'][0]},
-            render_function=None, render_checkbox_title='Render markers',
-            labels=None)
+            render_checkbox_title='Render markers')
         curves_dict = {}
         for i, s in enumerate(self.legend_entries):
             curves_dict[s] = i
+        self.curves_title = ipywidgets.Label(value='Curve')
         self.curves_dropdown = ipywidgets.Dropdown(
-            description='Curve: ', options=curves_dict, value=0)
-        self.lines_markers_tab = ipywidgets.Tab(
-            children=[self.lines_wid, self.markers_wid], margin='0.2cm')
+            description='', options=curves_dict, value=0, width='3cm')
+        self.curves_box = ipywidgets.HBox([self.curves_title,
+                                           self.curves_dropdown])
+        self.curves_box.layout.align_items = 'center'
+        self.curves_box.layout.margin = '0px 0px 10px 0px'
+        self.lines_markers_tab = ipywidgets.Tab([self.lines_wid,
+                                                 self.markers_wid])
         self.lines_markers_tab.set_title(0, 'Lines')
         self.lines_markers_tab.set_title(1, 'Markers')
-        self.lines_markers_box = ipywidgets.VBox(
-            children=[self.curves_dropdown, self.lines_markers_tab],
-            align='start')
+        self.lines_markers_box = ipywidgets.VBox([self.curves_box,
+                                                  self.lines_markers_tab])
         self.legend_wid = LegendOptionsWidget(
             {'render_legend': default_options['render_legend'],
              'legend_title': default_options['legend_title'],
@@ -3826,7 +3805,7 @@ class PlotOptionsWidget(MenpoWidget):
              'legend_border_padding': default_options['legend_border_padding'],
              'legend_shadow': default_options['legend_shadow'],
              'legend_rounded_corners': default_options['legend_rounded_corners']},
-            render_function=None, render_checkbox_title='Render legend')
+            render_checkbox_title='Render legend')
         self.axes_wid = AxesOptionsWidget(
             {'render_axes': default_options['render_axes'],
              'axes_font_name': default_options['axes_font_name'],
@@ -3837,49 +3816,65 @@ class PlotOptionsWidget(MenpoWidget):
              'axes_y_limits': default_options['axes_y_limits'],
              'axes_x_ticks': default_options['axes_x_ticks'],
              'axes_y_ticks': default_options['axes_y_ticks']},
-            render_function=None, render_checkbox_title='Render axes')
+            render_checkbox_title='Render axes')
         self.zoom_wid = ZoomTwoScalesWidget(
             {'zoom': default_options['zoom'], 'min': 0.1, 'max': 4.,
-             'step': 0.05, 'lock_aspect_ratio': False}, render_function=None,
-            description='Scale: ', continuous_update=False)
+             'step': 0.05, 'lock_aspect_ratio': False}, description='Scale',
+            continuous_update=False)
         self.grid_wid = GridOptionsWidget(
             {'render_grid': default_options['render_grid'],
              'grid_line_width': default_options['grid_line_width'],
              'grid_line_style': default_options['grid_line_style']},
-            render_function=None, render_checkbox_title='Render grid')
-        self.x_label = ipywidgets.Text(description='X label', margin='0.05cm',
-                                       value=default_options['x_label'])
-        self.y_label = ipywidgets.Text(description='Y label', margin='0.05cm',
-                                       value=default_options['y_label'])
-        self.title = ipywidgets.Text(description='Title', margin='0.05cm',
-                                     value=default_options['title'])
+            render_checkbox_title='Render grid')
+        self.x_label_title = ipywidgets.Label(value='X label')
+        self.x_label = ipywidgets.Text(
+            description='', value=default_options['x_label'], width='6cm')
+        self.x_label_box = ipywidgets.HBox([self.x_label_title, self.x_label])
+        self.x_label_box.layout.align_items = 'center'
+        self.y_label_title = ipywidgets.Label(value='Y label')
+        self.y_label = ipywidgets.Text(
+            description='', value=default_options['y_label'], width='6cm')
+        self.y_label_box = ipywidgets.HBox([self.y_label_title, self.y_label])
+        self.y_label_box.layout.align_items = 'center'
+        self.title_title = ipywidgets.Label(value='Title')
+        self.title = ipywidgets.Text(
+            description='', value=default_options['title'], width='6cm')
+        self.title_box = ipywidgets.HBox([self.title_title, self.title])
+        self.title_box.layout.align_items = 'center'
+        self.legend_entries_title = ipywidgets.Label(value='Legend')
         self.legend_entries_text = ipywidgets.Textarea(
-            description='Legend', width='73mm', margin='0.05cm',
+            description='', width='6cm',
             value=self._convert_list_to_legend_entries(self.legend_entries))
-        self.plot_related_options = ipywidgets.VBox(
-            children=[self.x_label, self.y_label, self.title,
-                      self.legend_entries_text])
+        self.legend_entries_box = ipywidgets.HBox([self.legend_entries_title,
+                                                   self.legend_entries_text])
+        self.legend_entries_box.layout.align_items = 'center'
+        self.plot_related_options = ipywidgets.VBox([self.x_label_box,
+                                                     self.y_label_box,
+                                                     self.title_box,
+                                                     self.legend_entries_box])
+        self.plot_related_options.layout.align_items = 'flex-end'
+        self.box_1 = ipywidgets.VBox([self.plot_related_options])
+        self.box_1.layout.align_items = 'flex-start'
 
         # Group widgets
-        self.options_tab = ipywidgets.Tab(
-            children=[self.plot_related_options, self.lines_markers_box,
-                      self.legend_wid, self.axes_wid, self.zoom_wid,
-                      self.grid_wid])
-        self.options_tab.set_title(0, 'Figure')
-        self.options_tab.set_title(1, 'Renderer')
-        self.options_tab.set_title(2, 'Legend')
-        self.options_tab.set_title(3, 'Axes')
-        self.options_tab.set_title(4, 'Zoom')
-        self.options_tab.set_title(5, 'Grid')
+        self.tab_box = ipywidgets.Tab([self.box_1, self.lines_markers_box,
+                                       self.legend_wid, self.axes_wid,
+                                       self.zoom_wid, self.grid_wid])
+        self.tab_box.set_title(0, 'Labels')
+        self.tab_box.set_title(1, 'Lines & Markers')
+        self.tab_box.set_title(2, 'Legend')
+        self.tab_box.set_title(3, 'Axes')
+        self.tab_box.set_title(4, 'Zoom')
+        self.tab_box.set_title(5, 'Grid')
+        self.container = ipywidgets.VBox([self.tab_box])
 
         # Create final widget
-        children = [self.options_tab]
-        super(PlotOptionsWidget, self).__init__(
-            children, Dict, default_options, render_function=render_function,
-            orientation='vertical', align='start')
+        super(PlotMatplotlibOptionsWidget, self).__init__(
+            [self.container], Dict, default_options,
+            render_function=render_function)
 
         # Set style
-        self.predefined_style(style, tabs_style)
+        self.predefined_style(style, suboptions_style)
 
         # Set functionality
         def get_legend_entries(change):
@@ -3967,9 +3962,9 @@ class PlotOptionsWidget(MenpoWidget):
                 'render_grid': self.grid_wid.selected_values['render_grid'],
                 'grid_line_style': self.grid_wid.selected_values['grid_line_style'],
                 'grid_line_width': self.grid_wid.selected_values['grid_line_width']}
-        self.title.observe(save_options, names='value', type='change')
-        self.x_label.observe(save_options, names='value', type='change')
-        self.y_label.observe(save_options, names='value', type='change')
+        self.title.on_submit(save_options)
+        self.x_label.on_submit(save_options)
+        self.y_label.on_submit(save_options)
         self.legend_entries_text.observe(save_options, names='value',
                                          type='change')
         self.lines_wid.observe(save_options, names='selected_values',
@@ -4021,54 +4016,7 @@ class PlotOptionsWidget(MenpoWidget):
 
     def create_default_options(self):
         r"""
-        Function that returns a `dict` with default options. The returned
-        `dict` has the following default keys and values:
-
-        * ``title = ''``
-        * ``x_label = ''``
-        * ``y_label = ''``
-        * ``render_legend = True``
-        * ``legend_title = ''``
-        * ``legend_font_name = 'sans-serif'``
-        * ``legend_font_style = 'normal'``
-        * ``legend_font_size = 10``
-        * ``legend_font_weight = 'normal'``
-        * ``legend_marker_scale = 1.``
-        * ``legend_location = 2``
-        * ``legend_bbox_to_anchor = (1.05, 1.)``
-        * ``legend_border_axes_pad = 1.``
-        * ``legend_n_columns = 1``
-        * ``legend_horizontal_spacing = 1.``
-        * ``legend_vertical_spacing = 1.``
-        * ``legend_border = True``
-        * ``legend_border_padding = 0.5``
-        * ``legend_shadow = False``
-        * ``legend_rounded_corners = False``
-        * ``render_axes = True``
-        * ``axes_font_name = 'sans-serif'``
-        * ``axes_font_size = 10``
-        * ``axes_font_style = 'normal'``
-        * ``axes_font_weight = 'normal'``
-        * ``axes_x_limits = None``
-        * ``axes_y_limits = None``
-        * ``axes_x_ticks = None``
-        * ``axes_y_ticks = None``
-        * ``render_grid = True``
-        * ``grid_line_style = '--'``
-        * ``grid_line_width = 0.5``
-        * ``render_lines = [True] * self.n_curves``
-        * ``line_width = [1] * self.n_curves``
-        * ``line_colour = colours if self.n_curves > 1 else ['red']``
-        * ``line_style = ['-'] * self.n_curves``
-        * ``render_markers = [True] * self.n_curves``
-        * ``marker_size = [7] * self.n_curves``
-        * ``marker_face_colour = ['white'] * self.n_curves``
-        * ``marker_edge_colour = colours if self.n_curves > 1 else ['red']``
-        * ``marker_style = ['s'] * self.n_curves``
-        * ``marker_edge_width = [2.] * self.n_curves``
-        * ``zoom = [1., 1.]``
-
-        where ``colours = sample_colours_from_colourmap(self.n_curves, 'Paired')``.
+        Function that returns a `dict` with default options.
         """
         render_lines = [True] * self.n_curves
         line_style = ['-'] * self.n_curves
@@ -4116,137 +4064,7 @@ class PlotOptionsWidget(MenpoWidget):
         tmp_lines = tmp_lines[:-1]
         return unicode().join(tmp_lines)
 
-    def style(self, box_style=None, border_visible=False, border_colour='black',
-              border_style='solid', border_width=1, border_radius=0,
-              padding='0.2cm', margin=0, tabs_box_style=None,
-              tabs_border_visible=True, tabs_border_colour='black',
-              tabs_border_style='solid', tabs_border_width=1,
-              tabs_border_radius=1, tabs_padding=0, tabs_margin=0,
-              font_family='', font_size=None, font_style='', font_weight=''):
-        r"""
-        Function that defines the styling of the widget.
-
-        Parameters
-        ----------
-        box_style : `str` or ``None`` (see below), optional
-            Possible widget style options::
-
-                'success', 'info', 'warning', 'danger', '', None
-
-        border_visible : `bool`, optional
-            Defines whether to draw the border line around the widget.
-        border_colour : `str`, optional
-            The colour of the border around the widget.
-        border_style : `str`, optional
-            The line style of the border around the widget.
-        border_width : `float`, optional
-            The line width of the border around the widget.
-        border_radius : `float`, optional
-            The radius of the border around the widget.
-        padding : `float`, optional
-            The padding around the widget.
-        margin : `float`, optional
-            The margin around the widget.
-        tabs_box_style : See Below, optional
-            Possible tab widgets style options::
-
-                'success', 'info', 'warning', 'danger', '', None
-
-        tabs_border_visible : `bool`, optional
-            Defines whether to draw the border line around the tab widgets.
-        tabs_border_colour : `str`, optional
-            The colour of the border around the tab widgets.
-        tabs_border_style : `str`, optional
-            The line style of the border around the tab widgets.
-        tabs_border_width : `float`, optional
-            The line width of the border around the tab widgets.
-        tabs_border_radius : `float`, optional
-            The radius of the corners of the box of the tab widgets.
-        tabs_padding : `float`, optional
-            The padding around the tab widgets.
-        tabs_margin : `float`, optional
-            The margin around the tab widgets.
-        font_family : `str` (see below), optional
-            The font family to be used. Example options::
-
-                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
-                'helvetica'
-
-        font_size : `int`, optional
-            The font size.
-        font_style : `str` (see below), optional
-            The font style. Example options::
-
-                'normal', 'italic', 'oblique'
-
-        font_weight : See Below, optional
-            The font weight. Example options::
-
-                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
-                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
-                'extra bold', 'black'
-        """
-        format_box(self, box_style, border_visible, border_colour, border_style,
-                   border_width, border_radius, padding, margin)
-        format_box(self.lines_markers_box, box_style=tabs_box_style,
-                   border_visible=tabs_border_style,
-                   border_colour=tabs_border_colour,
-                   border_style=tabs_border_style,
-                   border_width=tabs_border_width,
-                   border_radius=tabs_border_radius, padding=tabs_padding,
-                   margin=tabs_margin)
-        format_box(self.plot_related_options, box_style=tabs_box_style,
-                   border_visible=tabs_border_style,
-                   border_colour=tabs_border_colour,
-                   border_style=tabs_border_style,
-                   border_width=tabs_border_width,
-                   border_radius=tabs_border_radius, padding=tabs_padding,
-                   margin=tabs_margin)
-        self.lines_wid.style(
-            box_style=tabs_box_style, border_visible=False, padding=0,
-            margin=0, font_family=font_family, font_size=font_size,
-            font_weight=font_weight, font_style=font_style)
-        self.markers_wid.style(
-            box_style=tabs_box_style, border_visible=False, padding=0,
-            margin=0, font_family=font_family, font_size=font_size,
-            font_weight=font_weight, font_style=font_style)
-        self.legend_wid.style(
-            box_style=tabs_box_style, border_visible=tabs_border_visible,
-            border_colour=tabs_border_colour, border_style=tabs_border_style,
-            border_width=tabs_border_width, border_radius=tabs_border_radius,
-            padding=tabs_padding, margin=tabs_margin, font_family=font_family,
-            font_size=font_size, font_weight=font_weight, font_style=font_style)
-        self.zoom_wid.style(
-            box_style=tabs_box_style, border_visible=tabs_border_visible,
-            border_colour=tabs_border_colour, border_style=tabs_border_style,
-            border_width=tabs_border_width, border_radius=tabs_border_radius,
-            padding=tabs_padding, margin=tabs_margin, font_family=font_family,
-            font_size=font_size, font_weight=font_weight, font_style=font_style)
-        self.axes_wid.style(
-            box_style=tabs_box_style, border_visible=tabs_border_visible,
-            border_colour=tabs_border_colour, border_style=tabs_border_style,
-            border_width=tabs_border_width, border_radius=tabs_border_radius,
-            padding=tabs_padding, margin=tabs_margin, font_family=font_family,
-            font_size=font_size, font_weight=font_weight, font_style=font_style)
-        self.grid_wid.style(
-            box_style=tabs_box_style, border_visible=tabs_border_visible,
-            border_colour=tabs_border_colour, border_style=tabs_border_style,
-            border_width=tabs_border_width, border_radius=tabs_border_radius,
-            padding=tabs_padding, margin=tabs_margin, font_family=font_family,
-            font_size=font_size, font_weight=font_weight, font_style=font_style)
-        format_font(self, font_family, font_size, font_style, font_weight)
-        format_font(self.x_label, font_family, font_size, font_style,
-                    font_weight)
-        format_font(self.y_label, font_family, font_size, font_style,
-                    font_weight)
-        format_font(self.title, font_family, font_size, font_style,
-                    font_weight)
-        format_font(self.legend_entries_text, font_family, font_size, font_style,
-                    font_weight)
-        format_font(self.curves_dropdown, font_family, font_size, font_style,
-                    font_weight)
-
-    def predefined_style(self, style, tabs_style='minimal'):
+    def predefined_style(self, style, suboptions_style=''):
         r"""
         Function that sets a predefined style on the widget.
 
@@ -4255,71 +4073,47 @@ class PlotOptionsWidget(MenpoWidget):
         style : `str` (see below)
             Style options:
 
-                ============= ============================
+                ============= ==================
                 Style         Description
-                ============= ============================
-                ``'minimal'`` Simple black and white style
+                ============= ==================
                 ``'success'`` Green-based style
                 ``'info'``    Blue-based style
                 ``'warning'`` Yellow-based style
                 ``'danger'``  Red-based style
                 ``''``        No style
-                ============= ============================
+                ============= ==================
 
         tabs_style : `str` (see below)
             Tabs style options:
 
-                ============= ============================
+                ============= ==================
                 Style         Description
-                ============= ============================
-                ``'minimal'`` Simple black and white style
+                ============= ==================
                 ``'success'`` Green-based style
                 ``'info'``    Blue-based style
                 ``'warning'`` Yellow-based style
                 ``'danger'``  Red-based style
                 ``''``        No style
-                ============= ============================
+                ============= ==================
         """
-        if tabs_style == 'minimal' or tabs_style == '':
-            tabs_style = ''
-            tabs_border_visible = True
-            tabs_border_colour = 'black'
-            tabs_border_radius = 0
-            tabs_padding = 0
-        else:
-            tabs_style = tabs_style
-            tabs_border_visible = True
-            tabs_border_colour = map_styles_to_hex_colours(tabs_style)
-            tabs_border_radius = 10
-            tabs_padding = '0.2cm'
-
-        if style == 'minimal':
-            self.style(box_style='', border_visible=True, border_colour='black',
-                       border_style='solid', border_width=1, border_radius=0,
-                       padding='0.2cm', margin='0.5cm', font_family='',
-                       font_size=None, font_style='', font_weight='',
-                       tabs_box_style=tabs_style,
-                       tabs_border_visible=tabs_border_visible,
-                       tabs_border_colour=tabs_border_colour,
-                       tabs_border_style='solid', tabs_border_width=1,
-                       tabs_border_radius=tabs_border_radius,
-                       tabs_padding=tabs_padding, tabs_margin='0.3cm')
-        elif (style == 'info' or style == 'success' or style == 'danger' or
-                      style == 'warning'):
-            self.style(box_style=style, border_visible=True,
-                       border_colour=map_styles_to_hex_colours(style),
-                       border_style='solid', border_width=1, border_radius=10,
-                       padding='0.2cm', margin='0.5cm', font_family='',
-                       font_size=None, font_style='', font_weight='',
-                       tabs_box_style=tabs_style,
-                       tabs_border_visible=tabs_border_visible,
-                       tabs_border_colour=tabs_border_colour,
-                       tabs_border_style='solid', tabs_border_width=1,
-                       tabs_border_radius=tabs_border_radius,
-                       tabs_padding=tabs_padding, tabs_margin='0.3cm')
-        else:
-            raise ValueError('style must be minimal or info or success or '
-                             'danger or warning')
+        self.container.box_style = style
+        self.box_1.box_style = suboptions_style
+        self.lines_markers_box.box_style = suboptions_style
+        self.legend_wid.box_style = suboptions_style
+        self.axes_wid.box_style = suboptions_style
+        self.zoom_wid.box_style = suboptions_style
+        tmp_style = '' if suboptions_style == '' else 'primary'
+        self.zoom_wid.x_button_minus.button_style = tmp_style
+        self.zoom_wid.x_button_plus.button_style = tmp_style
+        self.zoom_wid.x_zoom_slider.slider_color = map_styles_to_hex_colours(
+            tmp_style)
+        self.zoom_wid.y_button_minus.button_style = tmp_style
+        self.zoom_wid.y_button_plus.button_style = tmp_style
+        self.zoom_wid.y_zoom_slider.slider_color = map_styles_to_hex_colours(
+            tmp_style)
+        self.zoom_wid.lock_aspect_button.button_style = (
+            '' if suboptions_style == '' else 'warning')
+        self.grid_wid.box_style = suboptions_style
 
 
 class LinearModelParametersWidget(MenpoWidget):
@@ -4421,16 +4215,15 @@ class LinearModelParametersWidget(MenpoWidget):
     style : `str` (see below), optional
         Sets a predefined style at the widget. Possible options are:
 
-            ============= ============================
+            ============= ==================
             Style         Description
-            ============= ============================
-            ``'minimal'`` Simple black and white style
+            ============= ==================
             ``'success'`` Green-based style
             ``'info'``    Blue-based style
             ``'warning'`` Yellow-based style
             ``'danger'``  Red-based style
             ``''``        No style
-            ============= ============================
+            ============= ==================
 
     continuous_update : `bool`, optional
         If ``True``, then the render function is called while moving a
@@ -4475,7 +4268,7 @@ class LinearModelParametersWidget(MenpoWidget):
                  params_str='', params_bounds=(-3., 3.), params_step=0.1,
                  plot_variance_visible=True, plot_variance_function=None,
                  animation_visible=True, loop_enabled=False, interval=0.,
-                 interval_step=0.05, animation_step=0.5, style='minimal',
+                 interval_step=0.05, animation_step=0.5, style='',
                  continuous_update=False):
         from time import sleep
         from IPython import get_ipython
@@ -4521,8 +4314,8 @@ class LinearModelParametersWidget(MenpoWidget):
         self.play_stop_toggle = ipywidgets.ToggleButton(
                 icon='fa-play', description='', value=False, margin='0.05cm',
                 tooltip='Play animation')
-        self._toggle_play_style = '' if style == 'minimal' else 'success'
-        self._toggle_stop_style = '' if style == 'minimal' else 'danger'
+        self._toggle_play_style = '' if style == '' else 'success'
+        self._toggle_stop_style = '' if style == '' else 'danger'
         self.fast_forward_button = ipywidgets.Button(
                 icon='fa-fast-forward', description='', margin='0.05cm',
                 tooltip='Increase animation speed')
@@ -4899,50 +4692,17 @@ class LinearModelParametersWidget(MenpoWidget):
         style : `str` (see below)
             Style options:
 
-                ============= ============================
+                ============= ==================
                 Style         Description
-                ============= ============================
-                ``'minimal'`` Simple black and white style
+                ============= ==================
                 ``'success'`` Green-based style
                 ``'info'``    Blue-based style
                 ``'warning'`` Yellow-based style
                 ``'danger'``  Red-based style
                 ``''``        No style
-                ============= ============================
+                ============= ==================
         """
-        if style == 'minimal':
-            self.play_stop_toggle.button_style = ''
-            self.fast_forward_button.button_style = ''
-            self.fast_backward_button.button_style = ''
-            self.loop_toggle.button_style = ''
-            self._toggle_play_style = ''
-            self._toggle_stop_style = ''
-            self.style(box_style=None, border_visible=True,
-                       border_colour='black', border_style='solid',
-                       border_width=1, border_radius=0, padding='0.2cm',
-                       margin='0.3cm', font_family='', font_size=None,
-                       font_style='', font_weight='', slider_width='',
-                       slider_handle_colour=None, slider_bar_colour=None,
-                       buttons_style='')
-        elif (style == 'info' or style == 'success' or style == 'danger' or
-                    style == 'warning'):
-            self.play_stop_toggle.button_style = 'success'
-            self.fast_forward_button.button_style = 'info'
-            self.fast_backward_button.button_style = 'info'
-            self.loop_toggle.button_style = 'info'
-            self._toggle_play_style = 'success'
-            self._toggle_stop_style = 'danger'
-            self.style(box_style=style, border_visible=True,
-                       border_colour=map_styles_to_hex_colours(style),
-                       border_style='solid', border_width=1, border_radius=10,
-                       padding='0.2cm', margin='0.3cm', font_family='',
-                       font_size=None, font_style='', font_weight='',
-                       slider_width='',
-                       slider_handle_colour=map_styles_to_hex_colours(style),
-                       slider_bar_colour=None, buttons_style='primary')
-        else:
-            raise ValueError('style must be minimal or info or success or '
-                             'danger or warning')
+        pass
 
     def stop_animation(self):
         r"""
@@ -5079,7 +4839,7 @@ class LinearModelParametersWidget(MenpoWidget):
 
                 # Set style
                 if self.box_style is None:
-                    self.predefined_style('minimal')
+                    self.predefined_style('')
                 else:
                     self.predefined_style(self.box_style)
             else:
@@ -5166,31 +4926,29 @@ class CameraSnapshotWidget(MenpoWidget):
     style : `str` (see below), optional
         Sets a predefined style at the widget. Possible options are:
 
-            ============= ============================
+            ============= ==================
             Style         Description
-            ============= ============================
-            ``'minimal'`` Simple black and white style
+            ============= ==================
             ``'success'`` Green-based style
             ``'info'``    Blue-based style
             ``'warning'`` Yellow-based style
             ``'danger'``  Red-based style
             ``''``        No style
-            ============= ============================
+            ============= ==================
 
     preview_style : `str` (see below), optional
         Sets a predefined style at the widget's preview box. Possible options
         are:
 
-            ============= ============================
+            ============= ==================
             Style         Description
-            ============= ============================
-            ``'minimal'`` Simple black and white style
+            ============= ==================
             ``'success'`` Green-based style
             ``'info'``    Blue-based style
             ``'warning'`` Yellow-based style
             ``'danger'``  Red-based style
             ``''``        No style
-            ============= ============================
+            ============= ==================
 
     Example
     -------
@@ -5213,7 +4971,7 @@ class CameraSnapshotWidget(MenpoWidget):
 
     def __init__(self, canvas_width=640, hd=True, n_preview_windows=5,
                  preview_windows_margin=3, render_function=None,
-                 style='minimal', preview_style='minimal'):
+                 style='', preview_style=''):
         # Publish javascript - only occurs once on construction of first
         # webcam widget
         if not self.javascript_exported:
@@ -5417,7 +5175,7 @@ class CameraSnapshotWidget(MenpoWidget):
         format_font(self.preview, font_family, font_size, font_style,
                     font_weight)
 
-    def predefined_style(self, style, preview_style='minimal'):
+    def predefined_style(self, style, preview_style=''):
         r"""
         Function that sets a predefined style on the widget.
 
@@ -5426,92 +5184,27 @@ class CameraSnapshotWidget(MenpoWidget):
         style : `str` (see below)
             Style options:
 
-                ============= ============================
+                ============= ==================
                 Style         Description
-                ============= ============================
-                ``'minimal'`` Simple black and white style
+                ============= ==================
                 ``'success'`` Green-based style
                 ``'info'``    Blue-based style
                 ``'warning'`` Yellow-based style
                 ``'danger'``  Red-based style
                 ``''``        No style
-                ============= ============================
+                ============= ==================
 
         preview_style : `str` (see below)
             Preview box style options:
 
-                ============= ============================
+                ============= ==================
                 Style         Description
-                ============= ============================
-                ``'minimal'`` Simple black and white style
+                ============= ==================
                 ``'success'`` Green-based style
                 ``'info'``    Blue-based style
                 ``'warning'`` Yellow-based style
                 ``'danger'``  Red-based style
                 ``''``        No style
-                ============= ============================
+                ============= ==================
         """
-        if preview_style == 'minimal' or preview_style == '':
-            preview_style = ''
-            preview_border_visible = True
-            preview_border_colour = 'black'
-            preview_border_radius = 0
-            preview_padding = 0
-        else:
-            preview_style = preview_style
-            preview_border_visible = not style == preview_style
-            preview_border_colour = map_styles_to_hex_colours(preview_style)
-            preview_border_radius = 10
-            preview_padding = '0.3cm'
-
-        if style == 'minimal':
-            self.snapshot_but.button_style = ''
-            self.close_but.button_style = ''
-            self.zoom_widget.button_minus.button_style = ''
-            self.zoom_widget.button_plus.button_style = ''
-            self.resolution_text.color = map_styles_to_hex_colours(
-                'minimal', background=False)
-            self.n_snapshots_text.color = map_styles_to_hex_colours(
-                'minimal', background=False)
-            format_slider(self.zoom_widget.zoom_slider, slider_width='2cm',
-                          slider_handle_colour=map_styles_to_hex_colours('minimal'),
-                          slider_bar_colour=map_styles_to_hex_colours('minimal'),
-                          slider_text_visible=False)
-            self.style(box_style='', border_visible=False,
-                       border_colour='black', border_style='solid',
-                       border_width=1, border_radius=0, padding=0, margin=0,
-                       font_family='', font_size=None, font_style='',
-                       font_weight='', preview_box_style=preview_style,
-                       preview_border_visible=preview_border_visible,
-                       preview_border_colour=preview_border_colour,
-                       preview_border_style='solid', preview_border_width=1,
-                       preview_border_radius=preview_border_radius,
-                       preview_padding=preview_padding, preview_margin='0.1cm')
-        elif (style == 'info' or style == 'success' or style == 'danger' or
-                      style == 'warning'):
-            self.snapshot_but.button_style = 'primary'
-            self.close_but.button_style = 'danger'
-            self.zoom_widget.button_minus.button_style = 'warning'
-            self.zoom_widget.button_plus.button_style = 'warning'
-            self.resolution_text.color = map_styles_to_hex_colours(
-                'warning', background=False)
-            self.n_snapshots_text.color = map_styles_to_hex_colours(
-                'info', background=False)
-            format_slider(self.zoom_widget.zoom_slider, slider_width='2cm',
-                          slider_handle_colour=map_styles_to_hex_colours('warning'),
-                          slider_bar_colour=map_styles_to_hex_colours('warning'),
-                          slider_text_visible=False)
-            self.style(box_style=style, border_visible=True,
-                       border_colour=map_styles_to_hex_colours(style),
-                       border_style='solid', border_width=1, border_radius=10,
-                       padding=0, margin=0, font_family='',
-                       font_size=None, font_style='', font_weight='',
-                       preview_box_style=preview_style,
-                       preview_border_visible=preview_border_visible,
-                       preview_border_colour=preview_border_colour,
-                       preview_border_style='solid', preview_border_width=1,
-                       preview_border_radius=preview_border_radius,
-                       preview_padding=preview_padding, preview_margin='0.1cm')
-        else:
-            raise ValueError('style must be minimal or info or success or '
-                             'danger or warning')
+        pass

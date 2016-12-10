@@ -27,7 +27,7 @@ from ..checks import check_n_parameters
 from ..options import (SaveMatplotlibFigureOptionsWidget, RendererOptionsWidget,
                        ImageOptionsWidget, PatchOptionsWidget,
                        LandmarkOptionsWidget, LinearModelParametersWidget,
-                       PlotOptionsWidget, AnimationOptionsWidget,
+                       PlotMatplotlibOptionsWidget, AnimationOptionsWidget,
                        TextPrintWidget)
 from ..style import map_styles_to_hex_colours
 from ..tools import LogoWidget
@@ -1895,9 +1895,9 @@ def plot_ced(errors, legend_entries=None, error_range=None,
         save_figure_wid.renderer = renderer
 
     # Create widgets
-    wid = PlotOptionsWidget(legend_entries=legend_entries,
-                            render_function=render_function,
-                            style=widget_box_style, tabs_style=tabs_style)
+    wid = PlotMatplotlibOptionsWidget(legend_entries=legend_entries,
+                                      render_function=render_function,
+                                      style=widget_box_style, tabs_style=tabs_style)
     save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
                                                         style=save_figure_style)
 
