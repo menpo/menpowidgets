@@ -150,22 +150,18 @@ class AnimationOptionsWidget(MenpoWidget):
 
         # Create other widgets
         self.play_stop_toggle = ipywidgets.ToggleButton(
-            icon='fa-play', description='', value=False,
+            icon='fa-play', description='', value=False, width='40px',
             tooltip='Play animation')
         self.fast_forward_button = ipywidgets.Button(
-            icon='fa-fast-forward', description='',
+            icon='fa-fast-forward', description='', width='40px',
             tooltip='Increase animation speed')
         self.fast_backward_button = ipywidgets.Button(
-            icon='fa-fast-backward', description='',
+            icon='fa-fast-backward', description='', width='40px',
             tooltip='Decrease animation speed')
         loop_icon = 'fa-repeat' if loop_enabled else 'fa-long-arrow-right'
         self.loop_toggle = ipywidgets.ToggleButton(
-            icon=loop_icon, description='', value=loop_enabled,
+            icon=loop_icon, description='', value=loop_enabled, width='40px',
             tooltip='Repeat animation')
-        self.play_stop_toggle.layout.width = '40px'
-        self.fast_forward_button.layout.width = '40px'
-        self.fast_backward_button.layout.width = '40px'
-        self.loop_toggle.layout.width = '40px'
 
         # Group widgets
         self.box_1 = ipywidgets.HBox([self.play_stop_toggle, self.loop_toggle,
@@ -4119,41 +4115,7 @@ class PlotMatplotlibOptionsWidget(MenpoWidget):
 class LinearModelParametersWidget(MenpoWidget):
     r"""
     Creates a widget for selecting parameters values when visualizing a linear
-    model (e.g. PCA model). The widget has options for animating through various
-    parameters values. It consists of the following objects from `ipywidgets`:
-
-    == ============== ====================== ========================
-    No Object         Property (`self.`)     Description
-    == ============== ====================== ========================
-    1  `Button`       `plot_button`          The plot variance button
-    2  `Button`       `reset_button`         The reset button
-    3  `HBox`         `plot_and_reset`       Contains 1, 2
-    4  `ToggleButton` `play_stop_toggle`     The play/stop button
-    5  `Button`       `fast_forward_button`  Increase speed
-    6  `Button`       `fast_backward_button` Decrease speed
-    7  `ToggleButton` `loop_toggle`          Repeat mode
-    8  `HBox`         `animation_buttons`    Contains 4, 5, 6, 7
-    9  `HBox`         `buttons_box`          Contains 3, 8
-    == ============== ====================== ========================
-
-    If ``mode = 'single'``, then:
-
-    == ============= ================== ==========================
-    No Object        Property (`self.`) Description
-    == ============= ================== ==========================
-    4  `FloatSlider` `slider`           The parameter value slider
-    5  `Dropdown`    `dropdown_params`  The parameter selector
-    6  `HBox`        `parameters_wid`   Contains 4, 5
-    == ============= ================== ==========================
-
-    If ``mode = 'multiple'``, then:
-
-    == ============= ================== ==========================
-    No Object        Property (`self.`) Description
-    == ============= ================== ==========================
-    7  `FloatSlider` `sliders`          `list` of all sliders
-    8  `VBox`        `parameters_wid`   Contains all 7
-    == ============= ================== ==========================
+    model (e.g. PCA model).
 
     Note that:
 
@@ -4161,8 +4123,8 @@ class LinearModelParametersWidget(MenpoWidget):
       :meth:`set_widget_state` method.
     * The selected values are stored in the ``self.selected_values`` `trait`
       which is a `list`.
-    * To set the styling of this widget please refer to the :meth:`style` and
-      :meth:`predefined_style` methods.
+    * To set the styling of this widget please refer to the
+      :meth:`predefined_style` method.
     * To update the handler callback functions of the widget, please refer to
       the :meth:`replace_render_function` and :meth:`replace_variance_function`
       methods.
@@ -4265,11 +4227,11 @@ class LinearModelParametersWidget(MenpoWidget):
         >>>                      allow_callback=True)
     """
     def __init__(self, n_parameters, render_function=None, mode='multiple',
-                 params_str='', params_bounds=(-3., 3.), params_step=0.1,
-                 plot_variance_visible=True, plot_variance_function=None,
-                 animation_visible=True, loop_enabled=False, interval=0.,
-                 interval_step=0.05, animation_step=0.5, style='',
-                 continuous_update=False):
+                 params_str='Parameter ', params_bounds=(-3., 3.),
+                 params_step=0.1, plot_variance_visible=True,
+                 plot_variance_function=None, animation_visible=True,
+                 loop_enabled=False, interval=0., interval_step=0.05,
+                 animation_step=0.5, style='', continuous_update=False):
         from time import sleep
         from IPython import get_ipython
 
@@ -4283,63 +4245,72 @@ class LinearModelParametersWidget(MenpoWidget):
 
         # Create children
         if mode == 'multiple':
-            self.sliders = [
-                ipywidgets.FloatSlider(
-                    description="{}{}".format(params_str, p),
-                    min=params_bounds[0], max=params_bounds[1],
-                    step=params_step, value=0.,
+            self.sliders = []
+            self.parameters_children = []
+            for p in range(n_parameters):
+                slider_title = ipywidgets.Label(
+                    value="{}{}".format(params_str, p))
+                slider_wid = ipywidgets.FloatSlider(
+                    description='', min=params_bounds[0], max=params_bounds[1],
+                    step=params_step, value=0., width='8cm',
                     continuous_update=continuous_update)
-                for p in range(n_parameters)]
-            self.parameters_wid = ipywidgets.VBox(children=self.sliders,
-                                                  margin='0.2cm')
+                tmp = ipywidgets.HBox([slider_title, slider_wid])
+                tmp.layout.align_items = 'center'
+                self.sliders.append(slider_wid)
+                self.parameters_children.append(tmp)
+            self.parameters_wid = ipywidgets.VBox(self.parameters_children)
+            self.parameters_wid.layout.align_items = 'flex-end'
         else:
             vals = OrderedDict()
             for p in range(n_parameters):
                 vals["{}{}".format(params_str, p)] = p
             self.slider = ipywidgets.FloatSlider(
                     description='', min=params_bounds[0], max=params_bounds[1],
-                    step=params_step, value=0., readout=False, margin='0.2cm',
+                    step=params_step, value=0., readout=True, width='8cm',
                     continuous_update=continuous_update)
             self.dropdown_params = ipywidgets.Dropdown(options=vals,
-                                                       margin='0.2cm')
-            self.parameters_wid = ipywidgets.HBox(
-                children=[self.dropdown_params, self.slider])
-        self.plot_button = ipywidgets.Button(
-            description='Variance', margin='0.05cm',
-            visible=plot_variance_visible)
-        self.reset_button = ipywidgets.Button(description='Reset',
-                                              margin='0.05cm')
-        self.plot_and_reset = ipywidgets.HBox(
-                children=[self.reset_button, self.plot_button], margin='0.2cm')
+                                                       width='3cm')
+            self.dropdown_params.layout.margin = '0px 10px 0px 0px'
+            self.parameters_wid = ipywidgets.HBox([self.dropdown_params,
+                                                   self.slider])
+        self.parameters_wid.layout.margin = '0px 0px 10px 0px'
+        self.plot_button = ipywidgets.Button(description='Variance',
+                                             width='80px')
+        self.plot_button.layout.display = (
+            'inline' if plot_variance_visible else 'none')
+        self.reset_button = ipywidgets.Button(description='Reset', width='80px')
+        self.plot_and_reset = ipywidgets.HBox([self.reset_button,
+                                               self.plot_button])
         self.play_stop_toggle = ipywidgets.ToggleButton(
-                icon='fa-play', description='', value=False, margin='0.05cm',
-                tooltip='Play animation')
+            icon='fa-play', description='', value=False, width='40px',
+            tooltip='Play animation')
         self._toggle_play_style = '' if style == '' else 'success'
         self._toggle_stop_style = '' if style == '' else 'danger'
         self.fast_forward_button = ipywidgets.Button(
-                icon='fa-fast-forward', description='', margin='0.05cm',
-                tooltip='Increase animation speed')
+            icon='fa-fast-forward', description='', width='40px',
+            tooltip='Increase animation speed')
         self.fast_backward_button = ipywidgets.Button(
-                icon='fa-fast-backward', description='', margin='0.05cm',
-                tooltip='Decrease animation speed')
+            icon='fa-fast-backward', description='', width='40px',
+            tooltip='Decrease animation speed')
         loop_icon = 'fa-repeat' if loop_enabled else 'fa-long-arrow-right'
         self.loop_toggle = ipywidgets.ToggleButton(
-                icon=loop_icon, description='', value=loop_enabled,
-                margin='0.05cm', tooltip='Repeat animation')
+            icon=loop_icon, description='', value=loop_enabled, width='40px',
+            tooltip='Repeat animation')
         self.animation_buttons = ipywidgets.HBox(
-                children=[self.play_stop_toggle, self.loop_toggle,
-                          self.fast_backward_button, self.fast_forward_button],
-                margin='0.2cm', visible=animation_visible)
-        self.buttons_box = ipywidgets.HBox(children=[self.animation_buttons,
-                                                     self.plot_and_reset])
-        self.options_box = ipywidgets.VBox(
-                children=[self.parameters_wid, self.buttons_box], align='start')
+            [self.play_stop_toggle, self.loop_toggle,
+             self.fast_backward_button, self.fast_forward_button])
+        self.animation_buttons.layout.display = (
+            'flex' if animation_visible else 'none')
+        self.animation_buttons.layout.margin = '0px 15px 0px 0px'
+        self.buttons_box = ipywidgets.HBox([self.animation_buttons,
+                                            self.plot_and_reset])
+        self.container = ipywidgets.VBox([self.parameters_wid,
+                                          self.buttons_box])
 
         # Create final widget
-        children = [self.options_box]
         super(LinearModelParametersWidget, self).__init__(
-                children, List, [0.] * n_parameters,
-                render_function=render_function, align='start')
+            [self.container], List, [0.] * n_parameters,
+            render_function=render_function)
 
         # Assign output
         self.n_parameters = n_parameters
@@ -4395,7 +4366,7 @@ class LinearModelParametersWidget(MenpoWidget):
             # Set parameters to 0
             self.selected_values = [0.0] * self.n_parameters
             if mode == 'multiple':
-                for ww in self.parameters_wid.children:
+                for ww in self.sliders:
                     ww.value = 0.
             else:
                 self.parameters_wid.children[0].value = 0
@@ -4468,7 +4439,7 @@ class LinearModelParametersWidget(MenpoWidget):
                         slider_val -= self.animation_step
 
                         # set value
-                        self.parameters_wid.children[slider_id].value = slider_val
+                        self.sliders[slider_id].value = slider_val
 
                         # Run IPython iteration.
                         kernel.do_one_iteration()
@@ -4484,7 +4455,7 @@ class LinearModelParametersWidget(MenpoWidget):
                         slider_val += self.animation_step
 
                         # set value
-                        self.parameters_wid.children[slider_id].value = slider_val
+                        self.sliders[slider_id].value = slider_val
 
                         # Run IPython iteration.
                         kernel.do_one_iteration()
@@ -4499,7 +4470,7 @@ class LinearModelParametersWidget(MenpoWidget):
                         slider_val -= self.animation_step
 
                         # set value
-                        self.parameters_wid.children[slider_id].value = slider_val
+                        self.sliders[slider_id].value = slider_val
 
                         # Run IPython iteration.
                         kernel.do_one_iteration()
@@ -4508,7 +4479,7 @@ class LinearModelParametersWidget(MenpoWidget):
                         sleep(self.interval)
 
                     # reset value
-                    self.parameters_wid.children[slider_id].value = 0.
+                    self.sliders[slider_id].value = 0.
 
                     # update slider id
                     if self.loop_toggle.value and slider_id == n_sliders - 1:
@@ -4591,97 +4562,9 @@ class LinearModelParametersWidget(MenpoWidget):
 
     def _save_slider_value_from_id(self, change):
         current_parameters = list(self.selected_values)
-        description = change['owner'].description
-        i = int(description[len(self.params_str)::])
+        i = self.sliders.index(change['owner'])
         current_parameters[i] = change['new']
         self.selected_values = current_parameters
-
-    def style(self, box_style=None, border_visible=False, border_colour='black',
-              border_style='solid', border_width=1, border_radius=0, padding=0,
-              margin=0, font_family='', font_size=None, font_style='',
-              font_weight='', slider_width='', slider_handle_colour=None,
-              slider_bar_colour=None, buttons_style=''):
-        r"""
-        Function that defines the styling of the widget.
-
-        Parameters
-        ----------
-        box_style : `str` or ``None`` (see below), optional
-            Possible widget style options::
-
-                'success', 'info', 'warning', 'danger', '', None
-
-        border_visible : `bool`, optional
-            Defines whether to draw the border line around the widget.
-        border_colour : `str`, optional
-            The colour of the border around the widget.
-        border_style : `str`, optional
-            The line style of the border around the widget.
-        border_width : `float`, optional
-            The line width of the border around the widget.
-        border_radius : `float`, optional
-            The radius of the border around the widget.
-        padding : `float`, optional
-            The padding around the widget.
-        margin : `float`, optional
-            The margin around the widget.
-        font_family : `str` (see below), optional
-            The font family to be used. Example options::
-
-                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
-                'helvetica'
-
-        font_size : `int`, optional
-            The font size.
-        font_style : `str` (see below), optional
-            The font style. Example options::
-
-                'normal', 'italic', 'oblique'
-
-        font_weight : See Below, optional
-            The font weight. Example options::
-
-                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
-                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
-                'extra bold', 'black'
-
-        slider_width : `str`, optional
-            The width of the slider(s).
-        slider_handle_colour : `str`, optional
-            The colour of the handle(s) of the slider(s).
-        slider_bar_colour : `str`, optional
-            The bar colour of the slider(s).
-        buttons_style : `str` or ``None`` (see below), optional
-            Style options:
-
-                'success', 'info', 'warning', 'danger', 'primary', '', None
-        """
-        format_box(self, box_style, border_visible, border_colour, border_style,
-                   border_width, border_radius, padding, margin)
-        format_font(self, font_family, font_size, font_style, font_weight)
-        format_font(self.reset_button, font_family, font_size, font_style,
-                    font_weight)
-        format_font(self.plot_button, font_family, font_size, font_style,
-                    font_weight)
-        if self.mode == 'single':
-            format_slider(self.slider, slider_width=slider_width,
-                          slider_handle_colour=slider_handle_colour,
-                          slider_bar_colour=slider_bar_colour,
-                          slider_text_visible=True)
-            format_font(self.slider, font_family, font_size, font_style,
-                        font_weight)
-            format_font(self.dropdown_params, font_family, font_size,
-                        font_style, font_weight)
-        else:
-            for sl in self.sliders:
-                format_slider(sl, slider_width=slider_width,
-                              slider_handle_colour=slider_handle_colour,
-                              slider_bar_colour=slider_bar_colour,
-                              slider_text_visible=True)
-                format_font(sl, font_family, font_size, font_style,
-                            font_weight)
-        self.reset_button.button_style = buttons_style
-        self.plot_button.button_style = buttons_style
 
     def predefined_style(self, style):
         r"""
@@ -4702,7 +4585,25 @@ class LinearModelParametersWidget(MenpoWidget):
                 ``''``        No style
                 ============= ==================
         """
-        pass
+        self.container.box_style = style
+        if style != '':
+            self.play_stop_toggle.button_style = self._toggle_play_style
+            self.fast_forward_button.button_style = 'info'
+            self.fast_backward_button.button_style = 'info'
+            self.loop_toggle.button_style = 'warning'
+            self.reset_button.button_style = 'danger'
+            self.plot_button.button_style = 'primary'
+            for s in self.sliders:
+                s.slider_color = map_styles_to_hex_colours(style, False)
+        else:
+            self.play_stop_toggle.button_style = ''
+            self.fast_forward_button.button_style = ''
+            self.fast_backward_button.button_style = ''
+            self.loop_toggle.button_style = ''
+            self.reset_button.button_style = ''
+            self.plot_button.button_style = ''
+            for s in self.sliders:
+                s.slider_color = map_styles_to_hex_colours('', False)
 
     def stop_animation(self):
         r"""
@@ -4823,25 +4724,28 @@ class LinearModelParametersWidget(MenpoWidget):
             self.selected_values = [0.] * n_parameters
             if self.mode == 'multiple':
                 # Create new sliders
-                self.sliders = [
-                    ipywidgets.FloatSlider(
-                        description="{}{}".format(params_str, p),
-                        min=params_bounds[0], max=params_bounds[1],
-                        step=params_step, value=0.)
-                    for p in range(n_parameters)]
-                # Set sliders as the children of the container
-                self.parameters_wid.children = self.sliders
+                self.sliders = []
+                self.parameters_children = []
+                for p in range(n_parameters):
+                    slider_title = ipywidgets.Label(
+                        value="{}{}".format(params_str, p))
+                    slider_wid = ipywidgets.FloatSlider(
+                        description='', min=params_bounds[0],
+                        max=params_bounds[1],
+                        step=params_step, value=0., width='8cm',
+                        continuous_update=self.continuous_update)
+                    slider_wid.slider_color = map_styles_to_hex_colours(
+                        self.container.box_style, False)
+                    tmp = ipywidgets.HBox([slider_title, slider_wid])
+                    tmp.layout.align_items = 'center'
+                    self.sliders.append(slider_wid)
+                    self.parameters_children.append(tmp)
+                self.parameters_wid.children = self.parameters_children
 
                 # Assign saving values and main plotting function to all sliders
                 for w in self.sliders:
                     w.observe(self._save_slider_value_from_id, names='value',
                               type='change')
-
-                # Set style
-                if self.box_style is None:
-                    self.predefined_style('')
-                else:
-                    self.predefined_style(self.box_style)
             else:
                 self.slider.min = params_bounds[0]
                 self.slider.max = params_bounds[1]
