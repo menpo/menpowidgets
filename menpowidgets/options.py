@@ -306,6 +306,7 @@ class AnimationOptionsWidget(MenpoWidget):
 
         """
         self.container.box_style = style
+        self.container.border = '0px'
         if style != '':
             self.play_stop_toggle.button_style = self._toggle_play_style
             self.fast_forward_button.button_style = 'info'
@@ -684,6 +685,7 @@ class Shape2DOptionsWidget(MenpoWidget):
 
         """
         self.container.box_style = style
+        self.container.border = '0px'
         self.labels_options_wid.container.box_style = suboptions_style
         if suboptions_style != '' or style != '':
             self.labels_options_wid.set_buttons_style('primary')
@@ -1033,6 +1035,7 @@ class Shape3DOptionsWidget(MenpoWidget):
 
         """
         self.container.box_style = style
+        self.container.border = '0px'
         self.labels_options_wid.container.box_style = suboptions_style
         if suboptions_style != '' or style != '':
             self.labels_options_wid.set_buttons_style('primary')
@@ -1292,7 +1295,7 @@ class RendererOptionsWidget(MenpoWidget):
                        'lock_aspect_ratio': False}
                 self.options_widgets.append(ZoomTwoScalesWidget(
                     tmp, render_function=None,
-                    description='Scale: ',
+                    description='Scale',
                     minus_description='fa-search-minus',
                     plus_description='fa-search-plus',
                     continuous_update=False))
@@ -1302,7 +1305,7 @@ class RendererOptionsWidget(MenpoWidget):
                        'zoom': self.global_options[o]}
                 self.options_widgets.append(ZoomOneScaleWidget(
                     tmp, render_function=None,
-                    description='Scale: ',
+                    description='Scale',
                     minus_description='fa-search-minus',
                     plus_description='fa-search-plus',
                     continuous_update=False))
@@ -1576,7 +1579,9 @@ class RendererOptionsWidget(MenpoWidget):
         """
         for w in self.options_widgets:
             w.box_style = style
+            w.border = '0px'
         self.container.box_style = style
+        self.container.border = '0px'
         for i, o in enumerate(self.options_tabs):
             if o == 'lines_matplotlib':
                 tmp = self.options_widgets[i].line_colour_widget
@@ -2163,6 +2168,7 @@ class ImageOptionsWidget(MenpoWidget):
                 ============= ============================
         """
         self.container.box_style = style
+        self.container.border = '0px'
         self.channels_wid.single_slider.slider_color = \
             map_styles_to_hex_colours(style)
         self.channels_wid.multiple_slider.slider_color = \
@@ -2494,6 +2500,7 @@ class LandmarkOptionsWidget(MenpoWidget):
 
         """
         self.container.box_style = style
+        self.container.border = '0px'
         self.shape_options_wid.predefined_style('', suboptions_style)
         self.box_3.box_style = suboptions_style
         self.group_slider.slider_color = map_styles_to_hex_colours(
@@ -2744,7 +2751,7 @@ class TextPrintWidget(ipywidgets.Box):
                 ============= ==================
         """
         self.container.box_style = style
-        self.container.border = '2px solid'
+        self.container.border = '0px'
 
     def set_widget_state(self, text_per_line):
         r"""
@@ -2763,7 +2770,7 @@ class TextPrintWidget(ipywidgets.Box):
             self.container.children = self.label_texts
         else:
             for i, t in enumerate(text_per_line):
-                self.latex_texts[i].value = t
+                self.label_texts[i].value = t
         self.n_lines = n_lines
         self.text_per_line = text_per_line
 
@@ -3027,6 +3034,7 @@ class SaveMatplotlibFigureOptionsWidget(ipywidgets.Box):
                 ============= ==================
         """
         self.container.box_style = style
+        self.container.border = '0px'
         if style != '':
             self.save_button.button_style = 'primary'
         else:
@@ -3212,6 +3220,7 @@ class SaveMayaviFigureOptionsWidget(ipywidgets.Box):
                 ============= ==================
         """
         self.container.box_style = style
+        self.container.border = '0px'
         if style != '':
             self.save_button.button_style = 'primary'
         else:
@@ -3568,6 +3577,7 @@ class PatchOptionsWidget(MenpoWidget):
                 ============= ==================
         """
         self.container.box_style = style
+        self.container.border = '0px'
         self.slicing_wid.single_slider.slider_color = \
             map_styles_to_hex_colours(style)
         self.slicing_wid.multiple_slider.slider_color = \
@@ -4092,6 +4102,7 @@ class PlotMatplotlibOptionsWidget(MenpoWidget):
                 ============= ==================
         """
         self.container.box_style = style
+        self.container.border = '0px'
         self.box_1.box_style = suboptions_style
         self.lines_markers_box.box_style = suboptions_style
         self.legend_wid.box_style = suboptions_style
@@ -4585,6 +4596,7 @@ class LinearModelParametersWidget(MenpoWidget):
                 ============= ==================
         """
         self.container.box_style = style
+        self.container.border = '0px'
         if style != '':
             self.play_stop_toggle.button_style = self._toggle_play_style
             self.fast_forward_button.button_style = 'info'
@@ -5035,6 +5047,7 @@ class CameraSnapshotWidget(MenpoWidget):
                 ============= ==================
         """
         self.container.box_style = style
+        self.container.border = '0px'
         self.preview.box_style = preview_style
         self.preview.border = '2px solid'
         self.camera_logo_box.box_style = style

@@ -39,7 +39,7 @@ from .options import IterativeResultOptionsWidget
 
 def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                   mode='multiple', parameters_bounds=(-3.0, 3.0),
-                  figure_size=(10, 8), style='coloured'):
+                  figure_size=(7, 7), style='coloured'):
     r"""
     Widget that allows the dynamic visualization of a multi-scale Active
     Appearance Model.
@@ -388,7 +388,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
 def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                         mode='multiple', parameters_bounds=(-3.0, 3.0),
-                        figure_size=(10, 8), style='coloured'):
+                        figure_size=(7, 7), style='coloured'):
     r"""
     Widget that allows the dynamic visualization of a multi-scale patch-based
     Active Appearance Model.
@@ -722,7 +722,7 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
 
 def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
-                  parameters_bounds=(-3.0, 3.0), figure_size=(10, 8),
+                  parameters_bounds=(-3.0, 3.0), figure_size=(7, 7),
                   style='coloured'):
     r"""
     Widget that allows the dynamic visualization of a multi-scale Active
@@ -1005,7 +1005,7 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
 
 
 def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
-                        parameters_bounds=(-3.0, 3.0), figure_size=(10, 8),
+                        parameters_bounds=(-3.0, 3.0), figure_size=(7, 7),
                         style='coloured'):
     r"""
     Widget that allows the dynamic visualization of a multi-scale patch-based
@@ -1274,7 +1274,7 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
 
 
 def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
-                  parameters_bounds=(-3.0, 3.0), figure_size=(10, 8),
+                  parameters_bounds=(-3.0, 3.0), figure_size=(7, 7),
                   style='coloured'):
     r"""
     Widget that allows the dynamic visualization of a multi-scale Constrained
@@ -1558,7 +1558,7 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
     render_function({})
 
 
-def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(10, 8),
+def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(7, 7),
                               style='coloured'):
     r"""
     Widget that allows the dynamic visualization of a multi-scale Ensemble of
@@ -1946,7 +1946,7 @@ def plot_ced(errors, legend_entries=None, error_range=None,
         return wid
 
 
-def visualize_fitting_result(fitting_results, figure_size=(10, 8), style='coloured',
+def visualize_fitting_result(fitting_results, figure_size=(7, 7), style='coloured',
                              browser_style='buttons', custom_info_callback=None):
     r"""
     Widget that allows browsing through a `list` of fitting results.

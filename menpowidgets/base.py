@@ -13,7 +13,8 @@ from .options import (RendererOptionsWidget, TextPrintWidget,
                       SaveMatplotlibFigureOptionsWidget, AnimationOptionsWidget,
                       ImageOptionsWidget, LandmarkOptionsWidget,
                       PlotMatplotlibOptionsWidget, PatchOptionsWidget,
-                      LinearModelParametersWidget, CameraSnapshotWidget)
+                      LinearModelParametersWidget, CameraSnapshotWidget,
+                      Shape2DOptionsWidget, Shape3DOptionsWidget)
 from .style import format_box, map_styles_to_hex_colours
 from .tools import LogoWidget
 from .utils import (extract_group_labels_from_landmarks,
@@ -39,76 +40,69 @@ def menpowidgets_src_dir_path():
     return Path(os.path.abspath(__file__)).parent
 
 
-def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
-                          browser_style='buttons', custom_info_callback=None):
+def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
+                        custom_info_callback=None):
     r"""
-    Widget that allows browsing through a `list` of `menpo.shape.PointCloud`,
-    `menpo.shape.PointUndirectedGraph`, `menpo.shape.PointDirectedGraph`,
-    `menpo.shape.PointTree`, `menpo.shape.TriMesh` or any subclass of those.
-    Any instance of the above can be combined in the `list`.
+    Widget that allows browsing through a `list` of
+    2D shapes. The supported objects are:
 
-    The widget has options tabs regarding the renderer (lines, markers,
-    numbering, zoom, axes) and saving the figure to file.
+            ==================================
+            Object
+            ==================================
+            `menpo.shape.PointCloud`
+            `menpo.shape.PointUndirectedGraph`
+            `menpo.shape.PointDirectedGraph`
+            `menpo.shape.PointTree`
+            `menpo.shape.LabelledPointGraph`
+            `menpo.shape.TriMesh`
+            ==================================
+
+    Any instance of the above can be combined in the input `list`.
 
     Parameters
     ----------
-    pointclouds : `list`
+    shapes : `list`
         The `list` of objects to be visualized. It can contain a combination of
-        `menpo.shape.PointCloud`, `menpo.shape.PointUndirectedGraph`,
-        `menpo.shape.PointDirectedGraph`, `menpo.shape.PointTree`,
-        `menpo.shape.TriMesh` or subclasses of those.
+
+            ==================================
+            Object
+            ==================================
+            `menpo.shape.PointCloud`
+            `menpo.shape.PointUndirectedGraph`
+            `menpo.shape.PointDirectedGraph`
+            `menpo.shape.PointTree`
+            `menpo.shape.LabelledPointGraph`
+            `menpo.shape.TriMesh`
+            ==================================
+
+        or subclasses of those.
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.
-    style : ``{'coloured', 'minimal'}``, optional
-        If ``'coloured'``, then the style of the widget will be coloured. If
-        ``minimal``, then the style is simple using black and white colours.
     browser_style : ``{'buttons', 'slider'}``, optional
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
     custom_info_callback: `function` or ``None``, optional
-        If not None, it should be a function that accepts a pointcloud
-        and returns a list of custom messages to be printed per
-        pointcloud. Each custom message will be printed in a separate line.
+        If not ``None``, it should be a function that accepts a 2D shape
+        and returns a list of custom messages to be printed about it. Each
+        custom message will be printed in a separate line.
     """
     # Ensure that the code is being run inside a Jupyter kernel!
     from .utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
     print('Initializing...')
 
-    # Make sure that pointclouds is a list even with one pointcloud member
-    if not isinstance(pointclouds, Sized):
-        pointclouds = [pointclouds]
+    # Make sure that shapes is a list even with one member
+    if not isinstance(shapes, Sized):
+        shapes = [shapes]
 
-    # Get the number of pointclouds
-    n_pointclouds = len(pointclouds)
+    # Get the number of shapes
+    n_shapes = len(shapes)
 
     # Define the styling options
-    if style == 'coloured':
-        logo_style = 'warning'
-        widget_box_style = 'warning'
-        widget_border_radius = 10
-        widget_border_width = 1
-        animation_style = 'warning'
-        info_style = 'info'
-        renderer_box_style = 'info'
-        renderer_box_border_colour = map_styles_to_hex_colours('info')
-        renderer_box_border_radius = 10
-        renderer_style = 'danger'
-        renderer_tabs_style = 'danger'
-        save_figure_style = 'danger'
-    else:
-        logo_style = 'minimal'
-        widget_box_style = ''
-        widget_border_radius = 0
-        widget_border_width = 0
-        animation_style = 'minimal'
-        info_style = 'minimal'
-        renderer_box_style = ''
-        renderer_box_border_colour = 'black'
-        renderer_box_border_radius = 0
-        renderer_style = 'minimal'
-        renderer_tabs_style = 'minimal'
-        save_figure_style = 'minimal'
+    main_style = 'warning'
+    tabs_style = 'info'
+    tabs_border = '2px solid'
+    tabs_margin = '15px'
 
     # Define render function
     def render_function(change):
@@ -116,21 +110,21 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
         # that will be rendered
         ipydisplay.clear_output(wait=True)
 
-        # Get selected pointcloud index
-        im = pointcloud_number_wid.selected_values if n_pointclouds > 1 else 0
+        # Get selected shape index
+        i = shape_number_wid.selected_values if n_shapes > 1 else 0
 
         # Render pointcloud with selected options
-        tmp1 = renderer_options_wid.selected_values['lines']
-        tmp2 = renderer_options_wid.selected_values['markers']
-        options = renderer_options_wid.selected_values['numbering']
+        tmp1 = shape_options_wid.selected_values['lines']
+        tmp2 = shape_options_wid.selected_values['markers']
+        options = renderer_options_wid.selected_values['numbering_matplotlib']
         options.update(renderer_options_wid.selected_values['axes'])
         new_figure_size = (
             renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
-        renderer = pointclouds[im].view(
+        shapes[i].view(
                 figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-                image_view=axes_mode_wid.value == 1, label=None,
-                render_lines=tmp1['render_lines'],
+                image_view=shape_options_wid.selected_values['image_view'],
+                render_lines=tmp1['render_lines'], label=None,
                 line_colour=tmp1['line_colour'][0],
                 line_style=tmp1['line_style'], line_width=tmp1['line_width'],
                 render_markers=tmp2['render_markers'],
@@ -140,93 +134,102 @@ def visualize_pointclouds(pointclouds, figure_size=(10, 8), style='coloured',
                 marker_edge_colour=tmp2['marker_edge_colour'][0],
                 marker_edge_width=tmp2['marker_edge_width'],
                 figure_size=new_figure_size, **options)
-        plt.show()
+        save_figure_wid.renderer.force_draw()
 
         # Update info text widget
-        update_info(pointclouds[im], custom_info_callback=custom_info_callback)
-
-        # Save the current figure id
-        save_figure_wid.renderer = renderer
+        update_info(shapes[i], custom_info_callback=custom_info_callback)
 
     # Define function that updates the info text
-    def update_info(pointcloud, custom_info_callback=None):
-        min_b, max_b = pointcloud.bounds()
-        rang = pointcloud.range()
-        cm = pointcloud.centre()
+    def update_info(shape, custom_info_callback=None):
+        min_b, max_b = shape.bounds()
+        rang = shape.range()
+        cm = shape.centre()
         text_per_line = [
-            "> {} points".format(pointcloud.n_points),
+            "> {} points".format(shape.n_points),
             "> Bounds: [{0:.1f}-{1:.1f}]W, [{2:.1f}-{3:.1f}]H".format(
                 min_b[0], max_b[0], min_b[1], max_b[1]),
             "> Range: {0:.1f}W, {1:.1f}H".format(rang[0], rang[1]),
             "> Centre of mass: ({0:.1f}, {1:.1f})".format(cm[0], cm[1]),
-            "> Norm: {0:.2f}".format(pointcloud.norm())]
+            "> Norm: {0:.2f}".format(shape.norm())]
         if custom_info_callback is not None:
             # iterate over the list of messages returned by the callback
             # function and append them in the text_per_line.
-            for msg in custom_info_callback(pointcloud):
+            for msg in custom_info_callback(shape):
                 text_per_line.append('> {}'.format(msg))
         info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Create widgets
-    axes_mode_wid = ipywidgets.RadioButtons(
-        options={'Image': 1, 'Point cloud': 2}, description='Axes mode:',
-        value=1)
-    axes_mode_wid.observe(render_function, names='value', type='change')
+    try:
+        labels = shapes[0].labels
+    except AttributeError:
+        labels = None
+    shape_options_wid = Shape2DOptionsWidget(
+        labels=labels, render_function=render_function, style=main_style,
+        suboptions_style=tabs_style)
     renderer_options_wid = RendererOptionsWidget(
-        options_tabs=['markers', 'lines', 'numbering', 'zoom_one', 'axes'],
-        labels=None, axes_x_limits=0.1, axes_y_limits=0.1,
-        render_function=render_function, style=renderer_style,
-        tabs_style=renderer_tabs_style)
-    renderer_options_box = ipywidgets.VBox(
-        children=[axes_mode_wid, renderer_options_wid], align='center',
-        margin='0.1cm')
-    info_wid = TextPrintWidget(text_per_line=[''] * 5, style=info_style)
-    save_figure_wid = SaveMatplotlibFigureOptionsWidget(style=save_figure_style)
+        options_tabs=['zoom_one', 'axes', 'numbering_matplotlib'],
+        labels=None,  axes_x_limits=0.1, axes_y_limits=0.1,
+        render_function=render_function, style=tabs_style)
+    renderer_options_wid.container.margin = tabs_margin
+    renderer_options_wid.container.border = tabs_border
+    info_wid = TextPrintWidget(text_per_line=[''] * 5, style=tabs_style)
+    info_wid.container.margin = tabs_margin
+    info_wid.container.border = tabs_border
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget(style=tabs_style)
+    save_figure_wid.container.margin = tabs_margin
+    save_figure_wid.container.border = tabs_border
 
     # Group widgets
-    if n_pointclouds > 1:
-        # Pointcloud selection slider
-        index = {'min': 0, 'max': n_pointclouds-1, 'step': 1, 'index': 0}
-        pointcloud_number_wid = AnimationOptionsWidget(
-            index, render_function=render_function, index_style=browser_style,
-            interval=0.2, description='Pointcloud ', loop_enabled=True,
-            continuous_update=False, style=animation_style)
+    if n_shapes > 1:
+        # Define function that updates options' widgets state
+        def update_widgets(change):
+            # Get current shape and check if it has labels
+            i = shape_number_wid.selected_values
+            try:
+                labels = shapes[i].labels
+            except AttributeError:
+                labels = None
+
+            # Update shape options
+            shape_options_wid.set_widget_state(labels=labels,
+                                               allow_callback=True)
+
+        # Shape selection slider
+        index = {'min': 0, 'max': n_shapes-1, 'step': 1, 'index': 0}
+        shape_number_wid = AnimationOptionsWidget(
+            index, render_function=update_widgets, index_style=browser_style,
+            interval=0.2, description='Shape', loop_enabled=True,
+            continuous_update=False, style=main_style)
 
         # Header widget
-        header_wid = ipywidgets.HBox(
-            children=[LogoWidget(style=logo_style), pointcloud_number_wid],
-            align='start')
+        header_wid = ipywidgets.HBox([LogoWidget(style=main_style),
+                                      shape_number_wid])
     else:
         # Header widget
-        header_wid = LogoWidget(style=logo_style)
-    header_wid.margin = '0.1cm'
-    options_box = ipywidgets.Tab(children=[info_wid, renderer_options_box,
-                                           save_figure_wid], margin='0.1cm')
-    tab_titles = ['Info', 'Renderer', 'Export']
+        header_wid = LogoWidget(style=main_style)
+    options_box = ipywidgets.Tab([shape_options_wid, info_wid,
+                                  renderer_options_wid, save_figure_wid])
+    tab_titles = ['Shape', 'Info', 'Renderer', 'Export']
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
-    if n_pointclouds > 1:
-        wid = ipywidgets.VBox(children=[header_wid, options_box], align='start')
+    if n_shapes > 1:
+        wid = ipywidgets.VBox([header_wid, options_box])
     else:
-        wid = ipywidgets.HBox(children=[header_wid, options_box], align='start')
+        wid = ipywidgets.HBox([header_wid, options_box])
 
     # Set widget's style
-    wid.box_style = widget_box_style
-    wid.border_radius = widget_border_radius
-    wid.border_width = widget_border_width
-    wid.border_color = map_styles_to_hex_colours(widget_box_style)
-    format_box(renderer_options_box, renderer_box_style, True,
-               renderer_box_border_colour, 'solid', 1,
-               renderer_box_border_radius, '0.1cm', '0.2cm')
+    wid.box_style = main_style
 
     # Display final widget
-    ipydisplay.display(wid)
+    final_box = ipywidgets.Box([wid])
+    final_box.layout.display = 'flex'
+    ipydisplay.display(final_box)
 
     # Trigger initial visualization
     render_function({})
 
 
-def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8), style='coloured',
+def visualize_landmarkgroups(landmarkgroups, figure_size=(7, 7), style='coloured',
                              browser_style='buttons', custom_info_callback=None):
     r"""
     Widget that allows browsing through a `list` of
@@ -447,7 +450,7 @@ def visualize_landmarkgroups(landmarkgroups, figure_size=(10, 8), style='coloure
     render_function({})
 
 
-def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
+def visualize_landmarks(landmarks, figure_size=(7, 7), style='coloured',
                         browser_style='buttons', custom_info_callback=None):
     r"""
     Widget that allows browsing through a `list` of
@@ -676,7 +679,7 @@ def visualize_landmarks(landmarks, figure_size=(10, 8), style='coloured',
     render_function({})
 
 
-def visualize_images(images, figure_size=(10, 8), style='coloured',
+def visualize_images(images, figure_size=(7, 7), style='coloured',
                      browser_style='buttons', custom_info_callback=None):
     r"""
     Widget that allows browsing through a `list` of `menpo.image.Image` (or
@@ -908,7 +911,7 @@ def visualize_images(images, figure_size=(10, 8), style='coloured',
     render_function({})
 
 
-def visualize_patches(patches, patch_centers, figure_size=(10, 8), style='coloured',
+def visualize_patches(patches, patch_centers, figure_size=(7, 7), style='coloured',
                       browser_style='buttons', custom_info_callback=None):
     r"""
     Widget that allows browsing through a `list` of patch-based images.
@@ -1268,7 +1271,7 @@ def save_matplotlib_figure(renderer, style='coloured'):
 
 
 def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
-                          parameters_bounds=(-3.0, 3.0), figure_size=(10, 8),
+                          parameters_bounds=(-3.0, 3.0), figure_size=(7, 7),
                           style='coloured'):
     r"""
     Widget that allows the dynamic visualization of a multi-scale linear
@@ -1626,7 +1629,7 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
 
 def visualize_appearance_model(appearance_model, n_parameters=5,
                                mode='multiple', parameters_bounds=(-3.0, 3.0),
-                               figure_size=(10, 8), style='coloured'):
+                               figure_size=(7, 7), style='coloured'):
     r"""
     Widget that allows the dynamic visualization of a multi-scale linear
     statistical appearance model.
@@ -1904,7 +1907,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
 def visualize_patch_appearance_model(appearance_model, centers,
                                      n_parameters=5, mode='multiple',
                                      parameters_bounds=(-3.0, 3.0),
-                                     figure_size=(10, 8), style='coloured'):
+                                     figure_size=(7, 7), style='coloured'):
     r"""
     Widget that allows the dynamic visualization of a multi-scale linear
     statistical patch-based appearance model.
