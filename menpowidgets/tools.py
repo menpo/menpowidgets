@@ -32,21 +32,21 @@ class LogoWidget(ipywidgets.Box):
 
     Parameters
     ----------
-    style : ``{'', 'minimal', 'danger', 'info', 'warning', 'success'}``, optional
+    style : ``{'', 'danger', 'info', 'warning', 'success'}``, optional
         Defines the styling of the logo widget, i.e. the colour around the
         logo image.
     """
-    def __init__(self, style='minimal'):
+    def __init__(self, style=''):
         from menpowidgets.base import menpowidgets_src_dir_path
         import menpo.io as mio
         # Try to only load the logo once
         global MENPO_LOGO_SCALE
         logos_path = menpowidgets_src_dir_path() / 'logos'
-        if style == 'minimal':
+        if style == '':
             global MENPO_MINIMAL_LOGO
             if MENPO_MINIMAL_LOGO is None:
                 MENPO_MINIMAL_LOGO = mio.import_image(
-                    logos_path / "menpoproject_{}.png".format(style))
+                    logos_path / "menpoproject_minimal.png")
             self.image = ipywidgets.Image(
                 value=convert_image_to_bytes(MENPO_MINIMAL_LOGO), width='50px')
         elif style == 'danger':
@@ -4216,6 +4216,7 @@ class CameraWidget(ipywidgets.DOMWidget):
         720 x 1280. Otherwise the default resolution will be used.
     """
     _view_name = Unicode('CameraView').tag(sync=True)
+    _view_module = Unicode('camera').tag(sync=True)
     imageurl = Unicode('').tag(sync=True)
     take_snapshot = Bool(False).tag(sync=True)
     canvas_width = Int(640).tag(sync=True)

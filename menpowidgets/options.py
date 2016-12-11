@@ -4776,27 +4776,12 @@ class LinearModelParametersWidget(MenpoWidget):
 
 class CameraSnapshotWidget(MenpoWidget):
     r"""
-    Creates a webcam widget for taking screenshots. The widget consists of the
-    following objects from `ipywidgets` and :ref:`api-tools-index`:
-
-    == ========================= ================== ======================
-    No Object                    Property (`self.`) Description
-    == ========================= ================== ======================
-    1  :map:`CameraWidget`       `camera_wid`       The webcam widget
-    2  `Latex`                   `n_snapshots_text` Number of snapshots
-    3  `Button`                  `snapshot_but`     Take snapshot button
-    4  `VBox`                    `snapshot_box`     Contains 3, 2
-    5  `Button`                  `close_but`        Close widget button
-    8  :map:`ZoomOneScaleWidget` `zoom_widget`      Resolution controller
-    9  `HBox`                    `buttons_box`      Contains 3, 5, 8
-    10 `Image`                   `preview_children` List of preview images
-    11 `HBox`                    `preview`          Contains all 10
-    == ========================= ================== ======================
+    Creates a webcam widget for taking screenshots.
 
     Note that:
 
     * The selected values are stored in the ``self.selected_values`` `trait`.
-    * To set the styling of this widget please refer to the :meth:`style` and
+    * To set the styling of this widget please refer to the
       :meth:`predefined_style` methods.
     * To update the handler callback function of the widget, please refer to the
       :meth:`replace_render_function` method.
@@ -4894,58 +4879,63 @@ class CameraSnapshotWidget(MenpoWidget):
 
         # Create widgets
         self.logo_wid = LogoWidget(style=style)
-        self.logo_wid.margin = '0.1cm'
         self.camera_wid = CameraWidget(canvas_width=canvas_width, hd=hd)
-        self.camera_wid.margin = '0.1cm'
-        self.camera_logo_box = ipywidgets.VBox(
-            children=[self.logo_wid, self.camera_wid], align='center')
-        self.n_snapshots_text = ipywidgets.Latex(value='', margin=2,
-                                                 visible=False)
+        self.camera_logo_box = ipywidgets.VBox([self.logo_wid, self.camera_wid])
+        self.camera_logo_box.layout.align_items = 'center'
+        self.n_snapshots_text = ipywidgets.Label(value='')
         self.snapshot_but = ipywidgets.Button(
             icon='fa-camera', description='  Take Snapshot',
-            tooltip='Take snapshot')
-        self.snapshot_but.style = 'primary'
-        self.snapshot_box = ipywidgets.VBox(
-            children=[self.snapshot_but, self.n_snapshots_text],
-            align='center', margin='0.1cm')
-        self.close_but = ipywidgets.Button(
-            icon='fa-close', description='  Close', tooltip='Close the widget',
-            margin='0.1cm')
+            tooltip='Take snapshot', width='3.5cm')
+        self.snapshot_box = ipywidgets.VBox([self.snapshot_but,
+                                             self.n_snapshots_text])
+        self.snapshot_box.layout.align_items = 'center'
+        self.close_but = ipywidgets.Button(icon='fa-close',
+                                           description='  Close',
+                                           tooltip='Close the widget',
+                                           width='2.5cm')
         self.zoom_widget = ZoomOneScaleWidget(
             {'min': 0.1, 'max': 2.1, 'step': 0.05, 'zoom': 1.},
-            continuous_update=False)
-        self.zoom_widget.title.visible = False
-        self.zoom_widget.zoom_text.visible = False
+            description='', continuous_update=False)
+        self.zoom_widget.zoom_slider.width = '3cm'
+        self.zoom_widget.zoom_text.layout.display = 'none'
         self.zoom_widget.button_plus.tooltip = 'Increase video resolution'
         self.zoom_widget.button_minus.tooltip = 'Decrease video resolution'
-        self.zoom_widget.margin = '0.1cm'
-        self.resolution_text = ipywidgets.Latex(
+        self.resolution_text = ipywidgets.Label(
             value="{}W x {}H".format(self.camera_wid.canvas_width,
-                                     self.camera_wid.canvas_height),
-            margin='0.1cm')
+                                     self.camera_wid.canvas_height))
         self.resolution_text.font_family = 'monospace'
-        self.zoom_and_resolution_box = ipywidgets.HBox(
-            children=[self.zoom_widget, self.resolution_text], align='center')
+        self.zoom_and_resolution_box = ipywidgets.HBox([self.zoom_widget,
+                                                        self.resolution_text])
+        self.zoom_and_resolution_box.layout.align_items = 'center'
         self.buttons_box = ipywidgets.HBox(
-            children=[self.snapshot_box, self.close_but,
-                      self.zoom_and_resolution_box], align='start')
-        width_per_preview = int((canvas_width - preview_windows_margin * 2 *
-                                 n_preview_windows) / n_preview_windows)
-        preview_children = [
-            ipywidgets.Image(width=width_per_preview,
-                             margin=preview_windows_margin, visible=False)
-            for k in range(n_preview_windows)]
-        self.preview = ipywidgets.HBox(children=preview_children, align='start',
-                                       visible=False)
+            [self.snapshot_box, self.close_but, self.zoom_and_resolution_box])
+        self.buttons_box.layout.align_items = 'flex-start'
+        self.width_per_preview = \
+            int((canvas_width - preview_windows_margin * 2 *
+                 n_preview_windows) / n_preview_windows)
+        self.height_per_preview = (
+            self.width_per_preview * self.camera_wid.canvas_height /
+            float(self.camera_wid.canvas_width))
+        preview_children = []
+        for _ in range(n_preview_windows):
+            tmp = ipywidgets.Image(width=0, height=0,
+                                   margin=preview_windows_margin)
+            tmp.layout.display = 'none'
+            preview_children.append(tmp)
+        self.preview = ipywidgets.HBox(preview_children)
+        self.preview.layout.display = 'none'
+        self.container = ipywidgets.VBox([self.camera_logo_box,
+                                          self.buttons_box,
+                                          ipywidgets.VBox([self.preview])])
 
         # Create final widget
-        children = [self.camera_logo_box, self.buttons_box, self.preview]
         super(CameraSnapshotWidget, self).__init__(
-            children, List, [], render_function=render_function,
-            orientation='vertical', align='center')
+            [self.container], List, [], render_function=render_function)
 
         # Assign properties
         self.selected_values = self.camera_wid.snapshots
+        self.preview_windows_margin = preview_windows_margin
+        self.n_preview_windows = n_preview_windows
 
         # Assign take screenshot callback
         def take_snapshot(_):
@@ -4959,6 +4949,7 @@ class CameraSnapshotWidget(MenpoWidget):
 
         # Assign preview callback
         def update_preview(_):
+            self.selected_values = self.camera_wid.snapshots
             # Convert image to bytes
             img = self.camera_wid.imageurl.encode('utf-8')
             img = b64decode(img[len('data:image/png;base64,'):])
@@ -4966,19 +4957,22 @@ class CameraSnapshotWidget(MenpoWidget):
             n_snapshots = len(self.selected_values)
             if n_snapshots == 1:
                 self.n_snapshots_text.value = "1 snapshot"
-                self.n_snapshots_text.visible = True
-                self.preview.visible = True
             else:
                 self.n_snapshots_text.value = "{} snapshots".format(n_snapshots)
             # Update preview thumbnails
             if n_snapshots <= n_preview_windows:
+                self.preview.children[n_snapshots - 1].width = \
+                    self.width_per_preview
+                self.preview.children[n_snapshots - 1].height = \
+                    self.height_per_preview
                 self.preview.children[n_snapshots-1].value = img
-                self.preview.children[n_snapshots-1].visible = True
+                self.preview.children[n_snapshots - 1].layout.display = ''
             else:
                 for k in range(n_preview_windows-1):
                     self.preview.children[k].value = \
                         self.preview.children[k+1].value
                 self.preview.children[n_preview_windows-1].value = img
+            self.preview.layout.display = 'flex'
         self.camera_wid.observe(update_preview, names='imageurl', type='change')
 
         # Assign zoom resolution callback
@@ -4993,91 +4987,21 @@ class CameraSnapshotWidget(MenpoWidget):
         def set_resolution_text(_):
             self.resolution_text.value = "{}W x {}H".format(
                 self.camera_wid.canvas_width, self.camera_wid.canvas_height)
+            self.width_per_preview = \
+                int((self.camera_wid.canvas_width -
+                     self.preview_windows_margin * 2 *
+                     self.n_preview_windows) / self.n_preview_windows)
+            self.height_per_preview = (
+                self.width_per_preview * self.camera_wid.canvas_height /
+                float(self.camera_wid.canvas_width))
+            for w in self.preview.children:
+                w.width = self.width_per_preview
+                w.height = self.height_per_preview
         self.camera_wid.observe(set_resolution_text, names='canvas_height',
                                 type='change')
 
         # Set style
         self.predefined_style(style, preview_style)
-
-    def style(self, box_style=None, border_visible=False, border_colour='black',
-              border_style='solid', border_width=1, border_radius=0,
-              padding='0.2cm', margin=0, preview_box_style=None,
-              preview_border_visible=True, preview_border_colour='black',
-              preview_border_style='solid', preview_border_width=1,
-              preview_border_radius=1, preview_padding=0, preview_margin=0,
-              font_family='', font_size=None, font_style='', font_weight=''):
-        r"""
-        Function that defines the styling of the widget.
-
-        Parameters
-        ----------
-        box_style : `str` or ``None`` (see below), optional
-            Possible widget style options::
-
-                'success', 'info', 'warning', 'danger', '', None
-
-        border_visible : `bool`, optional
-            Defines whether to draw the border line around the widget.
-        border_colour : `str`, optional
-            The colour of the border around the widget.
-        border_style : `str`, optional
-            The line style of the border around the widget.
-        border_width : `float`, optional
-            The line width of the border around the widget.
-        border_radius : `float`, optional
-            The radius of the border around the widget.
-        padding : `float`, optional
-            The padding around the widget.
-        margin : `float`, optional
-            The margin around the widget.
-        preview_box_style : `str` or ``None`` (see below), optional
-            Possible tab widgets style options::
-
-                'success', 'info', 'warning', 'danger', '', None
-
-        preview_border_visible : `bool`, optional
-            Defines whether to draw the border line around the preview.
-        preview_border_colour : `str`, optional
-            The color of the border around the preview.
-        preview_border_style : `str`, optional
-            The line style of the border around the preview.
-        preview_border_width : `float`, optional
-            The line width of the border around the preview.
-        preview_border_radius : `float`, optional
-            The radius of the corners of the box of the preview.
-        preview_padding : `float`, optional
-            The padding around the preview box.
-        preview_margin : `float`, optional
-            The margin around the preview box.
-        font_family : `str` (see below), optional
-            The font family to be used. Example options::
-
-                'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace',
-                'helvetica'
-
-        font_size : `int`, optional
-            The font size.
-        font_style : `str` (see below), optional
-            The font style. Example options::
-
-                'normal', 'italic', 'oblique'
-
-        font_weight : See Below, optional
-            The font weight. Example options::
-
-                'ultralight', 'light', 'normal', 'regular', 'book', 'medium',
-                'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy',
-                'extra bold', 'black'
-        """
-        format_box(self, box_style, border_visible, border_colour, border_style,
-                   border_width, border_radius, padding, margin)
-        format_box(self.preview, preview_box_style, preview_border_visible,
-                   preview_border_colour, preview_border_style,
-                   preview_border_width, preview_border_radius, preview_padding,
-                   preview_margin)
-        format_font(self, font_family, font_size, font_style, font_weight)
-        format_font(self.preview, font_family, font_size, font_style,
-                    font_weight)
 
     def predefined_style(self, style, preview_style=''):
         r"""
@@ -5111,4 +5035,22 @@ class CameraSnapshotWidget(MenpoWidget):
                 ``''``        No style
                 ============= ==================
         """
-        pass
+        self.container.box_style = style
+        self.preview.box_style = preview_style
+        self.preview.border = '2px solid'
+        self.camera_logo_box.box_style = style
+        self.camera_logo_box.border = '0px'
+        if style != '' or preview_style != '':
+            self.snapshot_but.button_style = 'primary'
+            self.close_but.button_style = 'danger'
+            self.zoom_widget.button_plus.button_style = 'warning'
+            self.zoom_widget.button_minus.button_style = 'warning'
+            self.zoom_widget.zoom_slider.slider_color = \
+                map_styles_to_hex_colours('warning', False)
+        else:
+            self.snapshot_but.button_style = ''
+            self.close_but.button_style = ''
+            self.zoom_widget.button_plus.button_style = ''
+            self.zoom_widget.button_minus.button_style = ''
+            self.zoom_widget.zoom_slider.slider_color = \
+                map_styles_to_hex_colours('', False)
