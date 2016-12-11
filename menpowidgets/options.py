@@ -2719,17 +2719,27 @@ class TextPrintWidget(ipywidgets.Box):
         >>> wid.set_widget_state(['M', 'E', 'N', 'P', 'O'])
     """
     def __init__(self, text_per_line, style=''):
-        self.label_texts = [ipywidgets.Label(value=t) for t in text_per_line]
-        self.container = ipywidgets.VBox(self.label_texts)
+        txt = self._convert_text_list_to_html(text_per_line)
+        self.text_html = ipywidgets.HTML(txt)
+        self.container = ipywidgets.VBox([self.text_html])
         super(TextPrintWidget, self).__init__([self.container])
         self.layout.display = 'flex'
 
         # Assign options
-        self.n_lines = len(text_per_line)
         self.text_per_line = text_per_line
 
         # Set style
         self.predefined_style(style)
+
+    def _convert_text_list_to_html(self, text_per_line):
+        txt = "<p>"
+        for i, t in enumerate(text_per_line):
+            if i == len(text_per_line) - 1:
+                txt += "{}".format(t)
+            else:
+                txt += "{}<br>".format(t)
+        txt += "</p>"
+        return txt
 
     def predefined_style(self, style):
         r"""
@@ -2762,16 +2772,8 @@ class TextPrintWidget(ipywidgets.Box):
         text_per_line : `list` of `str`
             The text to be printed per line.
         """
-        # Check if n_lines has changed
-        n_lines = len(text_per_line)
-        if n_lines != self.n_lines:
-            self.label_texts = [ipywidgets.Label(value=t)
-                                for t in text_per_line]
-            self.container.children = self.label_texts
-        else:
-            for i, t in enumerate(text_per_line):
-                self.label_texts[i].value = t
-        self.n_lines = n_lines
+        txt = self._convert_text_list_to_html(text_per_line)
+        self.text_html.value = txt
         self.text_per_line = text_per_line
 
 

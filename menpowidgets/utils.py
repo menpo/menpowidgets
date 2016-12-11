@@ -932,7 +932,7 @@ def render_image(image, renderer, render_landmarks, image_is_masked,
                 **mask_arguments)
 
     # show plot
-    plt.show()
+    renderer.force_draw()
 
     return renderer
 
