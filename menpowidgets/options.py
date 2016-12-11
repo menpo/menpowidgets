@@ -2378,6 +2378,7 @@ class LandmarkOptionsWidget(MenpoWidget):
             options={'0': '0'}, description='', value='0', width='4cm')
         self.group_label = ipywidgets.Label()
         # Shape 2D options widget
+        self.type = type
         if type == '2D':
             self.shape_options_wid = Shape2DOptionsWidget([' '])
         elif type == '3D':
@@ -2447,24 +2448,57 @@ class LandmarkOptionsWidget(MenpoWidget):
 
     def _save_options(self, change):
         if self.group_keys is None:
-            self.selected_values = {
-                'landmarks': {
-                    'group': None,
-                    'render_landmarks': False,
-                    'with_labels': None},
-                'lines': self.shape_options_wid.selected_values['lines'],
-                'markers': self.shape_options_wid.selected_values['markers']}
+            if self.type == '2D':
+                self.selected_values = {
+                    'landmarks': {
+                        'group': None,
+                        'render_landmarks': False,
+                        'with_labels': None},
+                    'lines':
+                        self.shape_options_wid.selected_values['lines'],
+                    'markers':
+                        self.shape_options_wid.selected_values['markers'],
+                    'image_view':
+                        self.shape_options_wid.selected_values['image_view']}
+            else:
+                self.selected_values = {
+                    'landmarks': {
+                        'group': None,
+                        'render_landmarks': False,
+                        'with_labels': None},
+                    'lines':
+                        self.shape_options_wid.selected_values['lines'],
+                    'markers':
+                        self.shape_options_wid.selected_values['markers']}
         else:
-            self.selected_values = {
-                'landmarks': {
-                    'render_landmarks':
-                        self.render_landmarks_switch.selected_values,
-                    'group':
-                        self.group_keys[self.group_dropdown.value],
-                    'with_labels':
-                        self.shape_options_wid.selected_values['with_labels']},
-                'lines': self.shape_options_wid.selected_values['lines'],
-                'markers': self.shape_options_wid.selected_values['markers']}
+            if self.type == '2D':
+                self.selected_values = {
+                    'landmarks': {
+                        'render_landmarks':
+                            self.render_landmarks_switch.selected_values,
+                        'group':
+                            self.group_keys[self.group_dropdown.value],
+                        'with_labels':
+                            self.shape_options_wid.selected_values['with_labels']},
+                    'lines':
+                        self.shape_options_wid.selected_values['lines'],
+                    'markers':
+                        self.shape_options_wid.selected_values['markers'],
+                    'image_view':
+                        self.shape_options_wid.selected_values['image_view']}
+            else:
+                self.selected_values = {
+                    'landmarks': {
+                        'render_landmarks':
+                            self.render_landmarks_switch.selected_values,
+                        'group':
+                            self.group_keys[self.group_dropdown.value],
+                        'with_labels':
+                            self.shape_options_wid.selected_values['with_labels']},
+                    'lines':
+                        self.shape_options_wid.selected_values['lines'],
+                    'markers':
+                        self.shape_options_wid.selected_values['markers']}
 
     def predefined_style(self, style, suboptions_style):
         r"""
@@ -2568,6 +2602,8 @@ class LandmarkOptionsWidget(MenpoWidget):
                 tmp = self.shape_options_wid.get_default_options(labels_keys)
                 self.default_options[key]['lines'] = tmp['lines']
                 self.default_options[key]['markers'] = tmp['markers']
+                if self.type == '2D':
+                    self.default_options[key]['image_view'] = tmp['image_view']
         return self.default_options[key]
 
     def _parse_group_keys_labels_keys(self, group_keys, labels_keys):

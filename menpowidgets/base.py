@@ -173,7 +173,7 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
         render_function=render_function, style=tabs_style)
     renderer_options_wid.container.margin = tabs_margin
     renderer_options_wid.container.border = tabs_border
-    info_wid = TextPrintWidget(text_per_line=[''] * 5, style=tabs_style)
+    info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
     info_wid.container.margin = tabs_margin
     info_wid.container.border = tabs_border
     save_figure_wid = SaveMatplotlibFigureOptionsWidget(style=tabs_style)
@@ -233,16 +233,13 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
     render_function({})
 
 
-def visualize_landmarks(landmarks, figure_size=(7, 7), style='coloured',
-                        browser_style='buttons', custom_info_callback=None):
+def visualize_landmarks_2d(landmarks, figure_size=(7, 7),
+                           browser_style='buttons', custom_info_callback=None):
     r"""
     Widget that allows browsing through a `list` of
-    `menpo.landmark.LandmarkManager` (or subclass) objects.
-
-    The landmark managers can have a combination of different attributes, e.g.
-    landmark groups and labels etc. The widget has options tabs regarding the
-    landmarks, the renderer (lines, markers, numbering, legend, zoom, axes)
-    and saving the figure to file.
+    `menpo.landmark.LandmarkManager` (or subclass) objects. The landmark
+    managers can have a combination of different attributes, e.g.
+    landmark groups and labels etc.
 
     Parameters
     ----------
@@ -250,16 +247,13 @@ def visualize_landmarks(landmarks, figure_size=(7, 7), style='coloured',
         The `list` of landmark managers to be visualized.
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.
-    style : ``{'coloured', 'minimal'}``, optional
-        If ``'coloured'``, then the style of the widget will be coloured. If
-        ``minimal``, then the style is simple using black and white colours.
     browser_style : ``{'buttons', 'slider'}``, optional
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
     custom_info_callback: `function` or ``None``, optional
-        If not None, it should be a function that accepts a landmark group and returns
-        a list of custom messages to be printed per landmark group. Each custom message
-        will be printed in a separate line.
+        If not None, it should be a function that accepts a landmark group and
+        returns a list of custom messages to be printed per landmark group.
+        Each custom message will be printed in a separate line.
     """
     # Ensure that the code is being run inside a Jupyter kernel!
     from .utils import verify_ipython_and_kernel
@@ -274,34 +268,10 @@ def visualize_landmarks(landmarks, figure_size=(7, 7), style='coloured',
     n_landmarks = len(landmarks)
 
     # Define the styling options
-    if style == 'coloured':
-        logo_style = 'info'
-        widget_box_style = 'info'
-        widget_border_radius = 10
-        widget_border_width = 1
-        animation_style = 'info'
-        landmarks_style = 'danger'
-        info_style = 'danger'
-        renderer_box_style = 'danger'
-        renderer_box_border_colour = map_styles_to_hex_colours('danger')
-        renderer_box_border_radius = 10
-        renderer_style = 'warning'
-        renderer_tabs_style = 'warning'
-        save_figure_style = 'danger'
-    else:
-        logo_style = 'minimal'
-        widget_box_style = ''
-        widget_border_radius = 0
-        widget_border_width = 0
-        landmarks_style = 'minimal'
-        animation_style = 'minimal'
-        info_style = 'minimal'
-        renderer_box_style = ''
-        renderer_box_border_colour = 'black'
-        renderer_box_border_radius = 0
-        renderer_style = 'minimal'
-        renderer_tabs_style = 'minimal'
-        save_figure_style = 'minimal'
+    main_style = 'info'
+    tabs_style = 'warning'
+    tabs_border = '2px solid'
+    tabs_margin = '15px'
 
     # Define render function
     def render_function(change):
@@ -310,16 +280,16 @@ def visualize_landmarks(landmarks, figure_size=(7, 7), style='coloured',
         ipydisplay.clear_output(wait=True)
 
         # get selected index
-        im = landmark_number_wid.selected_values if n_landmarks > 1 else 0
+        i = landmark_number_wid.selected_values if n_landmarks > 1 else 0
 
         # get selected group
-        selected_group = landmark_options_wid.selected_values['group']
+        selected_group = landmark_options_wid.selected_values['landmarks']['group']
 
-        if landmark_options_wid.selected_values['render_landmarks']:
+        if landmark_options_wid.selected_values['landmarks']['render_landmarks']:
             # show landmarks with selected options
-            tmp1 = renderer_options_wid.selected_values['lines']
-            tmp2 = renderer_options_wid.selected_values['markers']
-            options = renderer_options_wid.selected_values['numbering']
+            tmp1 = landmark_options_wid.selected_values['lines']
+            tmp2 = landmark_options_wid.selected_values['markers']
+            options = renderer_options_wid.selected_values['numbering_matplotlib']
             options.update(renderer_options_wid.selected_values['legend'])
             options.update(renderer_options_wid.selected_values['axes'])
             new_figure_size = (
@@ -329,16 +299,16 @@ def visualize_landmarks(landmarks, figure_size=(7, 7), style='coloured',
             line_colour = []
             marker_face_colour = []
             marker_edge_colour = []
-            for lbl in landmark_options_wid.selected_values['with_labels']:
-                lbl_idx = landmarks[im][selected_group].labels.index(lbl)
+            for lbl in landmark_options_wid.selected_values['landmarks']['with_labels']:
+                lbl_idx = landmarks[i][selected_group].labels.index(lbl)
                 line_colour.append(tmp1['line_colour'][lbl_idx])
                 marker_face_colour.append(tmp2['marker_face_colour'][lbl_idx])
                 marker_edge_colour.append(tmp2['marker_edge_colour'][lbl_idx])
             # render
-            renderer = landmarks[im][selected_group].view(
-                with_labels=landmark_options_wid.selected_values['with_labels'],
+            landmarks[i][selected_group].view(
+                with_labels=landmark_options_wid.selected_values['landmarks']['with_labels'],
                 figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-                image_view=axes_mode_wid.value == 1,
+                image_view=landmark_options_wid.selected_values['image_view'],
                 render_lines=tmp1['render_lines'], line_colour=line_colour,
                 line_style=tmp1['line_style'], line_width=tmp1['line_width'],
                 render_markers=tmp2['render_markers'],
@@ -348,15 +318,12 @@ def visualize_landmarks(landmarks, figure_size=(7, 7), style='coloured',
                 marker_edge_colour=marker_edge_colour,
                 marker_edge_width=tmp2['marker_edge_width'],
                 figure_size=new_figure_size, **options)
-            plt.show()
-
-            # Save the current figure id
-            save_figure_wid.renderer = renderer
+            save_figure_wid.renderer.force_draw()
         else:
             ipydisplay.clear_output()
 
         # update info text widget
-        update_info(landmarks[im], selected_group,
+        update_info(landmarks[i], selected_group,
                     custom_info_callback=custom_info_callback)
 
     # Define function that updates the info text
@@ -385,78 +352,72 @@ def visualize_landmarks(landmarks, figure_size=(7, 7), style='coloured',
     # Create widgets
     groups_keys, labels_keys = extract_group_labels_from_landmarks(landmarks[0])
     first_label = labels_keys[0] if labels_keys else None
-    axes_mode_wid = ipywidgets.RadioButtons(
-        options={'Image': 1, 'Point cloud': 2}, description='Axes mode:',
-        value=1)
-    axes_mode_wid.observe(render_function, names='value', type='change')
-    renderer_options_wid = RendererOptionsWidget(
-        options_tabs=['markers', 'lines', 'numbering', 'legend', 'zoom_one',
-                      'axes'], labels=first_label,
-        axes_x_limits=0.1, axes_y_limits=0.1,
-        render_function=render_function,  style=renderer_style,
-        tabs_style=renderer_tabs_style)
-    renderer_options_box = ipywidgets.VBox(
-        children=[axes_mode_wid, renderer_options_wid], align='center',
-        margin='0.1cm')
     landmark_options_wid = LandmarkOptionsWidget(
         group_keys=groups_keys, labels_keys=labels_keys,
-        render_function=render_function, style=landmarks_style,
-        renderer_widget=renderer_options_wid)
-    info_wid = TextPrintWidget(text_per_line=[''] * 5, style=info_style)
+        type='2D', render_function=render_function, style=main_style,
+        suboptions_style=tabs_style)
+    landmark_options_wid.container.margin = tabs_margin
+    landmark_options_wid.container.border = tabs_border
+    renderer_options_wid = RendererOptionsWidget(
+        options_tabs=['zoom_one', 'axes', 'numbering_matplotlib', 'legend'],
+        labels=first_label, axes_x_limits=0.1, axes_y_limits=0.1,
+        render_function=render_function,  style=tabs_style)
+    renderer_options_wid.container.margin = tabs_margin
+    renderer_options_wid.container.border = tabs_border
+    info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
+    info_wid.container.margin = tabs_margin
+    info_wid.container.border = tabs_border
     save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
-                                                        style=save_figure_style)
+                                                        style=tabs_style)
+    save_figure_wid.container.margin = tabs_margin
+    save_figure_wid.container.border = tabs_border
 
     # Group widgets
     if n_landmarks > 1:
         # Define function that updates options' widgets state
         def update_widgets(change):
             # Get new groups and labels
-            im = landmark_number_wid.selected_values
+            i = landmark_number_wid.selected_values
             g_keys, l_keys = extract_group_labels_from_landmarks(
-                landmarks[im])
+                landmarks[i])
 
             # Update landmarks options
             landmark_options_wid.set_widget_state(
                 group_keys=g_keys, labels_keys=l_keys, allow_callback=True)
-            landmark_options_wid.predefined_style(landmarks_style)
 
         # Landmark selection slider
         index = {'min': 0, 'max': n_landmarks-1, 'step': 1, 'index': 0}
         landmark_number_wid = AnimationOptionsWidget(
             index, render_function=update_widgets, index_style=browser_style,
             interval=0.2, description='Shape', loop_enabled=True,
-            continuous_update=False, style=animation_style)
+            continuous_update=False, style=main_style)
 
         # Header widget
-        header_wid = ipywidgets.HBox(
-            children=[LogoWidget(style=logo_style), landmark_number_wid],
-            align='start')
+        logo_wid = LogoWidget(style=main_style)
+        header_wid = ipywidgets.HBox([logo_wid, landmark_number_wid])
+        header_wid.layout.align_items = 'center'
+        header_wid.layout.margin = '0px 0px 10px 0px'
     else:
         # Header widget
-        header_wid = LogoWidget(style=logo_style)
-    header_wid.margin = '0.2cm'
-    options_box = ipywidgets.Tab(
-        children=[info_wid, landmark_options_wid, renderer_options_box,
-                  save_figure_wid], margin='0.2cm')
+        header_wid = LogoWidget(style=main_style)
+        header_wid.layout.margin = '0px 10px 0px 0px'
+    options_box = ipywidgets.Tab([info_wid, landmark_options_wid,
+                                  renderer_options_wid, save_figure_wid])
     tab_titles = ['Info', 'Landmarks', 'Renderer', 'Export']
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
     if n_landmarks > 1:
-        wid = ipywidgets.VBox(children=[header_wid, options_box], align='start')
+        wid = ipywidgets.VBox([header_wid, options_box])
     else:
-        wid = ipywidgets.HBox(children=[header_wid, options_box], align='start')
+        wid = ipywidgets.HBox([header_wid, options_box])
 
     # Set widget's style
-    wid.box_style = widget_box_style
-    wid.border_radius = widget_border_radius
-    wid.border_width = widget_border_width
-    wid.border_color = map_styles_to_hex_colours(widget_box_style)
-    format_box(renderer_options_box, renderer_box_style, True,
-               renderer_box_border_colour, 'solid', 1,
-               renderer_box_border_radius, '0.1cm', '0.2cm')
+    wid.box_style = main_style
 
     # Display final widget
-    ipydisplay.display(wid)
+    final_box = ipywidgets.Box([wid])
+    final_box.layout.display = 'flex'
+    ipydisplay.display(final_box)
 
     # Trigger initial visualization
     render_function({})
