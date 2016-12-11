@@ -19,8 +19,7 @@ from .tools import (IndexSliderWidget, IndexButtonsWidget, SlicingCommandWidget,
                     CameraWidget, ColourSelectionWidget, TriMeshOptionsWidget,
                     TexturedTriMeshOptionsWidget, SwitchWidget,
                     MultipleSelectionTogglesWidget)
-from .style import (map_styles_to_hex_colours, format_box, format_font,
-                    format_slider)
+from .style import map_styles_to_hex_colours
 from .utils import sample_colours_from_colourmap, lists_are_the_same
 
 

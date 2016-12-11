@@ -359,12 +359,19 @@ class MultipleSelectionTogglesWidget(MenpoWidget):
         The items from `labels` that will be selected by default.
     description : `str`, optional
         The description of the widget.
+    allow_no_selection : `bool`, optional
+        If ``True``, then the user can disable all toggle buttons. If
+        ``False``, then if all buttons are turned off they automatically get
+        turned on back.
     render_function : `callable` or ``None``, optional
         The render function that is executed when a widgets' value changes.
         If ``None``, then nothing is assigned.
+    buttons_style : `str`, optional
+        The style of the buttons.
     """
     def __init__(self, labels, with_labels=None, description='Labels',
-                 render_function=None, buttons_style=''):
+                 allow_no_selection=False, render_function=None,
+                 buttons_style=''):
         # Check with labels
         if with_labels is None or len(with_labels) == 0:
             with_labels = [l for l in labels]
@@ -393,6 +400,7 @@ class MultipleSelectionTogglesWidget(MenpoWidget):
         # Set property
         self.labels = labels
         self.buttons_style = buttons_style
+        self.allow_no_selection = allow_no_selection
 
         # Set functionality
         for w in self.labels_toggles:
@@ -400,7 +408,7 @@ class MultipleSelectionTogglesWidget(MenpoWidget):
 
     def _save_options(self, _):
         value = [w.description for w in self.labels_toggles if w.value]
-        if len(value) == 0:
+        if not self.allow_no_selection and len(value) == 0:
             value = []
             for w in self.labels_toggles:
                 w.unobserve(self._save_options, names='value', type='change')
