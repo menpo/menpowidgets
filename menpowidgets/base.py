@@ -14,7 +14,8 @@ from .options import (RendererOptionsWidget, TextPrintWidget,
                       ImageOptionsWidget, LandmarkOptionsWidget,
                       PlotMatplotlibOptionsWidget, PatchOptionsWidget,
                       LinearModelParametersWidget, CameraSnapshotWidget,
-                      Shape2DOptionsWidget, Shape3DOptionsWidget)
+                      Shape2DOptionsWidget, Shape3DOptionsWidget,
+                      SaveMayaviFigureOptionsWidget)
 from .style import format_box, map_styles_to_hex_colours
 from .tools import LogoWidget
 from .utils import (extract_group_labels_from_landmarks,
@@ -934,7 +935,7 @@ def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(8, 4)):
     render_function({})
 
 
-def save_matplotlib_figure(renderer, style='coloured'):
+def save_matplotlib_figure(renderer):
     r"""
     Widget that allows to save a figure, which was generated with Matplotlib,
     to file.
@@ -943,21 +944,40 @@ def save_matplotlib_figure(renderer, style='coloured'):
     ----------
     renderer : `menpo.visualize.viewmatplotlib.MatplotlibRenderer`
         The Matplotlib renderer object.
-    style : ``{'coloured', 'minimal'}``, optional
-        If ``'coloured'``, then the style of the widget will be coloured. If
-        ``minimal``, then the style is simple using black and white colours.
     """
     # Ensure that the code is being run inside a Jupyter kernel!
     from .utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
     # Create sub-widgets
-    if style == 'coloured':
-        style = 'warning'
-    logo_wid = LogoWidget(style='minimal')
-    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer, style=style)
-    save_figure_wid.margin = '0.1cm'
-    logo_wid.margin = '0.1cm'
-    wid = ipywidgets.HBox(children=[logo_wid, save_figure_wid])
+    logo_wid = LogoWidget(style='')
+    logo_wid.layout.margin = '0px 10px 0px 0px'
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer,
+                                                        style='warning')
+    wid = ipywidgets.HBox([logo_wid, save_figure_wid])
+
+    # Display widget
+    ipydisplay.display(wid)
+
+
+def save_mayavi_figure(renderer):
+    r"""
+    Widget that allows to save a figure, which was generated with Mayavi,
+    to file.
+
+    Parameters
+    ----------
+    renderer : `menpo3d.visualize.viewmayavi.MayaviRenderer`
+        The Mayavi renderer object.
+    """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
+    # Create sub-widgets
+    logo_wid = LogoWidget(style='')
+    logo_wid.layout.margin = '0px 10px 0px 0px'
+    save_figure_wid = SaveMayaviFigureOptionsWidget(renderer,
+                                                    style='warning')
+    wid = ipywidgets.HBox([logo_wid, save_figure_wid])
 
     # Display widget
     ipydisplay.display(wid)

@@ -47,3 +47,4 @@ Various
     webcam_widget
     plot_graph
     save_matplotlib_figure
+    save_mayavi_figure

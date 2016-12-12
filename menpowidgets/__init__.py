@@ -1,6 +1,6 @@
 from .base import (visualize_shapes_2d, visualize_landmarks_2d,
                    visualize_images, visualize_patches,
-                   plot_graph, save_matplotlib_figure,
+                   plot_graph, save_matplotlib_figure, save_mayavi_figure,
                    visualize_appearance_model, visualize_patch_appearance_model,
                    visualize_shape_model, webcam_widget)
 from .menpofitwidgets import *
