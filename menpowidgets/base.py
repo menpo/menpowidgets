@@ -14,8 +14,7 @@ from .options import (RendererOptionsWidget, TextPrintWidget,
                       ImageOptionsWidget, LandmarkOptionsWidget,
                       PlotMatplotlibOptionsWidget, PatchOptionsWidget,
                       LinearModelParametersWidget, CameraSnapshotWidget,
-                      Shape2DOptionsWidget, Shape3DOptionsWidget,
-                      SaveMayaviFigureOptionsWidget)
+                      Shape2DOptionsWidget, SaveMayaviFigureOptionsWidget)
 from .tools import LogoWidget, SwitchWidget
 from .utils import (extract_group_labels_from_landmarks,
                     extract_groups_labels_from_image, render_image,

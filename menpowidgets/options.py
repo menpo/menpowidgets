@@ -876,7 +876,7 @@ class Shape3DOptionsWidget(MenpoWidget):
         else:
             self.labels_options_wid = MultipleSelectionTogglesWidget(
                 labels=[' '], with_labels=None, render_function=None,
-                description='Labels', buttons_style=buttons_style)
+                description='Labels', buttons_style=self.buttons_style)
         self.labels_options_wid.layout.margin = '0px 0px 10px 0px'
         self.labels_options_wid.container.layout.border = '2px solid'
 

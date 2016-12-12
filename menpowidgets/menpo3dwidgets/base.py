@@ -1,4 +1,5 @@
 from menpo.base import MenpoMissingDependencyError
+from menpo.visualize import print_dynamic
 
 try:
     import menpo3d
@@ -7,7 +8,7 @@ except ImportError:
 
 # Continue with imports if we have menpo3d
 import sys
-from collections import OrderedDict
+from collections import Sized, OrderedDict
 import matplotlib.pyplot as plt
 
 import ipywidgets
@@ -17,7 +18,188 @@ from ..style import map_styles_to_hex_colours
 from ..checks import check_n_parameters
 from ..options import (RendererOptionsWidget, TextPrintWidget,
                        LinearModelParametersWidget, LogoWidget,
-                       SaveMayaviFigureOptionsWidget)
+                       SaveMayaviFigureOptionsWidget, Shape3DOptionsWidget,
+                       AnimationOptionsWidget)
+
+
+def visualize_shapes_3d(shapes, browser_style='buttons',
+                        custom_info_callback=None):
+    r"""
+    Widget that allows browsing through a `list` of
+    3D shapes. The supported objects are:
+
+            ==================================
+            Object
+            ==================================
+            `menpo.shape.PointCloud`
+            `menpo.shape.PointUndirectedGraph`
+            `menpo.shape.PointDirectedGraph`
+            `menpo.shape.PointTree`
+            `menpo.shape.LabelledPointGraph`
+            ==================================
+
+    Any instance of the above can be combined in the input `list`.
+
+    Parameters
+    ----------
+    shapes : `list`
+        The `list` of objects to be visualized. It can contain a combination of
+
+            ==================================
+            Object
+            ==================================
+            `menpo.shape.PointCloud`
+            `menpo.shape.PointUndirectedGraph`
+            `menpo.shape.PointDirectedGraph`
+            `menpo.shape.PointTree`
+            `menpo.shape.LabelledPointGraph`
+            ==================================
+
+        or subclasses of those.
+    browser_style : ``{'buttons', 'slider'}``, optional
+        It defines whether the selector of the objects will have the form of
+        plus/minus buttons or a slider.
+    custom_info_callback: `function` or ``None``, optional
+        If not ``None``, it should be a function that accepts a 2D shape
+        and returns a list of custom messages to be printed about it. Each
+        custom message will be printed in a separate line.
+    """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from ..utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
+    print_dynamic('Initializing...')
+
+    # Make sure that shapes is a list even with one member
+    if not isinstance(shapes, Sized):
+        shapes = [shapes]
+
+    # Get the number of shapes
+    n_shapes = len(shapes)
+
+    # Define the styling options
+    main_style = 'warning'
+    tabs_style = 'info'
+    tabs_border = '2px solid'
+    tabs_margin = '15px'
+
+    # Define render function
+    def render_function(change):
+        # Clear current figure
+        save_figure_wid.renderer.clear_figure()
+        ipydisplay.clear_output(wait=True)
+
+        # Get selected shape index
+        i = shape_number_wid.selected_values if n_shapes > 1 else 0
+
+        # Render shape with selected options
+        tmp1 = shape_options_wid.selected_values['lines']
+        tmp2 = shape_options_wid.selected_values['markers']
+        options = renderer_options_wid.selected_values['numbering_mayavi']
+        shapes[i].view(
+            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+            render_lines=tmp1['render_lines'],
+            line_colour=tmp1['line_colour'][0], line_width=tmp1['line_width'],
+            render_markers=tmp2['render_markers'],
+            marker_style=tmp2['marker_style'], marker_size=tmp2['marker_size'],
+            marker_colour=tmp2['marker_colour'][0],
+            marker_resolution=tmp2['marker_resolution'], step=1,
+            alpha=1.0, **options)
+        save_figure_wid.renderer.force_draw()
+
+        # Update info text widget
+        update_info(shapes[i], custom_info_callback=custom_info_callback)
+
+    # Define function that updates the info text
+    def update_info(shape, custom_info_callback=None):
+        min_b, max_b = shape.bounds()
+        rang = shape.range()
+        cm = shape.centre()
+        text_per_line = [
+            "> {} points".format(shape.n_points),
+            "> Bounds: [{0:.1f}-{1:.1f}]W, [{2:.1f}-{3:.1f}]H".format(
+                min_b[0], max_b[0], min_b[1], max_b[1]),
+            "> Range: {0:.1f}W, {1:.1f}H".format(rang[0], rang[1]),
+            "> Centre of mass: ({0:.1f}, {1:.1f})".format(cm[0], cm[1]),
+            "> Norm: {0:.2f}".format(shape.norm())]
+        if custom_info_callback is not None:
+            # iterate over the list of messages returned by the callback
+            # function and append them in the text_per_line.
+            for msg in custom_info_callback(shape):
+                text_per_line.append('> {}'.format(msg))
+        info_wid.set_widget_state(text_per_line=text_per_line)
+
+    # Create widgets
+    try:
+        labels = shapes[0].labels
+    except AttributeError:
+        labels = None
+    shape_options_wid = Shape3DOptionsWidget(
+        labels=labels, render_function=render_function, style=main_style,
+        suboptions_style=tabs_style)
+    renderer_options_wid = RendererOptionsWidget(
+        options_tabs=['numbering_mayavi'], labels=None,
+        render_function=render_function, style=tabs_style)
+    renderer_options_wid.container.margin = tabs_margin
+    renderer_options_wid.container.border = tabs_border
+    info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
+    info_wid.container.margin = tabs_margin
+    info_wid.container.border = tabs_border
+    save_figure_wid = SaveMayaviFigureOptionsWidget(style=tabs_style)
+    save_figure_wid.container.margin = tabs_margin
+    save_figure_wid.container.border = tabs_border
+
+    # Group widgets
+    if n_shapes > 1:
+        # Define function that updates options' widgets state
+        def update_widgets(change):
+            # Get current shape and check if it has labels
+            i = shape_number_wid.selected_values
+            try:
+                labels = shapes[i].labels
+            except AttributeError:
+                labels = None
+
+            # Update shape options
+            shape_options_wid.set_widget_state(labels=labels,
+                                               allow_callback=True)
+
+        # Shape selection slider
+        index = {'min': 0, 'max': n_shapes-1, 'step': 1, 'index': 0}
+        shape_number_wid = AnimationOptionsWidget(
+            index, render_function=update_widgets, index_style=browser_style,
+            interval=0.2, description='Shape', loop_enabled=True,
+            continuous_update=False, style=main_style)
+
+        # Header widget
+        logo_wid = LogoWidget(style=main_style)
+        header_wid = ipywidgets.HBox([logo_wid, shape_number_wid])
+        header_wid.layout.align_items = 'center'
+        header_wid.layout.margin = '0px 0px 10px 0px'
+    else:
+        # Header widget
+        header_wid = LogoWidget(style=main_style)
+        header_wid.layout.margin = '0px 10px 0px 0px'
+    options_box = ipywidgets.Tab([info_wid, shape_options_wid,
+                                  renderer_options_wid, save_figure_wid])
+    tab_titles = ['Info', 'Shape', 'Renderer', 'Export']
+    for (k, tl) in enumerate(tab_titles):
+        options_box.set_title(k, tl)
+    if n_shapes > 1:
+        wid = ipywidgets.VBox([header_wid, options_box])
+    else:
+        wid = ipywidgets.HBox([header_wid, options_box])
+
+    # Set widget's style
+    wid.box_style = main_style
+
+    # Display final widget
+    final_box = ipywidgets.Box([wid])
+    final_box.layout.display = 'flex'
+    ipydisplay.display(final_box)
+
+    # Trigger initial visualization
+    render_function({})
+    print_dynamic('')
 
 
 def visualize_shape_model_3d(shape_model, n_parameters=5, mode='multiple',
