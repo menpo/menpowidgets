@@ -3909,7 +3909,7 @@ class PlotMatplotlibOptionsWidget(MenpoWidget):
         self.tab_box.set_title(3, 'Axes')
         self.tab_box.set_title(4, 'Zoom')
         self.tab_box.set_title(5, 'Grid')
-        self.container = ipywidgets.VBox([self.tab_box])
+        self.container = ipywidgets.HBox([self.tab_box])
 
         # Create final widget
         super(PlotMatplotlibOptionsWidget, self).__init__(

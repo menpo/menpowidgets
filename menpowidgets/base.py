@@ -839,8 +839,7 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7),
     render_function({})
 
 
-def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(10, 6),
-               style='coloured'):
+def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(8, 4)):
     r"""
     Widget that allows plotting various curves in a graph.
 
@@ -859,9 +858,6 @@ def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(10, 6),
         ``None``, then the names format is ``curve {}.format(i)``.
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.
-    style : ``{'coloured', 'minimal'}``, optional
-        If ``'coloured'``, then the style of the widget will be coloured. If
-        ``minimal``, then the style is simple using black and white colours.
     """
     # Ensure that the code is being run inside a Jupyter kernel!
     from .utils import verify_ipython_and_kernel
@@ -873,16 +869,10 @@ def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(10, 6),
     n_curves = len(y_axis)
 
     # Define the styling options
-    if style == 'coloured':
-        logo_style = 'danger'
-        widget_box_style = 'danger'
-        tabs_style = 'warning'
-        save_figure_style = 'warning'
-    else:
-        logo_style = 'minimal'
-        widget_box_style = 'minimal'
-        tabs_style = 'minimal'
-        save_figure_style = 'minimal'
+    main_style = 'danger'
+    tabs_style = 'warning'
+    tabs_border = '2px solid'
+    tabs_margin = '15px'
 
     # Parse options
     if legend_entries is None:
@@ -895,47 +885,50 @@ def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(10, 6),
         ipydisplay.clear_output(wait=True)
 
         # plot with selected options
-        opts = wid.selected_values.copy()
+        opts = plot_wid.selected_values.copy()
         new_figure_size = (
-            wid.selected_values['zoom'][0] * figure_size[0],
-            wid.selected_values['zoom'][1] * figure_size[1])
+            plot_wid.selected_values['zoom'][0] * figure_size[0],
+            plot_wid.selected_values['zoom'][1] * figure_size[1])
         del opts['zoom']
-        renderer = plot_curve(
+        plot_curve(
             x_axis=x_axis, y_axis=y_axis, figure_size=new_figure_size,
             figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
             **opts)
 
         # show plot
-        plt.show()
-
-        # Save the current figure id
-        save_figure_wid.renderer = renderer
+        save_figure_wid.renderer.force_draw()
 
     # Create widgets
-    wid = PlotMatplotlibOptionsWidget(legend_entries=legend_entries,
-                                      render_function=render_function,
-                                      style=widget_box_style, tabs_style=tabs_style)
+    plot_wid = PlotMatplotlibOptionsWidget(
+        legend_entries=legend_entries, render_function=render_function,
+        style='', suboptions_style=tabs_style)
+    plot_wid.container.margin = tabs_margin
+    plot_wid.container.border = tabs_border
     save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
-                                                        style=save_figure_style)
+                                                        style=tabs_style)
+    save_figure_wid.container.margin = tabs_margin
+    save_figure_wid.container.border = tabs_border
 
     # Group widgets
-    logo = LogoWidget(style=logo_style)
-    logo.margin = '0.1cm'
-    tmp_children = list(wid.options_tab.children)
+    logo = LogoWidget(style=main_style)
+    tmp_children = list(plot_wid.tab_box.children)
     tmp_children.append(save_figure_wid)
-    wid.options_tab.children = tmp_children
-    wid.options_tab.set_title(0, 'Figure')
-    wid.options_tab.set_title(1, 'Renderer')
-    wid.options_tab.set_title(2, 'Legend')
-    wid.options_tab.set_title(3, 'Axes')
-    wid.options_tab.set_title(4, 'Zoom')
-    wid.options_tab.set_title(5, 'Grid')
-    wid.options_tab.set_title(6, 'Export')
-    wid.children = [logo, wid.options_tab]
-    wid.align = 'start'
+    plot_wid.tab_box.children = tmp_children
+    plot_wid.tab_box.set_title(0, 'Labels')
+    plot_wid.tab_box.set_title(1, 'Lines & Markers')
+    plot_wid.tab_box.set_title(2, 'Legend')
+    plot_wid.tab_box.set_title(3, 'Axes')
+    plot_wid.tab_box.set_title(4, 'Zoom')
+    plot_wid.tab_box.set_title(5, 'Grid')
+    plot_wid.tab_box.set_title(6, 'Export')
 
     # Display final widget
-    ipydisplay.display(wid)
+    wid = ipywidgets.HBox([logo, plot_wid])
+    wid.box_style = main_style
+    plot_wid.container.border = '0px'
+    final_box = ipywidgets.Box([wid])
+    final_box.layout.display = 'flex'
+    ipydisplay.display(final_box)
 
     # Trigger initial visualization
     render_function({})
