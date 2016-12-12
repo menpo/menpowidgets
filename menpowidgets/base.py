@@ -1649,7 +1649,7 @@ def visualize_patch_appearance_model(appearance_model, centers,
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
 
         # show image with selected options
-        renderer = render_patches(
+        render_patches(
             patches=instance.pixels, patch_centers=centers[level],
             renderer=save_figure_wid.renderer, figure_size=new_figure_size,
             **options)

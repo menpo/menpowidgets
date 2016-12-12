@@ -26,7 +26,7 @@ from ..options import (SaveMatplotlibFigureOptionsWidget, RendererOptionsWidget,
                        ImageOptionsWidget, PatchOptionsWidget,
                        LandmarkOptionsWidget, LinearModelParametersWidget,
                        PlotMatplotlibOptionsWidget, AnimationOptionsWidget,
-                       TextPrintWidget)
+                       TextPrintWidget, Shape2DOptionsWidget)
 from ..style import map_styles_to_hex_colours
 from ..tools import LogoWidget
 from ..utils import (render_patches, render_image,
@@ -339,7 +339,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
 def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                         mode='multiple', parameters_bounds=(-3.0, 3.0),
-                        figure_size=(7, 7), style='coloured'):
+                        figure_size=(7, 7)):
     r"""
     Widget that allows the dynamic visualization of a multi-scale patch-based
     Active Appearance Model.
@@ -370,9 +370,6 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         The minimum and maximum bounds, in std units, for the sliders.
     figure_size : (`int`, `int`), optional
         The size of the plotted figures.
-    style : ``{'coloured', 'minimal'}``, optional
-        If ``'coloured'``, then the style of the widget will be coloured. If
-        ``minimal``, then the style is simple using black and white colours.
     """
     # Ensure that the code is being run inside a Jupyter kernel!
     from menpowidgets.utils import verify_ipython_and_kernel
@@ -383,38 +380,10 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     n_levels = aam.n_scales
 
     # Define the styling options
-    if style == 'coloured':
-        model_style = 'info'
-        model_tab_style = 'danger'
-        model_parameters_style = 'danger'
-        patches_style = 'minimal'
-        patches_subwidgets_style = 'danger'
-        channels_style = 'danger'
-        logo_style = 'info'
-        widget_box_style = 'info'
-        widget_border_radius = 10
-        widget_border_width = 1
-        info_style = 'danger'
-        renderer_style = 'danger'
-        renderer_tabs_style = 'info'
-        save_figure_style = 'danger'
-    elif style == 'minimal':
-        model_style = 'info'
-        model_tab_style = ''
-        model_parameters_style = 'minimal'
-        patches_style = 'minimal'
-        patches_subwidgets_style = 'minimal'
-        channels_style = 'minimal'
-        logo_style = 'minimal'
-        widget_box_style = ''
-        widget_border_radius = 0
-        widget_border_width = 0
-        info_style = 'minimal'
-        renderer_style = 'minimal'
-        renderer_tabs_style = 'minimal'
-        save_figure_style = 'minimal'
-    else:
-        raise ValueError("style must be either coloured or minimal")
+    main_style = 'info'
+    tabs_style = 'danger'
+    tabs_border = '2px solid'
+    tabs_margin = '15px'
 
     # Get the maximum number of components per level
     max_n_shape = [sp.model.n_active_components for sp in aam.shape_models]
@@ -444,32 +413,26 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             appearance_weights=appearance_weights)
 
         # Render instance with selected options
-        options = renderer_options_wid.selected_values['lines']
-        options.update(renderer_options_wid.selected_values['markers'])
-        options.update(renderer_options_wid.selected_values['numbering'])
+        options = shape_options_wid.selected_values['lines']
+        options.update(shape_options_wid.selected_values['markers'])
+        options.update(renderer_options_wid.selected_values['numbering_matplotlib'])
         options.update(renderer_options_wid.selected_values['axes'])
-        options.update(renderer_options_wid.selected_values['image'])
+        image_options = dict(image_options_wid.selected_values)
+        del image_options['masked_enabled']
+        options.update(image_options)
         options.update(patch_options_wid.selected_values)
         new_figure_size = (
             renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
 
         # show image with selected options
-        renderer = render_patches(
+        render_patches(
             patches=appearance_instance.pixels, patch_centers=shape_instance,
             renderer=save_figure_wid.renderer, figure_size=new_figure_size,
-            channels=channel_options_wid.selected_values['channels'],
-            glyph_enabled=channel_options_wid.selected_values['glyph_enabled'],
-            glyph_block_size=channel_options_wid.selected_values['glyph_block_size'],
-            glyph_use_negative=channel_options_wid.selected_values['glyph_use_negative'],
-            sum_enabled=channel_options_wid.selected_values['sum_enabled'],
             **options)
 
         # Update info
         update_info(aam, appearance_instance, level)
-
-        # Save the current figure id
-        save_figure_wid.renderer = renderer
 
     # Define function that updates the info text
     def update_info(aam, appearance_instance, level):
@@ -516,9 +479,7 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         ipydisplay.clear_output(wait=True)
 
         # Get selected level
-        level = 0
-        if n_levels > 1:
-            level = level_wid.value
+        level = level_wid.value if n_levels > 1 else 0
 
         # Render
         new_figure_size = (
@@ -526,15 +487,12 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             renderer_options_wid.selected_values['zoom_one'] * 3)
         plt.subplot(121)
         aam.shape_models[level].model.plot_eigenvalues_ratio(
-            figure_id=save_figure_wid.renderer.figure_id)
+            figure_id=save_figure_wid.renderer.figure_id, new_figure=False)
         plt.subplot(122)
-        renderer = aam.shape_models[level].model.plot_eigenvalues_cumulative_ratio(
-            figure_id=save_figure_wid.renderer.figure_id,
+        aam.shape_models[level].model.plot_eigenvalues_cumulative_ratio(
+            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
             figure_size=new_figure_size)
-        plt.show()
-
-        # Save the current figure id
-        save_figure_wid.renderer = renderer
+        save_figure_wid.renderer.force_draw()
 
     # Plot appearance variance function
     def plot_appearance_variance(name):
@@ -543,9 +501,7 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         ipydisplay.clear_output(wait=True)
 
         # Get selected level
-        level = 0
-        if n_levels > 1:
-            level = level_wid.value
+        level = level_wid.value if n_levels > 1 else 0
 
         # Render
         new_figure_size = (
@@ -553,85 +509,98 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             renderer_options_wid.selected_values['zoom_one'] * 3)
         plt.subplot(121)
         aam.appearance_models[level].plot_eigenvalues_ratio(
-            figure_id=save_figure_wid.renderer.figure_id)
+            figure_id=save_figure_wid.renderer.figure_id, new_figure=False)
         plt.subplot(122)
-        renderer = aam.appearance_models[level]. \
+        aam.appearance_models[level]. \
             plot_eigenvalues_cumulative_ratio(
-            figure_id=save_figure_wid.renderer.figure_id,
+            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
             figure_size=new_figure_size)
-        plt.show()
-
-        # Save the current figure id
-        save_figure_wid.renderer = renderer
+        save_figure_wid.renderer.force_draw()
 
     # Create widgets
     shape_model_parameters_wid = LinearModelParametersWidget(
-            n_shape_parameters[0], render_function, params_str='Parameter ',
-            mode=mode, params_bounds=parameters_bounds, params_step=0.1,
-            plot_variance_visible=True, style=model_parameters_style,
-            plot_variance_function=plot_shape_variance,
-            animation_step=0.5, interval=0., loop_enabled=True)
+        n_shape_parameters[0], render_function, params_str='Parameter ',
+        mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+        plot_variance_visible=True, plot_variance_function=plot_shape_variance,
+        style=tabs_style, animation_step=0.5, interval=0., loop_enabled=True)
     appearance_model_parameters_wid = LinearModelParametersWidget(
-            n_appearance_parameters[0], render_function, params_str='Parameter ',
-            mode=mode, params_bounds=parameters_bounds, params_step=0.1,
-            plot_variance_visible=True, style=model_parameters_style,
-            plot_variance_function=plot_appearance_variance,
-            animation_step=0.5, interval=0., loop_enabled=True)
+        n_appearance_parameters[0], render_function, params_str='Parameter ',
+        mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+        plot_variance_visible=True,
+        plot_variance_function=plot_appearance_variance, style=tabs_style,
+        animation_step=0.5, interval=0., loop_enabled=True)
+    try:
+        labels = aam.shape_models[0].model.mean().labels
+    except AttributeError:
+        labels = None
+    shape_options_wid = Shape2DOptionsWidget(
+        labels=labels, render_function=None, style=main_style,
+        suboptions_style=tabs_style)
+    shape_options_wid.line_options_wid.render_lines_switch.button_wid.value = False
+    shape_options_wid.add_render_function(render_function)
     patch_options_wid = PatchOptionsWidget(
-            n_patches=aam.appearance_models[0].mean().pixels.shape[0],
-            n_offsets=aam.appearance_models[0].mean().pixels.shape[1],
-            render_function=render_function, style=patches_style,
-            subwidgets_style=patches_subwidgets_style)
-    channel_options_wid = ImageOptionsWidget(
-            n_channels=aam.appearance_models[0].mean().pixels.shape[2],
-            image_is_masked=False, render_function=render_function,
-            style=channels_style)
+        n_patches=aam.appearance_models[0].mean().pixels.shape[0],
+        n_offsets=aam.appearance_models[0].mean().pixels.shape[1],
+        render_function=render_function, style=tabs_style)
+    patch_options_wid.container.margin = tabs_margin
+    patch_options_wid.container.border = tabs_border
+    image_options_wid = ImageOptionsWidget(
+        n_channels=aam.appearance_models[0].mean().pixels.shape[2],
+        image_is_masked=False, render_function=None, style=tabs_style)
+    image_options_wid.interpolation_checkbox.button_wid.value = False
+    image_options_wid.add_render_function(render_function)
+    image_options_wid.container.margin = tabs_margin
+    image_options_wid.container.border = tabs_border
     renderer_options_wid = RendererOptionsWidget(
-            options_tabs=['image', 'markers', 'lines', 'numbering', 'zoom_one',
-                          'axes'], labels=None,
-            axes_x_limits=None, axes_y_limits=None,
-            render_function=None,  style=renderer_style,
-            tabs_style=renderer_tabs_style)
-    renderer_options_wid.options_widgets[0].interpolation_checkbox.value = True
-    renderer_options_wid.add_render_function(render_function)
-    info_wid = TextPrintWidget(text_per_line=[''] * 8, style=info_style)
+        options_tabs=['zoom_one', 'axes', 'numbering_matplotlib'], labels=None,
+        axes_x_limits=None, axes_y_limits=None,
+        render_function=render_function,  style=tabs_style)
+    renderer_options_wid.container.margin = tabs_margin
+    renderer_options_wid.container.border = tabs_border
+    info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
+    info_wid.container.margin = tabs_margin
+    info_wid.container.border = tabs_border
     save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
-                                                        style=save_figure_style)
-
-    # Define function that updates options' widgets state
-    def update_widgets(change):
-        value = change['new']
-        # Update shape model parameters
-        shape_model_parameters_wid.set_widget_state(
-            n_shape_parameters[value], params_str='Parameter ',
-            allow_callback=False)
-
-        # Update appearance model parameters
-        appearance_model_parameters_wid.set_widget_state(
-            n_appearance_parameters[value], params_str='Parameter ',
-            allow_callback=False)
-
-        # Update patch options
-        patch_options_wid.set_widget_state(
-            n_patches=aam.appearance_models[value].mean().pixels.shape[0],
-            n_offsets=aam.appearance_models[value].mean().pixels.shape[1],
-            allow_callback=False)
-
-        # Update channels options
-        channel_options_wid.set_widget_state(
-            n_channels=aam.appearance_models[value].mean().pixels.shape[2],
-            image_is_masked=False, allow_callback=True)
+                                                        style=tabs_style)
+    save_figure_wid.container.margin = tabs_margin
+    save_figure_wid.container.border = tabs_border
 
     # Group widgets
-    model_parameters_wid = ipywidgets.Tab(
-        children=[shape_model_parameters_wid, appearance_model_parameters_wid])
-    model_parameters_wid.set_title(0, 'Shape')
-    model_parameters_wid.set_title(1, 'Appearance')
-    model_parameters_wid = ipywidgets.FlexBox(children=[model_parameters_wid],
-                                              margin='0.2cm', padding='0.1cm',
-                                              box_style=model_tab_style)
+    model_parameters_wid = ipywidgets.HBox(
+        [ipywidgets.Tab([shape_model_parameters_wid,
+                        appearance_model_parameters_wid])])
+    model_parameters_wid.children[0].set_title(0, 'Shape')
+    model_parameters_wid.children[0].set_title(1, 'Appearance')
+    model_parameters_wid.box_style = tabs_style
+    model_parameters_wid.margin = tabs_margin
+    model_parameters_wid.border = tabs_border
     tmp_children = [model_parameters_wid]
     if n_levels > 1:
+        # Define function that updates options' widgets state
+        def update_widgets(change):
+            value = change['new']
+            # Update shape model parameters
+            shape_model_parameters_wid.set_widget_state(
+                n_shape_parameters[value], params_str='Parameter ',
+                allow_callback=False)
+
+            # Update appearance model parameters
+            appearance_model_parameters_wid.set_widget_state(
+                n_appearance_parameters[value], params_str='Parameter ',
+                allow_callback=False)
+
+            # Update patch options
+            patch_options_wid.set_widget_state(
+                n_patches=aam.appearance_models[value].mean().pixels.shape[0],
+                n_offsets=aam.appearance_models[value].mean().pixels.shape[1],
+                allow_callback=False)
+
+            # Update channels options
+            image_options_wid.set_widget_state(
+                n_channels=aam.appearance_models[value].mean().pixels.shape[2],
+                image_is_masked=False, allow_callback=True)
+
+        # Create pyramid radiobuttons
         radio_str = OrderedDict()
         for l in range(n_levels):
             if l == 0:
@@ -645,28 +614,26 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         level_wid.observe(update_widgets, names='value', type='change')
         level_wid.observe(render_function, names='value', type='change')
         tmp_children.insert(0, level_wid)
-    tmp_wid = ipywidgets.HBox(children=tmp_children, align='center',
-                              box_style=model_style)
-    options_box = ipywidgets.Tab(children=[tmp_wid, patch_options_wid,
-                                           channel_options_wid,
-                                           renderer_options_wid,
-                                           info_wid, save_figure_wid])
-    tab_titles = ['Model', 'Patches', 'Channels', 'Renderer', 'Info', 'Export']
+    tmp_wid = ipywidgets.HBox(tmp_children)
+    options_box = ipywidgets.Tab([tmp_wid, patch_options_wid,
+                                  image_options_wid, shape_options_wid,
+                                  renderer_options_wid, info_wid,
+                                  save_figure_wid])
+    tab_titles = ['Model', 'Patches', 'Channels', 'Shape', 'Renderer', 'Info',
+                  'Export']
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
-    logo_wid = LogoWidget(style=logo_style)
-    logo_wid.margin = '0.1cm'
-    wid = ipywidgets.HBox(children=[logo_wid, options_box], align='start')
+    logo_wid = LogoWidget(style=main_style)
+    logo_wid.layout.margin = '0px 10px 0px 0px'
+    wid = ipywidgets.HBox([logo_wid, options_box])
 
     # Set widget's style
-    wid.box_style = widget_box_style
-    wid.border_radius = widget_border_radius
-    wid.border_width = widget_border_width
-    wid.border_color = map_styles_to_hex_colours(widget_box_style)
-    renderer_options_wid.margin = '0.2cm'
+    wid.box_style = main_style
 
     # Display final widget
-    ipydisplay.display(wid)
+    final_box = ipywidgets.Box([wid])
+    final_box.layout.display = 'flex'
+    ipydisplay.display(final_box)
 
     # Trigger initial visualization
     render_function({})
