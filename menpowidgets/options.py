@@ -4998,7 +4998,7 @@ class CameraSnapshotWidget(MenpoWidget):
 
         # Assign preview callback
         def update_preview(_):
-            self.selected_values = self.camera_wid.snapshots
+            self.selected_values = self.camera_wid.snapshots.copy()
             # Convert image to bytes
             img = self.camera_wid.imageurl.encode('utf-8')
             img = b64decode(img[len('data:image/png;base64,'):])

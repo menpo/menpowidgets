@@ -840,7 +840,7 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7),
     render_function({})
 
 
-def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(8, 4)):
+def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(9, 5)):
     r"""
     Widget that allows plotting various curves in a graph.
 
@@ -1888,8 +1888,7 @@ def visualize_patch_appearance_model(appearance_model, centers,
     render_function({})
 
 
-def webcam_widget(canvas_width=640, hd=True, n_preview_windows=5,
-                  style='coloured'):
+def webcam_widget(canvas_width=640, hd=True, n_preview_windows=5):
     r"""
     Webcam widget for taking snapshots. The snapshots are dynamically previewed
     in a FIFO stack of thumbnails.
@@ -1906,9 +1905,6 @@ def webcam_widget(canvas_width=640, hd=True, n_preview_windows=5,
     n_preview_windows : `int`, optional
         The number of preview thumbnails that will be used as a FIFO stack to
         show the captured screenshots. It must be at least 4.
-    style : ``{'coloured', 'minimal'}``, optional
-        If ``'coloured'``, then the style of the widget will be coloured. If
-        ``minimal``, then the style is simple using black and white colours.
 
     Returns
     -------
@@ -1919,21 +1915,20 @@ def webcam_widget(canvas_width=640, hd=True, n_preview_windows=5,
     from .utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
 
-    # Define the styling options
-    if style == 'coloured':
-        wid_style = 'danger'
-        preview_style = 'warning'
-    else:
-        wid_style = 'minimal'
-        preview_style = 'minimal'
+    # Set update function
+    images = []
+
+    def update(_):
+        images.append(wid.selected_values[-1])
 
     # Create widgets
     wid = CameraSnapshotWidget(
         canvas_width=canvas_width, hd=hd, n_preview_windows=n_preview_windows,
-        preview_windows_margin=3, style=wid_style, preview_style=preview_style)
+        preview_windows_margin=3, style='danger', preview_style='warning',
+        render_function=update)
 
     # Display widget
     ipydisplay.display(wid)
 
     # Return
-    return wid.selected_values
+    return images
