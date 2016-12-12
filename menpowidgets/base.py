@@ -630,7 +630,7 @@ def visualize_images(images, figure_size=(7, 7), browser_style='buttons',
     render_function({})
 
 
-def visualize_patches(patches, patch_centers, figure_size=(7, 7), style='coloured',
+def visualize_patches(patches, patch_centers, figure_size=(7, 7),
                       browser_style='buttons', custom_info_callback=None):
     r"""
     Widget that allows browsing through a `list` of patch-based images.
@@ -643,9 +643,7 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7), style='coloure
         2. `list` of ``n_center * n_offset`` `menpo.image.Image` objects
 
     The patches can have a combination of different attributes, e.g. number of
-    centers, number of offsets, number of channels etc. The widget has options
-    tabs regarding the visualized patches, channels, the renderer (lines,
-    markers, numbering, figure, axes, image) and saving the figure to file.
+    centers, number of offsets, number of channels etc.
 
     Parameters
     ----------
@@ -662,9 +660,6 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7), style='coloure
         Otherwise, it needs to have the same length as patches.
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.
-    style : ``{'coloured', 'minimal'}``, optional
-        If ``'coloured'``, then the style of the widget will be coloured. If
-        ``minimal``, then the style is simple using black and white colours.
     browser_style : ``{'buttons', 'slider'}``, optional
         It defines whether the selector of the objects will have the form of
         plus/minus buttons or a slider.
@@ -678,12 +673,12 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7), style='coloure
     verify_ipython_and_kernel()
     print('Initializing...')
 
-    # Make sure that patches is a list even with one patches member
+    # Make sure that patches is a list even with one member
     if (isinstance(patches, list) and isinstance(patches[0], Image)) or \
             not isinstance(patches, list):
         patches = [patches]
 
-    # Make sure that patch_centers is a list even with one pointcloud
+    # Make sure that patch_centers is a list even with one shape
     if not isinstance(patch_centers, list):
         patch_centers = [patch_centers] * len(patches)
     elif isinstance(patch_centers, list) and len(patch_centers) == 1:
@@ -699,32 +694,10 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7), style='coloure
     n_patches = len(patches)
 
     # Define the styling options
-    if style == 'coloured':
-        logo_style = 'warning'
-        widget_box_style = 'warning'
-        widget_border_radius = 10
-        widget_border_width = 1
-        animation_style = 'warning'
-        channels_style = 'info'
-        patches_style = 'minimal'
-        patches_subwidgets_style = 'danger'
-        info_style = 'info'
-        renderer_style = 'info'
-        renderer_tabs_style = 'minimal'
-        save_figure_style = 'danger'
-    else:
-        logo_style = 'minimal'
-        widget_box_style = ''
-        widget_border_radius = 0
-        widget_border_width = 0
-        channels_style = 'minimal'
-        patches_style = 'minimal'
-        patches_subwidgets_style = 'minimal'
-        animation_style = 'minimal'
-        info_style = 'minimal'
-        renderer_style = 'minimal'
-        renderer_tabs_style = 'minimal'
-        save_figure_style = 'minimal'
+    main_style = 'info'
+    tabs_style = 'danger'
+    tabs_border = '2px solid'
+    tabs_margin = '15px'
 
     # Define render function
     def render_function(change):
@@ -733,35 +706,29 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7), style='coloure
         ipydisplay.clear_output(wait=True)
 
         # get selected index
-        im = image_number_wid.selected_values if n_patches > 1 else 0
+        i = image_number_wid.selected_values if n_patches > 1 else 0
 
         # show patch-based image with selected options
-        options = renderer_options_wid.selected_values['lines']
-        options.update(renderer_options_wid.selected_values['markers'])
-        options.update(renderer_options_wid.selected_values['numbering'])
+        options = shape_options_wid.selected_values['lines']
+        options.update(shape_options_wid.selected_values['markers'])
+        options.update(renderer_options_wid.selected_values['numbering_matplotlib'])
         options.update(renderer_options_wid.selected_values['axes'])
-        options.update(renderer_options_wid.selected_values['image'])
+        image_options = dict(image_options_wid.selected_values)
+        del image_options['masked_enabled']
+        options.update(image_options)
         options.update(patch_options_wid.selected_values)
         new_figure_size = (
             renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
 
         # show image with selected options
-        renderer = render_patches(
-            patches=patches[im], patch_centers=patch_centers[im],
+        render_patches(
+            patches=patches[i], patch_centers=patch_centers[i],
             renderer=save_figure_wid.renderer, figure_size=new_figure_size,
-            channels=channel_options_wid.selected_values['channels'],
-            glyph_enabled=channel_options_wid.selected_values['glyph_enabled'],
-            glyph_block_size=channel_options_wid.selected_values['glyph_block_size'],
-            glyph_use_negative=channel_options_wid.selected_values['glyph_use_negative'],
-            sum_enabled=channel_options_wid.selected_values['sum_enabled'],
             **options)
 
         # update info text widget
-        update_info(patches[im], custom_info_callback=custom_info_callback)
-
-        # Save the current figure id
-        save_figure_wid.renderer = renderer
+        update_info(patches[i], custom_info_callback=custom_info_callback)
 
     # Define function that updates the info text
     def update_info(ptchs, custom_info_callback=None):
@@ -781,42 +748,56 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7), style='coloure
         info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Create widgets
+    try:
+        labels = patch_centers[0].labels
+    except AttributeError:
+        labels = None
+    shape_options_wid = Shape2DOptionsWidget(
+        labels=labels, render_function=None, style=main_style,
+        suboptions_style=tabs_style)
+    shape_options_wid.line_options_wid.render_lines_switch.button_wid.value = False
+    shape_options_wid.add_render_function(render_function)
     patch_options_wid = PatchOptionsWidget(
         n_patches=patches[0].shape[0], n_offsets=patches[0].shape[1],
-        render_function=render_function, style=patches_style,
-        subwidgets_style=patches_subwidgets_style)
-    channel_options_wid = ImageOptionsWidget(
+        render_function=render_function, style=tabs_style)
+    patch_options_wid.container.margin = tabs_margin
+    patch_options_wid.container.border = tabs_border
+    image_options_wid = ImageOptionsWidget(
         n_channels=patches[0].shape[2], image_is_masked=False,
-        render_function=render_function, style=channels_style)
+        render_function=None, style=tabs_style)
+    image_options_wid.interpolation_checkbox.button_wid.value = False
+    image_options_wid.add_render_function(render_function)
+    image_options_wid.container.margin = tabs_margin
+    image_options_wid.container.border = tabs_border
     renderer_options_wid = RendererOptionsWidget(
-        options_tabs=['markers', 'lines', 'numbering', 'zoom_one', 'axes',
-                      'image'], labels=None,
+        options_tabs=['zoom_one', 'axes', 'numbering_matplotlib'], labels=None,
         axes_x_limits=None, axes_y_limits=None,
-        render_function=None,  style=renderer_style,
-        tabs_style=renderer_tabs_style)
-    renderer_options_wid.options_widgets[5].interpolation_checkbox.value = True
-    renderer_options_wid.add_render_function(render_function)
-    info_wid = TextPrintWidget(text_per_line=[''] * 3, style=info_style)
+        render_function=render_function,  style=tabs_style)
+    renderer_options_wid.container.margin = tabs_margin
+    renderer_options_wid.container.border = tabs_border
+    info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
+    info_wid.container.margin = tabs_margin
+    info_wid.container.border = tabs_border
     save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
-                                                        style=save_figure_style)
+                                                        style=tabs_style)
+    save_figure_wid.container.margin = tabs_margin
+    save_figure_wid.container.border = tabs_border
 
     # Group widgets
     if n_patches > 1:
         # Define function that updates options' widgets state
         def update_widgets(change):
-            # Get new groups and labels, then update landmark options
-            im = 0
-            if n_patches > 1:
-                im = image_number_wid.selected_values
+            # Selected object
+            i = image_number_wid.selected_values
 
             # Update patch options
             patch_options_wid.set_widget_state(
-                n_patches=patches[im].shape[0], n_offsets=patches[im].shape[1],
+                n_patches=patches[i].shape[0], n_offsets=patches[i].shape[1],
                 allow_callback=False)
 
             # Update channels options
-            channel_options_wid.set_widget_state(
-                n_channels=patches[im].shape[2], image_is_masked=False,
+            image_options_wid.set_widget_state(
+                n_channels=patches[i].shape[2], image_is_masked=False,
                 allow_callback=True)
 
         # Image selection slider
@@ -824,35 +805,35 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7), style='coloure
         image_number_wid = AnimationOptionsWidget(
             index, render_function=update_widgets, index_style=browser_style,
             interval=0.2, description='Image', loop_enabled=True,
-            continuous_update=False, style=animation_style)
+            continuous_update=False, style=main_style)
 
         # Header widget
-        header_wid = ipywidgets.HBox(
-            children=[LogoWidget(style=logo_style), image_number_wid],
-            align='start')
+        logo_wid = LogoWidget(style=main_style)
+        header_wid = ipywidgets.HBox([logo_wid, image_number_wid])
+        header_wid.layout.align_items = 'center'
+        header_wid.layout.margin = '0px 0px 10px 0px'
     else:
         # Header widget
-        header_wid = LogoWidget(style=logo_style)
-    header_wid.margin = '0.2cm'
-    options_box = ipywidgets.Tab(
-        children=[info_wid, patch_options_wid, channel_options_wid,
-                  renderer_options_wid, save_figure_wid], margin='0.2cm')
-    tab_titles = ['Info', 'Patches', 'Channels', 'Renderer', 'Export']
+        header_wid = LogoWidget(style=main_style)
+        header_wid.layout.margin = '0px 10px 0px 0px'
+    options_box = ipywidgets.Tab([info_wid, patch_options_wid,
+                                  image_options_wid, shape_options_wid,
+                                  renderer_options_wid, save_figure_wid])
+    tab_titles = ['Info', 'Patches', 'Image', 'Shape', 'Renderer', 'Export']
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
     if n_patches > 1:
-        wid = ipywidgets.VBox(children=[header_wid, options_box], align='start')
+        wid = ipywidgets.VBox([header_wid, options_box])
     else:
-        wid = ipywidgets.HBox(children=[header_wid, options_box], align='start')
+        wid = ipywidgets.HBox([header_wid, options_box])
 
     # Set widget's style
-    wid.box_style = widget_box_style
-    wid.border_radius = widget_border_radius
-    wid.border_width = widget_border_width
-    wid.border_color = map_styles_to_hex_colours(widget_box_style)
+    wid.box_style = main_style
 
     # Display final widget
-    ipydisplay.display(wid)
+    final_box = ipywidgets.Box([wid])
+    final_box.layout.display = 'flex'
+    ipydisplay.display(final_box)
 
     # Trigger initial visualization
     render_function({})

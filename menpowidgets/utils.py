@@ -1079,6 +1079,6 @@ def render_patches(patches, patch_centers, patches_indices, offset_index,
             figure_size=figure_size)
 
     # show plot
-    plt.show()
+    renderer.force_draw()
 
     return renderer
