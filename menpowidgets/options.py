@@ -4755,7 +4755,8 @@ class LinearModelParametersWidget(MenpoWidget):
             # The number of parameters hasn't changed
             if self.mode == 'multiple':
                 for p, sl in enumerate(self.sliders):
-                    sl.description = "{}{}".format(params_str, p)
+                    self.parameters_children[p].children[0].value = \
+                        "{}{}".format(params_str, p)
                     sl.min = params_bounds[0]
                     sl.max = params_bounds[1]
                     sl.step = params_step

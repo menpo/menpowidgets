@@ -17,7 +17,7 @@ from .options import (RendererOptionsWidget, TextPrintWidget,
                       Shape2DOptionsWidget, Shape3DOptionsWidget,
                       SaveMayaviFigureOptionsWidget)
 from .style import format_box, map_styles_to_hex_colours
-from .tools import LogoWidget
+from .tools import LogoWidget, SwitchWidget
 from .utils import (extract_group_labels_from_landmarks,
                     extract_groups_labels_from_image, render_image,
                     render_patches)
@@ -983,9 +983,8 @@ def save_mayavi_figure(renderer):
     ipydisplay.display(wid)
 
 
-def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
-                          parameters_bounds=(-3.0, 3.0), figure_size=(7, 7),
-                          style='coloured'):
+def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
+                             parameters_bounds=(-3.0, 3.0), figure_size=(7, 7)):
     r"""
     Widget that allows the dynamic visualization of a multi-scale linear
     statistical shape model.
@@ -1009,9 +1008,6 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
         The minimum and maximum bounds, in std units, for the sliders.
     figure_size : (`int`, `int`), optional
         The size of the plotted figures.
-    style : ``{'coloured', 'minimal'}``, optional
-        If ``'coloured'``, then the style of the widget will be coloured. If
-        ``minimal``, then the style is simple using black and white colours.
     """
     # Ensure that the code is being run inside a Jupyter kernel!
     from .utils import verify_ipython_and_kernel
@@ -1028,34 +1024,10 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
     n_levels = len(shape_model)
 
     # Define the styling options
-    if style == 'coloured':
-        model_parameters_style = 'info'
-        logo_style = 'warning'
-        widget_box_style = 'warning'
-        widget_border_radius = 10
-        widget_border_width = 1
-        info_style = 'info'
-        renderer_box_style = 'info'
-        renderer_box_border_colour = map_styles_to_hex_colours('info')
-        renderer_box_border_radius = 10
-        renderer_style = 'danger'
-        renderer_tabs_style = 'danger'
-        save_figure_style = 'danger'
-    elif style == 'minimal':
-        model_parameters_style = 'minimal'
-        logo_style = 'minimal'
-        widget_box_style = ''
-        widget_border_radius = 0
-        widget_border_width = 0
-        info_style = 'minimal'
-        renderer_box_style = ''
-        renderer_box_border_colour = 'black'
-        renderer_box_border_radius = 0
-        renderer_style = 'minimal'
-        renderer_tabs_style = 'minimal'
-        save_figure_style = 'minimal'
-    else:
-        raise ValueError("style must be either coloured or minimal")
+    main_style = 'warning'
+    tabs_style = 'info'
+    tabs_border = '2px solid'
+    tabs_margin = '15px'
 
     # Get the maximum number of components per level
     max_n_params = [sp.n_active_components for sp in shape_model]
@@ -1084,9 +1056,9 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
         mean = shape_model[level].mean()
 
         # Render shape instance with selected options
-        tmp1 = renderer_options_wid.selected_values['lines']
-        tmp2 = renderer_options_wid.selected_values['markers']
-        options = renderer_options_wid.selected_values['numbering']
+        tmp1 = shape_options_wid.selected_values['lines']
+        tmp2 = shape_options_wid.selected_values['markers']
+        options = renderer_options_wid.selected_values['numbering_matplotlib']
         options.update(renderer_options_wid.selected_values['axes'])
         new_figure_size = (
             renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
@@ -1098,34 +1070,33 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
             instance = shape_model[level].instance(weights)
 
             # Render mean shape
-            if mean_wid.value:
-                mean.view(figure_id=save_figure_wid.renderer.figure_id,
-                          new_figure=False, image_view=axes_mode_wid.value == 1,
-                          figure_size=None, render_lines=tmp1['render_lines'],
-                          line_colour='yellow', line_style=tmp1['line_style'],
-                          line_width=tmp1['line_width'],
-                          render_markers=tmp2['render_markers'],
-                          marker_style=tmp2['marker_style'],
-                          marker_size=tmp2['marker_size'],
-                          marker_face_colour='yellow',
-                          marker_edge_colour='yellow',
-                          marker_edge_width=tmp2['marker_edge_width'])
-
-            # Render instance
-            renderer = instance.view(
+            if mean_wid.selected_values:
+                mean.view(
                     figure_id=save_figure_wid.renderer.figure_id,
-                    new_figure=False, image_view=axes_mode_wid.value == 1,
-                    figure_size=new_figure_size,
-                    render_lines=tmp1['render_lines'],
-                    line_colour=tmp1['line_colour'][0],
-                    line_style=tmp1['line_style'],
+                    new_figure=False,
+                    image_view=shape_options_wid.selected_values['image_view'],
+                    figure_size=None, render_lines=tmp1['render_lines'],
+                    line_colour='yellow', line_style=tmp1['line_style'],
                     line_width=tmp1['line_width'],
                     render_markers=tmp2['render_markers'],
                     marker_style=tmp2['marker_style'],
                     marker_size=tmp2['marker_size'],
-                    marker_face_colour=tmp2['marker_face_colour'][0],
-                    marker_edge_colour=tmp2['marker_edge_colour'][0],
-                    marker_edge_width=tmp2['marker_edge_width'], **options)
+                    marker_face_colour='yellow', marker_edge_colour='yellow',
+                    marker_edge_width=tmp2['marker_edge_width'])
+
+            # Render instance
+            instance.view(
+                figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+                image_view=shape_options_wid.selected_values['image_view'],
+                figure_size=new_figure_size, render_lines=tmp1['render_lines'],
+                line_colour=tmp1['line_colour'][0],
+                line_style=tmp1['line_style'], line_width=tmp1['line_width'],
+                render_markers=tmp2['render_markers'],
+                marker_style=tmp2['marker_style'],
+                marker_size=tmp2['marker_size'],
+                marker_face_colour=tmp2['marker_face_colour'][0],
+                marker_edge_colour=tmp2['marker_edge_colour'][0],
+                marker_edge_width=tmp2['marker_edge_width'], **options)
 
             # Get instance range
             instance_range = instance.range()
@@ -1136,19 +1107,18 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
             instance_upper = shape_model[level].instance(weights)
 
             # Render mean shape
-            renderer = mean.view(
-                    figure_id=save_figure_wid.renderer.figure_id,
-                    new_figure=False, image_view=axes_mode_wid.value == 1,
-                    figure_size=new_figure_size,
-                    render_lines=tmp1['render_lines'],
-                    line_colour=tmp1['line_colour'][0],
-                    line_style=tmp1['line_style'], line_width=tmp1['line_width'],
-                    render_markers=tmp2['render_markers'],
-                    marker_style=tmp2['marker_style'],
-                    marker_size=tmp2['marker_size'],
-                    marker_face_colour=tmp2['marker_face_colour'][0],
-                    marker_edge_colour=tmp2['marker_edge_colour'][0],
-                    marker_edge_width=tmp2['marker_edge_width'])
+            mean.view(
+                figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+                image_view=shape_options_wid.selected_values['image_view'],
+                figure_size=new_figure_size, render_lines=tmp1['render_lines'],
+                line_colour=tmp1['line_colour'][0],
+                line_style=tmp1['line_style'], line_width=tmp1['line_width'],
+                render_markers=tmp2['render_markers'],
+                marker_style=tmp2['marker_style'],
+                marker_size=tmp2['marker_size'],
+                marker_face_colour=tmp2['marker_face_colour'][0],
+                marker_edge_colour=tmp2['marker_edge_colour'][0],
+                marker_edge_width=tmp2['marker_edge_width'])
 
             # Render vectors
             ax = plt.gca()
@@ -1163,7 +1133,7 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
                 yl = instance_lower.points[p, 1]
                 xu = instance_upper.points[p, 0]
                 yu = instance_upper.points[p, 1]
-                if axes_mode_wid.value == 1:
+                if shape_options_wid.selected_values['image_view']:
                     # image mode
                     lines = [[(ym, xm), (yl, xl)], [(ym, xm), (yu, xu)]]
                 else:
@@ -1186,23 +1156,20 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
                     x_min, x_max, y_min, y_max, tmp['axes_x_limits'],
                     tmp['axes_y_limits'])
             _set_axes_options(
-                    ax, render_axes=tmp['render_axes'],
-                    inverted_y_axis=axes_mode_wid.value == 1,
-                    axes_font_name=tmp['axes_font_name'],
-                    axes_font_size=tmp['axes_font_size'],
-                    axes_font_style=tmp['axes_font_style'],
-                    axes_font_weight=tmp['axes_font_weight'],
-                    axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
-                    axes_x_ticks=tmp['axes_x_ticks'],
-                    axes_y_ticks=tmp['axes_y_ticks'])
+                ax, render_axes=tmp['render_axes'],
+                inverted_y_axis=shape_options_wid.selected_values['image_view'],
+                axes_font_name=tmp['axes_font_name'],
+                axes_font_size=tmp['axes_font_size'],
+                axes_font_style=tmp['axes_font_style'],
+                axes_font_weight=tmp['axes_font_weight'],
+                axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
+                axes_x_ticks=tmp['axes_x_ticks'],
+                axes_y_ticks=tmp['axes_y_ticks'])
 
             # Get instance range
             instance_range = mean.range()
 
-        plt.show()
-
-        # Save the current figure id
-        save_figure_wid.renderer = renderer
+        save_figure_wid.renderer.force_draw()
 
         # Update info
         update_info(level, instance_range)
@@ -1238,65 +1205,72 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
             renderer_options_wid.selected_values['zoom_one'] * 3)
         plt.subplot(121)
         shape_model[level].plot_eigenvalues_ratio(
-            figure_id=save_figure_wid.renderer.figure_id)
+            figure_id=save_figure_wid.renderer.figure_id, new_figure=False)
         plt.subplot(122)
-        renderer = shape_model[level].plot_eigenvalues_cumulative_ratio(
-            figure_id=save_figure_wid.renderer.figure_id,
+        shape_model[level].plot_eigenvalues_cumulative_ratio(
+            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
             figure_size=new_figure_size)
-        plt.show()
-
-        # Save the current figure id
-        save_figure_wid.renderer = renderer
+        save_figure_wid.renderer.force_draw()
 
     # Create widgets
     mode_dict = OrderedDict()
     mode_dict['Deformation'] = 1
     mode_dict['Vectors'] = 2
     mode_wid = ipywidgets.RadioButtons(options=mode_dict,
-                                       description='Mode:', value=1)
+                                       description='Mode', value=1)
     mode_wid.observe(render_function, names='value', type='change')
-    mean_wid = ipywidgets.Checkbox(value=False,
-                                   description='Render mean shape')
-    mean_wid.observe(render_function, names='value', type='change')
+    mean_wid = SwitchWidget(
+        selected_value=False, description='Render mean shape',
+        description_location='right', switch_type='checkbox')
+    mean_wid.observe(render_function, names='selected_values', type='change')
 
     # Function that controls mean shape checkbox visibility
     def mean_visible(change):
         if change['new'] == 1:
-            mean_wid.disabled = False
+            mean_wid.button_wid.disabled = False
         else:
-            mean_wid.disabled = True
-            mean_wid.value = False
+            mean_wid.button_wid.disabled = True
+            mean_wid.set_widget_state(False, allow_callback=False)
     mode_wid.observe(mean_visible, names='value', type='change')
     model_parameters_wid = LinearModelParametersWidget(
         n_parameters[0], render_function, params_str='Parameter ',
         mode=mode, params_bounds=parameters_bounds, params_step=0.1,
         plot_variance_visible=True, plot_variance_function=plot_variance,
         animation_step=0.5, interval=0., loop_enabled=True,
-        style=model_parameters_style, continuous_update=False)
-    axes_mode_wid = ipywidgets.RadioButtons(
-        options={'Image': 1, 'Point cloud': 2}, description='Axes mode:',
-        value=1)
-    axes_mode_wid.observe(render_function, names='value', type='change')
+        style=tabs_style, continuous_update=False)
+    model_parameters_wid.container.margin = tabs_margin
+    model_parameters_wid.container.border = tabs_border
+    try:
+        labels = shape_model[0].mean_shape().labels
+    except AttributeError:
+        labels = None
+    shape_options_wid = Shape2DOptionsWidget(
+        labels=labels, render_function=render_function, style=main_style,
+        suboptions_style=tabs_style)
+    # TODO: Do I need legend here?
     renderer_options_wid = RendererOptionsWidget(
-        options_tabs=['markers', 'lines', 'numbering', 'zoom_one', 'axes'],
-        labels=None, axes_x_limits=0.1, axes_y_limits=0.1,
-        render_function=render_function, style=renderer_style,
-        tabs_style=renderer_tabs_style)
-    renderer_options_box = ipywidgets.VBox(
-        children=[axes_mode_wid, renderer_options_wid], align='center',
-        margin='0.1cm')
-    info_wid = TextPrintWidget(text_per_line=[''] * 6, style=info_style)
-    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
-                                                        style=save_figure_style)
-
-    # Define function that updates options' widgets state
-    def update_widgets(change):
-        model_parameters_wid.set_widget_state(
-            n_parameters=n_parameters[change['new']], params_str='Parameter ',
-            allow_callback=True)
+        options_tabs=['zoom_one', 'axes', 'numbering_matplotlib'],
+        labels=None,  axes_x_limits=0.1, axes_y_limits=0.1,
+        render_function=render_function, style=tabs_style)
+    renderer_options_wid.container.margin = tabs_margin
+    renderer_options_wid.container.border = tabs_border
+    info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
+    info_wid.container.margin = tabs_margin
+    info_wid.container.border = tabs_border
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget(style=tabs_style)
+    save_figure_wid.container.margin = tabs_margin
+    save_figure_wid.container.border = tabs_border
 
     # Group widgets
     if n_levels > 1:
+        # Define function that updates options' widgets state
+        def update_widgets(change):
+            print(n_parameters[change['new']])
+            model_parameters_wid.set_widget_state(
+                n_parameters=n_parameters[change['new']],
+                params_str='Parameter ', allow_callback=True)
+
+        # Create pyramid radiobuttons
         radio_str = OrderedDict()
         for l in range(n_levels):
             if l == 0:
@@ -1306,35 +1280,31 @@ def visualize_shape_model(shape_model, n_parameters=5, mode='multiple',
             else:
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
-            options=radio_str, description='Pyramid:', value=n_levels-1)
+            options=radio_str, description='Pyramid', value=n_levels-1)
         level_wid.observe(update_widgets, names='value', type='change')
         level_wid.observe(render_function, names='value', type='change')
         radio_children = [level_wid, mode_wid, mean_wid]
     else:
         radio_children = [mode_wid, mean_wid]
-    radio_wids = ipywidgets.VBox(children=radio_children, margin='0.3cm')
-    tmp_wid = ipywidgets.HBox(children=[radio_wids, model_parameters_wid])
-    options_box = ipywidgets.Tab(children=[tmp_wid, renderer_options_box,
-                                           info_wid, save_figure_wid])
-    tab_titles = ['Model', 'Renderer', 'Info', 'Export']
+    radio_wids = ipywidgets.VBox(radio_children)
+    tmp_wid = ipywidgets.HBox([radio_wids, model_parameters_wid])
+    options_box = ipywidgets.Tab([tmp_wid, shape_options_wid,
+                                  renderer_options_wid, info_wid,
+                                  save_figure_wid])
+    tab_titles = ['Model', 'Shape', 'Renderer', 'Info', 'Export']
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
-    logo_wid = LogoWidget(style=logo_style)
-    logo_wid.margin = '0.1cm'
-    wid = ipywidgets.HBox(children=[logo_wid, options_box], align='start')
+    logo_wid = LogoWidget(style=main_style)
+    logo_wid.layout.margin = '0px 10px 0px 0px'
+    wid = ipywidgets.HBox([logo_wid, options_box])
 
     # Set widget's style
-    wid.box_style = widget_box_style
-    wid.border_radius = widget_border_radius
-    wid.border_width = widget_border_width
-    wid.border_color = map_styles_to_hex_colours(widget_box_style)
-    renderer_options_wid.margin = '0.2cm'
-    format_box(renderer_options_box, renderer_box_style, True,
-               renderer_box_border_colour, 'solid', 1,
-               renderer_box_border_radius, '0.1cm', '0.2cm')
+    wid.box_style = main_style
 
     # Display final widget
-    ipydisplay.display(wid)
+    final_box = ipywidgets.Box([wid])
+    final_box.layout.display = 'flex'
+    ipydisplay.display(final_box)
 
     # Trigger initial visualization
     render_function({})

@@ -33,7 +33,7 @@ Models
 .. toctree::
     :maxdepth: 2
 
-    visualize_shape_model
+    visualize_shape_model_2d
     visualize_appearance_model
     visualize_patch_appearance_model
 
