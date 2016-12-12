@@ -27,7 +27,6 @@ from ..options import (SaveMatplotlibFigureOptionsWidget, RendererOptionsWidget,
                        LandmarkOptionsWidget, LinearModelParametersWidget,
                        PlotMatplotlibOptionsWidget, AnimationOptionsWidget,
                        TextPrintWidget, Shape2DOptionsWidget)
-from ..style import map_styles_to_hex_colours
 from ..tools import LogoWidget
 from ..utils import (render_patches, render_image,
                      extract_groups_labels_from_image)
@@ -1730,9 +1729,9 @@ def plot_ced(errors, legend_entries=None, error_range=None,
         return final_box
 
 
-def visualize_fitting_result(fitting_results, figure_size=(7, 7),
-                             browser_style='buttons',
-                             custom_info_callback=None):
+def visualize_fitting_results(fitting_results, figure_size=(7, 7),
+                              browser_style='buttons',
+                              custom_info_callback=None):
     r"""
     Widget that allows browsing through a `list` of fitting results.
 

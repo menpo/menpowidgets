@@ -42,5 +42,5 @@ Fitting Result
 .. toctree::
     :maxdepth: 2
 
-    visualize_fitting_result
+    visualize_fitting_results
     plot_ced
