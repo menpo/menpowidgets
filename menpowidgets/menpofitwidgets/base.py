@@ -1571,8 +1571,7 @@ def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(7, 7)):
 
 
 def plot_ced(errors, legend_entries=None, error_range=None,
-             error_type='me_norm', figure_size=(10, 6), style='coloured',
-             return_widget=False):
+             error_type='me_norm', figure_size=(9, 5), return_widget=False):
     r"""
     Widget for visualizing the cumulative error curves of the provided errors.
 
@@ -1600,9 +1599,6 @@ def plot_ced(errors, legend_entries=None, error_range=None,
         Specifies the type of the provided errors.
     figure_size : (`int`, `int`), optional
         The initial size of the rendered figure.
-    style : ``{'coloured', 'minimal'}``, optional
-        If ``'coloured'``, then the style of the widget will be coloured. If
-        ``minimal``, then the style is simple using black and white colours.
     return_widget : `bool`, optional
         If ``True``, the widget object will be returned so that it can be used
         as part of a parent widget. If ``False``, the widget object is not
@@ -1622,16 +1618,10 @@ def plot_ced(errors, legend_entries=None, error_range=None,
     n_curves = len(errors)
 
     # Define the styling options
-    if style == 'coloured':
-        logo_style = 'danger'
-        widget_box_style = 'danger'
-        tabs_style = 'warning'
-        save_figure_style = 'warning'
-    else:
-        logo_style = 'minimal'
-        widget_box_style = 'minimal'
-        tabs_style = 'minimal'
-        save_figure_style = 'minimal'
+    main_style = 'danger'
+    tabs_style = 'warning'
+    tabs_border = '2px solid'
+    tabs_margin = '15px'
 
     # Parse options
     if legend_entries is None:
@@ -1661,10 +1651,10 @@ def plot_ced(errors, legend_entries=None, error_range=None,
         ipydisplay.clear_output(wait=True)
 
         # plot with selected options
-        opts = wid.selected_values.copy()
+        opts = plot_wid.selected_values.copy()
         new_figure_size = (
-            wid.selected_values['zoom'][0] * figure_size[0],
-            wid.selected_values['zoom'][1] * figure_size[1])
+            plot_wid.selected_values['zoom'][0] * figure_size[0],
+            plot_wid.selected_values['zoom'][1] * figure_size[1])
         del opts['zoom']
         if opts['axes_x_limits'] is None:
             tmp_error_range = None
@@ -1674,67 +1664,70 @@ def plot_ced(errors, legend_entries=None, error_range=None,
             tmp_error_range = [opts['axes_x_limits'][0],
                                1.0001 * opts['axes_x_limits'][1],
                                x_axis_step]
-        renderer = plot_cumulative_error_distribution(
+        plot_cumulative_error_distribution(
             errors, error_range=tmp_error_range,
             figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
             figure_size=new_figure_size, **opts)
 
         # show plot
-        plt.show()
-
-        # Save the current figure id
-        save_figure_wid.renderer = renderer
+        save_figure_wid.renderer.force_draw()
 
     # Create widgets
-    wid = PlotMatplotlibOptionsWidget(legend_entries=legend_entries,
-                                      render_function=render_function,
-                                      style=widget_box_style, tabs_style=tabs_style)
+    plot_wid = PlotMatplotlibOptionsWidget(
+        legend_entries=legend_entries, render_function=render_function,
+        style='', suboptions_style=tabs_style)
+    plot_wid.container.margin = tabs_margin
+    plot_wid.container.border = tabs_border
     save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
-                                                        style=save_figure_style)
+                                                        style=tabs_style)
+    save_figure_wid.container.margin = tabs_margin
+    save_figure_wid.container.border = tabs_border
 
     # Set values in plot widget
-    wid.remove_render_function()
-    wid.axes_wid.axes_limits_widget.axes_x_limits_toggles.value = 'range'
-    wid.axes_wid.axes_limits_widget.axes_x_limits_range.set_widget_state(
+    plot_wid.remove_render_function()
+    plot_wid.x_label.value = x_label
+    plot_wid.y_label.value = 'Images Proportion'
+    plot_wid.title.value = 'Cumulative error distribution'
+    plot_wid.axes_wid.axes_limits_widget.axes_x_limits_toggles.value = 'range'
+    plot_wid.axes_wid.axes_limits_widget.axes_x_limits_range.set_widget_state(
         [0., x_axis_limit], allow_callback=False)
-    wid.axes_wid.axes_limits_widget.axes_y_limits_toggles.value = 'range'
-    wid.axes_wid.axes_limits_widget.axes_y_limits_range.set_widget_state(
+    plot_wid.axes_wid.axes_limits_widget.axes_y_limits_toggles.value = 'range'
+    plot_wid.axes_wid.axes_limits_widget.axes_y_limits_range.set_widget_state(
         [0., 1.], allow_callback=False)
-    wid.axes_wid.axes_ticks_widget.axes_x_ticks_toggles.value = 'auto'
+    plot_wid.axes_wid.axes_ticks_widget.axes_x_ticks_toggles.value = 'auto'
 
-    wid.axes_wid.axes_ticks_widget.axes_y_ticks_toggles.value = 'list'
-    wid.axes_wid.axes_ticks_widget.axes_y_ticks_list.set_widget_state(
+    plot_wid.axes_wid.axes_ticks_widget.axes_y_ticks_toggles.value = 'list'
+    plot_wid.axes_wid.axes_ticks_widget.axes_y_ticks_list.set_widget_state(
         list(np.arange(0., 1.1, 0.1)), allow_callback=False)
-    wid.x_label.value = x_label
-    wid.y_label.value = 'Images Proportion'
-    wid.title.value = 'Cumulative error distribution'
-    wid.add_render_function(render_function)
+    plot_wid.add_render_function(render_function)
 
     # Group widgets
-    logo = LogoWidget(style=logo_style)
-    logo.margin = '0.1cm'
-    tmp_children = list(wid.options_tab.children)
+    logo = LogoWidget(style=main_style)
+    tmp_children = list(plot_wid.tab_box.children)
     tmp_children.append(save_figure_wid)
-    wid.options_tab.children = tmp_children
-    wid.options_tab.set_title(0, 'Figure')
-    wid.options_tab.set_title(1, 'Renderer')
-    wid.options_tab.set_title(2, 'Legend')
-    wid.options_tab.set_title(3, 'Axes')
-    wid.options_tab.set_title(4, 'Zoom')
-    wid.options_tab.set_title(5, 'Grid')
-    wid.options_tab.set_title(6, 'Export')
-    wid.children = [logo, wid.options_tab]
-    wid.align = 'start'
+    plot_wid.tab_box.children = tmp_children
+    plot_wid.tab_box.set_title(0, 'Labels')
+    plot_wid.tab_box.set_title(1, 'Lines & Markers')
+    plot_wid.tab_box.set_title(2, 'Legend')
+    plot_wid.tab_box.set_title(3, 'Axes')
+    plot_wid.tab_box.set_title(4, 'Zoom')
+    plot_wid.tab_box.set_title(5, 'Grid')
+    plot_wid.tab_box.set_title(6, 'Export')
 
     # Display final widget
-    ipydisplay.display(wid)
+    wid = ipywidgets.HBox([logo, plot_wid])
+    wid.box_style = main_style
+    plot_wid.container.border = '0px'
+    final_box = ipywidgets.Box([wid])
+    final_box.layout.display = 'flex'
+    ipydisplay.display(final_box)
 
     # Trigger initial visualization
     render_function({})
 
     # return widget object if asked
     if return_widget:
-        return wid
+        return final_box
 
 
 def visualize_fitting_result(fitting_results, figure_size=(7, 7), style='coloured',
