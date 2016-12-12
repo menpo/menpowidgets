@@ -640,8 +640,7 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
 
 def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
-                  parameters_bounds=(-3.0, 3.0), figure_size=(7, 7),
-                  style='coloured'):
+                  parameters_bounds=(-3.0, 3.0), figure_size=(7, 7)):
     r"""
     Widget that allows the dynamic visualization of a multi-scale Active
     Template Model.
@@ -665,9 +664,6 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
         The minimum and maximum bounds, in std units, for the sliders.
     figure_size : (`int`, `int`), optional
         The size of the plotted figures.
-    style : ``{'coloured', 'minimal'}``, optional
-        If ``'coloured'``, then the style of the widget will be coloured. If
-        ``minimal``, then the style is simple using black and white colours.
     """
     # Ensure that the code is being run inside a Jupyter kernel!
     from menpowidgets.utils import verify_ipython_and_kernel
@@ -678,34 +674,10 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
     n_levels = atm.n_scales
 
     # Define the styling options
-    if style == 'coloured':
-        model_style = 'info'
-        model_parameters_style = 'danger'
-        channels_style = 'danger'
-        landmarks_style = 'danger'
-        logo_style = 'info'
-        widget_box_style = 'info'
-        widget_border_radius = 10
-        widget_border_width = 1
-        info_style = 'danger'
-        renderer_style = 'danger'
-        renderer_tabs_style = 'info'
-        save_figure_style = 'danger'
-    elif style == 'minimal':
-        model_style = ''
-        model_parameters_style = 'minimal'
-        channels_style = 'minimal'
-        landmarks_style = 'minimal'
-        logo_style = 'minimal'
-        widget_box_style = ''
-        widget_border_radius = 0
-        widget_border_width = 0
-        info_style = 'minimal'
-        renderer_style = 'minimal'
-        renderer_tabs_style = 'minimal'
-        save_figure_style = 'minimal'
-    else:
-        raise ValueError("style must be either coloured or minimal")
+    main_style = 'info'
+    tabs_style = 'danger'
+    tabs_border = '2px solid'
+    tabs_margin = '15px'
 
     # Get the maximum number of components per level
     max_n_shape = [sp.model.n_active_components for sp in atm.shape_models]
@@ -728,16 +700,16 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
         shape_weights = shape_model_parameters_wid.selected_values
         instance = atm.instance(scale_index=level, shape_weights=shape_weights)
         image_is_masked = isinstance(instance, MaskedImage)
-        selected_group = landmark_options_wid.selected_values['group']
+        selected_group = landmark_options_wid.selected_values['landmarks']['group']
 
         # Render instance with selected options
-        tmp1 = renderer_options_wid.selected_values['lines']
-        tmp2 = renderer_options_wid.selected_values['markers']
-        options = renderer_options_wid.selected_values['numbering']
+        tmp1 = landmark_options_wid.selected_values['lines']
+        tmp2 = landmark_options_wid.selected_values['markers']
+        options = renderer_options_wid.selected_values['numbering_matplotlib']
+        options.update(renderer_options_wid.selected_values['legend'])
         options.update(renderer_options_wid.selected_values['axes'])
-        options.update(renderer_options_wid.selected_values['image'])
-        options.update(channel_options_wid.selected_values)
-        options.update(landmark_options_wid.selected_values)
+        options.update(image_options_wid.selected_values)
+        options.update(landmark_options_wid.selected_values['landmarks'])
         new_figure_size = (
             renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
@@ -746,38 +718,26 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
         marker_face_colour = []
         marker_edge_colour = []
         if instance.has_landmarks:
-            for lbl in landmark_options_wid.selected_values['with_labels']:
+            for lbl in landmark_options_wid.selected_values['landmarks']['with_labels']:
                 lbl_idx = instance.landmarks[selected_group].labels.index(lbl)
                 line_colour.append(tmp1['line_colour'][lbl_idx])
                 marker_face_colour.append(tmp2['marker_face_colour'][lbl_idx])
                 marker_edge_colour.append(tmp2['marker_edge_colour'][lbl_idx])
 
         # show image with selected options
-        renderer = render_image(
+        render_image(
             image=instance, renderer=save_figure_wid.renderer,
-            image_is_masked=image_is_masked,
-            render_lines=tmp1['render_lines'], line_style=tmp1['line_style'],
-            line_width=tmp1['line_width'], line_colour=line_colour,
-            render_markers=tmp2['render_markers'],
-            marker_style=tmp2['marker_style'],
-            marker_size=tmp2['marker_size'],
+            image_is_masked=image_is_masked, render_lines=tmp1['render_lines'],
+            line_style=tmp1['line_style'], line_width=tmp1['line_width'],
+            line_colour=line_colour, render_markers=tmp2['render_markers'],
+            marker_style=tmp2['marker_style'], marker_size=tmp2['marker_size'],
             marker_edge_width=tmp2['marker_edge_width'],
             marker_edge_colour=marker_edge_colour,
             marker_face_colour=marker_face_colour,
-            figure_size=new_figure_size, legend_n_columns=None,
-            legend_border_axes_pad=None, legend_rounded_corners=None,
-            legend_title=None, legend_horizontal_spacing=None,
-            legend_shadow=None, legend_location=None, legend_font_name=None,
-            legend_bbox_to_anchor=None, legend_border=None,
-            legend_marker_scale=None, legend_vertical_spacing=None,
-            legend_font_weight=None, legend_font_size=None, render_legend=False,
-            legend_font_style=None, legend_border_padding=None, **options)
+            figure_size=new_figure_size, **options)
 
         # Update info
         update_info(atm, instance, level, selected_group)
-
-        # Save the current figure id
-        save_figure_wid.renderer = renderer
 
     # Define function that updates the info text
     def update_info(atm, instance, level, group):
@@ -816,9 +776,7 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
         ipydisplay.clear_output(wait=True)
 
         # Get selected level
-        level = 0
-        if n_levels > 1:
-            level = level_wid.value
+        level = level_wid.value if n_levels > 1 else 0
 
         # Render
         new_figure_size = (
@@ -826,61 +784,68 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
             renderer_options_wid.selected_values['zoom_one'] * 3)
         plt.subplot(121)
         atm.shape_models[level].model.plot_eigenvalues_ratio(
-            figure_id=save_figure_wid.renderer.figure_id)
+            figure_id=save_figure_wid.renderer.figure_id, new_figure=False)
         plt.subplot(122)
         renderer = atm.shape_models[level].model.plot_eigenvalues_cumulative_ratio(
-            figure_id=save_figure_wid.renderer.figure_id,
+            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
             figure_size=new_figure_size)
-        plt.show()
-
-        # Save the current figure id
-        save_figure_wid.renderer = renderer
-
+        save_figure_wid.renderer.force_draw()
+        
     # Create widgets
     shape_model_parameters_wid = LinearModelParametersWidget(
-            n_shape_parameters[0], render_function, params_str='Parameter ',
-            mode=mode, params_bounds=parameters_bounds, params_step=0.1,
-            plot_variance_visible=True,
-            plot_variance_function=plot_shape_variance,
-            style=model_parameters_style, animation_step=0.5, interval=0.,
-            loop_enabled=True)
+        n_shape_parameters[0], render_function, params_str='Parameter ',
+        mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+        plot_variance_visible=True, plot_variance_function=plot_shape_variance,
+        style=tabs_style, animation_step=0.5, interval=0., loop_enabled=True)
+    shape_model_parameters_wid.container.margin = tabs_margin
+    shape_model_parameters_wid.container.border = tabs_border
     groups_keys, labels_keys = extract_groups_labels_from_image(
-            atm.warped_templates[0])
-    channel_options_wid = ImageOptionsWidget(
-            n_channels=atm.warped_templates[0].n_channels,
-            image_is_masked=isinstance(atm.warped_templates[0], MaskedImage),
-            render_function=render_function, style=channels_style)
-    renderer_options_wid = RendererOptionsWidget(
-            options_tabs=['markers', 'lines', 'image', 'numbering', 'zoom_one',
-                          'axes'], labels=labels_keys[0],
-            axes_x_limits=None, axes_y_limits=None,
-            render_function=render_function,  style=renderer_style,
-            tabs_style=renderer_tabs_style)
+        atm.warped_templates[0])
+    image_options_wid = ImageOptionsWidget(
+        n_channels=atm.warped_templates[0].n_channels,
+        image_is_masked=isinstance(atm.warped_templates[0], MaskedImage),
+        render_function=render_function, style=tabs_style)
+    image_options_wid.container.margin = tabs_margin
+    image_options_wid.container.border = tabs_border
     landmark_options_wid = LandmarkOptionsWidget(
-            group_keys=groups_keys, labels_keys=labels_keys,
-            render_function=render_function, style=landmarks_style,
-            renderer_widget=renderer_options_wid)
-    info_wid = TextPrintWidget(text_per_line=[''] * 10, style=info_style)
+        group_keys=groups_keys, labels_keys=labels_keys,
+        type='2D', render_function=render_function, style=main_style,
+        suboptions_style=tabs_style)
+    landmark_options_wid.container.margin = tabs_margin
+    landmark_options_wid.container.border = tabs_border
+    renderer_options_wid = RendererOptionsWidget(
+        options_tabs=['zoom_one', 'axes', 'numbering_matplotlib', 'legend'],
+        labels=None, axes_x_limits=None, axes_y_limits=None,
+        render_function=render_function, style=tabs_style)
+    renderer_options_wid.container.margin = tabs_margin
+    renderer_options_wid.container.border = tabs_border
+    info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
+    info_wid.container.margin = tabs_margin
+    info_wid.container.border = tabs_border
     save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
-                                                        style=save_figure_style)
-
-    # Define function that updates options' widgets state
-    def update_widgets(change):
-        value = change['new']
-        # Update shape model parameters
-        shape_model_parameters_wid.set_widget_state(
-            n_shape_parameters[value], params_str='Parameter ',
-            allow_callback=False)
-
-        # Update channel options
-        channel_options_wid.set_widget_state(
-            n_channels=atm.warped_templates[value].n_channels,
-            image_is_masked=isinstance(atm.warped_templates[value], MaskedImage),
-            allow_callback=True)
+                                                        style=tabs_style)
+    save_figure_wid.container.margin = tabs_margin
+    save_figure_wid.container.border = tabs_border
 
     # Group widgets
     tmp_children = [shape_model_parameters_wid]
     if n_levels > 1:
+        # Define function that updates options' widgets state
+        def update_widgets(change):
+            value = change['new']
+            # Update shape model parameters
+            shape_model_parameters_wid.set_widget_state(
+                n_shape_parameters[value], params_str='Parameter ',
+                allow_callback=False)
+
+            # Update channel options
+            image_options_wid.set_widget_state(
+                n_channels=atm.warped_templates[value].n_channels,
+                image_is_masked=isinstance(atm.warped_templates[value],
+                                           MaskedImage),
+                allow_callback=True)
+
+        # Create pyramid radiobuttons
         radio_str = OrderedDict()
         for l in range(n_levels):
             if l == 0:
@@ -894,29 +859,24 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
         level_wid.observe(update_widgets, names='value', type='change')
         level_wid.observe(render_function, names='value', type='change')
         tmp_children.insert(0, level_wid)
-    tmp_wid = ipywidgets.HBox(children=tmp_children, align='center',
-                              box_style=model_style)
-    options_box = ipywidgets.Tab(children=[tmp_wid, channel_options_wid,
-                                           landmark_options_wid,
-                                           renderer_options_wid,
-                                           info_wid, save_figure_wid])
-    tab_titles = ['Model', 'Channels', 'Landmarks', 'Renderer', 'Info',
-                  'Export']
+    tmp_wid = ipywidgets.HBox(tmp_children)
+    options_box = ipywidgets.Tab([tmp_wid, image_options_wid,
+                                  landmark_options_wid, renderer_options_wid,
+                                  info_wid, save_figure_wid])
+    tab_titles = ['Model', 'Image', 'Landmarks', 'Renderer', 'Info', 'Export']
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
-    logo_wid = LogoWidget(style=logo_style)
-    logo_wid.margin = '0.1cm'
-    wid = ipywidgets.HBox(children=[logo_wid, options_box], align='start')
+    logo_wid = LogoWidget(style=main_style)
+    logo_wid.layout.margin = '0px 10px 0px 0px'
+    wid = ipywidgets.HBox([logo_wid, options_box])
 
     # Set widget's style
-    wid.box_style = widget_box_style
-    wid.border_radius = widget_border_radius
-    wid.border_width = widget_border_width
-    wid.border_color = map_styles_to_hex_colours(widget_box_style)
-    renderer_options_wid.margin = '0.2cm'
+    wid.box_style = main_style
 
     # Display final widget
-    ipydisplay.display(wid)
+    final_box = ipywidgets.Box([wid])
+    final_box.layout.display = 'flex'
+    ipydisplay.display(final_box)
 
     # Trigger initial visualization
     render_function({})
