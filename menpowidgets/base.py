@@ -16,7 +16,6 @@ from .options import (RendererOptionsWidget, TextPrintWidget,
                       LinearModelParametersWidget, CameraSnapshotWidget,
                       Shape2DOptionsWidget, Shape3DOptionsWidget,
                       SaveMayaviFigureOptionsWidget)
-from .style import format_box, map_styles_to_hex_colours
 from .tools import LogoWidget, SwitchWidget
 from .utils import (extract_group_labels_from_landmarks,
                     extract_groups_labels_from_image, render_image,
@@ -1369,9 +1368,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
         ipydisplay.clear_output(wait=True)
 
         # Get selected level
-        level = 0
-        if n_levels > 1:
-            level = level_wid.value
+        level = level_wid.value if n_levels > 1 else 0
 
         # Compute weights and instance
         parameters = model_parameters_wid.selected_values
@@ -1444,9 +1441,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
         ipydisplay.clear_output(wait=True)
 
         # Get selected level
-        level = 0
-        if n_levels > 1:
-            level = level_wid.value
+        level = level_wid.value if n_levels > 1 else 0
 
         # Render
         new_figure_size = (
@@ -1472,7 +1467,6 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
     model_parameters_wid.container.border = tabs_border
     groups_keys, labels_keys = extract_groups_labels_from_image(
         appearance_model[0].mean())
-    first_label = labels_keys[0] if labels_keys else None
     image_options_wid = ImageOptionsWidget(
         n_channels=appearance_model[0].mean().n_channels,
         image_is_masked=isinstance(appearance_model[0].mean(), MaskedImage),
@@ -1487,7 +1481,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
     landmark_options_wid.container.border = tabs_border
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['zoom_one', 'axes', 'numbering_matplotlib', 'legend'],
-        labels=first_label, axes_x_limits=None, axes_y_limits=None,
+        axes_x_limits=None, axes_y_limits=None,
         render_function=render_function,  style=tabs_style)
     renderer_options_wid.container.margin = tabs_margin
     renderer_options_wid.container.border = tabs_border
@@ -1731,7 +1725,8 @@ def visualize_patch_appearance_model(appearance_model, centers,
     patch_options_wid.container.border = tabs_border
     image_options_wid = ImageOptionsWidget(
         n_channels=appearance_model[0].mean().pixels.shape[2],
-        image_is_masked=False, render_function=None, style=tabs_style)
+        image_is_masked=isinstance(appearance_model[0].mean(), MaskedImage),
+        render_function=None, style=tabs_style)
     image_options_wid.interpolation_checkbox.button_wid.value = False
     image_options_wid.add_render_function(render_function)
     image_options_wid.container.margin = tabs_margin
@@ -1770,7 +1765,9 @@ def visualize_patch_appearance_model(appearance_model, centers,
             # Update channels options
             image_options_wid.set_widget_state(
                 n_channels=appearance_model[value].mean().pixels.shape[2],
-                image_is_masked=False, allow_callback=True)
+                image_is_masked=isinstance(appearance_model[value].mean(),
+                                           MaskedImage),
+                allow_callback=True)
 
         # Define pyramid radiobuttons
         radio_str = OrderedDict()
