@@ -191,6 +191,7 @@ def visualize_shapes_3d(shapes, browser_style='buttons',
 
     # Set widget's style
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
 
     # Display final widget
     final_box = ipywidgets.Box([wid])

@@ -222,6 +222,7 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
 
     # Set widget's style
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -412,6 +413,7 @@ def visualize_landmarks_2d(landmarks, figure_size=(7, 7),
 
     # Set widget's style
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -619,6 +621,7 @@ def visualize_images(images, figure_size=(7, 7), browser_style='buttons',
 
     # Set widget's style
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -828,6 +831,7 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7),
 
     # Set widget's style
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -924,6 +928,7 @@ def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(9, 5)):
     # Display final widget
     wid = ipywidgets.HBox([logo, plot_wid])
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
     plot_wid.container.border = '0px'
     final_box = ipywidgets.Box([wid])
     final_box.layout.display = 'flex'
@@ -1298,6 +1303,7 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
 
     # Set widget's style
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -1543,6 +1549,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
 
     # Set widget's style
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -1797,6 +1804,7 @@ def visualize_patch_appearance_model(appearance_model, centers,
 
     # Set widget's style
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -1845,6 +1853,7 @@ def webcam_widget(canvas_width=640, hd=True, n_preview_windows=5):
         canvas_width=canvas_width, hd=hd, n_preview_windows=n_preview_windows,
         preview_windows_margin=3, style='danger', preview_style='warning',
         render_function=update)
+    wid.container.layout.border = '2px solid'
 
     # Display widget
     ipydisplay.display(wid)

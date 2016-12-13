@@ -326,6 +326,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
     # Set widget's style
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -628,6 +629,7 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
     # Set widget's style
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -871,6 +873,7 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
 
     # Set widget's style
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -1111,6 +1114,7 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
 
     # Set widget's style
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -1363,6 +1367,7 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
 
     # Set widget's style
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -1559,6 +1564,7 @@ def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(7, 7)):
 
     # Set widget's style
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -1716,6 +1722,7 @@ def plot_ced(errors, legend_entries=None, error_range=None,
     # Display final widget
     wid = ipywidgets.HBox([logo, plot_wid])
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
     plot_wid.container.border = '0px'
     final_box = ipywidgets.Box([wid])
     final_box.layout.display = 'flex'
@@ -2142,6 +2149,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7),
 
     # Set widget's style
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
