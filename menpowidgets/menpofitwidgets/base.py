@@ -31,7 +31,7 @@ from ..tools import LogoWidget
 from ..utils import (render_patches, render_image,
                      extract_groups_labels_from_image)
 
-from .options import IterativeResultOptionsWidget
+from ..options import IterativeResultOptionsWidget
 
 
 def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,

@@ -23,3 +23,5 @@ and :ref:`api-menpofit-base-index`.
     Shape2DOptionsWidget
     Shape3DOptionsWidget
     TextPrintWidget
+    ResultOptionsWidget
+    IterativeResultOptionsWidget

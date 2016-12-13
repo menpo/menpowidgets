@@ -48,7 +48,6 @@ Options Widgets
       :maxdepth: 1
 
       menpowidgets/options/index
-      menpowidgets/menpofitwidgets/options/index
 
 
 Tools Widgets
