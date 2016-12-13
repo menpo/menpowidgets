@@ -27,8 +27,7 @@ MENPO_INFO_LOGO = None
 
 class LogoWidget(ipywidgets.Box):
     r"""
-    Creates a widget with Menpo's logo image. The widget stores the image in
-    ``self.image`` using `ipywidgets.Image`.
+    Creates a widget with Menpo's logo image.
 
     Parameters
     ----------
@@ -83,19 +82,11 @@ class LogoWidget(ipywidgets.Box):
                              "given.".format(style))
         super(LogoWidget, self).__init__(children=[self.image])
 
-        # Set image width
-        self.image.width = '50px'
-
 
 class SwitchWidget(MenpoWidget):
     r"""
-    Creates an on/off switch widget.
-
-    * The selected value is stored in the ``self.selected_values`` `trait`.
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * To update the handler callback function of the widget, please refer to the
-      :meth:`replace_render_function` method.
+    Creates an on/off switch widget. It can have the form of either a
+    checkbox or an on/off toggle button.
 
     Parameters
     ----------
@@ -119,17 +110,15 @@ class SwitchWidget(MenpoWidget):
         # Create children
         self.description_wid = ipywidgets.Label(value=description)
         if switch_type == 'toggle':
-            self.button_wid = ipywidgets.ToggleButton(value=selected_value)
-            self.button_wid.layout.width = '10px'
-            self.button_wid.layout.height = '10px'
-            self.button_wid.layout.border = '3px solid black'
+            button_style = 'danger'
             if selected_value:
-                self.button_wid.button_style = 'success'
-            else:
-                self.button_wid.button_style = 'danger'
+                button_style = 'success'
+            self.button_wid = ipywidgets.ToggleButton(
+                value=selected_value, button_style=button_style,
+                width='10px', height='10px', border='3px solid black')
         elif switch_type == 'checkbox':
-            self.button_wid = ipywidgets.Checkbox(value=selected_value)
-            self.button_wid.layout.width = '14px'
+            self.button_wid = ipywidgets.Checkbox(value=selected_value,
+                                                  width='14px')
         else:
             raise ValueError("switch_type can be either 'toggle' or 'checkbox'")
         self.switch_type = switch_type
@@ -194,12 +183,6 @@ class ListWidget(MenpoWidget):
     Creates a widget for selecting a `list` of numbers. It supports both
     `int` and `float`.
 
-    * The selected values are stored in the ``self.selected_values`` `trait`.
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * To update the handler callback function of the widget, please refer to the
-      :meth:`replace_render_function` method.
-
     Parameters
     ----------
     selected_list : `list`
@@ -243,12 +226,15 @@ class ListWidget(MenpoWidget):
         self.cmd_text = ipywidgets.Text(value=selected_cmd[:-2],
                                         placeholder='Type command',
                                         width='{}px'.format(width - 16))
-        self.example = ipywidgets.HTML(value=example_str)
-        self.error_msg = ipywidgets.HTML(value='')
+        self.example = ipywidgets.HTML(
+            value=example_str,
+            layout=ipywidgets.Layout(
+                display='inline' if example_visible else 'none'))
+        self.error_msg = ipywidgets.HTML(
+            value='', layout=ipywidgets.Layout(display='none'))
         self.state_icon = ipywidgets.HTML(
-            value='<i class="fa fa-check" style="color:green"></i>')
-        self.state_icon.layout.width = '16px'
-        self.state_icon.layout.margin = '0.1cm'
+            value='<i class="fa fa-check" style="color:green"></i>',
+            width='16px', margin='0.1cm')
 
         # Group widgets
         self.box_1 = ipywidgets.HBox([self.cmd_text, self.state_icon])
@@ -256,11 +242,6 @@ class ListWidget(MenpoWidget):
         self.box_2 = ipywidgets.VBox([self.box_1, self.example, self.error_msg])
         self.container = ipywidgets.HBox([self.cmd_description, self.box_2])
         self.container.layout.align_items = 'baseline'
-        self.container.layout.display = 'flex'
-
-        # Set visibility
-        self.example.layout.display = 'inline' if example_visible else 'none'
-        self.error_msg.layout.display = 'none'
 
         # Create final widget
         super(ListWidget, self).__init__([self.container], List, selected_list,
@@ -345,12 +326,6 @@ class MultipleSelectionTogglesWidget(MenpoWidget):
     r"""
     Creates a widget for selecting multiple binary flags from toggle buttons.
 
-    * The selected values are stored in the ``self.selected_values`` `trait`.
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * To update the handler callback function of the widget, please refer to the
-      :meth:`replace_render_function` method.
-
     Parameters
     ----------
     labels : `list`
@@ -378,12 +353,11 @@ class MultipleSelectionTogglesWidget(MenpoWidget):
 
         # Create children
         self.labels_title = ipywidgets.Label(value=description)
-        self.labels_toggles = []
-        for l in labels:
-            w = ipywidgets.ToggleButton(description=l, value=l in with_labels,
-                                        width='{}px'.format((len(l) + 2) * 9))
-            w.button_style = buttons_style
-            self.labels_toggles.append(w)
+        self.labels_toggles = [
+            ipywidgets.ToggleButton(description=l, value=l in with_labels,
+                                    width='{}px'.format((len(l) + 2) * 9),
+                                    button_style=buttons_style)
+            for l in labels]
 
         # Group widget
         self.box_1 = ipywidgets.HBox(self.labels_toggles)
@@ -463,8 +437,8 @@ class MultipleSelectionTogglesWidget(MenpoWidget):
             for l in labels:
                 w = ipywidgets.ToggleButton(
                     description=l, value=l in with_labels,
-                    width='{}px'.format((len(l) + 2) * 9))
-                w.button_style = self.buttons_style
+                    width='{}px'.format((len(l) + 2) * 9),
+                    button_style=self.buttons_style)
                 w.observe(self._save_options, names='value', type='change')
                 self.labels_toggles.append(w)
             self.box_1.children = self.labels_toggles
@@ -514,12 +488,6 @@ class SlicingCommandWidget(MenpoWidget):
     r"""
     Creates a widget for selecting a slicing command.
 
-    * The selected values are stored in the ``self.selected_values`` `trait`.
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * To update the handler callback function of the widget, please refer to the
-      :meth:`replace_render_function` method.
-
     Parameters
     ----------
     slice_options : `dict`
@@ -546,7 +514,7 @@ class SlicingCommandWidget(MenpoWidget):
         The width of the command box in pixels. It includes the status icon
         but not the description.
     """
-    def __init__(self, slice_options, description='Command:',
+    def __init__(self, slice_options, description='Command',
                  render_function=None, example_visible=True,
                  continuous_update=False, orientation='horizontal', width=260):
         # Create children
@@ -556,23 +524,29 @@ class SlicingCommandWidget(MenpoWidget):
         self.cmd_text = ipywidgets.Text(value=slice_options['command'],
                                         placeholder='Type command',
                                         width='{}px'.format(width-16))
-        self.error_msg = ipywidgets.HTML(value='')
+        self.error_msg = ipywidgets.HTML(
+            value='', layout=ipywidgets.Layout(display='none'))
         self.state_icon = ipywidgets.HTML(
-            value='<i class="fa fa-check" style="color:green"></i>')
-        self.state_icon.layout.width = '16px'
-        self.state_icon.layout.margin = '0.1cm'
+            value='<i class="fa fa-check" style="color:green"></i>',
+            width='16px', margin='0.1cm')
         example_str = ''
         if example_visible:
             example_str = self._example_str(slice_options['length'])
-        self.example = ipywidgets.HTML(value=example_str)
+        self.example = ipywidgets.HTML(
+            value=example_str, layout=ipywidgets.Layout(
+                display='inline' if example_visible else 'none'))
         self.single_slider = ipywidgets.IntSlider(
             min=0, max=slice_options['length'] - 1, value=0,
             width='{}px'.format(width-16), readout=False,
-            continuous_update=continuous_update)
+            continuous_update=continuous_update,
+            layout=ipywidgets.Layout(
+                display=self._single_slider_visible(indices)))
         self.multiple_slider = ipywidgets.IntRangeSlider(
             min=0, max=slice_options['length'] - 1,
             value=(indices[0], indices[-1]), width='{}px'.format(width-16),
-            readout=False, continuous_update=continuous_update)
+            readout=False, continuous_update=continuous_update,
+            layout=ipywidgets.Layout(
+                display=self._multiple_slider_visible(indices)[0]))
 
         # Group widgets
         self.box_1 = ipywidgets.HBox([self.cmd_text, self.state_icon])
@@ -588,14 +562,6 @@ class SlicingCommandWidget(MenpoWidget):
             raise ValueError("orientation must be 'horizontal' or 'vertical'")
         self.container = ipywidgets.HBox([self.cmd_description, self.box_4])
         self.container.layout.align_items = 'baseline'
-        self.container.layout.display = 'flex'
-
-        # Set visibility
-        self.example.layout.display = 'inline' if example_visible else 'none'
-        self.error_msg.layout.display = 'none'
-        self.single_slider.layout.display = self._single_slider_visible(indices)
-        self.multiple_slider.layout.display = self._multiple_slider_visible(
-            indices)[0]
 
         # Create final widget
         super(SlicingCommandWidget, self).__init__(
@@ -754,12 +720,6 @@ class IndexSliderWidget(MenpoWidget):
     r"""
     Creates a widget for selecting an index using a slider.
 
-    * The selected values are stored in the ``self.selected_values`` `trait`.
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * To update the handler callback function of the widget, please refer to the
-      :meth:`replace_render_function` method.
-
     Parameters
     ----------
     index : `dict`
@@ -786,11 +746,10 @@ class IndexSliderWidget(MenpoWidget):
         self.slider_description = ipywidgets.Label(value=description)
         self.slider = ipywidgets.IntSlider(
             min=index['min'], max=index['max'], value=index['index'],
-            step=index['step'], readout=False,
+            step=index['step'], readout=False, width='5cm',
             continuous_update=continuous_update)
-        self.slider_text = ipywidgets.Text(value=str(index['index']))
-        self.slider.layout.width = '5cm'
-        self.slider_text.layout.width = '2cm'
+        self.slider_text = ipywidgets.Text(value=str(index['index']),
+                                           width='2cm')
 
         # Create final widget
         self.container = ipywidgets.HBox([self.slider_description,
@@ -865,12 +824,6 @@ class IndexButtonsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting an index using plus/minus buttons.
 
-    * The selected values are stored in the ``self.selected_values`` `trait`.
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * To update the handler callback function of the widget, please refer to the
-      :meth:`replace_render_function` method.
-
     Parameters
     ----------
     index : `dict`
@@ -904,22 +857,21 @@ class IndexButtonsWidget(MenpoWidget):
                  minus_description='fa-minus', plus_description='fa-plus',
                  loop_enabled=True, text_editable=True):
         # Create children
-        self.title = ipywidgets.Label(value=description, padding=6, margin=6)
+        self.title = ipywidgets.Label(value=description)
         m_icon, m_description = parse_font_awesome_icon(minus_description)
         self.button_minus = ipywidgets.Button(
-                description=m_description, icon=m_icon, tooltip='Previous item')
+            description=m_description, icon=m_icon, tooltip='Previous item',
+            width='1cm')
         p_icon, p_description = parse_font_awesome_icon(plus_description)
         self.button_plus = ipywidgets.Button(
-                description=p_description, icon=p_icon, tooltip='Next item')
+            description=p_description, icon=p_icon, tooltip='Next item',
+            width='1cm')
         self.index_text = ipywidgets.Text(value=str(index['index']),
-                                          disabled=not text_editable)
+                                          disabled=not text_editable,
+                                          width='2cm')
         self.progress_bar = ipywidgets.IntProgress(
             value=index['index'], min=index['min'], max=index['max'],
-            step=index['step'])
-        self.button_minus.layout.width = '1cm'
-        self.button_plus.layout.width = '1cm'
-        self.index_text.layout.width = '2cm'
-        self.progress_bar.layout.width = '4.15cm'
+            step=index['step'], width='4.15cm')
         self._change_bar_height()
 
         # Group widgets
@@ -1055,12 +1007,6 @@ class ColourSelectionWidget(MenpoWidget):
     r"""
     Creates a widget for colour selection of a single or multiple objects.
 
-    * The selected values are stored in the ``self.selected_values`` `trait`.
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * To update the handler callback function of the widget, please refer to the
-      :meth:`replace_render_function` method.
-
     Parameters
     ----------
     colours_list : `list` of `str` or [`float`, `float`, `float`]
@@ -1103,14 +1049,13 @@ class ColourSelectionWidget(MenpoWidget):
         else:
             for k, l in enumerate(labels):
                 labels_dict[l] = k
-        self.label_dropdown = ipywidgets.Dropdown(options=labels_dict, value=0)
+        self.label_dropdown = ipywidgets.Dropdown(options=labels_dict,
+                                                  value=0, width='3cm')
         self.apply_to_all_button = ipywidgets.Button(
-            description=' Apply to all', icon='fa-paint-brush')
+            description=' Apply to all', icon='fa-paint-brush', width='3cm')
         self.colour_widget = ipywidgets.ColorPicker(value=default_colour,
-                                                    tooltip='Select colour')
-        self.colour_widget.layout.width = '3cm'
-        self.label_dropdown.layout.width = '3cm'
-        self.apply_to_all_button.layout.width = '3cm'
+                                                    tooltip='Select colour',
+                                                    width='3cm')
 
         # Group widgets
         self.labels_box = ipywidgets.VBox(
@@ -1120,7 +1065,6 @@ class ColourSelectionWidget(MenpoWidget):
         self.container = ipywidgets.HBox([self.wid_description,
                                           self.labels_box, self.colour_widget])
         self.container.layout.align_items = 'baseline'
-        self.container.layout.display = 'flex'
 
         # Create final widget
         super(ColourSelectionWidget, self).__init__(
@@ -1317,12 +1261,6 @@ class ZoomOneScaleWidget(MenpoWidget):
     r"""
     Creates a widget for selecting zoom options with a single scale.
 
-    * The selected values are stored in the ``self.selected_values`` `trait`.
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * To update the handler callback function of the widget, please refer to the
-      :meth:`replace_render_function` method.
-
     Parameters
     ----------
     zoom_options : `dict`
@@ -1357,19 +1295,18 @@ class ZoomOneScaleWidget(MenpoWidget):
         self.title = ipywidgets.Label(value=description)
         m_icon, m_description = parse_font_awesome_icon(minus_description)
         self.button_minus = ipywidgets.Button(description=m_description,
-                                              icon=m_icon, tooltip='Zoom Out')
+                                              icon=m_icon, tooltip='Zoom Out',
+                                              width='1cm')
         p_icon, p_description = parse_font_awesome_icon(plus_description)
         self.button_plus = ipywidgets.Button(description=p_description,
-                                             icon=p_icon, tooltip='Zoom In')
+                                             icon=p_icon, tooltip='Zoom In',
+                                             width='1cm')
         self.zoom_slider = ipywidgets.FloatSlider(
             value=zoom_options['zoom'], min=zoom_options['min'],
             max=zoom_options['max'], step=zoom_options['step'], readout=False,
-            continuous_update=continuous_update)
-        self.zoom_text = ipywidgets.Text(value=str(zoom_options['zoom']))
-        self.button_minus.layout.width = '1cm'
-        self.button_plus.layout.width = '1cm'
-        self.zoom_text.layout.width = '1.5cm'
-        self.zoom_slider.layout.width = '6cm'
+            continuous_update=continuous_update, width='6cm')
+        self.zoom_text = ipywidgets.Text(value=str(zoom_options['zoom']),
+                                         width='1.5cm')
 
         # Group widgets
         self.container = ipywidgets.HBox([self.title, self.button_minus,
@@ -1467,13 +1404,7 @@ class ZoomOneScaleWidget(MenpoWidget):
 
 class ZoomTwoScalesWidget(MenpoWidget):
     r"""
-    Creates a widget for selecting zoom options with a single scale.
-
-    * The selected values are stored in the ``self.selected_values`` `trait`.
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * To update the handler callback function of the widget, please refer to the
-      :meth:`replace_render_function` method.
+    Creates a widget for selecting zoom options with two scales.
 
     Parameters
     ----------
@@ -1512,34 +1443,30 @@ class ZoomTwoScalesWidget(MenpoWidget):
         self.y_title = ipywidgets.Label(value='Y')
         m_icon, m_description = parse_font_awesome_icon(minus_description)
         self.x_button_minus = ipywidgets.Button(description=m_description,
-                                                icon=m_icon, tooltip='Zoom Out')
+                                                icon=m_icon, tooltip='Zoom Out',
+                                                width='1cm')
         self.y_button_minus = ipywidgets.Button(description=m_description,
-                                                icon=m_icon, tooltip='Zoom Out')
+                                                icon=m_icon, tooltip='Zoom Out',
+                                                width='1cm')
         p_icon, p_description = parse_font_awesome_icon(plus_description)
         self.x_button_plus = ipywidgets.Button(description=p_description,
-                                               icon=p_icon, tooltip='Zoom In')
+                                               icon=p_icon, tooltip='Zoom In',
+                                               width='1cm')
         self.y_button_plus = ipywidgets.Button(description=p_description,
-                                               icon=p_icon, tooltip='Zoom In')
+                                               icon=p_icon, tooltip='Zoom In',
+                                               width='1cm')
         self.x_zoom_slider = ipywidgets.FloatSlider(
             value=zoom_options['zoom'][0], min=zoom_options['min'],
             max=zoom_options['max'], readout=False,
-            continuous_update=continuous_update)
+            continuous_update=continuous_update, width='6cm')
         self.y_zoom_slider = ipywidgets.FloatSlider(
             value=zoom_options['zoom'][1], min=zoom_options['min'],
             max=zoom_options['max'], readout=False,
-            continuous_update=continuous_update)
-        self.x_zoom_text = ipywidgets.Text(value=str(zoom_options['zoom'][0]))
-        self.y_zoom_text = ipywidgets.Text(value=str(zoom_options['zoom'][1]))
-        self.x_button_minus.layout.width = '1cm'
-        self.y_button_minus.layout.width = '1cm'
-        self.x_button_plus.layout.width = '1cm'
-        self.y_button_plus.layout.width = '1cm'
-        self.x_zoom_text.layout.width = '1.5cm'
-        self.y_zoom_text.layout.width = '1.5cm'
-        self.x_zoom_slider.layout.width = '6cm'
-        self.y_zoom_slider.layout.width = '6cm'
-
-
+            continuous_update=continuous_update, width='6cm')
+        self.x_zoom_text = ipywidgets.Text(value=str(zoom_options['zoom'][0]),
+                                           width='1.5cm')
+        self.y_zoom_text = ipywidgets.Text(value=str(zoom_options['zoom'][1]),
+                                           width='1.5cm')
         self.x_box = ipywidgets.HBox([self.x_title, self.x_button_minus,
                                       self.x_zoom_slider, self.x_button_plus,
                                       self.x_zoom_text])
@@ -1557,15 +1484,13 @@ class ZoomTwoScalesWidget(MenpoWidget):
             self.lock_link.unlink()
         self.lock_aspect_button = ipywidgets.ToggleButton(
             value=zoom_options['lock_aspect_ratio'], description='',
-            icon=lock_icon, tooltip='Keep aspect ratio')
-        self.lock_aspect_button.layout.width = '1cm'
+            icon=lock_icon, tooltip='Keep aspect ratio', width='1cm')
 
         # Group widgets
         self.options_box = ipywidgets.HBox([self.lock_aspect_button,
                                             self.x_y_box])
         self.options_box.layout.align_items = 'center'
         self.container = ipywidgets.HBox([self.title, self.options_box])
-        self.container.layout.display = 'flex'
         self.container.layout.align_items = 'baseline'
 
         # Create final widget
@@ -1730,12 +1655,6 @@ class ImageMatplotlibOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting image rendering options with `matplotlib`.
 
-    * The selected values are stored in the ``self.selected_values`` `trait`.
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * To update the handler callback function of the widget, please refer to the
-      :meth:`replace_render_function` method.
-
     Parameters
     ----------
     image_options : `dict`
@@ -1821,9 +1740,8 @@ class ImageMatplotlibOptionsWidget(MenpoWidget):
         cmap_dict['YlGnBu'] = 'YlGnBu'
         cmap_dict['YlOrBr'] = 'YlOrBr'
         cmap_dict['YlOrRd'] = 'YlOrRd'
-        self.cmap_select = ipywidgets.Select(options=cmap_dict, value='gray')
-        self.cmap_select.layout.width = '4cm'
-        self.cmap_select.layout.height = '2cm'
+        self.cmap_select = ipywidgets.Select(options=cmap_dict, value='gray',
+                                             width='4cm', height='2cm')
         self.cmap_title = ipywidgets.Label(value='Colourmap')
 
         # Group widgets
@@ -1834,7 +1752,6 @@ class ImageMatplotlibOptionsWidget(MenpoWidget):
         self.box_3 = ipywidgets.HBox([self.cmap_title, self.cmap_select])
         self.box_3.layout.align_items = 'center'
         self.container = ipywidgets.HBox([self.box_3, self.box_2])
-        self.container.layout.display = 'flex'
         self.container.layout.align_items = 'flex-start'
 
         # Create final widget
@@ -1905,12 +1822,6 @@ class LineMatplotlibOptionsWidget(MenpoWidget):
     Creates a widget for selecting line rendering options for a `matplotlib`
     renderer.
 
-    * The selected values are stored in the ``self.selected_values`` `trait`.
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * To update the handler callback function of the widget, please refer to the
-      :meth:`replace_render_function` method.
-
     Parameters
     ----------
     line_options : `dict`
@@ -1978,6 +1889,9 @@ class LineMatplotlibOptionsWidget(MenpoWidget):
             [self.container], Dict, line_options,
             render_function=render_function)
 
+        # Assign labels
+        self.labels = labels
+
         # Set functionality
         def line_options_visible(change):
             self.box_4.layout.display = 'flex' if change['new'] else 'none'
@@ -2033,11 +1947,12 @@ class LineMatplotlibOptionsWidget(MenpoWidget):
             # update
             self.render_lines_switch.set_widget_state(
                 line_options['render_lines'], allow_callback=False)
-            self.line_style_dropdown.value = line_options['line_style']
-            self.line_width_text.value = float(line_options['line_width'])
             self.line_colour_widget.set_widget_state(
                 line_options['line_colour'], labels=labels,
                 allow_callback=False)
+            self.labels = labels
+            self.line_style_dropdown.value = line_options['line_style']
+            self.line_width_text.value = float(line_options['line_width'])
 
             # re-assign render callback
             self.add_render_function(render_function)
@@ -2051,12 +1966,6 @@ class LineMayaviOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting line rendering options for a `mayavi`
     renderer.
-
-    * The selected values are stored in the ``self.selected_values`` `trait`.
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * To update the handler callback function of the widget, please refer to the
-      :meth:`replace_render_function` method.
 
     Parameters
     ----------
@@ -2111,6 +2020,9 @@ class LineMayaviOptionsWidget(MenpoWidget):
             [self.container], Dict, line_options,
             render_function=render_function)
 
+        # Assign labels
+        self.labels = labels
+
         # Set functionality
         def line_options_visible(change):
             self.box_2.layout.display = 'flex' if change['new'] else 'none'
@@ -2162,10 +2074,11 @@ class LineMayaviOptionsWidget(MenpoWidget):
             # update
             self.render_lines_switch.set_widget_state(
                 line_options['render_lines'], allow_callback=False)
-            self.line_width_text.value = float(line_options['line_width'])
             self.line_colour_widget.set_widget_state(
                 line_options['line_colour'], labels=labels,
                 allow_callback=False)
+            self.labels = labels
+            self.line_width_text.value = float(line_options['line_width'])
 
             # re-assign render callback
             self.add_render_function(render_function)
@@ -2179,12 +2092,6 @@ class MarkerMatplotlibOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting marker rendering options for a `matplotlib`
     renderer.
-
-    * The selected values are stored in the ``self.selected_values`` `trait`.
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * To update the handler callback function of the widget, please refer to the
-      :meth:`replace_render_function` method.
 
     Parameters
     ----------
@@ -2288,6 +2195,9 @@ class MarkerMatplotlibOptionsWidget(MenpoWidget):
             [self.container], Dict, marker_options,
             render_function=render_function)
 
+        # Assign labels
+        self.labels = labels
+
         # Set functionality
         def marker_options_visible(change):
             self.box_5.layout.display = 'flex' if change['new'] else 'none'
@@ -2357,16 +2267,17 @@ class MarkerMatplotlibOptionsWidget(MenpoWidget):
             # update
             self.render_markers_switch.set_widget_state(
                 marker_options['render_markers'], allow_callback=False)
-            self.marker_style_dropdown.value = marker_options['marker_style']
-            self.marker_size_text.value = int(marker_options['marker_size'])
-            self.marker_edge_width_text.value = \
-                float(marker_options['marker_edge_width'])
             self.marker_face_colour_widget.set_widget_state(
                 marker_options['marker_face_colour'], labels=labels,
                 allow_callback=False)
             self.marker_edge_colour_widget.set_widget_state(
                 marker_options['marker_edge_colour'], labels=labels,
                 allow_callback=False)
+            self.labels = labels
+            self.marker_style_dropdown.value = marker_options['marker_style']
+            self.marker_size_text.value = int(marker_options['marker_size'])
+            self.marker_edge_width_text.value = \
+                float(marker_options['marker_edge_width'])
 
             # re-assign render callback
             self.add_render_function(render_function)
@@ -2380,12 +2291,6 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting marker rendering options for a `mayavi`
     renderer.
-
-    * The selected values are stored in the ``self.selected_values`` `trait`.
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * To update the handler callback function of the widget, please refer to the
-      :meth:`replace_render_function` method.
 
     Parameters
     ----------
@@ -2488,6 +2393,9 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
             [self.container], Dict, marker_options,
             render_function=render_function)
 
+        # Assign labels
+        self.labels = labels
+
         # Set functionality
         def marker_options_visible(change):
             self.box_5.layout.display = 'flex' if change['new'] else 'none'
@@ -2562,6 +2470,10 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
             self.render_markers_switch.set_widget_state(
                 marker_options['render_markers'], allow_callback=False)
             self.marker_style_dropdown.value = marker_options['marker_style']
+            self.marker_colour_widget.set_widget_state(
+                marker_options['marker_colour'], labels=labels,
+                allow_callback=False)
+            self.labels = labels
             if marker_options['marker_size'] is None:
                 self.marker_size_text.disabled = True
                 self.marker_size_none.icon = 'fa-times'
@@ -2571,9 +2483,6 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
                 self.marker_size_text.value = float(marker_options['marker_size'])
             self.marker_resolution_text.value = \
                 int(marker_options['marker_resolution'])
-            self.marker_colour_widget.set_widget_state(
-                marker_options['marker_colour'], labels=labels,
-                allow_callback=False)
 
             # re-assign render callback
             self.add_render_function(render_function)
@@ -2587,12 +2496,6 @@ class NumberingMatplotlibOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting numbering rendering options for
     `matplotlib` renderers.
-
-    * The selected values are stored in the ``self.selected_values`` `trait`.
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * To update the handler callback function of the widget, please refer to the
-      :meth:`replace_render_function` method.
 
     Parameters
     ----------
@@ -2638,18 +2541,19 @@ class NumberingMatplotlibOptionsWidget(MenpoWidget):
         numbers_font_name_dict['fantasy'] = 'fantasy'
         numbers_font_name_dict['monospace'] = 'monospace'
         self.numbers_font_name_dropdown = ipywidgets.Dropdown(
-            options=numbers_font_name_dict,
+            options=numbers_font_name_dict, width='3cm',
             value=numbers_options['numbers_font_name'])
         self.numbers_font_size_title = ipywidgets.Label(value='Size')
         self.numbers_font_size_text = ipywidgets.BoundedIntText(
-            min=0, max=10**6, value=numbers_options['numbers_font_size'])
+            min=0, max=10**6, value=numbers_options['numbers_font_size'],
+            width='3cm')
         self.numbers_font_style_title = ipywidgets.Label(value='Style')
         numbers_font_style_dict = OrderedDict()
         numbers_font_style_dict['normal'] = 'normal'
         numbers_font_style_dict['italic'] = 'italic'
         numbers_font_style_dict['oblique'] = 'oblique'
         self.numbers_font_style_dropdown = ipywidgets.Dropdown(
-            options=numbers_font_style_dict,
+            options=numbers_font_style_dict, width='3cm',
             value=numbers_options['numbers_font_style'])
         self.numbers_font_weight_title = ipywidgets.Label(value='Weight')
         numbers_font_weight_dict = OrderedDict()
@@ -2668,7 +2572,7 @@ class NumberingMatplotlibOptionsWidget(MenpoWidget):
         numbers_font_weight_dict['extra bold'] = 'extra bold'
         numbers_font_weight_dict['black'] = 'black'
         self.numbers_font_weight_dropdown = ipywidgets.Dropdown(
-            options=numbers_font_weight_dict,
+            options=numbers_font_weight_dict, width='3cm',
             value=numbers_options['numbers_font_weight'])
         self.numbers_font_colour_widget = ColourSelectionWidget(
             numbers_options['numbers_font_colour'], description='Colour',
@@ -2680,7 +2584,7 @@ class NumberingMatplotlibOptionsWidget(MenpoWidget):
         numbers_horizontal_align_dict['right'] = 'right'
         numbers_horizontal_align_dict['left'] = 'left'
         self.numbers_horizontal_align_dropdown = ipywidgets.Dropdown(
-            options=numbers_horizontal_align_dict,
+            options=numbers_horizontal_align_dict, width='3cm',
             value=numbers_options['numbers_horizontal_align'])
         self.numbers_vertical_align_title = ipywidgets.Label(
             value='Vertical align')
@@ -2690,14 +2594,8 @@ class NumberingMatplotlibOptionsWidget(MenpoWidget):
         numbers_vertical_align_dict['bottom'] = 'bottom'
         numbers_vertical_align_dict['baseline'] = 'baseline'
         self.numbers_vertical_align_dropdown = ipywidgets.Dropdown(
-            options=numbers_vertical_align_dict,
+            options=numbers_vertical_align_dict, width='3cm',
             value=numbers_options['numbers_vertical_align'])
-        self.numbers_font_name_dropdown.layout.width = '3cm'
-        self.numbers_font_size_text.layout.width = '3cm'
-        self.numbers_font_style_dropdown.layout.width = '3cm'
-        self.numbers_font_weight_dropdown.layout.width = '3cm'
-        self.numbers_horizontal_align_dropdown.layout.width = '3cm'
-        self.numbers_vertical_align_dropdown.layout.width = '3cm'
 
         # Group widgets
         self.box_1 = ipywidgets.HBox([self.numbers_font_name_title,
@@ -2837,12 +2735,6 @@ class NumberingMayaviOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting numbering rendering options for a `mayavi`
     renderer.
-
-    * The selected values are stored in the ``self.selected_values`` `trait`.
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * To update the handler callback function of the widget, please refer to the
-      :meth:`replace_render_function` method.
 
     Parameters
     ----------
@@ -2990,12 +2882,6 @@ class NumberingMayaviOptionsWidget(MenpoWidget):
 class AxesLimitsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting the axes limits.
-
-    * The selected values are stored in the ``self.selected_values`` `trait`.
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * To update the handler callback function of the widget, please refer to the
-      :meth:`replace_render_function` method.
 
     Parameters
     ----------
@@ -3212,12 +3098,6 @@ class AxesTicksWidget(MenpoWidget):
     r"""
     Creates a widget for selecting the axes ticks.
 
-    * The selected values are stored in the ``self.selected_values`` `trait`.
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * To update the handler callback function of the widget, please refer to the
-      :meth:`replace_render_function` method.
-
     Parameters
     ----------
     axes_ticks : `dict`
@@ -3366,12 +3246,6 @@ class AxesOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting axes rendering options.
 
-    * The selected values are stored in the ``self.selected_values`` `trait`.
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * To update the handler callback function of the widget, please refer to the
-      :meth:`replace_render_function` method.
-
     Parameters
     ----------
     axes_options : `dict`
@@ -3417,17 +3291,19 @@ class AxesOptionsWidget(MenpoWidget):
         axes_font_name_dict['fantasy'] = 'fantasy'
         axes_font_name_dict['monospace'] = 'monospace'
         self.axes_font_name_dropdown = ipywidgets.Dropdown(
-            options=axes_font_name_dict, value=axes_options['axes_font_name'])
+            options=axes_font_name_dict, value=axes_options['axes_font_name'],
+            width='3cm')
         self.axes_font_size_title = ipywidgets.Label(value='Size')
         self.axes_font_size_text = ipywidgets.BoundedIntText(
-            value=axes_options['axes_font_size'], min=0, max=10**6)
+            value=axes_options['axes_font_size'], min=0, max=10**6, width='3cm')
         self.axes_font_style_title = ipywidgets.Label(value='Style')
         axes_font_style_dict = OrderedDict()
         axes_font_style_dict['normal'] = 'normal'
         axes_font_style_dict['italic'] = 'italic'
         axes_font_style_dict['oblique'] = 'oblique'
         self.axes_font_style_dropdown = ipywidgets.Dropdown(
-            options=axes_font_style_dict, value=axes_options['axes_font_style'])
+            options=axes_font_style_dict,
+            value=axes_options['axes_font_style'], width='3cm')
         self.axes_font_weight_title = ipywidgets.Label(value='Weight')
         axes_font_weight_dict = OrderedDict()
         axes_font_weight_dict['normal'] = 'normal'
@@ -3445,12 +3321,8 @@ class AxesOptionsWidget(MenpoWidget):
         axes_font_weight_dict['extra bold'] = 'extra bold'
         axes_font_weight_dict['black'] = 'black'
         self.axes_font_weight_dropdown = ipywidgets.Dropdown(
-            options=axes_font_weight_dict,
+            options=axes_font_weight_dict, width='3cm',
             value=axes_options['axes_font_weight'])
-        self.axes_font_name_dropdown.layout.width = '3cm'
-        self.axes_font_size_text.layout.width = '3cm'
-        self.axes_font_style_dropdown.layout.width = '3cm'
-        self.axes_font_weight_dropdown.layout.width = '3cm'
 
         self.box_1 = ipywidgets.HBox([self.axes_font_name_title,
                                       self.axes_font_name_dropdown])
@@ -3491,8 +3363,7 @@ class AxesOptionsWidget(MenpoWidget):
         self.axes_limits_widget.layout.margin = '7px'
 
         # options tab
-        self.container = ipywidgets.Tab(
-            children=[self.box_9, self.axes_limits_widget])
+        self.container = ipywidgets.Tab([self.box_9, self.axes_limits_widget])
         self.container.set_title(0, 'Font & Ticks')
         self.container.set_title(1, 'Limits')
 
@@ -3599,12 +3470,6 @@ class LegendOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting legend rendering options.
 
-    * The selected values are stored in the ``self.selected_values`` `trait`.
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * To update the handler callback function of the widget, please refer to the
-      :meth:`replace_render_function` method.
-
     Parameters
     ----------
     legend_options : `dict`
@@ -3660,18 +3525,19 @@ class LegendOptionsWidget(MenpoWidget):
         legend_font_name_dict['fantasy'] = 'fantasy'
         legend_font_name_dict['monospace'] = 'monospace'
         self.legend_font_name_dropdown = ipywidgets.Dropdown(
-            options=legend_font_name_dict,
+            options=legend_font_name_dict, width='3cm',
             value=legend_options['legend_font_name'])
         self.legend_font_size_title = ipywidgets.Label(value='Size')
         self.legend_font_size_text = ipywidgets.BoundedIntText(
-            min=0, max=10**6, value=legend_options['legend_font_size'])
+            min=0, max=10**6, value=legend_options['legend_font_size'],
+            width='3cm')
         self.legend_font_style_title = ipywidgets.Label(value='Style')
         legend_font_style_dict = OrderedDict()
         legend_font_style_dict['normal'] = 'normal'
         legend_font_style_dict['italic'] = 'italic'
         legend_font_style_dict['oblique'] = 'oblique'
         self.legend_font_style_dropdown = ipywidgets.Dropdown(
-            options=legend_font_style_dict,
+            options=legend_font_style_dict, width='3cm',
             value=legend_options['legend_font_style'])
         self.legend_font_weight_title = ipywidgets.Label(value='Weight')
         legend_font_weight_dict = OrderedDict()
@@ -3690,16 +3556,11 @@ class LegendOptionsWidget(MenpoWidget):
         legend_font_weight_dict['extra bold'] = 'extra bold'
         legend_font_weight_dict['black'] = 'black'
         self.legend_font_weight_dropdown = ipywidgets.Dropdown(
-            options=legend_font_weight_dict,
+            options=legend_font_weight_dict, width='3cm',
             value=legend_options['legend_font_weight'])
         self.legend_title_title = ipywidgets.Label(value='Title')
         self.legend_title_text = ipywidgets.Text(
-            value=legend_options['legend_title'])
-        self.legend_font_name_dropdown.layout.width = '3cm'
-        self.legend_font_size_text.layout.width = '3cm'
-        self.legend_font_style_dropdown.layout.width = '3cm'
-        self.legend_font_weight_dropdown.layout.width = '3cm'
-        self.legend_title_text.layout.width = '7.6cm'
+            value=legend_options['legend_title'], width='7.6cm')
 
         self.box_1 = ipywidgets.HBox([self.legend_font_name_title,
                                       self.legend_font_name_dropdown])
@@ -4085,12 +3946,6 @@ class GridOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting grid rendering options.
 
-    * The selected values are stored in the ``self.selected_values`` `trait`.
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * To update the handler callback function of the widget, please refer to the
-      :meth:`replace_render_function` method.
-
     Parameters
     ----------
     grid_options : `dict`
@@ -4120,7 +3975,8 @@ class GridOptionsWidget(MenpoWidget):
         self.render_grid_switch.layout.margin = '7px'
         self.grid_line_width_title = ipywidgets.Label(value='Width')
         self.grid_line_width_text = ipywidgets.BoundedFloatText(
-            value=grid_options['grid_line_width'], min=0., max=10**6)
+            value=grid_options['grid_line_width'], min=0., max=10**6,
+            width='3cm')
         self.grid_line_style_title = ipywidgets.Label(value='Style')
         grid_line_style_dict = OrderedDict()
         grid_line_style_dict['solid'] = '-'
@@ -4128,9 +3984,8 @@ class GridOptionsWidget(MenpoWidget):
         grid_line_style_dict['dash-dot'] = '-.'
         grid_line_style_dict['dotted'] = ':'
         self.grid_line_style_dropdown = ipywidgets.Dropdown(
-            value=grid_options['grid_line_style'], options=grid_line_style_dict)
-        self.grid_line_width_text.layout.width = '3cm'
-        self.grid_line_style_dropdown.layout.width = '3cm'
+            value=grid_options['grid_line_style'],
+            options=grid_line_style_dict, width='3cm')
 
         # Group widgets
         self.box_1 = ipywidgets.HBox([self.grid_line_width_title,
@@ -4258,12 +4113,6 @@ class CameraWidget(ipywidgets.DOMWidget):
 class TriMeshOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting trimesh rendering options.
-
-    * The selected values are stored in the ``self.selected_values`` `trait`.
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * To update the handler callback function of the widget, please refer to the
-      :meth:`replace_render_function` method.
 
     Parameters
     ----------
@@ -4513,12 +4362,6 @@ class TexturedTriMeshOptionsWidget(MenpoWidget):
     r"""
     Creates a widget for selecting textured trimesh rendering options.
 
-    * The selected values are stored in the ``self.selected_values`` `trait`.
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * To update the handler callback function of the widget, please refer to the
-      :meth:`replace_render_function` method.
-
     Parameters
     ----------
     mesh_options : `dict`
@@ -4560,25 +4403,22 @@ class TexturedTriMeshOptionsWidget(MenpoWidget):
         self.mesh_type_toggles.layout.margin = '0px 10px 0px 0px'
         self.line_width_title = ipywidgets.Label(value='Line width')
         self.line_width_text = ipywidgets.BoundedFloatText(
-            value=float(mesh_options['line_width']), min=0.0, max=10**6)
+            value=float(mesh_options['line_width']), min=0.0, max=10**6,
+            width='1.2cm')
         self.ambient_title = ipywidgets.Label(value='Ambient')
         self.ambient_slider = ipywidgets.FloatSlider(
             value=mesh_options['ambient_light'], min=0.0, max=1.0, step=0.05,
-            continuous_update=False)
+            continuous_update=False, width='7cm')
         self.specular_title = ipywidgets.Label(value='Specular')
         self.specular_slider = ipywidgets.FloatSlider(
             value=mesh_options['specular_light'], min=0.0, max=1.0, step=0.05,
-            continuous_update=False)
+            continuous_update=False, width='7cm')
         self.alpha_title = ipywidgets.Label(value='Alpha')
         self.alpha_slider = ipywidgets.FloatSlider(
             value=mesh_options['alpha'], min=0.0, max=1.0, step=0.05,
-            continuous_update=False)
+            continuous_update=False, width='7cm')
         self.colour_widget = ColourSelectionWidget(
             mesh_options['colour'], description='Colour', render_function=None)
-        self.ambient_slider.layout.width = '7cm'
-        self.specular_slider.layout.width = '7cm'
-        self.alpha_slider.layout.width = '7cm'
-        self.line_width_text.layout.width = '1.2cm'
 
         # Group widgets
         self.box_1 = ipywidgets.HBox([self.mesh_type_title,

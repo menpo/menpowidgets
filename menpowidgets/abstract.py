@@ -1,4 +1,4 @@
-from ipywidgets import Box
+from ipywidgets import Box, Layout
 
 
 class MenpoWidget(Box):
@@ -38,8 +38,8 @@ class MenpoWidget(Box):
     def __init__(self, children, trait, trait_initial_value,
                  render_function=None):
         # Create box object
-        super(MenpoWidget, self).__init__(children=children)
-        self.layout.display = 'flex'
+        super(MenpoWidget, self).__init__(children=children,
+                                          layout=Layout(display='flex'))
 
         # Add trait for selected values
         selected_values = trait(default_value=trait_initial_value)
