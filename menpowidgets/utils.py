@@ -717,7 +717,12 @@ def extract_group_labels_from_landmarks(landmark_manager):
     labels_keys = None
     if landmark_manager.has_landmarks:
         groups_keys = landmark_manager.group_labels
-        labels_keys = [landmark_manager[g].labels for g in groups_keys]
+        labels_keys = []
+        for g in groups_keys:
+            if hasattr(landmark_manager[g], 'labels'):
+                labels_keys.append(landmark_manager[g].labels)
+            else:
+                labels_keys.append(None)
     return groups_keys, labels_keys
 
 

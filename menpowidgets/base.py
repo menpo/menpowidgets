@@ -306,70 +306,88 @@ def visualize_landmarks_2d(landmarks, figure_size=(7, 7),
         # that will be rendered
         ipydisplay.clear_output(wait=True)
 
-        # get selected index
+        # get selected index and selected group
         i = landmark_number_wid.selected_values if n_landmarks > 1 else 0
-
-        # get selected group
-        selected_group = landmark_options_wid.selected_values['landmarks']['group']
+        g = landmark_options_wid.selected_values['landmarks']['group']
 
         if landmark_options_wid.selected_values['landmarks']['render_landmarks']:
-            # show landmarks with selected options
-            tmp1 = landmark_options_wid.selected_values['lines']
-            tmp2 = landmark_options_wid.selected_values['markers']
-            options = renderer_options_wid.selected_values['numbering_matplotlib']
-            options.update(renderer_options_wid.selected_values['legend'])
+            # get shape
+            shape = landmarks[i][g]
+
+            # Create options dictionary
+            options = dict()
+            options.update(landmark_options_wid.selected_values['lines'])
+            options.update(landmark_options_wid.selected_values['markers'])
+            options['image_view'] = landmark_options_wid.selected_values['image_view']
+            options.update(
+                renderer_options_wid.selected_values['numbering_matplotlib'])
             options.update(renderer_options_wid.selected_values['axes'])
+
+            # Correct options based on the type of the shape
+            if hasattr(shape, 'labels'):
+                # If the shape is a LabelledPointUndirectedGraph ...
+                # ...use the legend options
+                options.update(renderer_options_wid.selected_values['legend'])
+                # ...use with_labels
+                options['with_labels'] = \
+                    landmark_options_wid.selected_values['landmarks']['with_labels']
+                # ...correct colours
+                line_colour = []
+                marker_face_colour = []
+                marker_edge_colour = []
+                for lbl in options['with_labels']:
+                    id = shape.labels.index(lbl)
+                    line_colour.append(options['line_colour'][id])
+                    marker_face_colour.append(options['marker_face_colour'][id])
+                    marker_edge_colour.append(options['marker_edge_colour'][id])
+                options['line_colour'] = line_colour
+                options['marker_face_colour'] = marker_face_colour
+                options['marker_edge_colour'] = marker_edge_colour
+            else:
+                # If shape is PointCloud, TriMesh or PointGraph
+                # ...correct colours
+                options['line_colour'] = options['line_colour'][0]
+                options['marker_face_colour'] = options['marker_face_colour'][0]
+                options['marker_edge_colour'] = options['marker_edge_colour'][0]
+
+            # Get figure size
             new_figure_size = (
-                renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
-                renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
-            # get line and marker colours
-            line_colour = []
-            marker_face_colour = []
-            marker_edge_colour = []
-            for lbl in landmark_options_wid.selected_values['landmarks']['with_labels']:
-                lbl_idx = landmarks[i][selected_group].labels.index(lbl)
-                line_colour.append(tmp1['line_colour'][lbl_idx])
-                marker_face_colour.append(tmp2['marker_face_colour'][lbl_idx])
-                marker_edge_colour.append(tmp2['marker_edge_colour'][lbl_idx])
-            # render
-            landmarks[i][selected_group].view(
-                with_labels=landmark_options_wid.selected_values['landmarks']['with_labels'],
+                renderer_options_wid.selected_values['zoom_one'] *
+                figure_size[0],
+                renderer_options_wid.selected_values['zoom_one'] *
+                figure_size[1])
+
+            # Render shape with selected options
+            shape.view(
                 figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-                image_view=landmark_options_wid.selected_values['image_view'],
-                render_lines=tmp1['render_lines'], line_colour=line_colour,
-                line_style=tmp1['line_style'], line_width=tmp1['line_width'],
-                render_markers=tmp2['render_markers'],
-                marker_style=tmp2['marker_style'],
-                marker_size=tmp2['marker_size'],
-                marker_face_colour=marker_face_colour,
-                marker_edge_colour=marker_edge_colour,
-                marker_edge_width=tmp2['marker_edge_width'],
                 figure_size=new_figure_size, **options)
+
+            # Force rendering
             save_figure_wid.renderer.force_draw()
         else:
             ipydisplay.clear_output()
 
         # update info text widget
-        update_info(landmarks[i], selected_group,
-                    custom_info_callback=custom_info_callback)
+        update_info(landmarks[i], g, custom_info_callback=custom_info_callback)
 
     # Define function that updates the info text
     def update_info(landmarks, group, custom_info_callback=None):
         if group is not None:
-            min_b, max_b = landmarks[group][None].bounds()
-            rang = landmarks[group][None].range()
-            cm = landmarks[group][None].centre()
+            min_b, max_b = landmarks[group].bounds()
+            rang = landmarks[group].range()
+            cm = landmarks[group].centre()
             text_per_line = [
-                "> {} landmark points".format(landmarks[group][None].n_points),
-                "> Bounds: [{0:.1f}-{1:.1f}]W, [{2:.1f}-{3:.1f}]H".
-                    format(min_b[0], max_b[0], min_b[1], max_b[1]),
+                "> {} landmark points".format(landmarks[group].n_points),
+                "> {}".format(name_of_callable(landmarks[group])),
+                "> Bounds: [{0:.1f}-{1:.1f}]W, [{2:.1f}-{3:.1f}]H".format(
+                    min_b[0], max_b[0], min_b[1], max_b[1]),
                 "> Range: {0:.1f}W, {1:.1f}H".format(rang[0], rang[1]),
                 "> Centre of mass: ({0:.1f}, {1:.1f})".format(cm[0], cm[1]),
-                "> Norm: {0:.2f}".format(landmarks[group][None].norm())]
+                "> Norm: {0:.2f}".format(landmarks[group].norm())]
             if custom_info_callback is not None:
                 # iterate over the list of messages returned by the callback
                 # function and append them in the text_per_line.
-                for msg in custom_info_callback(landmarks[group][None]):
+                for msg in custom_info_callback(landmarks[group]):
                     text_per_line.append('> {}'.format(msg))
         else:
             text_per_line = ["No landmarks available."]
