@@ -766,20 +766,27 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7),
         # get selected index
         i = image_number_wid.selected_values if n_patches > 1 else 0
 
-        # show patch-based image with selected options
-        options = shape_options_wid.selected_values['lines']
+        # Create options dictionary
+        options = dict()
+        options.update(shape_options_wid.selected_values['lines'])
         options.update(shape_options_wid.selected_values['markers'])
-        options.update(renderer_options_wid.selected_values['numbering_matplotlib'])
+        options.update(
+            renderer_options_wid.selected_values['numbering_matplotlib'])
         options.update(renderer_options_wid.selected_values['axes'])
         image_options = dict(image_options_wid.selected_values)
         del image_options['masked_enabled']
         options.update(image_options)
         options.update(patch_options_wid.selected_values)
+        options['line_colour'] = options['line_colour'][0]
+        options['marker_face_colour'] = options['marker_face_colour'][0]
+        options['marker_edge_colour'] = options['marker_edge_colour'][0]
+
+        # Get figure size
         new_figure_size = (
             renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
 
-        # show image with selected options
+        # Render image with selected options
         render_patches(
             patches=patches[i], patch_centers=patch_centers[i],
             renderer=save_figure_wid.renderer, figure_size=new_figure_size,
@@ -806,12 +813,8 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7),
         info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Create widgets
-    try:
-        labels = patch_centers[0].labels
-    except AttributeError:
-        labels = None
     shape_options_wid = Shape2DOptionsWidget(
-        labels=labels, render_function=None, style=main_style,
+        labels=None, render_function=None, style=main_style,
         suboptions_style=tabs_style)
     shape_options_wid.line_options_wid.render_lines_switch.button_wid.value = False
     shape_options_wid.add_render_function(render_function)
