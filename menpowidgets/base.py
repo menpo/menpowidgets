@@ -6,6 +6,7 @@ import numpy as np
 import ipywidgets
 import IPython.display as ipydisplay
 
+from menpo.base import name_of_callable
 from menpo.image import MaskedImage, Image
 from menpo.image.base import _convert_patches_list_to_single_array
 
@@ -112,27 +113,53 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
         # Get selected shape index
         i = shape_number_wid.selected_values if n_shapes > 1 else 0
 
-        # Render pointcloud with selected options
-        tmp1 = shape_options_wid.selected_values['lines']
-        tmp2 = shape_options_wid.selected_values['markers']
-        options = renderer_options_wid.selected_values['numbering_matplotlib']
+        # Create options dictionary
+        options = dict()
+        options.update(shape_options_wid.selected_values['lines'])
+        options.update(shape_options_wid.selected_values['markers'])
+        options['image_view'] = shape_options_wid.selected_values['image_view']
+        options.update(
+            renderer_options_wid.selected_values['numbering_matplotlib'])
         options.update(renderer_options_wid.selected_values['axes'])
+
+        # Correct options based on the type of the shape
+        if hasattr(shapes[i], 'labels'):
+            # If the shape is a LabelledPointUndirectedGraph ...
+            # ...use the legend options
+            options.update(renderer_options_wid.selected_values['legend'])
+            # ...use with_labels
+            options['with_labels'] = \
+                shape_options_wid.selected_values['with_labels']
+            # ...correct colours
+            line_colour = []
+            marker_face_colour = []
+            marker_edge_colour = []
+            for lbl in options['with_labels']:
+                idx = shapes[i].labels.index(lbl)
+                line_colour.append(options['line_colour'][idx])
+                marker_face_colour.append(options['marker_face_colour'][idx])
+                marker_edge_colour.append(options['marker_edge_colour'][idx])
+            options['line_colour'] = line_colour
+            options['marker_face_colour'] = marker_face_colour
+            options['marker_edge_colour'] = marker_edge_colour
+        else:
+            # If shape is PointCloud, TriMesh or PointGraph
+            # ...correct colours
+            options['line_colour'] = options['line_colour'][0]
+            options['marker_face_colour'] = options['marker_face_colour'][0]
+            options['marker_edge_colour'] = options['marker_edge_colour'][0]
+
+        # Get figure size
         new_figure_size = (
             renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
+
+        # Render shape with selected options
         shapes[i].view(
-                figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-                image_view=shape_options_wid.selected_values['image_view'],
-                render_lines=tmp1['render_lines'], label=None,
-                line_colour=tmp1['line_colour'][0],
-                line_style=tmp1['line_style'], line_width=tmp1['line_width'],
-                render_markers=tmp2['render_markers'],
-                marker_style=tmp2['marker_style'],
-                marker_size=tmp2['marker_size'],
-                marker_face_colour=tmp2['marker_face_colour'][0],
-                marker_edge_colour=tmp2['marker_edge_colour'][0],
-                marker_edge_width=tmp2['marker_edge_width'],
-                figure_size=new_figure_size, **options)
+            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+            figure_size=new_figure_size, **options)
+
+        # Force rendering
         save_figure_wid.renderer.force_draw()
 
         # Update info text widget
@@ -144,6 +171,7 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
         rang = shape.range()
         cm = shape.centre()
         text_per_line = [
+            "> {}".format(name_of_callable(shape)),
             "> {} points".format(shape.n_points),
             "> Bounds: [{0:.1f}-{1:.1f}]W, [{2:.1f}-{3:.1f}]H".format(
                 min_b[0], max_b[0], min_b[1], max_b[1]),
@@ -157,17 +185,17 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
                 text_per_line.append('> {}'.format(msg))
         info_wid.set_widget_state(text_per_line=text_per_line)
 
-    # Create widgets
-    try:
+    # If the object is a LabelledPointUndirectedGraph, grab the labels
+    labels = None
+    if hasattr(shapes[0], 'labels'):
         labels = shapes[0].labels
-    except AttributeError:
-        labels = None
+
+    # Create widgets
     shape_options_wid = Shape2DOptionsWidget(
         labels=labels, render_function=render_function, style=main_style,
         suboptions_style=tabs_style)
-    # TODO: Do I need legend here?
     renderer_options_wid = RendererOptionsWidget(
-        options_tabs=['zoom_one', 'axes', 'numbering_matplotlib'],
+        options_tabs=['zoom_one', 'axes', 'numbering_matplotlib', 'legend'],
         labels=None,  axes_x_limits=0.1, axes_y_limits=0.1,
         render_function=render_function, style=tabs_style)
     renderer_options_wid.container.margin = tabs_margin
@@ -184,11 +212,10 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
         # Define function that updates options' widgets state
         def update_widgets(change):
             # Get current shape and check if it has labels
-            i = shape_number_wid.selected_values
-            try:
+            i = change['new']
+            labels = None
+            if hasattr(shapes[i], 'labels'):
                 labels = shapes[i].labels
-            except AttributeError:
-                labels = None
 
             # Update shape options
             shape_options_wid.set_widget_state(labels=labels,
