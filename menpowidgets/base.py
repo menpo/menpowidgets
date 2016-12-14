@@ -1115,17 +1115,50 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
                    shape_model[level].eigenvalues[:len(parameters)] ** 0.5)
 
         # Get the mean
-        mean = shape_model[level].mean()
+        mean = shape_model[level].template_instance
 
-        # Render shape instance with selected options
-        tmp1 = shape_options_wid.selected_values['lines']
-        tmp2 = shape_options_wid.selected_values['markers']
-        options = renderer_options_wid.selected_values['numbering_matplotlib']
+        # Create options dictionary
+        options = dict()
+        options.update(shape_options_wid.selected_values['lines'])
+        options.update(shape_options_wid.selected_values['markers'])
+        options['image_view'] = shape_options_wid.selected_values['image_view']
+        options.update(
+            renderer_options_wid.selected_values['numbering_matplotlib'])
         options.update(renderer_options_wid.selected_values['axes'])
+
+        # Correct options based on the type of the shape
+        if hasattr(mean, 'labels'):
+            # If the shape is a LabelledPointUndirectedGraph ...
+            # ...use the legend options
+            options.update(renderer_options_wid.selected_values['legend'])
+            # ...use with_labels
+            options['with_labels'] = \
+                shape_options_wid.selected_values['with_labels']
+            # ...correct colours
+            line_colour = []
+            marker_face_colour = []
+            marker_edge_colour = []
+            for lbl in options['with_labels']:
+                idx = mean.labels.index(lbl)
+                line_colour.append(options['line_colour'][idx])
+                marker_face_colour.append(options['marker_face_colour'][idx])
+                marker_edge_colour.append(options['marker_edge_colour'][idx])
+            options['line_colour'] = line_colour
+            options['marker_face_colour'] = marker_face_colour
+            options['marker_edge_colour'] = marker_edge_colour
+        else:
+            # If shape is PointCloud, TriMesh or PointGraph
+            # ...correct colours
+            options['line_colour'] = options['line_colour'][0]
+            options['marker_face_colour'] = options['marker_face_colour'][0]
+            options['marker_edge_colour'] = options['marker_edge_colour'][0]
+
+        # Get figure size
         new_figure_size = (
             renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
 
+        # Render with selected options
         if mode_wid.value == 1:
             # Deformation mode
             # Compute instance
@@ -1135,30 +1168,21 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
             if mean_wid.selected_values:
                 mean.view(
                     figure_id=save_figure_wid.renderer.figure_id,
-                    new_figure=False,
-                    image_view=shape_options_wid.selected_values['image_view'],
-                    figure_size=None, render_lines=tmp1['render_lines'],
-                    line_colour='yellow', line_style=tmp1['line_style'],
-                    line_width=tmp1['line_width'],
-                    render_markers=tmp2['render_markers'],
-                    marker_style=tmp2['marker_style'],
-                    marker_size=tmp2['marker_size'],
+                    new_figure=False, figure_size=None,
+                    image_view=options['image_view'],
+                    render_lines=options['render_lines'],
+                    line_colour='yellow', line_style=options['line_style'],
+                    line_width=options['line_width'],
+                    render_markers=options['render_markers'],
+                    marker_style=options['marker_style'],
+                    marker_size=options['marker_size'],
                     marker_face_colour='yellow', marker_edge_colour='yellow',
-                    marker_edge_width=tmp2['marker_edge_width'])
+                    marker_edge_width=options['marker_edge_width'])
 
             # Render instance
             instance.view(
                 figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-                image_view=shape_options_wid.selected_values['image_view'],
-                figure_size=new_figure_size, render_lines=tmp1['render_lines'],
-                line_colour=tmp1['line_colour'][0],
-                line_style=tmp1['line_style'], line_width=tmp1['line_width'],
-                render_markers=tmp2['render_markers'],
-                marker_style=tmp2['marker_style'],
-                marker_size=tmp2['marker_size'],
-                marker_face_colour=tmp2['marker_face_colour'][0],
-                marker_edge_colour=tmp2['marker_edge_colour'][0],
-                marker_edge_width=tmp2['marker_edge_width'], **options)
+                figure_size=new_figure_size, **options)
 
             # Get instance range
             instance_range = instance.range()
@@ -1171,16 +1195,7 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
             # Render mean shape
             mean.view(
                 figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-                image_view=shape_options_wid.selected_values['image_view'],
-                figure_size=new_figure_size, render_lines=tmp1['render_lines'],
-                line_colour=tmp1['line_colour'][0],
-                line_style=tmp1['line_style'], line_width=tmp1['line_width'],
-                render_markers=tmp2['render_markers'],
-                marker_style=tmp2['marker_style'],
-                marker_size=tmp2['marker_size'],
-                marker_face_colour=tmp2['marker_face_colour'][0],
-                marker_edge_colour=tmp2['marker_edge_colour'][0],
-                marker_edge_width=tmp2['marker_edge_width'])
+                figure_size=new_figure_size, **options)
 
             # Render vectors
             ax = plt.gca()
@@ -1195,7 +1210,7 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
                 yl = instance_lower.points[p, 1]
                 xu = instance_upper.points[p, 0]
                 yu = instance_upper.points[p, 1]
-                if shape_options_wid.selected_values['image_view']:
+                if options['image_view']:
                     # image mode
                     lines = [[(ym, xm), (yl, xl)], [(ym, xm), (yu, xu)]]
                 else:
@@ -1212,25 +1227,25 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
                 # add collection
                 ax.add_collection(lc)
 
-            tmp = renderer_options_wid.selected_values['axes']
             # parse axes limits
             axes_x_limits, axes_y_limits = _parse_axes_limits(
-                    x_min, x_max, y_min, y_max, tmp['axes_x_limits'],
-                    tmp['axes_y_limits'])
+                    x_min, x_max, y_min, y_max, options['axes_x_limits'],
+                    options['axes_y_limits'])
             _set_axes_options(
-                ax, render_axes=tmp['render_axes'],
-                inverted_y_axis=shape_options_wid.selected_values['image_view'],
-                axes_font_name=tmp['axes_font_name'],
-                axes_font_size=tmp['axes_font_size'],
-                axes_font_style=tmp['axes_font_style'],
-                axes_font_weight=tmp['axes_font_weight'],
+                ax, render_axes=options['render_axes'],
+                inverted_y_axis=options['image_view'],
+                axes_font_name=options['axes_font_name'],
+                axes_font_size=options['axes_font_size'],
+                axes_font_style=options['axes_font_style'],
+                axes_font_weight=options['axes_font_weight'],
                 axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
-                axes_x_ticks=tmp['axes_x_ticks'],
-                axes_y_ticks=tmp['axes_y_ticks'])
+                axes_x_ticks=options['axes_x_ticks'],
+                axes_y_ticks=options['axes_y_ticks'])
 
             # Get instance range
             instance_range = mean.range()
 
+        # Force rendering
         save_figure_wid.renderer.force_draw()
 
         # Update info
@@ -1248,7 +1263,7 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
             "> Instance range: {:.1f} x {:.1f}".format(instance_range[0],
                                                        instance_range[1]),
             "> {} landmark points, {} features".format(
-                shape_model[level].mean().n_points,
+                shape_model[level].template_instance.n_points,
                 shape_model[level].n_features)]
         info_wid.set_widget_state(text_per_line=text_per_line)
 
@@ -1302,16 +1317,14 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
         style=tabs_style, continuous_update=False)
     model_parameters_wid.container.margin = tabs_margin
     model_parameters_wid.container.border = tabs_border
-    try:
-        labels = shape_model[0].mean_shape().labels
-    except AttributeError:
-        labels = None
+    labels = None
+    if hasattr(shape_model[0].template_instance, 'labels'):
+        labels = shape_model[0].template_instance.labels
     shape_options_wid = Shape2DOptionsWidget(
         labels=labels, render_function=render_function, style=main_style,
         suboptions_style=tabs_style)
-    # TODO: Do I need legend here?
     renderer_options_wid = RendererOptionsWidget(
-        options_tabs=['zoom_one', 'axes', 'numbering_matplotlib'],
+        options_tabs=['zoom_one', 'axes', 'numbering_matplotlib', 'legend'],
         labels=None,  axes_x_limits=0.1, axes_y_limits=0.1,
         render_function=render_function, style=tabs_style)
     renderer_options_wid.container.margin = tabs_margin

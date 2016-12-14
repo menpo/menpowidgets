@@ -1,3 +1,6 @@
+from collections import Sized
+
+
 def view_widget(items, **kwargs):
     r"""
     Convieniece function that uses the type of the first item in a list to
@@ -27,9 +30,13 @@ def view_widget(items, **kwargs):
     from menpo.shape import PointCloud
     from menpo.landmark import LandmarkManager
     from menpo.image import Image
+    from menpo.model import PCAModel
 
     # We use the first item to select the correct widget
-    template = items[0]
+    if not isinstance(items, Sized):
+        template = items
+    else:
+        template = items[0]
 
     # Select widget based on template's class
     if isinstance(template, PointCloud) and template.n_dims == 2:
@@ -41,6 +48,11 @@ def view_widget(items, **kwargs):
     elif isinstance(template, Image):
         from .base import visualize_images
         visualize_images(items, **kwargs)
+    elif (isinstance(template, PCAModel)
+          and isinstance(template.template_instance, PointCloud)
+          and template.template_instance.n_dims == 2):
+        from .base import visualize_shape_model_2d
+        visualize_shape_model_2d(items, **kwargs)
     else:
         raise ValueError(
             "No suitable list visualization found for type {}".format(
