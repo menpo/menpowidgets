@@ -108,46 +108,57 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         instance = aam.instance(scale_index=level, shape_weights=shape_weights,
                                 appearance_weights=appearance_weights)
         image_is_masked = isinstance(instance, MaskedImage)
-        selected_group = landmark_options_wid.selected_values['landmarks']['group']
+        g = landmark_options_wid.selected_values['landmarks']['group']
 
-        # Render instance with selected options
-        tmp1 = landmark_options_wid.selected_values['lines']
-        tmp2 = landmark_options_wid.selected_values['markers']
-        options = renderer_options_wid.selected_values['numbering_matplotlib']
-        options.update(renderer_options_wid.selected_values['legend'])
+        # Create options dictionary
+        options = dict()
+        options.update(landmark_options_wid.selected_values['lines'])
+        options.update(landmark_options_wid.selected_values['markers'])
+        options.update(
+            renderer_options_wid.selected_values['numbering_matplotlib'])
         options.update(renderer_options_wid.selected_values['axes'])
+        options.update(renderer_options_wid.selected_values['legend'])
         options.update(image_options_wid.selected_values)
         options.update(landmark_options_wid.selected_values['landmarks'])
+
+        # Correct options based on the type of the shape
+        if (instance.has_landmarks and
+                hasattr(instance.landmarks[g], 'labels')):
+            # If the shape is a LabelledPointUndirectedGraph ...
+            # ...correct colours
+            line_colour = []
+            marker_face_colour = []
+            marker_edge_colour = []
+            for lbl in options['with_labels']:
+                id = instance.landmarks[g].labels.index(lbl)
+                line_colour.append(options['line_colour'][id])
+                marker_face_colour.append(options['marker_face_colour'][id])
+                marker_edge_colour.append(options['marker_edge_colour'][id])
+            options['line_colour'] = line_colour
+            options['marker_face_colour'] = marker_face_colour
+            options['marker_edge_colour'] = marker_edge_colour
+        else:
+            # If shape is PointCloud, TriMesh or PointGraph
+            # ...correct colours
+            options['line_colour'] = options['line_colour'][0]
+            options['marker_face_colour'] = options['marker_face_colour'][0]
+            options['marker_edge_colour'] = options['marker_edge_colour'][0]
+
+        # Get figure size
         new_figure_size = (
-            renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
-            renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
-        # get line and marker colours
-        line_colour = []
-        marker_face_colour = []
-        marker_edge_colour = []
-        if instance.has_landmarks:
-            for lbl in landmark_options_wid.selected_values['landmarks']['with_labels']:
-                lbl_idx = instance.landmarks[selected_group].labels.index(lbl)
-                line_colour.append(tmp1['line_colour'][lbl_idx])
-                marker_face_colour.append(tmp2['marker_face_colour'][lbl_idx])
-                marker_edge_colour.append(tmp2['marker_edge_colour'][lbl_idx])
+            renderer_options_wid.selected_values['zoom_one'] *
+            figure_size[0],
+            renderer_options_wid.selected_values['zoom_one'] *
+            figure_size[1])
 
         # show image with selected options
         render_image(
             image=instance, renderer=save_figure_wid.renderer,
-            image_is_masked=image_is_masked,
-            render_lines=tmp1['render_lines'], line_style=tmp1['line_style'],
-            line_width=tmp1['line_width'], line_colour=line_colour,
-            render_markers=tmp2['render_markers'],
-            marker_style=tmp2['marker_style'],
-            marker_size=tmp2['marker_size'],
-            marker_edge_width=tmp2['marker_edge_width'],
-            marker_edge_colour=marker_edge_colour,
-            marker_face_colour=marker_face_colour,
-            figure_size=new_figure_size, **options)
+            image_is_masked=image_is_masked, figure_size=new_figure_size,
+            **options)
 
         # Update info
-        update_info(aam, instance, level, selected_group)
+        update_info(aam, instance, level, g)
 
     # Define function that updates the info text
     def update_info(aam, instance, level, group):
@@ -156,7 +167,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         lvl_shape_mod = aam.shape_models[level].model
         aam_mean = lvl_app_mod.mean()
         n_channels = aam_mean.n_channels
-        tmplt_inst = lvl_app_mod.template_instance
+        tmplt_inst = lvl_app_mod.mean()
         feat = aam.holistic_features[level]
 
         # Feature string
@@ -293,6 +304,12 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                 n_appearance_parameters[value], params_str='Parameter ',
                 allow_callback=False)
 
+            # Update landmarks options
+            g_keys, l_keys = extract_groups_labels_from_image(
+                aam.appearance_models[value].mean())
+            landmark_options_wid.set_widget_state(
+                group_keys=g_keys, labels_keys=l_keys, allow_callback=False)
+
             # Update channel options
             image_options_wid.set_widget_state(
                 n_channels=aam.appearance_models[value].mean().n_channels,
@@ -413,14 +430,21 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             appearance_weights=appearance_weights)
 
         # Render instance with selected options
-        options = shape_options_wid.selected_values['lines']
+        options = dict()
+        options.update(shape_options_wid.selected_values['lines'])
         options.update(shape_options_wid.selected_values['markers'])
-        options.update(renderer_options_wid.selected_values['numbering_matplotlib'])
+        options.update(
+            renderer_options_wid.selected_values['numbering_matplotlib'])
         options.update(renderer_options_wid.selected_values['axes'])
         image_options = dict(image_options_wid.selected_values)
         del image_options['masked_enabled']
         options.update(image_options)
         options.update(patch_options_wid.selected_values)
+        options['line_colour'] = options['line_colour'][0]
+        options['marker_face_colour'] = options['marker_face_colour'][0]
+        options['marker_edge_colour'] = options['marker_edge_colour'][0]
+
+        # Get figure size
         new_figure_size = (
             renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
@@ -529,12 +553,8 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         plot_variance_visible=True,
         plot_variance_function=plot_appearance_variance, style=tabs_style,
         animation_step=0.5, interval=0., loop_enabled=True)
-    try:
-        labels = aam.shape_models[0].model.mean().labels
-    except AttributeError:
-        labels = None
     shape_options_wid = Shape2DOptionsWidget(
-        labels=labels, render_function=None, style=main_style,
+        labels=None, render_function=None, style=main_style,
         suboptions_style=tabs_style)
     shape_options_wid.line_options_wid.render_lines_switch.button_wid.value = False
     shape_options_wid.add_render_function(render_function)
@@ -701,44 +721,57 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
         shape_weights = shape_model_parameters_wid.selected_values
         instance = atm.instance(scale_index=level, shape_weights=shape_weights)
         image_is_masked = isinstance(instance, MaskedImage)
-        selected_group = landmark_options_wid.selected_values['landmarks']['group']
+        g = landmark_options_wid.selected_values['landmarks']['group']
 
         # Render instance with selected options
-        tmp1 = landmark_options_wid.selected_values['lines']
-        tmp2 = landmark_options_wid.selected_values['markers']
-        options = renderer_options_wid.selected_values['numbering_matplotlib']
-        options.update(renderer_options_wid.selected_values['legend'])
+        options = dict()
+        options.update(landmark_options_wid.selected_values['lines'])
+        options.update(landmark_options_wid.selected_values['markers'])
+        options.update(
+            renderer_options_wid.selected_values['numbering_matplotlib'])
         options.update(renderer_options_wid.selected_values['axes'])
+        options.update(renderer_options_wid.selected_values['legend'])
         options.update(image_options_wid.selected_values)
         options.update(landmark_options_wid.selected_values['landmarks'])
-        new_figure_size = (
-            renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
-            renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
-        # get line and marker colours
-        line_colour = []
-        marker_face_colour = []
-        marker_edge_colour = []
-        if instance.has_landmarks:
-            for lbl in landmark_options_wid.selected_values['landmarks']['with_labels']:
-                lbl_idx = instance.landmarks[selected_group].labels.index(lbl)
-                line_colour.append(tmp1['line_colour'][lbl_idx])
-                marker_face_colour.append(tmp2['marker_face_colour'][lbl_idx])
-                marker_edge_colour.append(tmp2['marker_edge_colour'][lbl_idx])
 
-        # show image with selected options
+        # Correct options based on the type of the shape
+        if (instance.has_landmarks and
+                hasattr(instance.landmarks[g], 'labels')):
+            # If the shape is a LabelledPointUndirectedGraph ...
+            # ...correct colours
+            line_colour = []
+            marker_face_colour = []
+            marker_edge_colour = []
+            for lbl in options['with_labels']:
+                id = instance.landmarks[g].labels.index(lbl)
+                line_colour.append(options['line_colour'][id])
+                marker_face_colour.append(options['marker_face_colour'][id])
+                marker_edge_colour.append(options['marker_edge_colour'][id])
+            options['line_colour'] = line_colour
+            options['marker_face_colour'] = marker_face_colour
+            options['marker_edge_colour'] = marker_edge_colour
+        else:
+            # If shape is PointCloud, TriMesh or PointGraph
+            # ...correct colours
+            options['line_colour'] = options['line_colour'][0]
+            options['marker_face_colour'] = options['marker_face_colour'][0]
+            options['marker_edge_colour'] = options['marker_edge_colour'][0]
+
+        # Get figure size
+        new_figure_size = (
+            renderer_options_wid.selected_values['zoom_one'] *
+            figure_size[0],
+            renderer_options_wid.selected_values['zoom_one'] *
+            figure_size[1])
+
+        # Render shape with selected options
         render_image(
             image=instance, renderer=save_figure_wid.renderer,
-            image_is_masked=image_is_masked, render_lines=tmp1['render_lines'],
-            line_style=tmp1['line_style'], line_width=tmp1['line_width'],
-            line_colour=line_colour, render_markers=tmp2['render_markers'],
-            marker_style=tmp2['marker_style'], marker_size=tmp2['marker_size'],
-            marker_edge_width=tmp2['marker_edge_width'],
-            marker_edge_colour=marker_edge_colour,
-            marker_face_colour=marker_face_colour,
-            figure_size=new_figure_size, **options)
+            image_is_masked=image_is_masked, figure_size=new_figure_size,
+            **options)
 
         # Update info
-        update_info(atm, instance, level, selected_group)
+        update_info(atm, instance, level, g)
 
     # Define function that updates the info text
     def update_info(atm, instance, level, group):
@@ -838,6 +871,12 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
             shape_model_parameters_wid.set_widget_state(
                 n_shape_parameters[value], params_str='Parameter ',
                 allow_callback=False)
+
+            # Update landmarks options
+            g_keys, l_keys = extract_groups_labels_from_image(
+                atm.warped_templates[value])
+            landmark_options_wid.set_widget_state(
+                group_keys=g_keys, labels_keys=l_keys, allow_callback=False)
 
             # Update channel options
             image_options_wid.set_widget_state(
@@ -946,15 +985,22 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
         shape_instance, template = atm.instance(scale_index=level,
                                                 shape_weights=shape_weights)
 
-        # Render instance with selected options
-        options = shape_options_wid.selected_values['lines']
+        # Create options dictionary
+        options = dict()
+        options.update(shape_options_wid.selected_values['lines'])
         options.update(shape_options_wid.selected_values['markers'])
-        options.update(renderer_options_wid.selected_values['numbering_matplotlib'])
+        options.update(
+            renderer_options_wid.selected_values['numbering_matplotlib'])
         options.update(renderer_options_wid.selected_values['axes'])
         image_options = dict(image_options_wid.selected_values)
         del image_options['masked_enabled']
         options.update(image_options)
         options.update(patch_options_wid.selected_values)
+        options['line_colour'] = options['line_colour'][0]
+        options['marker_face_colour'] = options['marker_face_colour'][0]
+        options['marker_edge_colour'] = options['marker_edge_colour'][0]
+
+        # Get figure size
         new_figure_size = (
             renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
@@ -1027,12 +1073,8 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
         mode=mode, params_bounds=parameters_bounds, params_step=0.1,
         plot_variance_visible=True, plot_variance_function=plot_shape_variance,
         style=tabs_style, animation_step=0.5, interval=0., loop_enabled=True)
-    try:
-        labels = atm.shape_models[0].model.mean().labels
-    except AttributeError:
-        labels = None
     shape_options_wid = Shape2DOptionsWidget(
-        labels=labels, render_function=None, style=main_style,
+        labels=None, render_function=None, style=main_style,
         suboptions_style=tabs_style)
     shape_options_wid.line_options_wid.render_lines_switch.button_wid.value = False
     shape_options_wid.add_render_function(render_function)
@@ -1195,15 +1237,22 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
                     clm.expert_ensembles[level].frequency_filter_images,
                     clm.expert_ensembles[level].n_experts)
 
-        # Render instance with selected options
-        options = shape_options_wid.selected_values['lines']
+        # Create options dictionary
+        options = dict()
+        options.update(shape_options_wid.selected_values['lines'])
         options.update(shape_options_wid.selected_values['markers'])
-        options.update(renderer_options_wid.selected_values['numbering_matplotlib'])
+        options.update(
+            renderer_options_wid.selected_values['numbering_matplotlib'])
         options.update(renderer_options_wid.selected_values['axes'])
         image_options = dict(image_options_wid.selected_values)
         del image_options['masked_enabled']
         options.update(image_options)
         options.update(patch_options_wid.selected_values)
+        options['line_colour'] = options['line_colour'][0]
+        options['marker_face_colour'] = options['marker_face_colour'][0]
+        options['marker_edge_colour'] = options['marker_edge_colour'][0]
+
+        # Get figure size
         new_figure_size = (
             renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
@@ -1273,12 +1322,8 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
         mode=mode, params_bounds=parameters_bounds, params_step=0.1,
         plot_variance_visible=True, plot_variance_function=plot_shape_variance,
         style=tabs_style, animation_step=0.5, interval=0., loop_enabled=True)
-    try:
-        labels = clm.shape_models[0].model.mean().labels
-    except AttributeError:
-        labels = None
     shape_options_wid = Shape2DOptionsWidget(
-        labels=labels, render_function=None, style=main_style,
+        labels=None, render_function=None, style=main_style,
         suboptions_style=tabs_style)
     shape_options_wid.line_options_wid.render_lines_switch.button_wid.value = False
     shape_options_wid.add_render_function(render_function)
@@ -1437,15 +1482,22 @@ def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(7, 7)):
                     expert_ensemble[level].frequency_filter_images,
                     expert_ensemble[level].n_experts)
 
-        # Render instance with selected options
-        options = shape_options_wid.selected_values['lines']
+        # Create options dictionary
+        options = dict()
+        options.update(shape_options_wid.selected_values['lines'])
         options.update(shape_options_wid.selected_values['markers'])
-        options.update(renderer_options_wid.selected_values['numbering_matplotlib'])
+        options.update(
+            renderer_options_wid.selected_values['numbering_matplotlib'])
         options.update(renderer_options_wid.selected_values['axes'])
         image_options = dict(image_options_wid.selected_values)
         del image_options['masked_enabled']
         options.update(image_options)
         options.update(patch_options_wid.selected_values)
+        options['line_colour'] = options['line_colour'][0]
+        options['marker_face_colour'] = options['marker_face_colour'][0]
+        options['marker_edge_colour'] = options['marker_edge_colour'][0]
+
+        # Get figure size
         new_figure_size = (
             renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
@@ -1476,12 +1528,8 @@ def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(7, 7)):
         info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Create widgets
-    try:
-        labels = centers[0].labels
-    except AttributeError:
-        labels = None
     shape_options_wid = Shape2DOptionsWidget(
-        labels=labels, render_function=None, style=main_style,
+        labels=None, render_function=None, style=main_style,
         suboptions_style=tabs_style)
     shape_options_wid.line_options_wid.render_lines_switch.button_wid.value = False
     shape_options_wid.add_render_function(render_function)
@@ -2142,7 +2190,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7),
         # then the animation stops.
         def save_fig_tab_fun(change):
             if (change['new'] == 3 and
-                    image_number_wid.play_options_toggle.value):
+                    image_number_wid.play_stop_toggle.value):
                 image_number_wid.stop_animation()
         options_box.observe(save_fig_tab_fun, names='selected_index',
                             type='change')

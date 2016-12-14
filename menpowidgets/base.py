@@ -1512,7 +1512,7 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
                    shape_model[level].eigenvalues[:len(parameters)] ** 0.5)
 
         # Get the mean
-        mean = shape_model[level].template_instance
+        mean = shape_model[level].mean()
 
         # Create options dictionary
         options = dict()
@@ -1660,7 +1660,7 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
             "> Instance range: {:.1f} x {:.1f}".format(instance_range[0],
                                                        instance_range[1]),
             "> {} landmark points, {} features".format(
-                shape_model[level].template_instance.n_points,
+                shape_model[level].mean().n_points,
                 shape_model[level].n_features)]
         info_wid.set_widget_state(text_per_line=text_per_line)
 
@@ -1715,8 +1715,8 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
     model_parameters_wid.container.margin = tabs_margin
     model_parameters_wid.container.border = tabs_border
     labels = None
-    if hasattr(shape_model[0].template_instance, 'labels'):
-        labels = shape_model[0].template_instance.labels
+    if hasattr(shape_model[0].mean(), 'labels'):
+        labels = shape_model[0].mean().labels
     shape_options_wid = Shape2DOptionsWidget(
         labels=labels, render_function=render_function, style=main_style,
         suboptions_style=tabs_style)
@@ -1953,11 +1953,11 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
     model_parameters_wid.container.margin = tabs_margin
     model_parameters_wid.container.border = tabs_border
     groups_keys, labels_keys = extract_groups_labels_from_image(
-        appearance_model[0].template_instance)
-    first_label = labels_keys[0] if labels_keys else None
+        appearance_model[0].mean())
     image_options_wid = ImageOptionsWidget(
         n_channels=appearance_model[0].mean().n_channels,
-        image_is_masked=isinstance(appearance_model[0].mean(), MaskedImage),
+        image_is_masked=isinstance(appearance_model[0].mean(),
+                                   MaskedImage),
         render_function=render_function, style=tabs_style)
     image_options_wid.container.margin = tabs_margin
     image_options_wid.container.border = tabs_border
@@ -1969,7 +1969,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
     landmark_options_wid.container.border = tabs_border
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['zoom_one', 'axes', 'numbering_matplotlib', 'legend'],
-        axes_x_limits=None, axes_y_limits=None, labels=first_label,
+        axes_x_limits=None, axes_y_limits=None, labels=None,
         render_function=render_function,  style=tabs_style)
     renderer_options_wid.container.margin = tabs_margin
     renderer_options_wid.container.border = tabs_border
@@ -2001,8 +2001,8 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
             # Update channels options
             image_options_wid.set_widget_state(
                 n_channels=appearance_model[value].mean().n_channels,
-                image_is_masked=isinstance(appearance_model[value].mean(),
-                                           MaskedImage),
+                image_is_masked=isinstance(
+                    appearance_model[value].mean(), MaskedImage),
                 allow_callback=True)
 
         # Create pyramid radiobuttons
@@ -2114,9 +2114,7 @@ def visualize_patch_appearance_model(appearance_model, centers,
         ipydisplay.clear_output(wait=True)
 
         # Get selected level
-        level = 0
-        if n_levels > 1:
-            level = level_wid.value
+        level = level_wid.value if n_levels > 1 else 0
 
         # Compute weights and instance
         parameters = model_parameters_wid.selected_values
