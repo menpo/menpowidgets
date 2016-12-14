@@ -1,5 +1,4 @@
 from menpo.base import MenpoMissingDependencyError
-from menpo.visualize import print_dynamic
 
 try:
     import menpo3d
@@ -13,6 +12,9 @@ import matplotlib.pyplot as plt
 
 import ipywidgets
 import IPython.display as ipydisplay
+
+from menpo.visualize import print_dynamic
+from menpo.base import name_of_callable
 
 from ..style import map_styles_to_hex_colours
 from ..checks import check_n_parameters
@@ -91,19 +93,40 @@ def visualize_shapes_3d(shapes, browser_style='buttons',
         # Get selected shape index
         i = shape_number_wid.selected_values if n_shapes > 1 else 0
 
+        # Create options dictionary
+        options = dict()
+        options.update(shape_options_wid.selected_values['lines'])
+        options.update(shape_options_wid.selected_values['markers'])
+        options.update(
+            renderer_options_wid.selected_values['numbering_mayavi'])
+
+        # Correct options based on the type of the shape
+        if hasattr(shapes[i], 'labels'):
+            # If the shape is a LabelledPointUndirectedGraph ...
+            # ...use with_labels
+            options['with_labels'] = \
+                shape_options_wid.selected_values['with_labels']
+            # ...correct colours
+            line_colour = []
+            marker_colour = []
+            for lbl in options['with_labels']:
+                idx = shapes[i].labels.index(lbl)
+                line_colour.append(options['line_colour'][idx])
+                marker_colour.append(options['marker_face_colour'][idx])
+            options['line_colour'] = line_colour
+            options['marker_colour'] = marker_colour
+        else:
+            # If shape is PointCloud, TriMesh or PointGraph
+            # ...correct colours
+            options['line_colour'] = options['line_colour'][0]
+            options['marker_colour'] = options['marker_colour'][0]
+
         # Render shape with selected options
-        tmp1 = shape_options_wid.selected_values['lines']
-        tmp2 = shape_options_wid.selected_values['markers']
-        options = renderer_options_wid.selected_values['numbering_mayavi']
         shapes[i].view(
             figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-            render_lines=tmp1['render_lines'],
-            line_colour=tmp1['line_colour'][0], line_width=tmp1['line_width'],
-            render_markers=tmp2['render_markers'],
-            marker_style=tmp2['marker_style'], marker_size=tmp2['marker_size'],
-            marker_colour=tmp2['marker_colour'][0],
-            marker_resolution=tmp2['marker_resolution'], step=1,
-            alpha=1.0, **options)
+            step=1, alpha=1.0, **options)
+
+        # Force rendering
         save_figure_wid.renderer.force_draw()
 
         # Update info text widget
@@ -115,6 +138,7 @@ def visualize_shapes_3d(shapes, browser_style='buttons',
         rang = shape.range()
         cm = shape.centre()
         text_per_line = [
+            "> {}".format(name_of_callable(shape)),
             "> {} points".format(shape.n_points),
             "> Bounds: [{0:.1f}-{1:.1f}]W, [{2:.1f}-{3:.1f}]H".format(
                 min_b[0], max_b[0], min_b[1], max_b[1]),
