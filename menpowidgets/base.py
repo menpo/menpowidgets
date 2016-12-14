@@ -515,51 +515,62 @@ def visualize_images(images, figure_size=(7, 7), browser_style='buttons',
         # that will be rendered
         ipydisplay.clear_output(wait=True)
 
-        # get selected index
+        # get selected index and selected group
         i = image_number_wid.selected_values if n_images > 1 else 0
+        g = landmark_options_wid.selected_values['landmarks']['group']
 
-        # update info text widget
+        # check if image is masked
         image_is_masked = isinstance(images[i], MaskedImage)
-        selected_group = landmark_options_wid.selected_values['landmarks']['group']
 
-        # show landmarks with selected options
-        tmp1 = landmark_options_wid.selected_values['lines']
-        tmp2 = landmark_options_wid.selected_values['markers']
-        options = renderer_options_wid.selected_values['numbering_matplotlib']
-        options.update(renderer_options_wid.selected_values['legend'])
+        # Create options dictionary
+        options = dict()
+        options.update(landmark_options_wid.selected_values['lines'])
+        options.update(landmark_options_wid.selected_values['markers'])
+        options.update(
+            renderer_options_wid.selected_values['numbering_matplotlib'])
         options.update(renderer_options_wid.selected_values['axes'])
+        options.update(renderer_options_wid.selected_values['legend'])
         options.update(image_options_wid.selected_values)
         options.update(landmark_options_wid.selected_values['landmarks'])
-        new_figure_size = (
-            renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
-            renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
-        # get line and marker colours
-        line_colour = []
-        marker_face_colour = []
-        marker_edge_colour = []
-        if images[i].has_landmarks:
-            for lbl in landmark_options_wid.selected_values['landmarks']['with_labels']:
-                lbl_idx = images[i].landmarks[selected_group].labels.index(lbl)
-                line_colour.append(tmp1['line_colour'][lbl_idx])
-                marker_face_colour.append(tmp2['marker_face_colour'][lbl_idx])
-                marker_edge_colour.append(tmp2['marker_edge_colour'][lbl_idx])
 
-        # show image with selected options
+        # Correct options based on the type of the shape
+        if (images[i].has_landmarks and
+                hasattr(images[i].landmarks[g], 'labels')):
+            # If the shape is a LabelledPointUndirectedGraph ...
+            # ...correct colours
+            line_colour = []
+            marker_face_colour = []
+            marker_edge_colour = []
+            for lbl in options['with_labels']:
+                id = images[i].landmarks[g].labels.index(lbl)
+                line_colour.append(options['line_colour'][id])
+                marker_face_colour.append(options['marker_face_colour'][id])
+                marker_edge_colour.append(options['marker_edge_colour'][id])
+            options['line_colour'] = line_colour
+            options['marker_face_colour'] = marker_face_colour
+            options['marker_edge_colour'] = marker_edge_colour
+        else:
+            # If shape is PointCloud, TriMesh or PointGraph
+            # ...correct colours
+            options['line_colour'] = options['line_colour'][0]
+            options['marker_face_colour'] = options['marker_face_colour'][0]
+            options['marker_edge_colour'] = options['marker_edge_colour'][0]
+
+        # Get figure size
+        new_figure_size = (
+            renderer_options_wid.selected_values['zoom_one'] *
+            figure_size[0],
+            renderer_options_wid.selected_values['zoom_one'] *
+            figure_size[1])
+
+        # Render shape with selected options
         render_image(
             image=images[i], renderer=save_figure_wid.renderer,
-            image_is_masked=image_is_masked,
-            render_lines=tmp1['render_lines'], line_style=tmp1['line_style'],
-            line_width=tmp1['line_width'], line_colour=line_colour,
-            render_markers=tmp2['render_markers'],
-            marker_style=tmp2['marker_style'],
-            marker_size=tmp2['marker_size'],
-            marker_edge_width=tmp2['marker_edge_width'],
-            marker_edge_colour=marker_edge_colour,
-            marker_face_colour=marker_face_colour,
-            figure_size=new_figure_size, **options)
+            image_is_masked=image_is_masked, figure_size=new_figure_size,
+            **options)
 
         # Update info
-        update_info(images[i], image_is_masked, selected_group,
+        update_info(images[i], image_is_masked, g,
                     custom_info_callback=custom_info_callback)
 
     # Define function that updates the info text
@@ -582,7 +593,7 @@ def visualize_images(images, figure_size=(7, 7), browser_style='buttons',
             img.pixels.min(), img.pixels.max()))
         if img.has_landmarks:
             text_per_line.append("> {} landmark points".format(
-                img.landmarks[group].lms.n_points))
+                img.landmarks[group].n_points))
         if custom_info_callback is not None:
             # iterate over the list of messages returned by the callback
             # function and append them in the text_per_line.
@@ -1468,7 +1479,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
     # Define function that updates the info text
     def update_info(image, level, group):
         lvl_app_mod = appearance_model[level]
-        lp = 0 if group is None else image.landmarks[group].lms.n_points
+        lp = 0 if group is None else image.landmarks[group].n_points
         text_per_line = [
             "> Level: {} out of {}.".format(level + 1, n_levels),
             "> {} components in total.".format(lvl_app_mod.n_components),
