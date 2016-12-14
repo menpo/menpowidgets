@@ -53,6 +53,10 @@ def view_widget(items, **kwargs):
           and template.template_instance.n_dims == 2):
         from .base import visualize_shape_model_2d
         visualize_shape_model_2d(items, **kwargs)
+    elif (isinstance(template, PCAModel)
+          and isinstance(template.template_instance, Image)):
+        from .base import visualize_appearance_model
+        visualize_appearance_model(items, **kwargs)
     else:
         raise ValueError(
             "No suitable list visualization found for type {}".format(
