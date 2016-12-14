@@ -1,32 +1,43 @@
 from collections import Sized
 
+from menpo.shape import PointCloud
+from menpo.landmark import LandmarkManager
+from menpo.image import Image
+from menpo.model import PCAModel
+
 
 def view_widget(items, **kwargs):
     r"""
-    Convieniece function that uses the type of the first item in a list to
-    automatically select and display the relevent group widget.
+    Convenience function that visualizes the provided items with a suitable
+    widget. The supported items are:
+
+        ========================================================================
+        Classes
+        ========================================================================
+        2D `PointCloud`, `PointGraph`, `LabelledPointUndirectedGraph`, `TriMesh`
+        3D `PointCloud`, `PointGraph`, `LabelledPointUndirectedGraph`
+        `Image`, `MaskedImage`
+        2D `LandmarkManager`
+        3D `LandmarkManager`
+        `PCAModel` of 2D `PointCloud` visualize_shape_model_2d
+        `PCAModel` of 3D `PointCloud` visualize_shape_model_3d
+        `PCAModel` of `Image` visualize_appearance_model
+        ========================================================================
 
     Parameters
     ----------
-    items : `list`
-        The `list` of objects to be visualized. The first item will be tested
-        for it's type, which has to be one of `menpo.shape.TriMesh`,
-        `menpo.shape.PointCloud`, `menpo.image.Image` and the appropriate
-        widget will be returned
+    items : `object` or `list` of `object`
+        The item(s) to visualize. The supported items are mentioned above.
     kwargs : optional
-        Keyword arguments that will be forwarded to the appropriate widget.
+        Keyword arguments that will be forwarded to the appropriate widget,
+        e.g. `browser_style`, `figure_size`.
 
     Raises
     ------
     ValueError
         If the type of the first item in the list does not have a suitable
-        multiple item viewer in menpowidgets.
+        widget in menpowidgets.
     """
-    from menpo.shape import PointCloud
-    from menpo.landmark import LandmarkManager
-    from menpo.image import Image
-    from menpo.model import PCAModel
-
     # We use the first item to select the correct widget
     if not isinstance(items, Sized):
         template = items
@@ -60,5 +71,7 @@ def view_widget(items, **kwargs):
         visualize_appearance_model(items, **kwargs)
     else:
         raise ValueError(
-            "No suitable list visualization found for type {}".format(
+            "No suitable widget found for type {} - Supported types are "
+            "PointCloud, LandmarkManager, Image, PCAModel or "
+            "subclasses of those.".format(
                 type(template)))

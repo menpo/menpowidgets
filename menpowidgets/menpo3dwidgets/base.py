@@ -20,8 +20,7 @@ from ..style import map_styles_to_hex_colours
 from ..checks import check_n_parameters
 from ..options import (RendererOptionsWidget, TextPrintWidget,
                        LinearModelParametersWidget, LogoWidget,
-                       SaveMayaviFigureOptionsWidget, Shape3DOptionsWidget,
-                       AnimationOptionsWidget)
+                       SaveMayaviFigureOptionsWidget)
 
 
 def visualize_shape_model_3d(shape_model, n_parameters=5, mode='multiple',

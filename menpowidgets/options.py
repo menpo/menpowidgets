@@ -81,15 +81,15 @@ class AnimationOptionsWidget(MenpoWidget):
     style : `str` (see below), optional
         Sets a predefined style at the widget. Possible options are:
 
-            ============= ============================
+            ============= ==================
             Style         Description
-            ============= ============================
+            ============= ==================
             ``'success'`` Green-based style
             ``'info'``    Blue-based style
             ``'warning'`` Yellow-based style
             ``'danger'``  Red-based style
             ``''``        No style
-            ============= ============================
+            ============= ==================
 
     Example
     -------
