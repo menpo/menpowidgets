@@ -47,35 +47,40 @@ class LogoWidget(ipywidgets.Box):
                 MENPO_MINIMAL_LOGO = mio.import_image(
                     logos_path / "menpoproject_minimal.png")
             self.image = ipywidgets.Image(
-                value=convert_image_to_bytes(MENPO_MINIMAL_LOGO), width='50px')
+                value=convert_image_to_bytes(MENPO_MINIMAL_LOGO), width='50px',
+                height='70px')
         elif style == 'danger':
             global MENPO_DANGER_LOGO
             if MENPO_DANGER_LOGO is None:
                 MENPO_DANGER_LOGO = mio.import_image(
                     logos_path / "menpoproject_{}.png".format(style))
             self.image = ipywidgets.Image(
-                value=convert_image_to_bytes(MENPO_DANGER_LOGO), width='50px')
+                value=convert_image_to_bytes(MENPO_DANGER_LOGO), width='50px',
+                height='70px')
         elif style == 'info':
             global MENPO_INFO_LOGO
             if MENPO_INFO_LOGO is None:
                 MENPO_INFO_LOGO = mio.import_image(
                     logos_path / "menpoproject_{}.png".format(style))
             self.image = ipywidgets.Image(
-                value=convert_image_to_bytes(MENPO_INFO_LOGO), width='50px')
+                value=convert_image_to_bytes(MENPO_INFO_LOGO), width='50px',
+                height='70px')
         elif style == 'warning':
             global MENPO_WARNING_LOGO
             if MENPO_WARNING_LOGO is None:
                 MENPO_WARNING_LOGO = mio.import_image(
                     logos_path / "menpoproject_{}.png".format(style))
             self.image = ipywidgets.Image(
-                value=convert_image_to_bytes(MENPO_WARNING_LOGO), width='50px')
+                value=convert_image_to_bytes(MENPO_WARNING_LOGO), width='50px',
+                height='70px')
         elif style == 'success':
             global MENPO_SUCCESS_LOGO
             if MENPO_SUCCESS_LOGO is None:
                 MENPO_SUCCESS_LOGO = mio.import_image(
                     logos_path / "menpoproject_{}.png".format(style))
             self.image = ipywidgets.Image(
-                value=convert_image_to_bytes(MENPO_SUCCESS_LOGO), width='50px')
+                value=convert_image_to_bytes(MENPO_SUCCESS_LOGO), width='50px',
+                height='70px')
         else:
             raise ValueError("style must be 'minimal', 'info', 'danger', "
                              "'warning', 'success' or ''; {} was "
