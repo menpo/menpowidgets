@@ -15,6 +15,7 @@ and :ref:`api-menpofit-base-index`.
     ImageOptionsWidget
     LandmarkOptionsWidget
     LinearModelParametersWidget
+    Mesh3DOptionsWidget
     PatchOptionsWidget
     PlotMatplotlibOptionsWidget
     RendererOptionsWidget

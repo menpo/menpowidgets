@@ -81,15 +81,15 @@ class AnimationOptionsWidget(MenpoWidget):
     style : `str` (see below), optional
         Sets a predefined style at the widget. Possible options are:
 
-            ============= ============================
+            ============= ==================
             Style         Description
-            ============= ============================
+            ============= ==================
             ``'success'`` Green-based style
             ``'info'``    Blue-based style
             ``'warning'`` Yellow-based style
             ``'danger'``  Red-based style
             ``''``        No style
-            ============= ============================
+            ============= ==================
 
     Example
     -------
@@ -1090,6 +1090,292 @@ class Shape3DOptionsWidget(MenpoWidget):
             else:
                 self.labels_options_wid.set_widget_state(
                     [' '], with_labels=None, allow_callback=False)
+
+            # Get values
+            self._save_options({})
+
+            # Add callbacks
+            self.add_callbacks()
+            self.add_render_function(render_function)
+
+        # trigger render function if allowed
+        if allow_callback:
+            self.call_render_function(old_value, self.selected_values)
+
+
+class Mesh3DOptionsWidget(MenpoWidget):
+    r"""
+    Creates a widget for selecting options for 3D meshes,
+    i.e. `menpo.shape.TriMesh`, `menpo.shape.TexturedTriMesh`,
+    and `menpo.shape.ColouredTriMesh`.
+
+    Note that:
+
+    * The selected values are stored in the ``self.selected_values`` `trait`.
+    * To update the state of the widget, please refer to the
+      :meth:`set_widget_state` method.
+    * To update the handler callback function of the widget, please refer to the
+      :meth:`replace_render_function` method.
+    * To set the styling of this widget please refer to the
+      :meth:`predefined_style` method.
+
+    Parameters
+    ----------
+    textured : `bool`, optional
+        ``True`` if the object is `TexturedTriMesh` or `ColouredTriMesh`.
+         ``False`` if the object is `TriMesh`.
+    render_function : `callable` or ``None``, optional
+        The render function that is executed when a widgets' value changes.
+        It must have signature ``render_function(change)`` where ``change`` is
+        a `dict` with the following keys:
+
+        * ``type`` : The type of notification (normally ``'change'``).
+        * ``owner`` : the `HasTraits` instance
+        * ``old`` : the old value of the modified trait attribute
+        * ``new`` : the new value of the modified trait attribute
+        * ``name`` : the name of the modified trait attribute.
+
+        If ``None``, then nothing is assigned.
+    style : `str` (see below), optional
+        Sets a predefined style at the widget. Possible options are:
+
+            ============= ==================
+            Style         Description
+            ============= ==================
+            ``'success'`` Green-based style
+            ``'info'``    Blue-based style
+            ``'warning'`` Yellow-based style
+            ``'danger'``  Red-based style
+            ``''``        No style
+            ============= ==================
+
+    Example
+    -------
+    Let's create a shape options widget and then update its state. Firstly,
+    we need to import it:
+
+        >>> from menpowidgets.options import Mesh3DOptionsWidget
+
+    Now let's define a render function that will get called on every widget
+    change and will dynamically print the selected index:
+
+        >>> from menpo.visualize import print_dynamic
+        >>> def render_function(change):
+        >>>     s = "Selected index: {}".format(wid.selected_values)
+        >>>     print_dynamic(s)
+
+    Create the widget with some initial options and display it:
+
+        >>> wid = Mesh3DOptionsWidget(True, render_function=render_function,
+        >>>                           style='danger')
+        >>> wid
+
+    By pressing the buttons you can select various labels. Markers and lines
+    options are also available. Finally, let's change the widget status with a
+    new dictionary of options:
+
+        >>> wid.set_widget_state(False, allow_callback=False)
+    """
+    def __init__(self, textured, render_function=None, style=''):
+        # Initialize default options dictionary
+        self.default_options = {}
+
+        # Assign properties
+        self.textured = textured
+
+        # Get initial options
+        renderer_options = self.get_default_options(textured)
+
+        # Create widgets
+        if textured:
+            self.textured_trimesh_wid = TexturedTriMeshOptionsWidget(
+                renderer_options, render_function=None,
+                render_checkbox_title='Render texture')
+            self.trimesh_wid = TriMeshOptionsWidget(
+                {'mesh_type': 'wireframe', 'line_width': 2., 'colour': 'red',
+                 'marker_style': 'sphere', 'marker_size': None,
+                 'marker_resolution': 8, 'step': 1, 'alpha': 1.},
+                render_function=None)
+        else:
+            self.trimesh_wid = TriMeshOptionsWidget(
+                renderer_options, render_function=None)
+            self.textured_trimesh_wid = TexturedTriMeshOptionsWidget(
+                {'render_texture': True, 'mesh_type': 'wireframe',
+                 'ambient_light': 0.0, 'specular_light': 0.0,
+                 'line_width': 2., 'colour': 'red', 'alpha': 1.0},
+                render_function=None, render_checkbox_title='Render texture')
+
+        # Set visibility
+        self._set_visibility()
+
+        # Group widgets
+        self.container = ipywidgets.HBox([self.trimesh_wid,
+                                          self.textured_trimesh_wid])
+
+        # Set style
+        self.predefined_style(style)
+
+        # Call superclass
+        initial_options = renderer_options.copy()
+        super(Mesh3DOptionsWidget, self).__init__(
+            [self.container], Dict, initial_options,
+            render_function=render_function)
+
+        # Add callbacks
+        self.add_callbacks()
+
+    def add_callbacks(self):
+        r"""
+        Function that adds the handler callback functions in all the widget
+        components, which are necessary for the internal functionality.
+        """
+        self.trimesh_wid.observe(
+            self._save_options, names='selected_values', type='change')
+        self.textured_trimesh_wid.observe(
+            self._save_options, names='selected_values', type='change')
+
+    def remove_callbacks(self):
+        r"""
+        Function that removes all the internal handler callback functions.
+        """
+        self.trimesh_wid.unobserve(
+            self._save_options, names='selected_values', type='change')
+        self.textured_trimesh_wid.unobserve(
+            self._save_options, names='selected_values', type='change')
+
+    def _save_options(self, change):
+        # update selected values
+        if self.textured:
+            self.selected_values = \
+                self.textured_trimesh_wid.selected_values.copy()
+        else:
+            self.selected_values = self.trimesh_wid.selected_values.copy()
+        # update default values
+        current_key = self.get_key(self.textured)
+        self.default_options[current_key] = self.selected_values.copy()
+
+    def _set_visibility(self):
+        if self.textured:
+            self.trimesh_wid.layout.display = 'none'
+            self.textured_trimesh_wid.layout.display = 'flex'
+        else:
+            self.textured_trimesh_wid.layout.display = 'none'
+            self.trimesh_wid.layout.display = 'flex'
+
+    def get_key(self, textured):
+        r"""
+        Function that returns a unique key based on the properties of the
+        provided mesh object.
+
+        Parameters
+        ----------
+        textured : `bool`, optional
+            ``True`` if the object is `TexturedTriMesh` or `ColouredTriMesh`.
+             ``False`` if the object is `TriMesh`.
+
+        Returns
+        -------
+        key : `str`
+            The key that has the format ``'{textured}'``.
+        """
+        return "{}".format(textured)
+
+    def get_default_options(self, textured):
+        r"""
+        Function that returns a `dict` with default options given the `textured`
+        property. The function returns the `dict` of options but also updates
+        the ``self.default_options`` `dict`.
+
+        Parameters
+        ----------
+        textured : `bool`, optional
+            ``True`` if the object is `TexturedTriMesh` or `ColouredTriMesh`.
+             ``False`` if the object is `TriMesh`.
+
+        Returns
+        -------
+        default_options : `dict`
+            A `dict` with the default options.
+        """
+        # create key
+        key = self.get_key(textured)
+        # if the key does not exist in the default options dict, then add it
+        if key not in self.default_options:
+            if textured:
+                self.default_options[key] = {
+                    'render_texture': True, 'mesh_type': 'wireframe',
+                    'ambient_light': 0.0, 'specular_light': 0.0,
+                    'line_width': 2., 'colour': 'red', 'alpha': 1.0}
+            else:
+                self.default_options[key] = {
+                    'mesh_type': 'wireframe', 'line_width': 2., 'colour': 'red',
+                    'marker_style': 'sphere', 'marker_size': None,
+                    'marker_resolution': 8, 'step': 1, 'alpha': 1.}
+        return self.default_options[key]
+
+    def predefined_style(self, style):
+        r"""
+        Sets a predefined style to the widget.
+
+        Parameters
+        ----------
+        style : `str` (see below)
+            The style of the widget. Possible options are:
+
+                ============= ==================
+                Style         Description
+                ============= ==================
+                ``'success'`` Green-based style
+                ``'info'``    Blue-based style
+                ``'warning'`` Yellow-based style
+                ``'danger'``  Red-based style
+                ``''``        No style
+                ============= ==================
+
+        """
+        self.container.box_style = style
+        self.container.border = '0px'
+
+    def set_widget_state(self, textured, allow_callback=True):
+        r"""
+        Method that updates the state of the widget, if the provided `textured`
+        is different than ``self.textured``.
+
+        Parameters
+        ----------
+        textured : `bool`, optional
+            ``True`` if the object is `TexturedTriMesh` or `ColouredTriMesh`.
+             ``False`` if the object is `TriMesh`.
+        allow_callback : `bool`, optional
+            If ``True``, it allows triggering of any callback functions.
+        """
+        # keep old value
+        old_value = self.selected_values
+
+        # check if updates are required
+        if (not self.default_options or
+                self.get_key(self.textured) != self.get_key(textured)):
+            # Temporarily remove callbacks
+            render_function = self._render_function
+            self.remove_render_function()
+            self.remove_callbacks()
+
+            # Get options
+            renderer_options = self.get_default_options(textured)
+
+            # Assign properties
+            self.textured = textured
+
+            # Set visibility
+            self._set_visibility()
+
+            # Update subwidgets
+            if textured:
+                self.textured_trimesh_wid.set_widget_state(
+                    renderer_options, allow_callback=False)
+            else:
+                self.trimesh_wid.set_widget_state(
+                    renderer_options, allow_callback=False)
 
             # Get values
             self._save_options({})

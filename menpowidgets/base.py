@@ -6,15 +6,18 @@ import numpy as np
 import ipywidgets
 import IPython.display as ipydisplay
 
+from menpo.base import name_of_callable
 from menpo.image import MaskedImage, Image
 from menpo.image.base import _convert_patches_list_to_single_array
+from menpo.visualize import print_dynamic
 
 from .options import (RendererOptionsWidget, TextPrintWidget,
                       SaveMatplotlibFigureOptionsWidget, AnimationOptionsWidget,
                       ImageOptionsWidget, LandmarkOptionsWidget,
                       PlotMatplotlibOptionsWidget, PatchOptionsWidget,
                       LinearModelParametersWidget, CameraSnapshotWidget,
-                      Shape2DOptionsWidget, SaveMayaviFigureOptionsWidget)
+                      Shape2DOptionsWidget, Shape3DOptionsWidget,
+                      SaveMayaviFigureOptionsWidget)
 from .tools import LogoWidget, SwitchWidget
 from .utils import (extract_group_labels_from_landmarks,
                     extract_groups_labels_from_image, render_image,
@@ -112,27 +115,53 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
         # Get selected shape index
         i = shape_number_wid.selected_values if n_shapes > 1 else 0
 
-        # Render pointcloud with selected options
-        tmp1 = shape_options_wid.selected_values['lines']
-        tmp2 = shape_options_wid.selected_values['markers']
-        options = renderer_options_wid.selected_values['numbering_matplotlib']
+        # Create options dictionary
+        options = dict()
+        options.update(shape_options_wid.selected_values['lines'])
+        options.update(shape_options_wid.selected_values['markers'])
+        options['image_view'] = shape_options_wid.selected_values['image_view']
+        options.update(
+            renderer_options_wid.selected_values['numbering_matplotlib'])
         options.update(renderer_options_wid.selected_values['axes'])
+
+        # Correct options based on the type of the shape
+        if hasattr(shapes[i], 'labels'):
+            # If the shape is a LabelledPointUndirectedGraph ...
+            # ...use the legend options
+            options.update(renderer_options_wid.selected_values['legend'])
+            # ...use with_labels
+            options['with_labels'] = \
+                shape_options_wid.selected_values['with_labels']
+            # ...correct colours
+            line_colour = []
+            marker_face_colour = []
+            marker_edge_colour = []
+            for lbl in options['with_labels']:
+                idx = shapes[i].labels.index(lbl)
+                line_colour.append(options['line_colour'][idx])
+                marker_face_colour.append(options['marker_face_colour'][idx])
+                marker_edge_colour.append(options['marker_edge_colour'][idx])
+            options['line_colour'] = line_colour
+            options['marker_face_colour'] = marker_face_colour
+            options['marker_edge_colour'] = marker_edge_colour
+        else:
+            # If shape is PointCloud, TriMesh or PointGraph
+            # ...correct colours
+            options['line_colour'] = options['line_colour'][0]
+            options['marker_face_colour'] = options['marker_face_colour'][0]
+            options['marker_edge_colour'] = options['marker_edge_colour'][0]
+
+        # Get figure size
         new_figure_size = (
             renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
+
+        # Render shape with selected options
         shapes[i].view(
-                figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-                image_view=shape_options_wid.selected_values['image_view'],
-                render_lines=tmp1['render_lines'], label=None,
-                line_colour=tmp1['line_colour'][0],
-                line_style=tmp1['line_style'], line_width=tmp1['line_width'],
-                render_markers=tmp2['render_markers'],
-                marker_style=tmp2['marker_style'],
-                marker_size=tmp2['marker_size'],
-                marker_face_colour=tmp2['marker_face_colour'][0],
-                marker_edge_colour=tmp2['marker_edge_colour'][0],
-                marker_edge_width=tmp2['marker_edge_width'],
-                figure_size=new_figure_size, **options)
+            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+            figure_size=new_figure_size, **options)
+
+        # Force rendering
         save_figure_wid.renderer.force_draw()
 
         # Update info text widget
@@ -144,6 +173,210 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
         rang = shape.range()
         cm = shape.centre()
         text_per_line = [
+            "> {}".format(name_of_callable(shape)),
+            "> {} points".format(shape.n_points),
+            "> Bounds: [{0:.1f}-{1:.1f}]W, [{2:.1f}-{3:.1f}]H".format(
+                min_b[0], max_b[0], min_b[1], max_b[1]),
+            "> Range: {0:.1f}W, {1:.1f}H".format(rang[0], rang[1]),
+            "> Centre of mass: ({0:.1f}, {1:.1f})".format(cm[0], cm[1]),
+            "> Norm: {0:.2f}".format(shape.norm())]
+        if custom_info_callback is not None:
+            # iterate over the list of messages returned by the callback
+            # function and append them in the text_per_line.
+            for msg in custom_info_callback(shape):
+                text_per_line.append('> {}'.format(msg))
+        info_wid.set_widget_state(text_per_line=text_per_line)
+
+    # If the object is a LabelledPointUndirectedGraph, grab the labels
+    labels = None
+    if hasattr(shapes[0], 'labels'):
+        labels = shapes[0].labels
+
+    # Create widgets
+    shape_options_wid = Shape2DOptionsWidget(
+        labels=labels, render_function=render_function, style=main_style,
+        suboptions_style=tabs_style)
+    renderer_options_wid = RendererOptionsWidget(
+        options_tabs=['zoom_one', 'axes', 'numbering_matplotlib', 'legend'],
+        labels=None,  axes_x_limits=0.1, axes_y_limits=0.1,
+        render_function=render_function, style=tabs_style)
+    renderer_options_wid.container.margin = tabs_margin
+    renderer_options_wid.container.border = tabs_border
+    info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
+    info_wid.container.margin = tabs_margin
+    info_wid.container.border = tabs_border
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget(style=tabs_style)
+    save_figure_wid.container.margin = tabs_margin
+    save_figure_wid.container.border = tabs_border
+
+    # Group widgets
+    if n_shapes > 1:
+        # Define function that updates options' widgets state
+        def update_widgets(change):
+            # Get current shape and check if it has labels
+            i = change['new']
+            labels = None
+            if hasattr(shapes[i], 'labels'):
+                labels = shapes[i].labels
+
+            # Update shape options
+            shape_options_wid.set_widget_state(labels=labels,
+                                               allow_callback=True)
+
+        # Shape selection slider
+        index = {'min': 0, 'max': n_shapes-1, 'step': 1, 'index': 0}
+        shape_number_wid = AnimationOptionsWidget(
+            index, render_function=update_widgets, index_style=browser_style,
+            interval=0.2, description='Shape', loop_enabled=True,
+            continuous_update=False, style=main_style)
+
+        # Header widget
+        logo_wid = LogoWidget(style=main_style)
+        header_wid = ipywidgets.HBox([logo_wid, shape_number_wid])
+        header_wid.layout.align_items = 'center'
+        header_wid.layout.margin = '0px 0px 10px 0px'
+    else:
+        # Header widget
+        header_wid = LogoWidget(style=main_style)
+        header_wid.layout.margin = '0px 10px 0px 0px'
+    options_box = ipywidgets.Tab([info_wid, shape_options_wid,
+                                  renderer_options_wid, save_figure_wid])
+    tab_titles = ['Info', 'Shape', 'Renderer', 'Export']
+    for (k, tl) in enumerate(tab_titles):
+        options_box.set_title(k, tl)
+    if n_shapes > 1:
+        wid = ipywidgets.VBox([header_wid, options_box])
+    else:
+        wid = ipywidgets.HBox([header_wid, options_box])
+
+    # Set widget's style
+    wid.box_style = main_style
+    wid.layout.border = '2px solid'
+
+    # Display final widget
+    final_box = ipywidgets.Box([wid])
+    final_box.layout.display = 'flex'
+    ipydisplay.display(final_box)
+
+    # Trigger initial visualization
+    render_function({})
+
+
+def visualize_shapes_3d(shapes, browser_style='buttons',
+                        custom_info_callback=None):
+    r"""
+    Widget that allows browsing through a `list` of
+    3D shapes. The supported objects are:
+
+            ==================================
+            Object
+            ==================================
+            `menpo.shape.PointCloud`
+            `menpo.shape.PointUndirectedGraph`
+            `menpo.shape.PointDirectedGraph`
+            `menpo.shape.PointTree`
+            `menpo.shape.LabelledPointGraph`
+            ==================================
+
+    Any instance of the above can be combined in the input `list`.
+
+    Parameters
+    ----------
+    shapes : `list`
+        The `list` of objects to be visualized. It can contain a combination of
+
+            ==================================
+            Object
+            ==================================
+            `menpo.shape.PointCloud`
+            `menpo.shape.PointUndirectedGraph`
+            `menpo.shape.PointDirectedGraph`
+            `menpo.shape.PointTree`
+            `menpo.shape.LabelledPointGraph`
+            ==================================
+
+        or subclasses of those.
+    browser_style : ``{'buttons', 'slider'}``, optional
+        It defines whether the selector of the objects will have the form of
+        plus/minus buttons or a slider.
+    custom_info_callback: `function` or ``None``, optional
+        If not ``None``, it should be a function that accepts a 2D shape
+        and returns a list of custom messages to be printed about it. Each
+        custom message will be printed in a separate line.
+    """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
+    print_dynamic('Initializing...')
+
+    # Make sure that shapes is a list even with one member
+    if not isinstance(shapes, Sized):
+        shapes = [shapes]
+
+    # Get the number of shapes
+    n_shapes = len(shapes)
+
+    # Define the styling options
+    main_style = 'warning'
+    tabs_style = 'info'
+    tabs_border = '2px solid'
+    tabs_margin = '15px'
+
+    # Define render function
+    def render_function(change):
+        # Clear current figure
+        save_figure_wid.renderer.clear_figure()
+        ipydisplay.clear_output(wait=True)
+
+        # Get selected shape index
+        i = shape_number_wid.selected_values if n_shapes > 1 else 0
+
+        # Create options dictionary
+        options = dict()
+        options.update(shape_options_wid.selected_values['lines'])
+        options.update(shape_options_wid.selected_values['markers'])
+        options.update(
+            renderer_options_wid.selected_values['numbering_mayavi'])
+
+        # Correct options based on the type of the shape
+        if hasattr(shapes[i], 'labels'):
+            # If the shape is a LabelledPointUndirectedGraph ...
+            # ...use with_labels
+            options['with_labels'] = \
+                shape_options_wid.selected_values['with_labels']
+            # ...correct colours
+            line_colour = []
+            marker_colour = []
+            for lbl in options['with_labels']:
+                idx = shapes[i].labels.index(lbl)
+                line_colour.append(options['line_colour'][idx])
+                marker_colour.append(options['marker_face_colour'][idx])
+            options['line_colour'] = line_colour
+            options['marker_colour'] = marker_colour
+        else:
+            # If shape is PointCloud, TriMesh or PointGraph
+            # ...correct colours
+            options['line_colour'] = options['line_colour'][0]
+            options['marker_colour'] = options['marker_colour'][0]
+
+        # Render shape with selected options
+        shapes[i].view(
+            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+            step=1, alpha=1.0, **options)
+
+        # Force rendering
+        save_figure_wid.renderer.force_draw()
+
+        # Update info text widget
+        update_info(shapes[i], custom_info_callback=custom_info_callback)
+
+    # Define function that updates the info text
+    def update_info(shape, custom_info_callback=None):
+        min_b, max_b = shape.bounds()
+        rang = shape.range()
+        cm = shape.centre()
+        text_per_line = [
+            "> {}".format(name_of_callable(shape)),
             "> {} points".format(shape.n_points),
             "> Bounds: [{0:.1f}-{1:.1f}]W, [{2:.1f}-{3:.1f}]H".format(
                 min_b[0], max_b[0], min_b[1], max_b[1]),
@@ -162,20 +395,18 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
         labels = shapes[0].labels
     except AttributeError:
         labels = None
-    shape_options_wid = Shape2DOptionsWidget(
+    shape_options_wid = Shape3DOptionsWidget(
         labels=labels, render_function=render_function, style=main_style,
         suboptions_style=tabs_style)
-    # TODO: Do I need legend here?
     renderer_options_wid = RendererOptionsWidget(
-        options_tabs=['zoom_one', 'axes', 'numbering_matplotlib'],
-        labels=None,  axes_x_limits=0.1, axes_y_limits=0.1,
+        options_tabs=['numbering_mayavi'], labels=None,
         render_function=render_function, style=tabs_style)
     renderer_options_wid.container.margin = tabs_margin
     renderer_options_wid.container.border = tabs_border
     info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
     info_wid.container.margin = tabs_margin
     info_wid.container.border = tabs_border
-    save_figure_wid = SaveMatplotlibFigureOptionsWidget(style=tabs_style)
+    save_figure_wid = SaveMayaviFigureOptionsWidget(style=tabs_style)
     save_figure_wid.container.margin = tabs_margin
     save_figure_wid.container.border = tabs_border
 
@@ -222,6 +453,7 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
 
     # Set widget's style
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -230,6 +462,7 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
 
     # Trigger initial visualization
     render_function({})
+    print_dynamic('')
 
 
 def visualize_landmarks_2d(landmarks, figure_size=(7, 7),
@@ -278,70 +511,88 @@ def visualize_landmarks_2d(landmarks, figure_size=(7, 7),
         # that will be rendered
         ipydisplay.clear_output(wait=True)
 
-        # get selected index
+        # get selected index and selected group
         i = landmark_number_wid.selected_values if n_landmarks > 1 else 0
-
-        # get selected group
-        selected_group = landmark_options_wid.selected_values['landmarks']['group']
+        g = landmark_options_wid.selected_values['landmarks']['group']
 
         if landmark_options_wid.selected_values['landmarks']['render_landmarks']:
-            # show landmarks with selected options
-            tmp1 = landmark_options_wid.selected_values['lines']
-            tmp2 = landmark_options_wid.selected_values['markers']
-            options = renderer_options_wid.selected_values['numbering_matplotlib']
-            options.update(renderer_options_wid.selected_values['legend'])
+            # get shape
+            shape = landmarks[i][g]
+
+            # Create options dictionary
+            options = dict()
+            options.update(landmark_options_wid.selected_values['lines'])
+            options.update(landmark_options_wid.selected_values['markers'])
+            options['image_view'] = landmark_options_wid.selected_values['image_view']
+            options.update(
+                renderer_options_wid.selected_values['numbering_matplotlib'])
             options.update(renderer_options_wid.selected_values['axes'])
+
+            # Correct options based on the type of the shape
+            if hasattr(shape, 'labels'):
+                # If the shape is a LabelledPointUndirectedGraph ...
+                # ...use the legend options
+                options.update(renderer_options_wid.selected_values['legend'])
+                # ...use with_labels
+                options['with_labels'] = \
+                    landmark_options_wid.selected_values['landmarks']['with_labels']
+                # ...correct colours
+                line_colour = []
+                marker_face_colour = []
+                marker_edge_colour = []
+                for lbl in options['with_labels']:
+                    id = shape.labels.index(lbl)
+                    line_colour.append(options['line_colour'][id])
+                    marker_face_colour.append(options['marker_face_colour'][id])
+                    marker_edge_colour.append(options['marker_edge_colour'][id])
+                options['line_colour'] = line_colour
+                options['marker_face_colour'] = marker_face_colour
+                options['marker_edge_colour'] = marker_edge_colour
+            else:
+                # If shape is PointCloud, TriMesh or PointGraph
+                # ...correct colours
+                options['line_colour'] = options['line_colour'][0]
+                options['marker_face_colour'] = options['marker_face_colour'][0]
+                options['marker_edge_colour'] = options['marker_edge_colour'][0]
+
+            # Get figure size
             new_figure_size = (
-                renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
-                renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
-            # get line and marker colours
-            line_colour = []
-            marker_face_colour = []
-            marker_edge_colour = []
-            for lbl in landmark_options_wid.selected_values['landmarks']['with_labels']:
-                lbl_idx = landmarks[i][selected_group].labels.index(lbl)
-                line_colour.append(tmp1['line_colour'][lbl_idx])
-                marker_face_colour.append(tmp2['marker_face_colour'][lbl_idx])
-                marker_edge_colour.append(tmp2['marker_edge_colour'][lbl_idx])
-            # render
-            landmarks[i][selected_group].view(
-                with_labels=landmark_options_wid.selected_values['landmarks']['with_labels'],
+                renderer_options_wid.selected_values['zoom_one'] *
+                figure_size[0],
+                renderer_options_wid.selected_values['zoom_one'] *
+                figure_size[1])
+
+            # Render shape with selected options
+            shape.view(
                 figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-                image_view=landmark_options_wid.selected_values['image_view'],
-                render_lines=tmp1['render_lines'], line_colour=line_colour,
-                line_style=tmp1['line_style'], line_width=tmp1['line_width'],
-                render_markers=tmp2['render_markers'],
-                marker_style=tmp2['marker_style'],
-                marker_size=tmp2['marker_size'],
-                marker_face_colour=marker_face_colour,
-                marker_edge_colour=marker_edge_colour,
-                marker_edge_width=tmp2['marker_edge_width'],
                 figure_size=new_figure_size, **options)
+
+            # Force rendering
             save_figure_wid.renderer.force_draw()
         else:
             ipydisplay.clear_output()
 
         # update info text widget
-        update_info(landmarks[i], selected_group,
-                    custom_info_callback=custom_info_callback)
+        update_info(landmarks[i], g, custom_info_callback=custom_info_callback)
 
     # Define function that updates the info text
     def update_info(landmarks, group, custom_info_callback=None):
         if group is not None:
-            min_b, max_b = landmarks[group][None].bounds()
-            rang = landmarks[group][None].range()
-            cm = landmarks[group][None].centre()
+            min_b, max_b = landmarks[group].bounds()
+            rang = landmarks[group].range()
+            cm = landmarks[group].centre()
             text_per_line = [
-                "> {} landmark points".format(landmarks[group][None].n_points),
-                "> Bounds: [{0:.1f}-{1:.1f}]W, [{2:.1f}-{3:.1f}]H".
-                    format(min_b[0], max_b[0], min_b[1], max_b[1]),
+                "> {} landmark points".format(landmarks[group].n_points),
+                "> {}".format(name_of_callable(landmarks[group])),
+                "> Bounds: [{0:.1f}-{1:.1f}]W, [{2:.1f}-{3:.1f}]H".format(
+                    min_b[0], max_b[0], min_b[1], max_b[1]),
                 "> Range: {0:.1f}W, {1:.1f}H".format(rang[0], rang[1]),
                 "> Centre of mass: ({0:.1f}, {1:.1f})".format(cm[0], cm[1]),
-                "> Norm: {0:.2f}".format(landmarks[group][None].norm())]
+                "> Norm: {0:.2f}".format(landmarks[group].norm())]
             if custom_info_callback is not None:
                 # iterate over the list of messages returned by the callback
                 # function and append them in the text_per_line.
-                for msg in custom_info_callback(landmarks[group][None]):
+                for msg in custom_info_callback(landmarks[group]):
                     text_per_line.append('> {}'.format(msg))
         else:
             text_per_line = ["No landmarks available."]
@@ -412,6 +663,199 @@ def visualize_landmarks_2d(landmarks, figure_size=(7, 7),
 
     # Set widget's style
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
+
+    # Display final widget
+    final_box = ipywidgets.Box([wid])
+    final_box.layout.display = 'flex'
+    ipydisplay.display(final_box)
+
+    # Trigger initial visualization
+    render_function({})
+
+
+def visualize_landmarks_3d(landmarks, browser_style='buttons',
+                           custom_info_callback=None):
+    r"""
+    Widget that allows browsing through a `list` of
+    `menpo.landmark.LandmarkManager` (or subclass) objects. The landmark
+    managers can have a combination of different attributes, e.g.
+    landmark groups and labels etc.
+
+    Parameters
+    ----------
+    landmarks : `list` of `menpo.landmark.LandmarkManager` or subclass
+        The `list` of landmark managers to be visualized.
+    browser_style : ``{'buttons', 'slider'}``, optional
+        It defines whether the selector of the objects will have the form of
+        plus/minus buttons or a slider.
+    custom_info_callback: `function` or ``None``, optional
+        If not None, it should be a function that accepts a landmark group and
+        returns a list of custom messages to be printed per landmark group.
+        Each custom message will be printed in a separate line.
+    """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
+    print('Initializing...')
+
+    # Make sure that landmarks is a list even with one landmark manager member
+    if not isinstance(landmarks, list):
+        landmarks = [landmarks]
+
+    # Get the number of landmark managers
+    n_landmarks = len(landmarks)
+
+    # Define the styling options
+    main_style = 'info'
+    tabs_style = 'warning'
+    tabs_border = '2px solid'
+    tabs_margin = '15px'
+
+    # Define render function
+    def render_function(change):
+        # Clear current figure
+        save_figure_wid.renderer.clear_figure()
+        ipydisplay.clear_output(wait=True)
+
+        # get selected index and selected group
+        i = landmark_number_wid.selected_values if n_landmarks > 1 else 0
+        g = landmark_options_wid.selected_values['landmarks']['group']
+
+        if landmark_options_wid.selected_values['landmarks']['render_landmarks']:
+            # get shape
+            shape = landmarks[i][g]
+
+            # Create options dictionary
+            options = dict()
+            options.update(landmark_options_wid.selected_values['lines'])
+            options.update(landmark_options_wid.selected_values['markers'])
+            options.update(
+                renderer_options_wid.selected_values['numbering_mayavi'])
+
+            # Correct options based on the type of the shape
+            if hasattr(shape, 'labels'):
+                # If the shape is a LabelledPointUndirectedGraph ...
+                # ...use with_labels
+                options['with_labels'] = \
+                    landmark_options_wid.selected_values['landmarks']['with_labels']
+                # ...correct colours
+                line_colour = []
+                marker_colour = []
+                for lbl in options['with_labels']:
+                    idx = shape.labels.index(lbl)
+                    line_colour.append(options['line_colour'][idx])
+                    marker_colour.append(options['marker_face_colour'][idx])
+                options['line_colour'] = line_colour
+                options['marker_colour'] = marker_colour
+            else:
+                # If shape is PointCloud, TriMesh or PointGraph
+                # ...correct colours
+                options['line_colour'] = options['line_colour'][0]
+                options['marker_colour'] = options['marker_colour'][0]
+
+            # Render shape with selected options
+            shape.view(
+                figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+                step=1, alpha=1.0, **options)
+
+            # Force rendering
+            save_figure_wid.renderer.force_draw()
+        else:
+            ipydisplay.clear_output()
+
+        # update info text widget
+        update_info(landmarks[i], g, custom_info_callback=custom_info_callback)
+
+    # Define function that updates the info text
+    def update_info(landmarks, group, custom_info_callback=None):
+        if group is not None:
+            min_b, max_b = landmarks[group].bounds()
+            rang = landmarks[group].range()
+            cm = landmarks[group].centre()
+            text_per_line = [
+                "> {} landmark points".format(landmarks[group].n_points),
+                "> {}".format(name_of_callable(landmarks[group])),
+                "> Bounds: [{0:.1f}-{1:.1f}]W, [{2:.1f}-{3:.1f}]H".format(
+                    min_b[0], max_b[0], min_b[1], max_b[1]),
+                "> Range: {0:.1f}W, {1:.1f}H".format(rang[0], rang[1]),
+                "> Centre of mass: ({0:.1f}, {1:.1f})".format(cm[0], cm[1]),
+                "> Norm: {0:.2f}".format(landmarks[group].norm())]
+            if custom_info_callback is not None:
+                # iterate over the list of messages returned by the callback
+                # function and append them in the text_per_line.
+                for msg in custom_info_callback(landmarks[group]):
+                    text_per_line.append('> {}'.format(msg))
+        else:
+            text_per_line = ["No landmarks available."]
+
+        info_wid.set_widget_state(text_per_line=text_per_line)
+
+    # Create widgets
+    groups_keys, labels_keys = extract_group_labels_from_landmarks(landmarks[0])
+    first_label = labels_keys[0] if labels_keys else None
+    landmark_options_wid = LandmarkOptionsWidget(
+        group_keys=groups_keys, labels_keys=labels_keys,
+        type='2D', render_function=render_function, style=main_style,
+        suboptions_style=tabs_style)
+    landmark_options_wid.container.margin = tabs_margin
+    landmark_options_wid.container.border = tabs_border
+    renderer_options_wid = RendererOptionsWidget(
+        options_tabs=['zoom_one', 'axes', 'numbering_matplotlib', 'legend'],
+        labels=first_label, axes_x_limits=0.1, axes_y_limits=0.1,
+        render_function=render_function,  style=tabs_style)
+    renderer_options_wid.container.margin = tabs_margin
+    renderer_options_wid.container.border = tabs_border
+    info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
+    info_wid.container.margin = tabs_margin
+    info_wid.container.border = tabs_border
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
+                                                        style=tabs_style)
+    save_figure_wid.container.margin = tabs_margin
+    save_figure_wid.container.border = tabs_border
+
+    # Group widgets
+    if n_landmarks > 1:
+        # Define function that updates options' widgets state
+        def update_widgets(change):
+            # Get new groups and labels
+            i = landmark_number_wid.selected_values
+            g_keys, l_keys = extract_group_labels_from_landmarks(
+                landmarks[i])
+
+            # Update landmarks options
+            landmark_options_wid.set_widget_state(
+                group_keys=g_keys, labels_keys=l_keys, allow_callback=True)
+
+        # Landmark selection slider
+        index = {'min': 0, 'max': n_landmarks-1, 'step': 1, 'index': 0}
+        landmark_number_wid = AnimationOptionsWidget(
+            index, render_function=update_widgets, index_style=browser_style,
+            interval=0.2, description='Shape', loop_enabled=True,
+            continuous_update=False, style=main_style)
+
+        # Header widget
+        logo_wid = LogoWidget(style=main_style)
+        header_wid = ipywidgets.HBox([logo_wid, landmark_number_wid])
+        header_wid.layout.align_items = 'center'
+        header_wid.layout.margin = '0px 0px 10px 0px'
+    else:
+        # Header widget
+        header_wid = LogoWidget(style=main_style)
+        header_wid.layout.margin = '0px 10px 0px 0px'
+    options_box = ipywidgets.Tab([info_wid, landmark_options_wid,
+                                  renderer_options_wid, save_figure_wid])
+    tab_titles = ['Info', 'Landmarks', 'Renderer', 'Export']
+    for (k, tl) in enumerate(tab_titles):
+        options_box.set_title(k, tl)
+    if n_landmarks > 1:
+        wid = ipywidgets.VBox([header_wid, options_box])
+    else:
+        wid = ipywidgets.HBox([header_wid, options_box])
+
+    # Set widget's style
+    wid.box_style = main_style
+    wid.layout.border = '2px solid'
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -468,51 +912,62 @@ def visualize_images(images, figure_size=(7, 7), browser_style='buttons',
         # that will be rendered
         ipydisplay.clear_output(wait=True)
 
-        # get selected index
+        # get selected index and selected group
         i = image_number_wid.selected_values if n_images > 1 else 0
+        g = landmark_options_wid.selected_values['landmarks']['group']
 
-        # update info text widget
+        # check if image is masked
         image_is_masked = isinstance(images[i], MaskedImage)
-        selected_group = landmark_options_wid.selected_values['landmarks']['group']
 
-        # show landmarks with selected options
-        tmp1 = landmark_options_wid.selected_values['lines']
-        tmp2 = landmark_options_wid.selected_values['markers']
-        options = renderer_options_wid.selected_values['numbering_matplotlib']
-        options.update(renderer_options_wid.selected_values['legend'])
+        # Create options dictionary
+        options = dict()
+        options.update(landmark_options_wid.selected_values['lines'])
+        options.update(landmark_options_wid.selected_values['markers'])
+        options.update(
+            renderer_options_wid.selected_values['numbering_matplotlib'])
         options.update(renderer_options_wid.selected_values['axes'])
+        options.update(renderer_options_wid.selected_values['legend'])
         options.update(image_options_wid.selected_values)
         options.update(landmark_options_wid.selected_values['landmarks'])
-        new_figure_size = (
-            renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
-            renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
-        # get line and marker colours
-        line_colour = []
-        marker_face_colour = []
-        marker_edge_colour = []
-        if images[i].has_landmarks:
-            for lbl in landmark_options_wid.selected_values['landmarks']['with_labels']:
-                lbl_idx = images[i].landmarks[selected_group].labels.index(lbl)
-                line_colour.append(tmp1['line_colour'][lbl_idx])
-                marker_face_colour.append(tmp2['marker_face_colour'][lbl_idx])
-                marker_edge_colour.append(tmp2['marker_edge_colour'][lbl_idx])
 
-        # show image with selected options
+        # Correct options based on the type of the shape
+        if (images[i].has_landmarks and
+                hasattr(images[i].landmarks[g], 'labels')):
+            # If the shape is a LabelledPointUndirectedGraph ...
+            # ...correct colours
+            line_colour = []
+            marker_face_colour = []
+            marker_edge_colour = []
+            for lbl in options['with_labels']:
+                id = images[i].landmarks[g].labels.index(lbl)
+                line_colour.append(options['line_colour'][id])
+                marker_face_colour.append(options['marker_face_colour'][id])
+                marker_edge_colour.append(options['marker_edge_colour'][id])
+            options['line_colour'] = line_colour
+            options['marker_face_colour'] = marker_face_colour
+            options['marker_edge_colour'] = marker_edge_colour
+        else:
+            # If shape is PointCloud, TriMesh or PointGraph
+            # ...correct colours
+            options['line_colour'] = options['line_colour'][0]
+            options['marker_face_colour'] = options['marker_face_colour'][0]
+            options['marker_edge_colour'] = options['marker_edge_colour'][0]
+
+        # Get figure size
+        new_figure_size = (
+            renderer_options_wid.selected_values['zoom_one'] *
+            figure_size[0],
+            renderer_options_wid.selected_values['zoom_one'] *
+            figure_size[1])
+
+        # Render shape with selected options
         render_image(
             image=images[i], renderer=save_figure_wid.renderer,
-            image_is_masked=image_is_masked,
-            render_lines=tmp1['render_lines'], line_style=tmp1['line_style'],
-            line_width=tmp1['line_width'], line_colour=line_colour,
-            render_markers=tmp2['render_markers'],
-            marker_style=tmp2['marker_style'],
-            marker_size=tmp2['marker_size'],
-            marker_edge_width=tmp2['marker_edge_width'],
-            marker_edge_colour=marker_edge_colour,
-            marker_face_colour=marker_face_colour,
-            figure_size=new_figure_size, **options)
+            image_is_masked=image_is_masked, figure_size=new_figure_size,
+            **options)
 
         # Update info
-        update_info(images[i], image_is_masked, selected_group,
+        update_info(images[i], image_is_masked, g,
                     custom_info_callback=custom_info_callback)
 
     # Define function that updates the info text
@@ -535,7 +990,7 @@ def visualize_images(images, figure_size=(7, 7), browser_style='buttons',
             img.pixels.min(), img.pixels.max()))
         if img.has_landmarks:
             text_per_line.append("> {} landmark points".format(
-                img.landmarks[group].lms.n_points))
+                img.landmarks[group].n_points))
         if custom_info_callback is not None:
             # iterate over the list of messages returned by the callback
             # function and append them in the text_per_line.
@@ -619,6 +1074,7 @@ def visualize_images(images, figure_size=(7, 7), browser_style='buttons',
 
     # Set widget's style
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -707,20 +1163,27 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7),
         # get selected index
         i = image_number_wid.selected_values if n_patches > 1 else 0
 
-        # show patch-based image with selected options
-        options = shape_options_wid.selected_values['lines']
+        # Create options dictionary
+        options = dict()
+        options.update(shape_options_wid.selected_values['lines'])
         options.update(shape_options_wid.selected_values['markers'])
-        options.update(renderer_options_wid.selected_values['numbering_matplotlib'])
+        options.update(
+            renderer_options_wid.selected_values['numbering_matplotlib'])
         options.update(renderer_options_wid.selected_values['axes'])
         image_options = dict(image_options_wid.selected_values)
         del image_options['masked_enabled']
         options.update(image_options)
         options.update(patch_options_wid.selected_values)
+        options['line_colour'] = options['line_colour'][0]
+        options['marker_face_colour'] = options['marker_face_colour'][0]
+        options['marker_edge_colour'] = options['marker_edge_colour'][0]
+
+        # Get figure size
         new_figure_size = (
             renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
 
-        # show image with selected options
+        # Render image with selected options
         render_patches(
             patches=patches[i], patch_centers=patch_centers[i],
             renderer=save_figure_wid.renderer, figure_size=new_figure_size,
@@ -747,12 +1210,8 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7),
         info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Create widgets
-    try:
-        labels = patch_centers[0].labels
-    except AttributeError:
-        labels = None
     shape_options_wid = Shape2DOptionsWidget(
-        labels=labels, render_function=None, style=main_style,
+        labels=None, render_function=None, style=main_style,
         suboptions_style=tabs_style)
     shape_options_wid.line_options_wid.render_lines_switch.button_wid.value = False
     shape_options_wid.add_render_function(render_function)
@@ -828,6 +1287,7 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7),
 
     # Set widget's style
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -924,6 +1384,7 @@ def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(9, 5)):
     # Display final widget
     wid = ipywidgets.HBox([logo, plot_wid])
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
     plot_wid.container.border = '0px'
     final_box = ipywidgets.Box([wid])
     final_box.layout.display = 'flex'
@@ -1053,15 +1514,48 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
         # Get the mean
         mean = shape_model[level].mean()
 
-        # Render shape instance with selected options
-        tmp1 = shape_options_wid.selected_values['lines']
-        tmp2 = shape_options_wid.selected_values['markers']
-        options = renderer_options_wid.selected_values['numbering_matplotlib']
+        # Create options dictionary
+        options = dict()
+        options.update(shape_options_wid.selected_values['lines'])
+        options.update(shape_options_wid.selected_values['markers'])
+        options['image_view'] = shape_options_wid.selected_values['image_view']
+        options.update(
+            renderer_options_wid.selected_values['numbering_matplotlib'])
         options.update(renderer_options_wid.selected_values['axes'])
+
+        # Correct options based on the type of the shape
+        if hasattr(mean, 'labels'):
+            # If the shape is a LabelledPointUndirectedGraph ...
+            # ...use the legend options
+            options.update(renderer_options_wid.selected_values['legend'])
+            # ...use with_labels
+            options['with_labels'] = \
+                shape_options_wid.selected_values['with_labels']
+            # ...correct colours
+            line_colour = []
+            marker_face_colour = []
+            marker_edge_colour = []
+            for lbl in options['with_labels']:
+                idx = mean.labels.index(lbl)
+                line_colour.append(options['line_colour'][idx])
+                marker_face_colour.append(options['marker_face_colour'][idx])
+                marker_edge_colour.append(options['marker_edge_colour'][idx])
+            options['line_colour'] = line_colour
+            options['marker_face_colour'] = marker_face_colour
+            options['marker_edge_colour'] = marker_edge_colour
+        else:
+            # If shape is PointCloud, TriMesh or PointGraph
+            # ...correct colours
+            options['line_colour'] = options['line_colour'][0]
+            options['marker_face_colour'] = options['marker_face_colour'][0]
+            options['marker_edge_colour'] = options['marker_edge_colour'][0]
+
+        # Get figure size
         new_figure_size = (
             renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
 
+        # Render with selected options
         if mode_wid.value == 1:
             # Deformation mode
             # Compute instance
@@ -1071,30 +1565,21 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
             if mean_wid.selected_values:
                 mean.view(
                     figure_id=save_figure_wid.renderer.figure_id,
-                    new_figure=False,
-                    image_view=shape_options_wid.selected_values['image_view'],
-                    figure_size=None, render_lines=tmp1['render_lines'],
-                    line_colour='yellow', line_style=tmp1['line_style'],
-                    line_width=tmp1['line_width'],
-                    render_markers=tmp2['render_markers'],
-                    marker_style=tmp2['marker_style'],
-                    marker_size=tmp2['marker_size'],
+                    new_figure=False, figure_size=None,
+                    image_view=options['image_view'],
+                    render_lines=options['render_lines'],
+                    line_colour='yellow', line_style=options['line_style'],
+                    line_width=options['line_width'],
+                    render_markers=options['render_markers'],
+                    marker_style=options['marker_style'],
+                    marker_size=options['marker_size'],
                     marker_face_colour='yellow', marker_edge_colour='yellow',
-                    marker_edge_width=tmp2['marker_edge_width'])
+                    marker_edge_width=options['marker_edge_width'])
 
             # Render instance
             instance.view(
                 figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-                image_view=shape_options_wid.selected_values['image_view'],
-                figure_size=new_figure_size, render_lines=tmp1['render_lines'],
-                line_colour=tmp1['line_colour'][0],
-                line_style=tmp1['line_style'], line_width=tmp1['line_width'],
-                render_markers=tmp2['render_markers'],
-                marker_style=tmp2['marker_style'],
-                marker_size=tmp2['marker_size'],
-                marker_face_colour=tmp2['marker_face_colour'][0],
-                marker_edge_colour=tmp2['marker_edge_colour'][0],
-                marker_edge_width=tmp2['marker_edge_width'], **options)
+                figure_size=new_figure_size, **options)
 
             # Get instance range
             instance_range = instance.range()
@@ -1107,16 +1592,7 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
             # Render mean shape
             mean.view(
                 figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-                image_view=shape_options_wid.selected_values['image_view'],
-                figure_size=new_figure_size, render_lines=tmp1['render_lines'],
-                line_colour=tmp1['line_colour'][0],
-                line_style=tmp1['line_style'], line_width=tmp1['line_width'],
-                render_markers=tmp2['render_markers'],
-                marker_style=tmp2['marker_style'],
-                marker_size=tmp2['marker_size'],
-                marker_face_colour=tmp2['marker_face_colour'][0],
-                marker_edge_colour=tmp2['marker_edge_colour'][0],
-                marker_edge_width=tmp2['marker_edge_width'])
+                figure_size=new_figure_size, **options)
 
             # Render vectors
             ax = plt.gca()
@@ -1131,7 +1607,7 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
                 yl = instance_lower.points[p, 1]
                 xu = instance_upper.points[p, 0]
                 yu = instance_upper.points[p, 1]
-                if shape_options_wid.selected_values['image_view']:
+                if options['image_view']:
                     # image mode
                     lines = [[(ym, xm), (yl, xl)], [(ym, xm), (yu, xu)]]
                 else:
@@ -1148,25 +1624,25 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
                 # add collection
                 ax.add_collection(lc)
 
-            tmp = renderer_options_wid.selected_values['axes']
             # parse axes limits
             axes_x_limits, axes_y_limits = _parse_axes_limits(
-                    x_min, x_max, y_min, y_max, tmp['axes_x_limits'],
-                    tmp['axes_y_limits'])
+                    x_min, x_max, y_min, y_max, options['axes_x_limits'],
+                    options['axes_y_limits'])
             _set_axes_options(
-                ax, render_axes=tmp['render_axes'],
-                inverted_y_axis=shape_options_wid.selected_values['image_view'],
-                axes_font_name=tmp['axes_font_name'],
-                axes_font_size=tmp['axes_font_size'],
-                axes_font_style=tmp['axes_font_style'],
-                axes_font_weight=tmp['axes_font_weight'],
+                ax, render_axes=options['render_axes'],
+                inverted_y_axis=options['image_view'],
+                axes_font_name=options['axes_font_name'],
+                axes_font_size=options['axes_font_size'],
+                axes_font_style=options['axes_font_style'],
+                axes_font_weight=options['axes_font_weight'],
                 axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
-                axes_x_ticks=tmp['axes_x_ticks'],
-                axes_y_ticks=tmp['axes_y_ticks'])
+                axes_x_ticks=options['axes_x_ticks'],
+                axes_y_ticks=options['axes_y_ticks'])
 
             # Get instance range
             instance_range = mean.range()
 
+        # Force rendering
         save_figure_wid.renderer.force_draw()
 
         # Update info
@@ -1238,16 +1714,14 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
         style=tabs_style, continuous_update=False)
     model_parameters_wid.container.margin = tabs_margin
     model_parameters_wid.container.border = tabs_border
-    try:
-        labels = shape_model[0].mean_shape().labels
-    except AttributeError:
-        labels = None
+    labels = None
+    if hasattr(shape_model[0].mean(), 'labels'):
+        labels = shape_model[0].mean().labels
     shape_options_wid = Shape2DOptionsWidget(
         labels=labels, render_function=render_function, style=main_style,
         suboptions_style=tabs_style)
-    # TODO: Do I need legend here?
     renderer_options_wid = RendererOptionsWidget(
-        options_tabs=['zoom_one', 'axes', 'numbering_matplotlib'],
+        options_tabs=['zoom_one', 'axes', 'numbering_matplotlib', 'legend'],
         labels=None,  axes_x_limits=0.1, axes_y_limits=0.1,
         render_function=render_function, style=tabs_style)
     renderer_options_wid.container.margin = tabs_margin
@@ -1298,6 +1772,7 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
 
     # Set widget's style
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -1375,49 +1850,62 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
                    appearance_model[level].eigenvalues[:len(parameters)] ** 0.5)
         instance = appearance_model[level].instance(weights)
         image_is_masked = isinstance(instance, MaskedImage)
-        selected_group = landmark_options_wid.selected_values['landmarks']['group']
+        g = landmark_options_wid.selected_values['landmarks']['group']
 
-        # show landmarks with selected options
-        tmp1 = landmark_options_wid.selected_values['lines']
-        tmp2 = landmark_options_wid.selected_values['markers']
-        options = renderer_options_wid.selected_values['numbering_matplotlib']
-        options.update(renderer_options_wid.selected_values['legend'])
+        # Create options dictionary
+        options = dict()
+        options.update(landmark_options_wid.selected_values['lines'])
+        options.update(landmark_options_wid.selected_values['markers'])
+        options.update(
+            renderer_options_wid.selected_values['numbering_matplotlib'])
         options.update(renderer_options_wid.selected_values['axes'])
+        options.update(renderer_options_wid.selected_values['legend'])
         options.update(image_options_wid.selected_values)
         options.update(landmark_options_wid.selected_values['landmarks'])
-        new_figure_size = (
-            renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
-            renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
-        # get line and marker colours
-        line_colour = []
-        marker_face_colour = []
-        marker_edge_colour = []
-        if instance.has_landmarks:
-            for lbl in landmark_options_wid.selected_values['landmarks']['with_labels']:
-                lbl_idx = instance.landmarks[selected_group].labels.index(lbl)
-                line_colour.append(tmp1['line_colour'][lbl_idx])
-                marker_face_colour.append(tmp2['marker_face_colour'][lbl_idx])
-                marker_edge_colour.append(tmp2['marker_edge_colour'][lbl_idx])
 
-        # show image with selected options
+        # Correct options based on the type of the shape
+        if (instance.has_landmarks and
+                hasattr(instance.landmarks[g], 'labels')):
+            # If the shape is a LabelledPointUndirectedGraph ...
+            # ...correct colours
+            line_colour = []
+            marker_face_colour = []
+            marker_edge_colour = []
+            for lbl in options['with_labels']:
+                id = instance.landmarks[g].labels.index(lbl)
+                line_colour.append(options['line_colour'][id])
+                marker_face_colour.append(options['marker_face_colour'][id])
+                marker_edge_colour.append(options['marker_edge_colour'][id])
+            options['line_colour'] = line_colour
+            options['marker_face_colour'] = marker_face_colour
+            options['marker_edge_colour'] = marker_edge_colour
+        else:
+            # If shape is PointCloud, TriMesh or PointGraph
+            # ...correct colours
+            options['line_colour'] = options['line_colour'][0]
+            options['marker_face_colour'] = options['marker_face_colour'][0]
+            options['marker_edge_colour'] = options['marker_edge_colour'][0]
+
+        # Get figure size
+        new_figure_size = (
+            renderer_options_wid.selected_values['zoom_one'] *
+            figure_size[0],
+            renderer_options_wid.selected_values['zoom_one'] *
+            figure_size[1])
+
+        # Render shape with selected options
         render_image(
             image=instance, renderer=save_figure_wid.renderer,
-            image_is_masked=image_is_masked, render_lines=tmp1['render_lines'],
-            line_style=tmp1['line_style'], line_width=tmp1['line_width'],
-            line_colour=line_colour, render_markers=tmp2['render_markers'],
-            marker_style=tmp2['marker_style'], marker_size=tmp2['marker_size'],
-            marker_edge_width=tmp2['marker_edge_width'],
-            marker_edge_colour=marker_edge_colour,
-            marker_face_colour=marker_face_colour,
-            figure_size=new_figure_size, **options)
+            image_is_masked=image_is_masked, figure_size=new_figure_size,
+            **options)
 
         # Update info
-        update_info(instance, level, selected_group)
+        update_info(instance, level, g)
 
     # Define function that updates the info text
     def update_info(image, level, group):
         lvl_app_mod = appearance_model[level]
-        lp = 0 if group is None else image.landmarks[group].lms.n_points
+        lp = 0 if group is None else image.landmarks[group].n_points
         text_per_line = [
             "> Level: {} out of {}.".format(level + 1, n_levels),
             "> {} components in total.".format(lvl_app_mod.n_components),
@@ -1468,7 +1956,8 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
         appearance_model[0].mean())
     image_options_wid = ImageOptionsWidget(
         n_channels=appearance_model[0].mean().n_channels,
-        image_is_masked=isinstance(appearance_model[0].mean(), MaskedImage),
+        image_is_masked=isinstance(appearance_model[0].mean(),
+                                   MaskedImage),
         render_function=render_function, style=tabs_style)
     image_options_wid.container.margin = tabs_margin
     image_options_wid.container.border = tabs_border
@@ -1480,7 +1969,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
     landmark_options_wid.container.border = tabs_border
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['zoom_one', 'axes', 'numbering_matplotlib', 'legend'],
-        axes_x_limits=None, axes_y_limits=None,
+        axes_x_limits=None, axes_y_limits=None, labels=None,
         render_function=render_function,  style=tabs_style)
     renderer_options_wid.container.margin = tabs_margin
     renderer_options_wid.container.border = tabs_border
@@ -1512,8 +2001,8 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
             # Update channels options
             image_options_wid.set_widget_state(
                 n_channels=appearance_model[value].mean().n_channels,
-                image_is_masked=isinstance(appearance_model[value].mean(),
-                                           MaskedImage),
+                image_is_masked=isinstance(
+                    appearance_model[value].mean(), MaskedImage),
                 allow_callback=True)
 
         # Create pyramid radiobuttons
@@ -1543,6 +2032,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
 
     # Set widget's style
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -1624,9 +2114,7 @@ def visualize_patch_appearance_model(appearance_model, centers,
         ipydisplay.clear_output(wait=True)
 
         # Get selected level
-        level = 0
-        if n_levels > 1:
-            level = level_wid.value
+        level = level_wid.value if n_levels > 1 else 0
 
         # Compute weights and instance
         parameters = model_parameters_wid.selected_values
@@ -1634,20 +2122,27 @@ def visualize_patch_appearance_model(appearance_model, centers,
                    appearance_model[level].eigenvalues[:len(parameters)] ** 0.5)
         instance = appearance_model[level].instance(weights)
 
-        # Render instance with selected options
-        options = shape_options_wid.selected_values['lines']
+        # Create options dictionary
+        options = dict()
+        options.update(shape_options_wid.selected_values['lines'])
         options.update(shape_options_wid.selected_values['markers'])
-        options.update(renderer_options_wid.selected_values['numbering_matplotlib'])
+        options.update(
+            renderer_options_wid.selected_values['numbering_matplotlib'])
         options.update(renderer_options_wid.selected_values['axes'])
         image_options = dict(image_options_wid.selected_values)
         del image_options['masked_enabled']
         options.update(image_options)
         options.update(patch_options_wid.selected_values)
+        options['line_colour'] = options['line_colour'][0]
+        options['marker_face_colour'] = options['marker_face_colour'][0]
+        options['marker_edge_colour'] = options['marker_edge_colour'][0]
+
+        # Get figure size
         new_figure_size = (
             renderer_options_wid.selected_values['zoom_one'] * figure_size[0],
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
 
-        # show image with selected options
+        # Render image with selected options
         render_patches(
             patches=instance.pixels, patch_centers=centers[level],
             renderer=save_figure_wid.renderer, figure_size=new_figure_size,
@@ -1707,12 +2202,8 @@ def visualize_patch_appearance_model(appearance_model, centers,
             style=tabs_style, continuous_update=False)
     model_parameters_wid.container.margin = tabs_margin
     model_parameters_wid.container.border = tabs_border
-    try:
-        labels = centers[0].labels
-    except AttributeError:
-        labels = None
     shape_options_wid = Shape2DOptionsWidget(
-        labels=labels, render_function=None, style=main_style,
+        labels=None, render_function=None, style=main_style,
         suboptions_style=tabs_style)
     shape_options_wid.line_options_wid.render_lines_switch.button_wid.value = False
     shape_options_wid.add_render_function(render_function)
@@ -1797,6 +2288,7 @@ def visualize_patch_appearance_model(appearance_model, centers,
 
     # Set widget's style
     wid.box_style = main_style
+    wid.layout.border = '2px solid'
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -1845,6 +2337,7 @@ def webcam_widget(canvas_width=640, hd=True, n_preview_windows=5):
         canvas_width=canvas_width, hd=hd, n_preview_windows=n_preview_windows,
         preview_windows_margin=3, style='danger', preview_style='warning',
         render_function=update)
+    wid.container.layout.border = '2px solid'
 
     # Display widget
     ipydisplay.display(wid)
