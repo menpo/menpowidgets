@@ -41,46 +41,48 @@ class LogoWidget(ipywidgets.Box):
         # Try to only load the logo once
         global MENPO_LOGO_SCALE
         logos_path = menpowidgets_src_dir_path() / 'logos'
+        width = 50
+        height = 66.5
         if style == '':
             global MENPO_MINIMAL_LOGO
             if MENPO_MINIMAL_LOGO is None:
                 MENPO_MINIMAL_LOGO = mio.import_image(
                     logos_path / "menpoproject_minimal.png")
             self.image = ipywidgets.Image(
-                value=convert_image_to_bytes(MENPO_MINIMAL_LOGO), width='50px',
-                height='70px')
+                value=convert_image_to_bytes(MENPO_MINIMAL_LOGO), width=width,
+                height=height)
         elif style == 'danger':
             global MENPO_DANGER_LOGO
             if MENPO_DANGER_LOGO is None:
                 MENPO_DANGER_LOGO = mio.import_image(
                     logos_path / "menpoproject_{}.png".format(style))
             self.image = ipywidgets.Image(
-                value=convert_image_to_bytes(MENPO_DANGER_LOGO), width='50px',
-                height='70px')
+                value=convert_image_to_bytes(MENPO_DANGER_LOGO), width=width,
+                height=height)
         elif style == 'info':
             global MENPO_INFO_LOGO
             if MENPO_INFO_LOGO is None:
                 MENPO_INFO_LOGO = mio.import_image(
                     logos_path / "menpoproject_{}.png".format(style))
             self.image = ipywidgets.Image(
-                value=convert_image_to_bytes(MENPO_INFO_LOGO), width='50px',
-                height='70px')
+                value=convert_image_to_bytes(MENPO_INFO_LOGO), width=width,
+                height=height)
         elif style == 'warning':
             global MENPO_WARNING_LOGO
             if MENPO_WARNING_LOGO is None:
                 MENPO_WARNING_LOGO = mio.import_image(
                     logos_path / "menpoproject_{}.png".format(style))
             self.image = ipywidgets.Image(
-                value=convert_image_to_bytes(MENPO_WARNING_LOGO), width='50px',
-                height='70px')
+                value=convert_image_to_bytes(MENPO_WARNING_LOGO), width=width,
+                height=height)
         elif style == 'success':
             global MENPO_SUCCESS_LOGO
             if MENPO_SUCCESS_LOGO is None:
                 MENPO_SUCCESS_LOGO = mio.import_image(
                     logos_path / "menpoproject_{}.png".format(style))
             self.image = ipywidgets.Image(
-                value=convert_image_to_bytes(MENPO_SUCCESS_LOGO), width='50px',
-                height='70px')
+                value=convert_image_to_bytes(MENPO_SUCCESS_LOGO), width=width,
+                height=height)
         else:
             raise ValueError("style must be 'minimal', 'info', 'danger', "
                              "'warning', 'success' or ''; {} was "
@@ -113,23 +115,26 @@ class SwitchWidget(MenpoWidget):
                  description_location='right', switch_type='checkbox',
                  render_function=None):
         # Create children
-        self.description_wid = ipywidgets.Label(value=description)
+        self.description_wid = ipywidgets.HTML(value=description)
         if switch_type == 'toggle':
             button_style = 'danger'
             if selected_value:
                 button_style = 'success'
-            self.button_wid = ipywidgets.ToggleButton(
-                value=selected_value, button_style=button_style,
-                width='10px', height='10px', border='3px solid black')
+            layout = ipywidgets.Layout(height='13px', width='16px',
+                                       border='2px solid black')
+            self.button_wid = ipywidgets.ToggleButton(value=selected_value,
+                                                      button_style=button_style,
+                                                      layout=layout)
         elif switch_type == 'checkbox':
+            layout = ipywidgets.Layout(width='16px')
             self.button_wid = ipywidgets.Checkbox(value=selected_value,
-                                                  width='14px')
+                                                  layout=layout)
         else:
             raise ValueError("switch_type can be either 'toggle' or 'checkbox'")
         self.switch_type = switch_type
         if description_location == 'left':
-            self.container = ipywidgets.HBox([self.description_wid,
-                                              self.button_wid])
+            self.container = ipywidgets.HBox((self.description_wid,
+                                              self.button_wid))
         elif description_location == 'right':
             self.container = ipywidgets.HBox([self.button_wid,
                                               self.description_wid])
@@ -227,10 +232,11 @@ class ListWidget(MenpoWidget):
                               "</em></font>"
         else:
             raise ValueError("mode must be either int or float.")
-        self.cmd_description = ipywidgets.Label(value=description)
+        self.cmd_description = ipywidgets.HTML(value=description)
+        layout = ipywidgets.Layout(width='{}px'.format(width - 16))
         self.cmd_text = ipywidgets.Text(value=selected_cmd[:-2],
                                         placeholder='Type command',
-                                        width='{}px'.format(width - 16))
+                                        layout=layout)
         self.example = ipywidgets.HTML(
             value=example_str,
             layout=ipywidgets.Layout(
@@ -357,12 +363,13 @@ class MultipleSelectionTogglesWidget(MenpoWidget):
             with_labels = [l for l in labels]
 
         # Create children
-        self.labels_title = ipywidgets.Label(value=description)
-        self.labels_toggles = [
-            ipywidgets.ToggleButton(description=l, value=l in with_labels,
-                                    width='{}px'.format((len(l) + 2) * 9),
-                                    button_style=buttons_style)
-            for l in labels]
+        self.labels_title = ipywidgets.HTML(value=description)
+        self.labels_toggles = []
+        for l in labels:
+            layout = ipywidgets.Layout(width='{}px'.format((len(l) + 2) * 9))
+            self.labels_toggles.append(ipywidgets.ToggleButton(
+                description=l, value=l in with_labels, layout=layout,
+                button_style=buttons_style))
 
         # Group widget
         self.box_1 = ipywidgets.HBox(self.labels_toggles)
@@ -440,14 +447,14 @@ class MultipleSelectionTogglesWidget(MenpoWidget):
             self.box_1.layout.visibility = 'hidden'
             self.labels_toggles = []
             for l in labels:
+                layout = ipywidgets.Layout(width='{}px'.format((len(l) + 2) * 9))
                 w = ipywidgets.ToggleButton(
-                    description=l, value=l in with_labels,
-                    width='{}px'.format((len(l) + 2) * 9),
+                    description=l, value=l in with_labels, layout=layout,
                     button_style=self.buttons_style)
                 w.observe(self._save_options, names='value', type='change')
                 self.labels_toggles.append(w)
             self.box_1.children = self.labels_toggles
-            self.box_1.layout.visibility = ''
+            self.box_1.layout.visibility = 'visible'
             self.labels = labels
 
             # temporarily remove render callback
@@ -525,10 +532,11 @@ class SlicingCommandWidget(MenpoWidget):
         # Create children
         indices = parse_slicing_command(slice_options['command'],
                                         slice_options['length'])
-        self.cmd_description = ipywidgets.Label(value=description)
+        self.cmd_description = ipywidgets.HTML(value=description)
+        layout = ipywidgets.Layout(width='{}px'.format(width - 16))
         self.cmd_text = ipywidgets.Text(value=slice_options['command'],
                                         placeholder='Type command',
-                                        width='{}px'.format(width-16))
+                                        layout=layout)
         self.error_msg = ipywidgets.HTML(
             value='', layout=ipywidgets.Layout(display='none'))
         self.state_icon = ipywidgets.HTML(
@@ -540,18 +548,18 @@ class SlicingCommandWidget(MenpoWidget):
         self.example = ipywidgets.HTML(
             value=example_str, layout=ipywidgets.Layout(
                 display='inline' if example_visible else 'none'))
+        layout = ipywidgets.Layout(display=self._single_slider_visible(indices),
+                                   width='{}px'.format(width - 16))
         self.single_slider = ipywidgets.IntSlider(
-            min=0, max=slice_options['length'] - 1, value=0,
-            width='{}px'.format(width-16), readout=False,
-            continuous_update=continuous_update,
-            layout=ipywidgets.Layout(
-                display=self._single_slider_visible(indices)))
+            min=0, max=slice_options['length'] - 1, value=0, readout=False,
+            continuous_update=continuous_update, layout=layout)
+        layout = ipywidgets.Layout(
+            display=self._multiple_slider_visible(indices)[0],
+            width='{}px'.format(width - 16))
         self.multiple_slider = ipywidgets.IntRangeSlider(
             min=0, max=slice_options['length'] - 1,
             value=(indices[0], indices[-1]), width='{}px'.format(width-16),
-            readout=False, continuous_update=continuous_update,
-            layout=ipywidgets.Layout(
-                display=self._multiple_slider_visible(indices)[0]))
+            readout=False, continuous_update=continuous_update, layout=layout)
 
         # Group widgets
         self.box_1 = ipywidgets.HBox([self.cmd_text, self.state_icon])
@@ -748,13 +756,15 @@ class IndexSliderWidget(MenpoWidget):
     def __init__(self, index, description='Index', continuous_update=False,
                  render_function=None):
         # Create children
-        self.slider_description = ipywidgets.Label(value=description)
+        self.slider_description = ipywidgets.HTML(value=description)
+        layout = ipywidgets.Layout(width='5cm')
         self.slider = ipywidgets.IntSlider(
             min=index['min'], max=index['max'], value=index['index'],
-            step=index['step'], readout=False, width='5cm',
+            step=index['step'], readout=False, layout=layout,
             continuous_update=continuous_update)
+        layout = ipywidgets.Layout(width='2cm')
         self.slider_text = ipywidgets.Text(value=str(index['index']),
-                                           width='2cm')
+                                           layout=layout)
 
         # Create final widget
         self.container = ipywidgets.HBox([self.slider_description,
@@ -862,22 +872,21 @@ class IndexButtonsWidget(MenpoWidget):
                  minus_description='fa-minus', plus_description='fa-plus',
                  loop_enabled=True, text_editable=True):
         # Create children
-        self.title = ipywidgets.Label(value=description)
+        self.title = ipywidgets.HTML(value=description)
         m_icon, m_description = parse_font_awesome_icon(minus_description)
         self.button_minus = ipywidgets.Button(
             description=m_description, icon=m_icon, tooltip='Previous item',
-            width='1cm')
+            layout=ipywidgets.Layout(width='1cm'))
         p_icon, p_description = parse_font_awesome_icon(plus_description)
         self.button_plus = ipywidgets.Button(
             description=p_description, icon=p_icon, tooltip='Next item',
-            width='1cm')
+            layout=ipywidgets.Layout(width='1cm'))
         self.index_text = ipywidgets.Text(value=str(index['index']),
                                           disabled=not text_editable,
-                                          width='2cm')
+                                          layout=ipywidgets.Layout(width='2cm'))
         self.progress_bar = ipywidgets.IntProgress(
             value=index['index'], min=index['min'], max=index['max'],
-            step=index['step'], width='4.15cm')
-        self._change_bar_height()
+            step=index['step'], layout=ipywidgets.Layout(width='4.15cm'))
 
         # Group widgets
         self.box_1 = ipywidgets.HBox([self.button_minus, self.index_text,
@@ -942,12 +951,6 @@ class IndexButtonsWidget(MenpoWidget):
                 self.index_text.value = str(tmp_val)
             self.selected_values = int(self.index_text.value)
         self.button_minus.on_click(value_minus)
-
-    def _change_bar_height(self):
-        HTML('<style> '
-             '.progress {height: 4px;} '
-             '.widget-hprogress {height: 5px;} '
-             '</style>')
 
     def set_widget_state(self, index, loop_enabled, text_editable,
                          allow_callback=True):
@@ -1044,7 +1047,7 @@ class ColourSelectionWidget(MenpoWidget):
         default_colour = decode_colour(colours_list[0])
 
         # Create children
-        self.wid_description = ipywidgets.Label(value=description)
+        self.wid_description = ipywidgets.HTML(value=description)
         labels_dict = OrderedDict()
         if labels is None:
             labels = []
@@ -1054,13 +1057,14 @@ class ColourSelectionWidget(MenpoWidget):
         else:
             for k, l in enumerate(labels):
                 labels_dict[l] = k
-        self.label_dropdown = ipywidgets.Dropdown(options=labels_dict,
-                                                  value=0, width='3cm')
+        self.label_dropdown = ipywidgets.Dropdown(
+            options=labels_dict, value=0, layout=ipywidgets.Layout(width='3cm'))
         self.apply_to_all_button = ipywidgets.Button(
-            description=' Apply to all', icon='fa-paint-brush', width='3cm')
-        self.colour_widget = ipywidgets.ColorPicker(value=default_colour,
-                                                    tooltip='Select colour',
-                                                    width='3cm')
+            description=' Apply to all', icon='fa-paint-brush',
+            layout=ipywidgets.Layout(width='3cm'))
+        self.colour_widget = ipywidgets.ColorPicker(
+            value=default_colour, tooltip='Select colour',
+            layout=ipywidgets.Layout(width='3cm'))
 
         # Group widgets
         self.labels_box = ipywidgets.VBox(
@@ -1297,21 +1301,22 @@ class ZoomOneScaleWidget(MenpoWidget):
                  minus_description='fa-search-minus',
                  plus_description='fa-search-plus', continuous_update=False):
         # Create children
-        self.title = ipywidgets.Label(value=description)
+        self.title = ipywidgets.HTML(value=description)
         m_icon, m_description = parse_font_awesome_icon(minus_description)
-        self.button_minus = ipywidgets.Button(description=m_description,
-                                              icon=m_icon, tooltip='Zoom Out',
-                                              width='1cm')
+        self.button_minus = ipywidgets.Button(
+            description=m_description, icon=m_icon, tooltip='Zoom Out',
+            layout=ipywidgets.Layout(width='1cm'))
         p_icon, p_description = parse_font_awesome_icon(plus_description)
-        self.button_plus = ipywidgets.Button(description=p_description,
-                                             icon=p_icon, tooltip='Zoom In',
-                                             width='1cm')
+        self.button_plus = ipywidgets.Button(
+            description=p_description, icon=p_icon, tooltip='Zoom In',
+            layout=ipywidgets.Layout(width='1cm'))
         self.zoom_slider = ipywidgets.FloatSlider(
             value=zoom_options['zoom'], min=zoom_options['min'],
             max=zoom_options['max'], step=zoom_options['step'], readout=False,
-            continuous_update=continuous_update, width='6cm')
+            continuous_update=continuous_update,
+            layout=ipywidgets.Layout(width='6cm'))
         self.zoom_text = ipywidgets.Text(value=str(zoom_options['zoom']),
-                                         width='1.5cm')
+                                         layout=ipywidgets.Layout(width='1.5cm'))
 
         # Group widgets
         self.container = ipywidgets.HBox([self.title, self.button_minus,
@@ -1443,35 +1448,39 @@ class ZoomTwoScalesWidget(MenpoWidget):
                  minus_description='fa-search-minus',
                  plus_description='fa-search-plus', continuous_update=False):
         # Create children
-        self.title = ipywidgets.Label(value=description)
-        self.x_title = ipywidgets.Label(value='X')
-        self.y_title = ipywidgets.Label(value='Y')
+        self.title = ipywidgets.HTML(value=description)
+        self.x_title = ipywidgets.HTML(value='X')
+        self.y_title = ipywidgets.HTML(value='Y')
         m_icon, m_description = parse_font_awesome_icon(minus_description)
-        self.x_button_minus = ipywidgets.Button(description=m_description,
-                                                icon=m_icon, tooltip='Zoom Out',
-                                                width='1cm')
-        self.y_button_minus = ipywidgets.Button(description=m_description,
-                                                icon=m_icon, tooltip='Zoom Out',
-                                                width='1cm')
+        self.x_button_minus = ipywidgets.Button(
+            description=m_description, icon=m_icon, tooltip='Zoom Out',
+            layout=ipywidgets.Layout(width='1cm'))
+        self.y_button_minus = ipywidgets.Button(
+            description=m_description, icon=m_icon, tooltip='Zoom Out',
+            layout=ipywidgets.Layout(width='1cm'))
         p_icon, p_description = parse_font_awesome_icon(plus_description)
-        self.x_button_plus = ipywidgets.Button(description=p_description,
-                                               icon=p_icon, tooltip='Zoom In',
-                                               width='1cm')
-        self.y_button_plus = ipywidgets.Button(description=p_description,
-                                               icon=p_icon, tooltip='Zoom In',
-                                               width='1cm')
+        self.x_button_plus = ipywidgets.Button(
+            description=p_description, icon=p_icon, tooltip='Zoom In',
+            layout=ipywidgets.Layout(width='1cm'))
+        self.y_button_plus = ipywidgets.Button(
+            description=p_description, icon=p_icon, tooltip='Zoom In',
+            layout=ipywidgets.Layout(width='1cm'))
         self.x_zoom_slider = ipywidgets.FloatSlider(
             value=zoom_options['zoom'][0], min=zoom_options['min'],
             max=zoom_options['max'], readout=False,
-            continuous_update=continuous_update, width='6cm')
+            continuous_update=continuous_update,
+            layout=ipywidgets.Layout(width='6cm'))
         self.y_zoom_slider = ipywidgets.FloatSlider(
             value=zoom_options['zoom'][1], min=zoom_options['min'],
             max=zoom_options['max'], readout=False,
-            continuous_update=continuous_update, width='6cm')
-        self.x_zoom_text = ipywidgets.Text(value=str(zoom_options['zoom'][0]),
-                                           width='1.5cm')
-        self.y_zoom_text = ipywidgets.Text(value=str(zoom_options['zoom'][1]),
-                                           width='1.5cm')
+            continuous_update=continuous_update,
+            layout=ipywidgets.Layout(width='6cm'))
+        self.x_zoom_text = ipywidgets.Text(
+            value=str(zoom_options['zoom'][0]),
+            layout=ipywidgets.Layout(width='1.5cm'))
+        self.y_zoom_text = ipywidgets.Text(
+            value=str(zoom_options['zoom'][1]),
+            layout=ipywidgets.Layout(width='1.5cm'))
         self.x_box = ipywidgets.HBox([self.x_title, self.x_button_minus,
                                       self.x_zoom_slider, self.x_button_plus,
                                       self.x_zoom_text])
@@ -1483,13 +1492,14 @@ class ZoomTwoScalesWidget(MenpoWidget):
         self.x_y_box = ipywidgets.VBox([self.x_box, self.y_box])
         self.lock_link = ipywidgets.jslink((self.x_zoom_slider, 'value'),
                                            (self.y_zoom_slider, 'value'))
-        lock_icon = 'fa-link'
+        lock_icon = 'link'
         if not zoom_options['lock_aspect_ratio']:
-            lock_icon = 'fa-unlink'
+            lock_icon = 'unlink'
             self.lock_link.unlink()
         self.lock_aspect_button = ipywidgets.ToggleButton(
             value=zoom_options['lock_aspect_ratio'], description='',
-            icon=lock_icon, tooltip='Keep aspect ratio', width='1cm')
+            icon=lock_icon, tooltip='Keep aspect ratio',
+            layout=ipywidgets.Layout(width='0.9cm'))
 
         # Group widgets
         self.options_box = ipywidgets.HBox([self.lock_aspect_button,
@@ -1590,13 +1600,13 @@ class ZoomTwoScalesWidget(MenpoWidget):
         def link_button(change):
             self.lock_aspect_ratio = change['new']
             if change['new']:
-                self.lock_aspect_button.icon = 'fa-link'
+                self.lock_aspect_button.icon = 'link'
                 self.lock_link = link((self.x_zoom_slider, 'value'),
                                       (self.y_zoom_slider, 'value'))
                 self.selected_values = [self.x_zoom_slider.value,
                                         self.x_zoom_slider.value]
             else:
-                self.lock_aspect_button.icon = 'fa-unlink'
+                self.lock_aspect_button.icon = 'unlink'
                 self.lock_link.unlink()
         self.lock_aspect_button.observe(link_button, names='value',
                                         type='change')
@@ -1679,13 +1689,14 @@ class ImageMatplotlibOptionsWidget(MenpoWidget):
             selected_value=image_options['interpolation'] == 'none',
             description='Interpolation', description_location='right',
             switch_type='checkbox', render_function=None)
-        self.alpha_title = ipywidgets.Label(value='Transparency')
+        self.alpha_title = ipywidgets.HTML(value='Transparency')
         self.alpha_slider = ipywidgets.FloatSlider(
-            value=image_options['alpha'],
-            min=0.0, max=1.0, step=0.05, continuous_update=False,
-            readout=False, width='3.5cm')
-        self.alpha_text = ipywidgets.Label(
-            value="{:.2f}".format(image_options['alpha']), width='0.9cm')
+            value=image_options['alpha'], min=0.0, max=1.0, step=0.05,
+            continuous_update=False, readout=False,
+            layout=ipywidgets.Layout(width='3.5cm'))
+        self.alpha_text = ipywidgets.HTML(
+            value="{:.2f}".format(image_options['alpha']),
+            layout=ipywidgets.Layout(width='0.9cm'))
         cmap_dict = OrderedDict()
         cmap_dict['None'] = None
         cmap_dict['afmhot'] = 'afmhot'
@@ -1745,9 +1756,10 @@ class ImageMatplotlibOptionsWidget(MenpoWidget):
         cmap_dict['YlGnBu'] = 'YlGnBu'
         cmap_dict['YlOrBr'] = 'YlOrBr'
         cmap_dict['YlOrRd'] = 'YlOrRd'
-        self.cmap_select = ipywidgets.Select(options=cmap_dict, value='gray',
-                                             width='4cm', height='2cm')
-        self.cmap_title = ipywidgets.Label(value='Colourmap')
+        self.cmap_select = ipywidgets.Select(
+            options=cmap_dict, value='gray',
+            layout=ipywidgets.Layout(width='4cm', height='2cm'))
+        self.cmap_title = ipywidgets.HTML(value='Colourmap')
 
         # Group widgets
         self.box_1 = ipywidgets.HBox([self.alpha_title, self.alpha_slider,
@@ -1755,7 +1767,8 @@ class ImageMatplotlibOptionsWidget(MenpoWidget):
         self.box_1.layout.align_items = 'center'
         self.box_2 = ipywidgets.VBox([self.box_1, self.interpolation_checkbox])
         self.box_3 = ipywidgets.HBox([self.cmap_title, self.cmap_select])
-        self.box_3.layout.align_items = 'center'
+        self.box_3.layout.align_items = 'baseline'
+        self.box_3.layout.margin = '0px 13px 0px 0px'
         self.container = ipywidgets.HBox([self.box_3, self.box_2])
         self.container.layout.align_items = 'flex-start'
 
@@ -1860,10 +1873,11 @@ class LineMatplotlibOptionsWidget(MenpoWidget):
             line_options['render_lines'], description=render_checkbox_title,
             description_location='right', switch_type=render_checkbox_type)
         self.render_lines_switch.layout.margin = '7px'
-        self.line_width_title = ipywidgets.Label(value='Width')
+        self.line_width_title = ipywidgets.HTML(value='Width')
         self.line_width_text = ipywidgets.BoundedFloatText(
-            value=line_options['line_width'], min=0., max=10**6, width='3cm')
-        self.line_style_title = ipywidgets.Label(value='Style')
+            value=line_options['line_width'], min=0., max=10**6,
+            layout=ipywidgets.Layout(width='3cm'))
+        self.line_style_title = ipywidgets.HTML(value='Style')
         line_style_dict = OrderedDict()
         line_style_dict['solid'] = '-'
         line_style_dict['dashed'] = '--'
@@ -1871,7 +1885,7 @@ class LineMatplotlibOptionsWidget(MenpoWidget):
         line_style_dict['dotted'] = ':'
         self.line_style_dropdown = ipywidgets.Dropdown(
             options=line_style_dict, value=line_options['line_style'],
-            width='3cm')
+            layout=ipywidgets.Layout(width='3cm'))
         self.line_colour_widget = ColourSelectionWidget(
             line_options['line_colour'], description='Colour', labels=labels,
             render_function=None)
@@ -2004,9 +2018,10 @@ class LineMayaviOptionsWidget(MenpoWidget):
             line_options['render_lines'], description=render_checkbox_title,
             description_location='right', switch_type=render_checkbox_type)
         self.render_lines_switch.layout.margin = '7px'
-        self.line_width_title = ipywidgets.Label(value='Width')
+        self.line_width_title = ipywidgets.HTML(value='Width')
         self.line_width_text = ipywidgets.BoundedFloatText(
-            value=line_options['line_width'], min=0., max=10**6, width='3cm')
+            value=line_options['line_width'], min=0., max=10**6,
+            layout=ipywidgets.Layout(width='3cm'))
         self.line_colour_widget = ColourSelectionWidget(
             line_options['line_colour'], description='Colour', labels=labels,
             render_function=None)
@@ -2136,14 +2151,15 @@ class MarkerMatplotlibOptionsWidget(MenpoWidget):
             marker_options['render_markers'], description=render_checkbox_title,
             description_location='right', switch_type=render_checkbox_type)
         self.render_markers_switch.layout.margin = '7px'
-        self.marker_size_title = ipywidgets.Label(value='Size')
+        self.marker_size_title = ipywidgets.HTML(value='Size')
         self.marker_size_text = ipywidgets.BoundedIntText(
-            value=marker_options['marker_size'], min=0, max=10**6, width='3cm')
-        self.marker_edge_width_title = ipywidgets.Label(value='Edge width')
+            value=marker_options['marker_size'], min=0, max=10**6,
+            layout=ipywidgets.Layout(width='3cm'))
+        self.marker_edge_width_title = ipywidgets.HTML(value='Edge width')
         self.marker_edge_width_text = ipywidgets.BoundedFloatText(
             value=marker_options['marker_edge_width'], min=0., max=10**6,
-            width='3cm')
-        self.marker_style_title = ipywidgets.Label(value='Style')
+            layout=ipywidgets.Layout(width='3cm'))
+        self.marker_style_title = ipywidgets.HTML(value='Style')
         marker_style_dict = OrderedDict()
         marker_style_dict['point'] = '.'
         marker_style_dict['pixel'] = ','
@@ -2168,7 +2184,7 @@ class MarkerMatplotlibOptionsWidget(MenpoWidget):
         marker_style_dict['thin diamond'] = 'd'
         self.marker_style_dropdown = ipywidgets.Dropdown(
             options=marker_style_dict, value=marker_options['marker_style'],
-            width='3cm')
+            layout=ipywidgets.Layout(width='3cm'))
         self.marker_face_colour_widget = ColourSelectionWidget(
             marker_options['marker_face_colour'], description='Face colour',
             labels=labels, render_function=None)
@@ -2331,7 +2347,7 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
             marker_options['render_markers'], description=render_checkbox_title,
             description_location='right', switch_type=render_checkbox_type)
         self.render_markers_switch.layout.margin = '7px'
-        self.marker_size_title = ipywidgets.Label(value='Size')
+        self.marker_size_title = ipywidgets.HTML(value='Size')
         m1 = marker_options['marker_size']
         m2 = False
         m_icon = 'fa-keyboard-o'
@@ -2340,14 +2356,16 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
             m2 = True
             m_icon = 'fa-times'
         self.marker_size_text = ipywidgets.BoundedFloatText(
-            value=m1, disabled=m2, min=0, max=10**6, width='1.9cm')
+            value=m1, disabled=m2, min=0, max=10**6,
+            layout=ipywidgets.Layout(width='1.9cm'))
         self.marker_size_none = ipywidgets.Button(
-            description='', icon=m_icon, width='1.0cm', height='0.8cm')
-        self.marker_resolution_title = ipywidgets.Label(value='Resolution')
+            description='', icon=m_icon,
+            layout=ipywidgets.Layout(width='1.0cm', height='0.8cm'))
+        self.marker_resolution_title = ipywidgets.HTML(value='Resolution')
         self.marker_resolution_text = ipywidgets.BoundedIntText(
             value=marker_options['marker_resolution'], min=0., max=10**6,
-            width='3cm')
-        self.marker_style_title = ipywidgets.Label(value='Style')
+            layout=ipywidgets.Layout(width='3cm'))
+        self.marker_style_title = ipywidgets.HTML(value='Style')
         marker_style_dict = OrderedDict()
         marker_style_dict['Sphere'] = 'sphere'
         marker_style_dict['Cube'] = 'cube'
@@ -2369,7 +2387,7 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
         marker_style_dict['2D vertex'] = '2dvertex'
         self.marker_style_dropdown = ipywidgets.Dropdown(
             options=marker_style_dict, value=marker_options['marker_style'],
-            width='3cm')
+            layout=ipywidgets.Layout(width='3cm'))
         self.marker_colour_widget = ColourSelectionWidget(
             marker_options['marker_colour'], description='Colour',
             labels=labels, render_function=None)
@@ -2538,7 +2556,7 @@ class NumberingMatplotlibOptionsWidget(MenpoWidget):
             description=render_checkbox_title, description_location='right',
             switch_type=render_checkbox_type)
         self.render_numbering_switch.layout.margin = '7px'
-        self.numbers_font_name_title = ipywidgets.Label(value='Font')
+        self.numbers_font_name_title = ipywidgets.HTML(value='Font')
         numbers_font_name_dict = OrderedDict()
         numbers_font_name_dict['serif'] = 'serif'
         numbers_font_name_dict['sans-serif'] = 'sans-serif'
@@ -2546,21 +2564,23 @@ class NumberingMatplotlibOptionsWidget(MenpoWidget):
         numbers_font_name_dict['fantasy'] = 'fantasy'
         numbers_font_name_dict['monospace'] = 'monospace'
         self.numbers_font_name_dropdown = ipywidgets.Dropdown(
-            options=numbers_font_name_dict, width='3cm',
-            value=numbers_options['numbers_font_name'])
-        self.numbers_font_size_title = ipywidgets.Label(value='Size')
+            options=numbers_font_name_dict,
+            value=numbers_options['numbers_font_name'],
+            layout=ipywidgets.Layout(width='3cm'))
+        self.numbers_font_size_title = ipywidgets.HTML(value='Size')
         self.numbers_font_size_text = ipywidgets.BoundedIntText(
             min=0, max=10**6, value=numbers_options['numbers_font_size'],
-            width='3cm')
-        self.numbers_font_style_title = ipywidgets.Label(value='Style')
+            layout=ipywidgets.Layout(width='3cm'))
+        self.numbers_font_style_title = ipywidgets.HTML(value='Style')
         numbers_font_style_dict = OrderedDict()
         numbers_font_style_dict['normal'] = 'normal'
         numbers_font_style_dict['italic'] = 'italic'
         numbers_font_style_dict['oblique'] = 'oblique'
         self.numbers_font_style_dropdown = ipywidgets.Dropdown(
-            options=numbers_font_style_dict, width='3cm',
+            options=numbers_font_style_dict,
+            layout=ipywidgets.Layout(width='3cm'),
             value=numbers_options['numbers_font_style'])
-        self.numbers_font_weight_title = ipywidgets.Label(value='Weight')
+        self.numbers_font_weight_title = ipywidgets.HTML(value='Weight')
         numbers_font_weight_dict = OrderedDict()
         numbers_font_weight_dict['normal'] = 'normal'
         numbers_font_weight_dict['ultralight'] = 'ultralight'
@@ -2577,21 +2597,23 @@ class NumberingMatplotlibOptionsWidget(MenpoWidget):
         numbers_font_weight_dict['extra bold'] = 'extra bold'
         numbers_font_weight_dict['black'] = 'black'
         self.numbers_font_weight_dropdown = ipywidgets.Dropdown(
-            options=numbers_font_weight_dict, width='3cm',
+            options=numbers_font_weight_dict,
+            layout=ipywidgets.Layout(width='3cm'),
             value=numbers_options['numbers_font_weight'])
         self.numbers_font_colour_widget = ColourSelectionWidget(
             numbers_options['numbers_font_colour'], description='Colour',
             render_function=None)
-        self.numbers_horizontal_align_title = ipywidgets.Label(
+        self.numbers_horizontal_align_title = ipywidgets.HTML(
             value='Horizontal align')
         numbers_horizontal_align_dict = OrderedDict()
         numbers_horizontal_align_dict['center'] = 'center'
         numbers_horizontal_align_dict['right'] = 'right'
         numbers_horizontal_align_dict['left'] = 'left'
         self.numbers_horizontal_align_dropdown = ipywidgets.Dropdown(
-            options=numbers_horizontal_align_dict, width='3cm',
+            options=numbers_horizontal_align_dict,
+            layout=ipywidgets.Layout(width='3cm'),
             value=numbers_options['numbers_horizontal_align'])
-        self.numbers_vertical_align_title = ipywidgets.Label(
+        self.numbers_vertical_align_title = ipywidgets.HTML(
             value='Vertical align')
         numbers_vertical_align_dict = OrderedDict()
         numbers_vertical_align_dict['center'] = 'center'
@@ -2599,7 +2621,8 @@ class NumberingMatplotlibOptionsWidget(MenpoWidget):
         numbers_vertical_align_dict['bottom'] = 'bottom'
         numbers_vertical_align_dict['baseline'] = 'baseline'
         self.numbers_vertical_align_dropdown = ipywidgets.Dropdown(
-            options=numbers_vertical_align_dict, width='3cm',
+            options=numbers_vertical_align_dict,
+            layout=ipywidgets.Layout(width='3cm'),
             value=numbers_options['numbers_vertical_align'])
 
         # Group widgets
@@ -2770,7 +2793,7 @@ class NumberingMayaviOptionsWidget(MenpoWidget):
             description=render_checkbox_title, description_location='right',
             switch_type=render_checkbox_type)
         self.render_numbering_switch.layout.margin = '7px'
-        self.numbers_size_title = ipywidgets.Label(value='Size')
+        self.numbers_size_title = ipywidgets.HTML(value='Size')
         n1 = numbers_options['numbers_size']
         n2 = False
         n_icon = 'fa-keyboard-o'
@@ -2779,9 +2802,11 @@ class NumberingMayaviOptionsWidget(MenpoWidget):
             n2 = True
             n_icon = 'fa-times'
         self.numbers_size_text = ipywidgets.BoundedFloatText(
-            value=n1, disabled=n2, min=0., max=10**6, width='1.9cm')
+            value=n1, disabled=n2, min=0., max=10**6,
+            layout=ipywidgets.Layout(width='1.9cm'))
         self.numbers_size_none = ipywidgets.Button(
-            description='', icon=n_icon, width='1.0cm', height='0.8cm')
+            description='', icon=n_icon,
+            layout=ipywidgets.Layout(width='1.0cm', height='0.8cm'))
         self.numbers_colour_widget = ColourSelectionWidget(
             numbers_options['numbers_colour'], description='Colour',
             render_function=None)
@@ -2919,7 +2944,7 @@ class AxesLimitsWidget(MenpoWidget):
             percentage_visible = False
             range_initial_value = axes_x_limits
             range_visible = True
-        self.axes_x_limits_title = ipywidgets.Label(value='X limits')
+        self.axes_x_limits_title = ipywidgets.HTML(value='X limits')
         self.axes_x_limits_toggles = ipywidgets.ToggleButtons(
             value=toggles_initial_value,
             options=['auto', 'percentage', 'range'])
@@ -2953,7 +2978,7 @@ class AxesLimitsWidget(MenpoWidget):
             percentage_visible = False
             range_initial_value = axes_y_limits
             range_visible = True
-        self.axes_y_limits_title = ipywidgets.Label(value='Y limits')
+        self.axes_y_limits_title = ipywidgets.HTML(value='Y limits')
         self.axes_y_limits_toggles = ipywidgets.ToggleButtons(
             value=toggles_initial_value,
             options=['auto', 'percentage', 'range'])
@@ -3126,12 +3151,12 @@ class AxesTicksWidget(MenpoWidget):
             toggles_initial_value = 'list'
             list_visible = True
             list_value = axes_ticks['x']
-        self.axes_x_ticks_title = ipywidgets.Label(value='X ticks')
+        self.axes_x_ticks_title = ipywidgets.HTML(value='X ticks')
         self.axes_x_ticks_toggles = ipywidgets.ToggleButtons(
             value=toggles_initial_value, options=['auto', 'list'])
         self.axes_x_ticks_list = ListWidget(
             list_value, mode='float', description='', render_function=None,
-            example_visible=False)
+            example_visible=False, width=200)
         self.axes_x_ticks_list.layout.display = (
             'flex' if list_visible else 'none')
 
@@ -3144,12 +3169,12 @@ class AxesTicksWidget(MenpoWidget):
             toggles_initial_value = 'list'
             list_visible = True
             list_value = axes_ticks['y']
-        self.axes_y_ticks_title = ipywidgets.Label(value='Y ticks')
+        self.axes_y_ticks_title = ipywidgets.HTML(value='Y ticks')
         self.axes_y_ticks_toggles = ipywidgets.ToggleButtons(
             value=toggles_initial_value, options=['auto', 'list'])
         self.axes_y_ticks_list = ListWidget(
             list_value, mode='float', description='', render_function=None,
-            example_visible=False)
+            example_visible=False, width=200)
         self.axes_y_ticks_list.layout.display = (
             'flex' if list_visible else 'none')
 
@@ -3288,7 +3313,7 @@ class AxesOptionsWidget(MenpoWidget):
             description_location='right', switch_type=render_checkbox_type)
         self.render_axes_switch.layout.margin = '7px'
         # axes font options
-        self.axes_font_name_title = ipywidgets.Label(value='Font')
+        self.axes_font_name_title = ipywidgets.HTML(value='Font')
         axes_font_name_dict = OrderedDict()
         axes_font_name_dict['serif'] = 'serif'
         axes_font_name_dict['sans-serif'] = 'sans-serif'
@@ -3297,19 +3322,20 @@ class AxesOptionsWidget(MenpoWidget):
         axes_font_name_dict['monospace'] = 'monospace'
         self.axes_font_name_dropdown = ipywidgets.Dropdown(
             options=axes_font_name_dict, value=axes_options['axes_font_name'],
-            width='3cm')
-        self.axes_font_size_title = ipywidgets.Label(value='Size')
+            layout=ipywidgets.Layout(width='3cm'))
+        self.axes_font_size_title = ipywidgets.HTML(value='Size')
         self.axes_font_size_text = ipywidgets.BoundedIntText(
-            value=axes_options['axes_font_size'], min=0, max=10**6, width='3cm')
-        self.axes_font_style_title = ipywidgets.Label(value='Style')
+            value=axes_options['axes_font_size'], min=0, max=10**6,
+            layout=ipywidgets.Layout(width='3cm'))
+        self.axes_font_style_title = ipywidgets.HTML(value='Style')
         axes_font_style_dict = OrderedDict()
         axes_font_style_dict['normal'] = 'normal'
         axes_font_style_dict['italic'] = 'italic'
         axes_font_style_dict['oblique'] = 'oblique'
         self.axes_font_style_dropdown = ipywidgets.Dropdown(
-            options=axes_font_style_dict,
-            value=axes_options['axes_font_style'], width='3cm')
-        self.axes_font_weight_title = ipywidgets.Label(value='Weight')
+            options=axes_font_style_dict, value=axes_options['axes_font_style'],
+            layout=ipywidgets.Layout(width='3cm'))
+        self.axes_font_weight_title = ipywidgets.HTML(value='Weight')
         axes_font_weight_dict = OrderedDict()
         axes_font_weight_dict['normal'] = 'normal'
         axes_font_weight_dict['ultralight'] = 'ultralight'
@@ -3326,7 +3352,7 @@ class AxesOptionsWidget(MenpoWidget):
         axes_font_weight_dict['extra bold'] = 'extra bold'
         axes_font_weight_dict['black'] = 'black'
         self.axes_font_weight_dropdown = ipywidgets.Dropdown(
-            options=axes_font_weight_dict, width='3cm',
+            options=axes_font_weight_dict, layout=ipywidgets.Layout(width='3cm'),
             value=axes_options['axes_font_weight'])
 
         self.box_1 = ipywidgets.HBox([self.axes_font_name_title,
@@ -3354,23 +3380,19 @@ class AxesOptionsWidget(MenpoWidget):
         self.axes_ticks_widget = AxesTicksWidget(axes_ticks,
                                                  render_function=None)
 
-        # axes font and ticks options box
-        self.box_8 = ipywidgets.VBox([self.box_7, self.axes_ticks_widget])
-
-        # axes font, ticks and render checkbox box
-        self.box_9 = ipywidgets.VBox([self.render_axes_switch, self.box_8])
-        self.box_9.layout.margin = '7px'
-
         # axes limits options
         self.axes_limits_widget = AxesLimitsWidget(
             axes_options['axes_x_limits'], axes_options['axes_y_limits'],
             render_function=None)
-        self.axes_limits_widget.layout.margin = '7px'
 
         # options tab
-        self.container = ipywidgets.Tab([self.box_9, self.axes_limits_widget])
-        self.container.set_title(0, 'Font & Ticks')
-        self.container.set_title(1, 'Limits')
+        self.accordion = ipywidgets.Accordion(
+            [self.box_7, self.axes_limits_widget, self.axes_ticks_widget])
+        self.accordion.set_title(0, 'Font')
+        self.accordion.set_title(1, 'Limits')
+        self.accordion.set_title(2, 'Ticks')
+        self.container = ipywidgets.VBox([self.render_axes_switch,
+                                          self.accordion])
 
         # Create final widget
         super(AxesOptionsWidget, self).__init__(
@@ -3379,7 +3401,7 @@ class AxesOptionsWidget(MenpoWidget):
 
         # Set functionality
         def axes_options_visible(change):
-            self.box_8.layout.display = 'flex' if change['new'] else 'none'
+            self.accordion.layout.display = 'flex' if change['new'] else 'none'
         axes_options_visible({'new': axes_options['render_axes']})
         self.render_axes_switch.observe(axes_options_visible,
                                         names='selected_values', type='change')
@@ -3522,7 +3544,7 @@ class LegendOptionsWidget(MenpoWidget):
         self.render_legend_switch.layout.margin = '7px'
 
         # font-related options and title
-        self.legend_font_name_title = ipywidgets.Label(value='Font')
+        self.legend_font_name_title = ipywidgets.HTML(value='Font')
         legend_font_name_dict = OrderedDict()
         legend_font_name_dict['serif'] = 'serif'
         legend_font_name_dict['sans-serif'] = 'sans-serif'
@@ -3530,21 +3552,22 @@ class LegendOptionsWidget(MenpoWidget):
         legend_font_name_dict['fantasy'] = 'fantasy'
         legend_font_name_dict['monospace'] = 'monospace'
         self.legend_font_name_dropdown = ipywidgets.Dropdown(
-            options=legend_font_name_dict, width='3cm',
+            options=legend_font_name_dict, layout=ipywidgets.Layout(width='3cm'),
             value=legend_options['legend_font_name'])
-        self.legend_font_size_title = ipywidgets.Label(value='Size')
+        self.legend_font_size_title = ipywidgets.HTML(value='Size')
         self.legend_font_size_text = ipywidgets.BoundedIntText(
             min=0, max=10**6, value=legend_options['legend_font_size'],
-            width='3cm')
-        self.legend_font_style_title = ipywidgets.Label(value='Style')
+            layout=ipywidgets.Layout(width='3cm'))
+        self.legend_font_style_title = ipywidgets.HTML(value='Style')
         legend_font_style_dict = OrderedDict()
         legend_font_style_dict['normal'] = 'normal'
         legend_font_style_dict['italic'] = 'italic'
         legend_font_style_dict['oblique'] = 'oblique'
         self.legend_font_style_dropdown = ipywidgets.Dropdown(
-            options=legend_font_style_dict, width='3cm',
+            options=legend_font_style_dict,
+            layout=ipywidgets.Layout(width='3cm'),
             value=legend_options['legend_font_style'])
-        self.legend_font_weight_title = ipywidgets.Label(value='Weight')
+        self.legend_font_weight_title = ipywidgets.HTML(value='Weight')
         legend_font_weight_dict = OrderedDict()
         legend_font_weight_dict['normal'] = 'normal'
         legend_font_weight_dict['ultralight'] = 'ultralight'
@@ -3561,11 +3584,13 @@ class LegendOptionsWidget(MenpoWidget):
         legend_font_weight_dict['extra bold'] = 'extra bold'
         legend_font_weight_dict['black'] = 'black'
         self.legend_font_weight_dropdown = ipywidgets.Dropdown(
-            options=legend_font_weight_dict, width='3cm',
+            options=legend_font_weight_dict,
+            layout=ipywidgets.Layout(width='3cm'),
             value=legend_options['legend_font_weight'])
-        self.legend_title_title = ipywidgets.Label(value='Title')
+        self.legend_title_title = ipywidgets.HTML(value='Title')
         self.legend_title_text = ipywidgets.Text(
-            value=legend_options['legend_title'], width='7.6cm')
+            value=legend_options['legend_title'],
+            layout=ipywidgets.Layout(width='7.6cm'))
 
         self.box_1 = ipywidgets.HBox([self.legend_font_name_title,
                                       self.legend_font_name_dropdown])
@@ -3590,10 +3615,9 @@ class LegendOptionsWidget(MenpoWidget):
         self.box_8.layout.align_items = 'center'
         self.box_9 = ipywidgets.VBox([self.box_8, self.box_7])
         self.box_9.layout.align_items = 'flex-end'
-        self.box_9.layout.margin = '7px'
 
         # location-related options
-        self.legend_location_title = ipywidgets.Label(value='Anchor')
+        self.legend_location_title = ipywidgets.HTML(value='Anchor')
         legend_location_dict = OrderedDict()
         legend_location_dict['best'] = 0
         legend_location_dict['upper right'] = 1
@@ -3607,7 +3631,7 @@ class LegendOptionsWidget(MenpoWidget):
         legend_location_dict['upper center'] = 9
         legend_location_dict['center'] = 10
         self.legend_location_dropdown = ipywidgets.Dropdown(
-            options=legend_location_dict,
+            options=legend_location_dict, layout=ipywidgets.Layout(width='3cm'),
             value=legend_options['legend_location'])
         if legend_options['legend_bbox_to_anchor'] is None:
             tmp1 = False
@@ -3619,15 +3643,14 @@ class LegendOptionsWidget(MenpoWidget):
             tmp3 = legend_options['legend_bbox_to_anchor'][1]
         self.bbox_to_anchor_enable_checkbox = SwitchWidget(
             tmp1, description='Offset', description_location='left')
-        self.bbox_to_anchor_x_text = ipywidgets.FloatText(value=tmp2)
-        self.bbox_to_anchor_y_text = ipywidgets.FloatText(value=tmp3)
-        self.legend_border_axes_pad_title = ipywidgets.Label(value='Padding')
+        self.bbox_to_anchor_x_text = ipywidgets.FloatText(
+            value=tmp2, layout=ipywidgets.Layout(width='1.6cm'))
+        self.bbox_to_anchor_y_text = ipywidgets.FloatText(
+            value=tmp3, layout=ipywidgets.Layout(width='1.6cm'))
+        self.legend_border_axes_pad_title = ipywidgets.HTML(value='Padding')
         self.legend_border_axes_pad_text = ipywidgets.BoundedFloatText(
-            value=legend_options['legend_border_axes_pad'], min=0.)
-        self.bbox_to_anchor_x_text.layout.width = '3cm'
-        self.bbox_to_anchor_y_text.layout.width = '3cm'
-        self.legend_border_axes_pad_text.layout.width = '3cm'
-        self.legend_location_dropdown.layout.width = '3cm'
+            value=legend_options['legend_border_axes_pad'], min=0.,
+            layout=ipywidgets.Layout(width='3cm'))
 
         self.box_10 = ipywidgets.HBox([self.legend_location_title,
                                        self.legend_location_dropdown])
@@ -3646,27 +3669,26 @@ class LegendOptionsWidget(MenpoWidget):
                                        self.box_13])
         self.box_14.layout.align_items = 'center'
         self.box_15 = ipywidgets.HBox([self.box_12, self.box_14])
-        self.box_15.layout.margin = '7px'
 
         # formatting related
-        self.legend_n_columns_title = ipywidgets.Label(value='# Columns')
+        self.legend_n_columns_title = ipywidgets.HTML(value='# Columns')
         self.legend_n_columns_text = ipywidgets.BoundedIntText(
-            value=legend_options['legend_n_columns'], min=0)
-        self.legend_marker_scale_title = ipywidgets.Label(value='Marker scale')
+            value=legend_options['legend_n_columns'], min=0,
+            layout=ipywidgets.Layout(width='1.6cm'))
+        self.legend_marker_scale_title = ipywidgets.HTML(value='Marker scale')
         self.legend_marker_scale_text = ipywidgets.BoundedFloatText(
-            value=legend_options['legend_marker_scale'], min=0.)
-        self.legend_horizontal_spacing_title = ipywidgets.Label(
+            value=legend_options['legend_marker_scale'], min=0.,
+            layout=ipywidgets.Layout(width='1.6cm'))
+        self.legend_horizontal_spacing_title = ipywidgets.HTML(
             value='Horizontal space')
         self.legend_horizontal_spacing_text = ipywidgets.BoundedFloatText(
-            value=legend_options['legend_horizontal_spacing'], min=0.)
-        self.legend_vertical_spacing_title = ipywidgets.Label(
+            value=legend_options['legend_horizontal_spacing'], min=0.,
+            layout=ipywidgets.Layout(width='1.6cm'))
+        self.legend_vertical_spacing_title = ipywidgets.HTML(
             value='Vertical space')
         self.legend_vertical_spacing_text = ipywidgets.BoundedFloatText(
-            value=legend_options['legend_vertical_spacing'], min=0.)
-        self.legend_n_columns_text.layout.width = '1.6cm'
-        self.legend_marker_scale_text.layout.width = '1.6cm'
-        self.legend_horizontal_spacing_text.layout.width = '1.6cm'
-        self.legend_vertical_spacing_text.layout.width = '1.6cm'
+            value=legend_options['legend_vertical_spacing'], min=0.,
+            layout=ipywidgets.Layout(width='1.6cm'))
 
         self.box_16 = ipywidgets.HBox([self.legend_n_columns_title,
                                        self.legend_n_columns_text])
@@ -3686,20 +3708,19 @@ class LegendOptionsWidget(MenpoWidget):
         self.box_21 = ipywidgets.VBox([self.box_18, self.box_19])
         self.box_21.layout.align_items = 'flex-end'
         self.box_22 = ipywidgets.HBox([self.box_20, self.box_21])
-        self.box_22.layout.margin = '7px'
 
         # border
         self.legend_border_checkbox = ipywidgets.Checkbox(
             description='Border', value=legend_options['legend_border'])
-        self.legend_border_padding_title = ipywidgets.Label(value='Padding')
+        self.legend_border_padding_title = ipywidgets.HTML(value='Padding')
         self.legend_border_padding_text = ipywidgets.BoundedFloatText(
-            value=legend_options['legend_border_padding'], min=0.)
+            value=legend_options['legend_border_padding'], min=0.,
+            layout=ipywidgets.Layout(width='1.2cm'))
         self.legend_shadow_checkbox = ipywidgets.Checkbox(
             description='Shadow', value=legend_options['legend_shadow'])
         self.legend_rounded_corners_checkbox = ipywidgets.Checkbox(
             description='Fancy',
             value=legend_options['legend_rounded_corners'])
-        self.legend_border_padding_text.layout.width = '1.2cm'
 
         self.box_23 = ipywidgets.HBox([self.legend_border_padding_title,
                                        self.legend_border_padding_text])
@@ -3710,11 +3731,10 @@ class LegendOptionsWidget(MenpoWidget):
         self.box_25 = ipywidgets.VBox([self.box_24,
                                        self.legend_shadow_checkbox,
                                        self.legend_rounded_corners_checkbox])
-        self.box_25.layout.margin = '7px'
 
         # Group widgets
-        self.box_27 = ipywidgets.Tab([self.box_15, self.box_9, self.box_22,
-                                      self.box_25])
+        self.box_27 = ipywidgets.Accordion([self.box_15, self.box_9, self.box_22,
+                                            self.box_25])
         self.box_27.set_title(0, 'Location')
         self.box_27.set_title(1, 'Title & Font')
         self.box_27.set_title(2, 'Formatting')
@@ -3741,10 +3761,10 @@ class LegendOptionsWidget(MenpoWidget):
                                             type='change')
 
         def bbox_to_anchor_visible(change):
-            self.bbox_to_anchor_x_text.layout.display = (
-                'inline' if change['new'] else 'none')
-            self.bbox_to_anchor_y_text.layout.display = (
-                'inline' if change['new'] else 'none')
+            self.bbox_to_anchor_x_text.layout.visibility = (
+                'visible' if change['new'] else 'hidden')
+            self.bbox_to_anchor_y_text.layout.visibility = (
+                'visible' if change['new'] else 'hidden')
         bbox_to_anchor_visible({
             'new': not legend_options['legend_bbox_to_anchor'] is None})
         self.bbox_to_anchor_enable_checkbox.observe(
@@ -3978,11 +3998,11 @@ class GridOptionsWidget(MenpoWidget):
             grid_options['render_grid'], description=render_checkbox_title,
             description_location='right', switch_type=render_checkbox_type)
         self.render_grid_switch.layout.margin = '7px'
-        self.grid_line_width_title = ipywidgets.Label(value='Width')
+        self.grid_line_width_title = ipywidgets.HTML(value='Width')
         self.grid_line_width_text = ipywidgets.BoundedFloatText(
             value=grid_options['grid_line_width'], min=0., max=10**6,
-            width='3cm')
-        self.grid_line_style_title = ipywidgets.Label(value='Style')
+            layout=ipywidgets.Layout(width='3cm'))
+        self.grid_line_style_title = ipywidgets.HTML(value='Style')
         grid_line_style_dict = OrderedDict()
         grid_line_style_dict['solid'] = '-'
         grid_line_style_dict['dashed'] = '--'
@@ -3990,7 +4010,8 @@ class GridOptionsWidget(MenpoWidget):
         grid_line_style_dict['dotted'] = ':'
         self.grid_line_style_dropdown = ipywidgets.Dropdown(
             value=grid_options['grid_line_style'],
-            options=grid_line_style_dict, width='3cm')
+            options=grid_line_style_dict,
+            layout=ipywidgets.Layout(width='3cm'))
 
         # Group widgets
         self.box_1 = ipywidgets.HBox([self.grid_line_width_title,
@@ -4144,23 +4165,26 @@ class TriMeshOptionsWidget(MenpoWidget):
         colour_converter = ColorConverter()
 
         # Create children
-        self.mesh_type_title = ipywidgets.Label(value='Type')
-        self.mesh_type_toggles = ipywidgets.ToggleButtons(
+        self.mesh_type_title = ipywidgets.HTML(value='Type')
+        self.mesh_type_toggles = ipywidgets.Dropdown(
             options=['surface', 'wireframe', 'points', 'mesh', 'fancymesh'],
-            tooltip='Select the mesh type.', value=mesh_options['mesh_type'])
-        self.line_width_title = ipywidgets.Label(value='Line width')
+            tooltip='Select the mesh type.', value=mesh_options['mesh_type'],
+            layout=ipywidgets.Layout(width='3cm'))
+        self.line_width_title = ipywidgets.HTML(value='Line width')
         self.line_width_text = ipywidgets.BoundedFloatText(
             value=float(mesh_options['line_width']), min=0.0, max=10**6,
-            width='1.1cm')
+            layout=ipywidgets.Layout(width='1.1cm'))
         self.colour_widget = ColourSelectionWidget(
             mesh_options['colour'], description='Colour', render_function=None)
-        self.alpha_title = ipywidgets.Label(value='Alpha')
+        self.alpha_title = ipywidgets.HTML(value='Alpha')
         self.alpha_slider = ipywidgets.FloatSlider(
             value=mesh_options['alpha'], min=0.0, max=1.0, step=0.1,
-            continuous_update=False, readout=False, width='2.3cm')
-        self.alpha_text = ipywidgets.Label(value=str(mesh_options['alpha']),
-                                           width='0.6cm')
-        self.marker_style_title = ipywidgets.Label(value='Style')
+            continuous_update=False, readout=False,
+            layout=ipywidgets.Layout(width='2.3cm'))
+        self.alpha_text = ipywidgets.Label(
+            value=str(mesh_options['alpha']),
+            layout=ipywidgets.Layout(width='0.6cm'))
+        self.marker_style_title = ipywidgets.HTML(value='Style')
         marker_style_dict = OrderedDict()
         marker_style_dict['Sphere'] = 'sphere'
         marker_style_dict['Cube'] = 'cube'
@@ -4182,8 +4206,8 @@ class TriMeshOptionsWidget(MenpoWidget):
         marker_style_dict['2D vertex'] = '2dvertex'
         self.marker_style_dropdown = ipywidgets.Dropdown(
             options=marker_style_dict, value=mesh_options['marker_style'],
-            width='3cm')
-        self.marker_size_title = ipywidgets.Label(value='Style')
+            layout=ipywidgets.Layout(width='3cm'))
+        self.marker_size_title = ipywidgets.HTML(value='Style')
         m1 = mesh_options['marker_size']
         m2 = False
         m_icon = 'fa-keyboard-o'
@@ -4192,16 +4216,19 @@ class TriMeshOptionsWidget(MenpoWidget):
             m2 = True
             m_icon = 'fa-times'
         self.marker_size_text = ipywidgets.BoundedFloatText(
-            value=m1, disabled=m2, min=0.0, max=10**6, width='1.9cm')
+            value=m1, disabled=m2, min=0.0, max=10**6,
+            layout=ipywidgets.Layout(width='1.9cm'))
         self.marker_size_none = ipywidgets.Button(
-            description='', icon=m_icon, width='1.0cm', height='0.8cm')
-        self.marker_resolution_title = ipywidgets.Label(value='Resolution')
+            description='', icon=m_icon,
+            layout=ipywidgets.Layout(width='1.0cm', height='0.8cm'))
+        self.marker_resolution_title = ipywidgets.HTML(value='Resolution')
         self.marker_resolution_text = ipywidgets.BoundedIntText(
             value=mesh_options['marker_resolution'], min=0, max=10**6,
-            width='3cm')
-        self.step_title = ipywidgets.Label(value='Step')
+            layout=ipywidgets.Layout(width='3cm'))
+        self.step_title = ipywidgets.HTML(value='Step')
         self.step_text = ipywidgets.BoundedIntText(
-            value=mesh_options['step'], min=1, max=10**6, width='3cm')
+            value=mesh_options['step'], min=1, max=10**6,
+            layout=ipywidgets.Layout(width='3cm'))
 
         # Group widgets
         self.box_1 = ipywidgets.HBox([self.mesh_type_title,
@@ -4401,27 +4428,28 @@ class TexturedTriMeshOptionsWidget(MenpoWidget):
             mesh_options['render_texture'], description=render_checkbox_title,
             description_location='right', switch_type=render_checkbox_type)
         self.render_texture_switch.layout.margin = '0px 10px 0px 0px'
-        self.mesh_type_title = ipywidgets.Label(value='Type')
-        self.mesh_type_toggles = ipywidgets.ToggleButtons(
+        self.mesh_type_title = ipywidgets.HTML(value='Type')
+        self.mesh_type_toggles = ipywidgets.Dropdown(
             options=['surface', 'wireframe'], tooltip='Select the mesh type.',
-            value=mesh_options['mesh_type'])
-        self.mesh_type_toggles.layout.margin = '0px 10px 0px 0px'
-        self.line_width_title = ipywidgets.Label(value='Line width')
+            value=mesh_options['mesh_type'],
+            layout=ipywidgets.Layout(width='3cm'))
+        self.mesh_type_toggles.layout.margin = '0px 15px 0px 0px'
+        self.line_width_title = ipywidgets.HTML(value='Line width')
         self.line_width_text = ipywidgets.BoundedFloatText(
             value=float(mesh_options['line_width']), min=0.0, max=10**6,
-            width='1.2cm')
-        self.ambient_title = ipywidgets.Label(value='Ambient')
+            layout=ipywidgets.Layout(width='1.2cm'))
+        self.ambient_title = ipywidgets.HTML(value='Ambient')
         self.ambient_slider = ipywidgets.FloatSlider(
             value=mesh_options['ambient_light'], min=0.0, max=1.0, step=0.05,
-            continuous_update=False, width='7cm')
-        self.specular_title = ipywidgets.Label(value='Specular')
+            continuous_update=False, layout=ipywidgets.Layout(width='6cm'))
+        self.specular_title = ipywidgets.HTML(value='Specular')
         self.specular_slider = ipywidgets.FloatSlider(
             value=mesh_options['specular_light'], min=0.0, max=1.0, step=0.05,
-            continuous_update=False, width='7cm')
-        self.alpha_title = ipywidgets.Label(value='Alpha')
+            continuous_update=False, layout=ipywidgets.Layout(width='6cm'))
+        self.alpha_title = ipywidgets.HTML(value='Alpha')
         self.alpha_slider = ipywidgets.FloatSlider(
             value=mesh_options['alpha'], min=0.0, max=1.0, step=0.05,
-            continuous_update=False, width='7cm')
+            continuous_update=False, layout=ipywidgets.Layout(width='6cm'))
         self.colour_widget = ColourSelectionWidget(
             mesh_options['colour'], description='Colour', render_function=None)
 
@@ -4458,15 +4486,15 @@ class TexturedTriMeshOptionsWidget(MenpoWidget):
         # Set functionality
         def colour_visible(change):
             self.colour_widget.layout.visibility = (
-                '' if not change['new'] else 'hidden')
+                'visible' if not change['new'] else 'hidden')
         colour_visible({'new': mesh_options['render_texture']})
         self.render_texture_switch.observe(colour_visible,
                                            names='selected_values',
                                            type='change')
 
         def line_width_visible(change):
-            self.box_2.layout.display = (
-                'flex' if change['new'] == 'wireframe' else 'none')
+            self.box_2.layout.visibility = (
+                'visible' if change['new'] == 'wireframe' else 'hidden')
         line_width_visible({'new': mesh_options['mesh_type']})
         self.mesh_type_toggles.observe(line_width_visible, names='value',
                                        type='change')
