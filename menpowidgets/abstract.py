@@ -38,8 +38,7 @@ class MenpoWidget(Box):
     def __init__(self, children, trait, trait_initial_value,
                  render_function=None):
         # Create box object
-        super(MenpoWidget, self).__init__(children=children,
-                                          layout=Layout(display='flex'))
+        super(MenpoWidget, self).__init__(children=children)
 
         # Add trait for selected values
         selected_values = trait(default_value=trait_initial_value)

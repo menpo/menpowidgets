@@ -141,26 +141,28 @@ class AnimationOptionsWidget(MenpoWidget):
                 continuous_update=continuous_update)
         elif index_style == 'buttons':
             self.index_wid = IndexButtonsWidget(
-                index, description=description, minus_description='fa-minus',
-                plus_description='fa-plus', loop_enabled=loop_enabled,
+                index, description=description, minus_description='minus',
+                plus_description='plus', loop_enabled=loop_enabled,
                 text_editable=True)
         else:
             raise ValueError('index_style should be either slider or buttons')
 
         # Create other widgets
         self.play_stop_toggle = ipywidgets.ToggleButton(
-            icon='fa-play', description='', value=False, width='40px',
-            tooltip='Play animation')
+            icon='play', description='', value=False,
+            tooltip='Play animation', layout=ipywidgets.Layout(width='40px'))
         self.fast_forward_button = ipywidgets.Button(
-            icon='fa-fast-forward', description='', width='40px',
-            tooltip='Increase animation speed')
+            icon='fast-forward', description='',
+            tooltip='Increase animation speed',
+            layout=ipywidgets.Layout(width='40px'))
         self.fast_backward_button = ipywidgets.Button(
-            icon='fa-fast-backward', description='', width='40px',
-            tooltip='Decrease animation speed')
-        loop_icon = 'fa-repeat' if loop_enabled else 'fa-long-arrow-right'
+            icon='fast-backward', description='',
+            tooltip='Decrease animation speed',
+            layout=ipywidgets.Layout(width='40px'))
+        loop_icon = 'repeat' if loop_enabled else 'long-arrow-right'
         self.loop_toggle = ipywidgets.ToggleButton(
-            icon=loop_icon, description='', value=loop_enabled, width='40px',
-            tooltip='Repeat animation')
+            icon=loop_icon, description='', value=loop_enabled,
+            tooltip='Repeat animation', layout=ipywidgets.Layout(width='40px'))
 
         # Group widgets
         self.box_1 = ipywidgets.HBox([self.play_stop_toggle, self.loop_toggle,
@@ -197,7 +199,7 @@ class AnimationOptionsWidget(MenpoWidget):
                 # Change the button style
                 self.play_stop_toggle.button_style = self._toggle_stop_style
                 # Change the icon and tooltip to Stop
-                self.play_stop_toggle.icon = 'fa-stop'
+                self.play_stop_toggle.icon = 'stop'
                 self.play_stop_toggle.tooltip = 'Stop animation'
                 # Disable index widget
                 if self.index_style == 'buttons':
@@ -212,7 +214,7 @@ class AnimationOptionsWidget(MenpoWidget):
                 # Change the button style
                 self.play_stop_toggle.button_style = self._toggle_play_style
                 # Change the icon and tooltip to Play
-                self.play_stop_toggle.icon = 'fa-play'
+                self.play_stop_toggle.icon = 'play'
                 self.play_stop_toggle.tooltip = 'Play animation'
                 # Enable index widget
                 if self.index_style == 'buttons':
@@ -227,9 +229,9 @@ class AnimationOptionsWidget(MenpoWidget):
 
         def loop_pressed(change):
             if change['new']:
-                self.loop_toggle.icon = 'fa-repeat'
+                self.loop_toggle.icon = 'repeat'
             else:
-                self.loop_toggle.icon = 'fa-long-arrow-right'
+                self.loop_toggle.icon = 'long-arrow-right'
             kernel.do_one_iteration()
         self.loop_toggle.observe(loop_pressed, names='value', type='change')
 
@@ -518,13 +520,11 @@ class Shape2DOptionsWidget(MenpoWidget):
         self.labels_options_wid.container.layout.border = '2px solid'
 
         # Group widgets
-        self.box_1 = ipywidgets.Tab([self.image_view_switch,
-                                     self.marker_options_wid,
-                                     self.line_options_wid])
-        self.box_1.set_title(0, 'View')
-        self.box_1.set_title(1, 'Markers')
-        self.box_1.set_title(2, 'Lines')
-        self.box_2 = ipywidgets.Box([self.box_1])
+        self.box_1 = ipywidgets.Accordion([self.marker_options_wid,
+                                           self.line_options_wid])
+        self.box_1.set_title(0, 'Markers')
+        self.box_1.set_title(1, 'Lines')
+        self.box_2 = ipywidgets.Box([self.image_view_switch, self.box_1])
         self.box_2.layout.border = '2px solid'
         self.box_2.layout.display = 'table'
         self.container = ipywidgets.VBox([self.labels_options_wid, self.box_2])
@@ -881,8 +881,8 @@ class Shape3DOptionsWidget(MenpoWidget):
         self.labels_options_wid.container.layout.border = '2px solid'
 
         # Group widgets
-        self.box_1 = ipywidgets.Tab([self.marker_options_wid,
-                                     self.line_options_wid])
+        self.box_1 = ipywidgets.Accordion([self.marker_options_wid,
+                                           self.line_options_wid])
         self.box_1.set_title(0, 'Markers')
         self.box_1.set_title(1, 'Lines')
         self.box_2 = ipywidgets.Box([self.box_1])
@@ -1569,12 +1569,12 @@ class RendererOptionsWidget(MenpoWidget):
                 self.options_widgets.append(NumberingMatplotlibOptionsWidget(
                     self.global_options[o], render_function=None,
                     render_checkbox_title='Render numbering'))
-                self.tab_titles.append('Numbering')
+                self.tab_titles.append('Numbers')
             elif o == 'numbering_mayavi':
                 self.options_widgets.append(NumberingMayaviOptionsWidget(
                     self.global_options[o], render_function=None,
                     render_checkbox_title='Render numbering'))
-                self.tab_titles.append('Numbering')
+                self.tab_titles.append('Numbers')
             elif o == 'zoom_two':
                 tmp = {'min': 0.1, 'max': 4., 'step': 0.05,
                        'zoom': self.global_options[o],
@@ -1864,7 +1864,7 @@ class RendererOptionsWidget(MenpoWidget):
 
         """
         for w in self.options_widgets:
-            w.box_style = style
+            # w.box_style = style
             w.border = '0px'
         self.container.box_style = style
         self.container.border = '0px'
@@ -2093,22 +2093,22 @@ class ImageOptionsWidget(MenpoWidget):
         self.glyph_checkbox = SwitchWidget(
             False, description='Glyph', description_location='right',
             switch_type='checkbox')
-        self.glyph_block_size_title = ipywidgets.Label(value='Block size')
-        self.glyph_block_size_text = ipywidgets.BoundedIntText(min=1, max=25,
-                                                               width='1cm')
+        self.glyph_block_size_title = ipywidgets.HTML(value='Block size')
+        self.glyph_block_size_text = ipywidgets.BoundedIntText(
+            min=1, max=25, layout=ipywidgets.Layout(width='1cm'))
         self.glyph_use_negative_checkbox = SwitchWidget(
             False, description='Negative', description_location='right',
             switch_type='checkbox')
         self.interpolation_checkbox = SwitchWidget(
             False, description='Interpolation', description_location='right',
             switch_type='checkbox')
-        self.alpha_title = ipywidgets.Label(value='Transparency')
+        self.alpha_title = ipywidgets.HTML(value='Transparency')
         self.alpha_slider = ipywidgets.FloatSlider(
             value=1.0, min=0.0, max=1.0, step=0.05, continuous_update=False,
-            readout=False, width='2.1cm')
-        self.alpha_text = ipywidgets.Label(value="{:.2f}".format(1.0),
-                                           width='0.75cm')
-        self.cmap_title = ipywidgets.Label(value='Colour map')
+            readout=False, layout=ipywidgets.Layout(width='2.1cm'))
+        self.alpha_text = ipywidgets.Label(
+            value="{:.2f}".format(1.0), layout=ipywidgets.Layout(width='0.75cm'))
+        self.cmap_title = ipywidgets.HTML(value='Colour map')
         cmap_dict = OrderedDict()
         cmap_dict['None'] = None
         cmap_dict['afmhot'] = 'afmhot'
@@ -2168,8 +2168,8 @@ class ImageOptionsWidget(MenpoWidget):
         cmap_dict['YlGnBu'] = 'YlGnBu'
         cmap_dict['YlOrBr'] = 'YlOrBr'
         cmap_dict['YlOrRd'] = 'YlOrRd'
-        self.cmap_select = ipywidgets.Dropdown(options=cmap_dict, value=None,
-                                               width='3cm')
+        self.cmap_select = ipywidgets.Dropdown(
+            options=cmap_dict, value=None, layout=ipywidgets.Layout(width='3cm'))
 
         # Group widgets
         self.box_1 = ipywidgets.HBox([self.glyph_block_size_title,
@@ -2651,18 +2651,20 @@ class LandmarkOptionsWidget(MenpoWidget):
 
         # Create children
         # Render landmarks switch and no landmarks message
-        self.no_landmarks_msg = ipywidgets.Label(
+        self.no_landmarks_msg = ipywidgets.HTML(
             value='No landmarks available.')
         self.render_landmarks_switch = SwitchWidget(
             selected_value=True, description='Render landmarks',
             description_location='right', switch_type='toggle')
         # Create group description, dropdown and slider
-        self.group_title = ipywidgets.Label(value='Group')
+        self.group_title = ipywidgets.HTML(value='Group')
         self.group_slider = ipywidgets.IntSlider(
-            readout=False, width='4cm', value=0, continuous_update=False, min=0)
+            readout=False, value=0, continuous_update=False, min=0,
+            layout=ipywidgets.Layout(width='4cm'))
         self.group_dropdown = ipywidgets.Dropdown(
-            options={'0': '0'}, description='', value='0', width='4cm')
-        self.group_label = ipywidgets.Label()
+            options={'0': '0'}, description='', value='0',
+            layout=ipywidgets.Layout(width='4cm'))
+        self.group_label = ipywidgets.HTML()
         # Shape 2D options widget
         self.type = type
         if type == '2D':
@@ -3155,7 +3157,7 @@ class SaveMatplotlibFigureOptionsWidget(ipywidgets.Box):
         from pathlib import Path
 
         # Create widgets
-        self.file_format_title = ipywidgets.Label(value='Format')
+        self.file_format_title = ipywidgets.HTML(value='Format')
         file_format_dict = OrderedDict()
         file_format_dict['png'] = 'png'
         file_format_dict['jpg'] = 'jpg'
@@ -3165,20 +3167,21 @@ class SaveMatplotlibFigureOptionsWidget(ipywidgets.Box):
         file_format_dict['svg'] = 'svg'
         self.file_format_select = ipywidgets.Select(
             options=file_format_dict, value=file_format, description='',
-            width='3cm')
+            layout=ipywidgets.Layout(width='3cm'))
         if dpi is None:
             dpi = 0
-        self.dpi_title = ipywidgets.Label(value='DPI')
-        self.dpi_text = ipywidgets.FloatText(description='', value=dpi,
-                                             min=0., width='3cm')
-        self.orientation_title = ipywidgets.Label(value='Orientation')
+        self.dpi_title = ipywidgets.HTML(value='DPI')
+        self.dpi_text = ipywidgets.FloatText(
+            description='', value=dpi, min=0.,
+            layout=ipywidgets.Layout(width='3cm'))
+        self.orientation_title = ipywidgets.HTML(value='Orientation')
         orientation_dict = OrderedDict()
         orientation_dict['portrait'] = 'portrait'
         orientation_dict['landscape'] = 'landscape'
         self.orientation_dropdown = ipywidgets.Dropdown(
             options=orientation_dict, value=orientation, description='',
-            width='3cm')
-        self.papertype_title = ipywidgets.Label(value='Paper type')
+            layout=ipywidgets.Layout(width='3cm'))
+        self.papertype_title = ipywidgets.HTML(value='Paper type')
         papertype_dict = OrderedDict()
         papertype_dict['letter'] = 'letter'
         papertype_dict['legal'] = 'legal'
@@ -3208,7 +3211,7 @@ class SaveMatplotlibFigureOptionsWidget(ipywidgets.Box):
         papertype_dict['b10'] = 'b10'
         self.papertype_select = ipywidgets.Dropdown(
             options=papertype_dict, value=paper_type, description='',
-            width='3cm')
+            layout=ipywidgets.Layout(width='3cm'))
         self.transparent_checkbox = SwitchWidget(
             transparent, description='Transparent',
             description_location='right', switch_type='checkbox')
@@ -3216,19 +3219,21 @@ class SaveMatplotlibFigureOptionsWidget(ipywidgets.Box):
             [face_colour], description='Face colour')
         self.edgecolour_widget = ColourSelectionWidget(
             [edge_colour], description='Edge colour')
-        self.pad_inches_title = ipywidgets.Label(value='Pad (inches)')
+        self.pad_inches_title = ipywidgets.HTML(value='Pad (inches)')
         self.pad_inches_text = ipywidgets.FloatText(
-            description='', value=pad_inches, width='3cm')
-        self.filename_title = ipywidgets.Label(value='Path')
+            description='', value=pad_inches,
+            layout=ipywidgets.Layout(width='3cm'))
+        self.filename_title = ipywidgets.HTML(value='Path')
         self.filename_text = ipywidgets.Text(
             description='', value=join(getcwd(), 'Untitled.' + file_format),
-            width='10cm')
+            layout=ipywidgets.Layout(width='10cm'))
         self.overwrite_checkbox = SwitchWidget(
             overwrite, description='Overwrite if file exists',
             description_location='right', switch_type='checkbox')
         self.error_latex = ipywidgets.HTML(value='')
-        self.save_button = ipywidgets.Button(description='  Save',
-                                             icon='fa-floppy-o', width='2cm')
+        self.save_button = ipywidgets.Button(
+            description='  Save', icon='floppy-o',
+            layout=ipywidgets.Layout(width='2cm'))
 
         # Group widgets
         self.box_2 = ipywidgets.HBox([self.dpi_title, self.dpi_text])
@@ -3262,10 +3267,7 @@ class SaveMatplotlibFigureOptionsWidget(ipywidgets.Box):
         self.box_9.layout.margin = '0px 10px 0px 0px'
         self.box_99 = ipywidgets.HBox([self.box_9, self.transparent_checkbox])
         self.box_99.layout.align_items = 'center'
-        self.box_7.layout.margin = '7px'
-        self.box_88.layout.margin = '7px'
-        self.box_99.layout.margin = '7px'
-        self.box_10 = ipywidgets.Tab([self.box_7, self.box_88, self.box_99])
+        self.box_10 = ipywidgets.Accordion([self.box_7, self.box_88, self.box_99])
         tab_titles = ['Path', 'Page setup', 'Colour']
         for (k, tl) in enumerate(tab_titles):
             self.box_10.set_title(k, tl)
@@ -3415,33 +3417,37 @@ class SaveMayaviFigureOptionsWidget(ipywidgets.Box):
             size is not None, description='Resolution',
             description_location='right', switch_type='checkbox')
         self.size_height = ipywidgets.BoundedIntText(
-            value=640, min=0, max=10000, disabled=size is not None, width='2cm')
+            value=640, min=0, max=10000, disabled=size is not None,
+            layout=ipywidgets.Layout(width='2cm'))
         self.size_width = ipywidgets.BoundedIntText(
-            value=480, min=0, max=10000, disabled=size is not None, width='2cm')
+            value=480, min=0, max=10000, disabled=size is not None,
+            layout=ipywidgets.Layout(width='2cm'))
         self.size_height_width_box = ipywidgets.VBox([self.size_height,
                                                       self.size_width])
         self.size_box = ipywidgets.HBox([self.size_checkbox,
                                          self.size_height_width_box])
         self.size_box.layout.align_items = 'center'
-        self.magn_descr = ipywidgets.Label(value='Magnification')
+        self.magn_descr = ipywidgets.HTML(value='Magnification')
         self.magn_toggle = ipywidgets.ToggleButton(
-            value=magnification == 'auto', description='auto', width='1.7cm')
+            value=magnification == 'auto', description='auto',
+            layout=ipywidgets.Layout(width='1.7cm'))
         self.magn_text = ipywidgets.BoundedFloatText(
             value=1., min=0.0001, max=100., disabled=magnification == 'auto',
-            width='2cm')
+            layout=ipywidgets.Layout(width='2cm'))
         self.magn_box = ipywidgets.HBox(
             [self.magn_descr, self.magn_toggle, self.magn_text])
         self.magn_box.layout.align_items = 'center'
-        self.filename_title = ipywidgets.Label(value='Path')
+        self.filename_title = ipywidgets.HTML(value='Path')
         self.filename_text = ipywidgets.Text(
             description='', value=join(getcwd(), 'Untitled.' + file_format),
-            width='10cm')
+            layout=ipywidgets.Layout(width='10cm'))
         self.overwrite_checkbox = SwitchWidget(
             overwrite, description='Overwrite if file exists',
             description_location='right', switch_type='checkbox')
         self.error_latex = ipywidgets.HTML(value='')
-        self.save_button = ipywidgets.Button(description='  Save',
-                                             icon='fa-floppy-o', width='2cm')
+        self.save_button = ipywidgets.Button(
+            description='  Save', icon='floppy-o',
+            layout=ipywidgets.Layout(width='2cm'))
 
         # Group widgets
         self.box_1 = ipywidgets.HBox([self.filename_title,
@@ -3652,15 +3658,16 @@ class PatchOptionsWidget(MenpoWidget):
         slice_options = {'command': "range({})".format(n_patches),
                          'length': n_patches}
         self.slicing_wid = SlicingCommandWidget(
-            slice_options, description='Patches',
-            orientation='vertical', example_visible=True,
-            continuous_update=False)
-        self.offset_title = ipywidgets.Label(value='Offset')
+            slice_options, description='Patches', orientation='vertical',
+            example_visible=True, continuous_update=False)
+        self.offset_title = ipywidgets.HTML(value='Offset')
         self.offset_dropdown = ipywidgets.Dropdown(
-            options={'0': 0}, value=0, description='', width='2cm')
-        self.background_title = ipywidgets.Label(value='Background')
+            options={'0': 0}, value=0, description='',
+            layout=ipywidgets.Layout(width='2cm'))
+        self.background_title = ipywidgets.HTML(value='Background')
         self.background_toggle = ipywidgets.ToggleButton(
-            description='white', value=True, width='2cm')
+            description='white', value=True,
+            layout=ipywidgets.Layout(width='2cm'))
         self.render_centers_checkbox = SwitchWidget(
             selected_value=True, description='Render centres',
             description_location='right', switch_type='checkbox')
@@ -3670,17 +3677,18 @@ class PatchOptionsWidget(MenpoWidget):
         self.render_bbox_checkbox = SwitchWidget(
             selected_value=True, description='Render bounding boxes',
             description_location='right', switch_type='checkbox')
-        self.bboxes_line_width_title = ipywidgets.Label(value='Line width')
+        self.bboxes_line_width_title = ipywidgets.HTML(value='Line width')
         self.bboxes_line_width_text = ipywidgets.BoundedFloatText(
-            value=1, min=0., max=10**6, width='2.2cm')
-        self.bboxes_line_style_title = ipywidgets.Label(value='Line style')
+            value=1, min=0., max=10**6, layout=ipywidgets.Layout(width='2.2cm'))
+        self.bboxes_line_style_title = ipywidgets.HTML(value='Line style')
         line_style_dict = OrderedDict()
         line_style_dict['solid'] = '-'
         line_style_dict['dashed'] = '--'
         line_style_dict['dash-dot'] = '-.'
         line_style_dict['dotted'] = ':'
         self.bboxes_line_style_dropdown = ipywidgets.Dropdown(
-            options=line_style_dict, value='-', width='2.2cm')
+            options=line_style_dict, value='-',
+            layout=ipywidgets.Layout(width='2.2cm'))
         self.bboxes_line_colour_widget = ColourSelectionWidget(
             'red', description='Line colour')
         self.bboxes_line_colour_widget.colour_widget.layout.width = '2.2cm'
@@ -4029,19 +4037,6 @@ class PlotMatplotlibOptionsWidget(MenpoWidget):
             ``''``        No style
             ============= ==================
 
-    suboptions_style : `str` (see below), optional
-        Sets a predefined style at the tabs of the widget. Possible options are:
-
-            ============= ==================
-            Style         Description
-            ============= ==================
-            ``'success'`` Green-based style
-            ``'info'``    Blue-based style
-            ``'warning'`` Yellow-based style
-            ``'danger'``  Red-based style
-            ``''``        No style
-            ============= ==================
-
     Example
     -------
     Let's create a plot options widget. Firstly, we need to import it:
@@ -4067,17 +4062,16 @@ class PlotMatplotlibOptionsWidget(MenpoWidget):
 
         >>> wid = PlotMatplotlibOptionsWidget(legend_entries,
         >>>                         render_function=render_function,
-        >>>                         style='danger', suboptions_style='info')
+        >>>                         style='danger')
         >>> wid
 
     By playing around, the printed message gets updated. The style of the widget
     can be changed as:
 
-        >>> wid.predefined_style('', 'info')
+        >>> wid.predefined_style('')
 
     """
-    def __init__(self, legend_entries, render_function=None, style='',
-                 suboptions_style=''):
+    def __init__(self, legend_entries, render_function=None, style=''):
         # Assign properties
         self.legend_entries = legend_entries
         self.n_curves = len(legend_entries)
@@ -4103,15 +4097,16 @@ class PlotMatplotlibOptionsWidget(MenpoWidget):
         curves_dict = {}
         for i, s in enumerate(self.legend_entries):
             curves_dict[s] = i
-        self.curves_title = ipywidgets.Label(value='Curve')
+        self.curves_title = ipywidgets.HTML(value='Curve')
         self.curves_dropdown = ipywidgets.Dropdown(
-            description='', options=curves_dict, value=0, width='3cm')
+            description='', options=curves_dict, value=0,
+            layout=ipywidgets.Layout(width='3cm'))
         self.curves_box = ipywidgets.HBox([self.curves_title,
                                            self.curves_dropdown])
         self.curves_box.layout.align_items = 'center'
         self.curves_box.layout.margin = '0px 0px 10px 0px'
-        self.lines_markers_tab = ipywidgets.Tab([self.lines_wid,
-                                                 self.markers_wid])
+        self.lines_markers_tab = ipywidgets.Accordion([self.lines_wid,
+                                                       self.markers_wid])
         self.lines_markers_tab.set_title(0, 'Lines')
         self.lines_markers_tab.set_title(1, 'Markers')
         self.lines_markers_box = ipywidgets.VBox([self.curves_box,
@@ -4155,24 +4150,27 @@ class PlotMatplotlibOptionsWidget(MenpoWidget):
              'grid_line_width': default_options['grid_line_width'],
              'grid_line_style': default_options['grid_line_style']},
             render_checkbox_title='Render grid')
-        self.x_label_title = ipywidgets.Label(value='X label')
+        self.x_label_title = ipywidgets.HTML(value='X label')
         self.x_label = ipywidgets.Text(
-            description='', value=default_options['x_label'], width='6cm')
+            description='', value=default_options['x_label'],
+            layout=ipywidgets.Layout(width='6cm'))
         self.x_label_box = ipywidgets.HBox([self.x_label_title, self.x_label])
         self.x_label_box.layout.align_items = 'center'
-        self.y_label_title = ipywidgets.Label(value='Y label')
+        self.y_label_title = ipywidgets.HTML(value='Y label')
         self.y_label = ipywidgets.Text(
-            description='', value=default_options['y_label'], width='6cm')
+            description='', value=default_options['y_label'],
+            layout=ipywidgets.Layout(width='6cm'))
         self.y_label_box = ipywidgets.HBox([self.y_label_title, self.y_label])
         self.y_label_box.layout.align_items = 'center'
-        self.title_title = ipywidgets.Label(value='Title')
+        self.title_title = ipywidgets.HTML(value='Title')
         self.title = ipywidgets.Text(
-            description='', value=default_options['title'], width='6cm')
+            description='', value=default_options['title'],
+            layout=ipywidgets.Layout(width='6cm'))
         self.title_box = ipywidgets.HBox([self.title_title, self.title])
         self.title_box.layout.align_items = 'center'
-        self.legend_entries_title = ipywidgets.Label(value='Legend')
+        self.legend_entries_title = ipywidgets.HTML(value='Legend')
         self.legend_entries_text = ipywidgets.Textarea(
-            description='', width='6cm',
+            description='', layout=ipywidgets.Layout(width='6cm'),
             value=self._convert_list_to_legend_entries(self.legend_entries))
         self.legend_entries_box = ipywidgets.HBox([self.legend_entries_title,
                                                    self.legend_entries_text])
@@ -4203,7 +4201,7 @@ class PlotMatplotlibOptionsWidget(MenpoWidget):
             render_function=render_function)
 
         # Set style
-        self.predefined_style(style, suboptions_style)
+        self.predefined_style(style)
 
         # Set functionality
         def get_legend_entries(change):
@@ -4393,7 +4391,7 @@ class PlotMatplotlibOptionsWidget(MenpoWidget):
         tmp_lines = tmp_lines[:-1]
         return unicode().join(tmp_lines)
 
-    def predefined_style(self, style, suboptions_style=''):
+    def predefined_style(self, style):
         r"""
         Function that sets a predefined style on the widget.
 
@@ -4411,28 +4409,10 @@ class PlotMatplotlibOptionsWidget(MenpoWidget):
                 ``'danger'``  Red-based style
                 ``''``        No style
                 ============= ==================
-
-        tabs_style : `str` (see below)
-            Tabs style options:
-
-                ============= ==================
-                Style         Description
-                ============= ==================
-                ``'success'`` Green-based style
-                ``'info'``    Blue-based style
-                ``'warning'`` Yellow-based style
-                ``'danger'``  Red-based style
-                ``''``        No style
-                ============= ==================
         """
         self.container.box_style = style
         self.container.border = '0px'
-        self.box_1.box_style = suboptions_style
-        self.lines_markers_box.box_style = suboptions_style
-        self.legend_wid.box_style = suboptions_style
-        self.axes_wid.box_style = suboptions_style
-        self.zoom_wid.box_style = suboptions_style
-        tmp_style = '' if suboptions_style == '' else 'primary'
+        tmp_style = 'primary'
         self.zoom_wid.x_button_minus.button_style = tmp_style
         self.zoom_wid.x_button_plus.button_style = tmp_style
         self.zoom_wid.x_zoom_slider.slider_color = map_styles_to_hex_colours(
@@ -4441,9 +4421,7 @@ class PlotMatplotlibOptionsWidget(MenpoWidget):
         self.zoom_wid.y_button_plus.button_style = tmp_style
         self.zoom_wid.y_zoom_slider.slider_color = map_styles_to_hex_colours(
             tmp_style)
-        self.zoom_wid.lock_aspect_button.button_style = (
-            '' if suboptions_style == '' else 'warning')
-        self.grid_wid.box_style = suboptions_style
+        self.zoom_wid.lock_aspect_button.button_style = 'warning'
 
 
 class LinearModelParametersWidget(MenpoWidget):
@@ -4582,12 +4560,13 @@ class LinearModelParametersWidget(MenpoWidget):
             self.sliders = []
             self.parameters_children = []
             for p in range(n_parameters):
-                slider_title = ipywidgets.Label(
+                slider_title = ipywidgets.HTML(
                     value="{}{}".format(params_str, p))
                 slider_wid = ipywidgets.FloatSlider(
                     description='', min=params_bounds[0], max=params_bounds[1],
-                    step=params_step, value=0., width='8cm',
-                    continuous_update=continuous_update)
+                    step=params_step, value=0.,
+                    continuous_update=continuous_update,
+                    layout=ipywidgets.Layout(width='8cm'))
                 tmp = ipywidgets.HBox([slider_title, slider_wid])
                 tmp.layout.align_items = 'center'
                 self.sliders.append(slider_wid)
@@ -4599,37 +4578,41 @@ class LinearModelParametersWidget(MenpoWidget):
             for p in range(n_parameters):
                 vals["{}{}".format(params_str, p)] = p
             self.slider = ipywidgets.FloatSlider(
-                    description='', min=params_bounds[0], max=params_bounds[1],
-                    step=params_step, value=0., readout=True, width='8cm',
-                    continuous_update=continuous_update)
-            self.dropdown_params = ipywidgets.Dropdown(options=vals,
-                                                       width='3cm')
+                description='', min=params_bounds[0], max=params_bounds[1],
+                step=params_step, value=0., readout=True,
+                layout=ipywidgets.Layout(width='8cm'),
+                continuous_update=continuous_update)
+            self.dropdown_params = ipywidgets.Dropdown(
+                options=vals, layout=ipywidgets.Layout(width='3cm'))
             self.dropdown_params.layout.margin = '0px 10px 0px 0px'
             self.parameters_wid = ipywidgets.HBox([self.dropdown_params,
                                                    self.slider])
         self.parameters_wid.layout.margin = '0px 0px 10px 0px'
-        self.plot_button = ipywidgets.Button(description='Variance',
-                                             width='80px')
+        self.plot_button = ipywidgets.Button(
+            description='Variance', layout=ipywidgets.Layout(width='80px'))
         self.plot_button.layout.display = (
             'inline' if plot_variance_visible else 'none')
-        self.reset_button = ipywidgets.Button(description='Reset', width='80px')
+        self.reset_button = ipywidgets.Button(
+            description='Reset', layout=ipywidgets.Layout(width='80px'))
         self.plot_and_reset = ipywidgets.HBox([self.reset_button,
                                                self.plot_button])
         self.play_stop_toggle = ipywidgets.ToggleButton(
-            icon='fa-play', description='', value=False, width='40px',
-            tooltip='Play animation')
+            icon='play', description='', value=False,
+            layout=ipywidgets.Layout(width='40px'), tooltip='Play animation')
         self._toggle_play_style = '' if style == '' else 'success'
         self._toggle_stop_style = '' if style == '' else 'danger'
         self.fast_forward_button = ipywidgets.Button(
-            icon='fa-fast-forward', description='', width='40px',
+            icon='fast-forward', description='',
+            layout=ipywidgets.Layout(width='40px'),
             tooltip='Increase animation speed')
         self.fast_backward_button = ipywidgets.Button(
-            icon='fa-fast-backward', description='', width='40px',
+            icon='fast-backward', description='',
+            layout=ipywidgets.Layout(width='40px'),
             tooltip='Decrease animation speed')
-        loop_icon = 'fa-repeat' if loop_enabled else 'fa-long-arrow-right'
+        loop_icon = 'repeat' if loop_enabled else 'long-arrow-right'
         self.loop_toggle = ipywidgets.ToggleButton(
-            icon=loop_icon, description='', value=loop_enabled, width='40px',
-            tooltip='Repeat animation')
+            icon=loop_icon, description='', value=loop_enabled,
+            layout=ipywidgets.Layout(width='40px'), tooltip='Repeat animation')
         self.animation_buttons = ipywidgets.HBox(
             [self.play_stop_toggle, self.loop_toggle,
              self.fast_backward_button, self.fast_forward_button])
@@ -4719,7 +4702,7 @@ class LinearModelParametersWidget(MenpoWidget):
                 # Change the button style
                 self.play_stop_toggle.button_style = self._toggle_stop_style
                 # Change the icon and tooltip to Stop
-                self.play_stop_toggle.icon = 'fa-stop'
+                self.play_stop_toggle.icon = 'stop'
                 self.play_stop_toggle.tooltip = 'Stop animation'
                 # Disable buttons
                 self.reset_button.disabled = True
@@ -4729,7 +4712,7 @@ class LinearModelParametersWidget(MenpoWidget):
                 # Change the button style
                 self.play_stop_toggle.button_style = self._toggle_play_style
                 # Change the icon and tooltip to Play
-                self.play_stop_toggle.icon = 'fa-play'
+                self.play_stop_toggle.icon = 'play'
                 self.play_stop_toggle.tooltip = 'Play animation'
                 # Enable buttons
                 self.reset_button.disabled = False
@@ -4739,9 +4722,9 @@ class LinearModelParametersWidget(MenpoWidget):
 
         def loop_pressed(change):
             if change['new']:
-                self.loop_toggle.icon = 'fa-repeat'
+                self.loop_toggle.icon = 'repeat'
             else:
-                self.loop_toggle.icon = 'fa-long-arrow-right'
+                self.loop_toggle.icon = 'long-arrow-right'
             kernel.do_one_iteration()
         self.loop_toggle.observe(loop_pressed, names='value', type='change')
 
@@ -5063,7 +5046,7 @@ class LinearModelParametersWidget(MenpoWidget):
                 self.sliders = []
                 self.parameters_children = []
                 for p in range(n_parameters):
-                    slider_title = ipywidgets.Label(
+                    slider_title = ipywidgets.HTML(
                         value="{}{}".format(params_str, p))
                     slider_wid = ipywidgets.FloatSlider(
                         description='', min=params_bounds[0],
@@ -5218,25 +5201,24 @@ class CameraSnapshotWidget(MenpoWidget):
         self.camera_wid = CameraWidget(canvas_width=canvas_width, hd=hd)
         self.camera_logo_box = ipywidgets.VBox([self.logo_wid, self.camera_wid])
         self.camera_logo_box.layout.align_items = 'center'
-        self.n_snapshots_text = ipywidgets.Label(value='')
+        self.n_snapshots_text = ipywidgets.HTML(value='')
         self.snapshot_but = ipywidgets.Button(
-            icon='fa-camera', description='  Take Snapshot',
-            tooltip='Take snapshot', width='3.5cm')
+            icon='camera', description='  Take Snapshot',
+            tooltip='Take snapshot', layout=ipywidgets.Layout(width='3.5cm'))
         self.snapshot_box = ipywidgets.VBox([self.snapshot_but,
                                              self.n_snapshots_text])
         self.snapshot_box.layout.align_items = 'center'
-        self.close_but = ipywidgets.Button(icon='fa-close',
-                                           description='  Close',
-                                           tooltip='Close the widget',
-                                           width='2.5cm')
+        self.close_but = ipywidgets.Button(
+            icon='close', description='  Close', tooltip='Close the widget',
+            layout=ipywidgets.Layout(width='2.5cm'))
         self.zoom_widget = ZoomOneScaleWidget(
             {'min': 0.1, 'max': 2.1, 'step': 0.05, 'zoom': 1.},
             description='', continuous_update=False)
-        self.zoom_widget.zoom_slider.width = '3cm'
+        self.zoom_widget.zoom_slider.layout.width = '3cm'
         self.zoom_widget.zoom_text.layout.display = 'none'
         self.zoom_widget.button_plus.tooltip = 'Increase video resolution'
         self.zoom_widget.button_minus.tooltip = 'Decrease video resolution'
-        self.resolution_text = ipywidgets.Label(
+        self.resolution_text = ipywidgets.HTML(
             value="{}W x {}H".format(self.camera_wid.canvas_width,
                                      self.camera_wid.canvas_height))
         self.resolution_text.font_family = 'monospace'
@@ -5375,7 +5357,6 @@ class CameraSnapshotWidget(MenpoWidget):
         self.container.border = '0px'
         self.preview.box_style = preview_style
         self.preview.border = '2px solid'
-        self.camera_logo_box.box_style = style
         self.camera_logo_box.border = '0px'
         if style != '' or preview_style != '':
             self.snapshot_but.button_style = 'primary'
@@ -5391,849 +5372,3 @@ class CameraSnapshotWidget(MenpoWidget):
             self.zoom_widget.button_minus.button_style = ''
             self.zoom_widget.zoom_slider.slider_color = \
                 map_styles_to_hex_colours('', False)
-
-
-class ResultOptionsWidget(MenpoWidget):
-    r"""
-    Creates a widget for selecting options when visualizing a fitting result.
-
-    Note that:
-
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * The selected values are stored in the ``self.selected_values`` `trait`
-      which is a `list`.
-    * To set the styling of this widget please refer to the
-      :meth:`predefined_style` method.
-    * To update the handler callback function of the widget, please refer to
-      the :meth:`replace_render_function` method.
-
-    Parameters
-    ----------
-    has_gt_shape : `bool`
-        Whether the fitting result object has the ground truth shape.
-    has_initial_shape : `bool`
-        Whether the fitting result object has the initial shape.
-    has_image : `bool`
-        Whether the fitting result object has the image.
-    render_function : `callable` or ``None``, optional
-        The render function that is executed when a widgets' value changes.
-        It must have signature ``render_function(change)`` where ``change`` is
-        a `dict` with the following keys:
-
-        * ``type`` : The type of notification (normally ``'change'``).
-        * ``owner`` : the `HasTraits` instance
-        * ``old`` : the old value of the modified trait attribute
-        * ``new`` : the new value of the modified trait attribute
-        * ``name`` : the name of the modified trait attribute.
-
-        If ``None``, then nothing is assigned.
-    style : `str` (see below), optional
-        Sets a predefined style at the widget. Possible options are:
-
-            ============= ==================
-            Style         Description
-            ============= ==================
-            ``'success'`` Green-based style
-            ``'info'``    Blue-based style
-            ``'warning'`` Yellow-based style
-            ``'danger'``  Red-based style
-            ``''``        No style
-            ============= ==================
-
-    Example
-    -------
-    Let's create a fitting result options widget and then update its state.
-    Firstly, we need to import it:
-
-        >>> from menpowidgets.options import ResultOptionsWidget
-
-    Now let's define a render function that will get called on every widget
-    change and will dynamically print the selected options:
-
-        >>> from menpo.visualize import print_dynamic
-        >>> def render_function(change):
-        >>>     s = "Final: {}, Initial: {}, GT: {}, Image: {}, Subplots: {}".format(
-        >>>         wid.selected_values['render_final_shape'],
-        >>>         wid.selected_values['render_initial_shape'],
-        >>>         wid.selected_values['render_gt_shape'],
-        >>>         wid.selected_values['render_image'],
-        >>>         wid.selected_values['subplots_enabled'])
-        >>>     print_dynamic(s)
-
-    Create the widget with some initial options and display it:
-
-        >>> wid = ResultOptionsWidget(has_gt_shape=True,
-        >>>                           has_initial_shape=True, has_image=True,
-        >>>                           render_function=render_function,
-        >>>                           style='info')
-        >>> wid
-
-    By changing the various widgets, the printed message gets updated. Finally,
-    let's change the widget status with a new set of options:
-
-        >>> wid.set_widget_state(has_gt_shape=True, has_initial_shape=False,
-        >>>                      has_image=False, allow_callback=True)
-    """
-    def __init__(self, has_gt_shape, has_initial_shape, has_image,
-                 render_function=None, style=''):
-        # Initialise default options dictionary
-        render_image = True if has_image else False
-        default_options = {'render_final_shape': True,
-                           'render_initial_shape': False,
-                           'render_gt_shape': False,
-                           'render_image': render_image,
-                           'subplots_enabled': True}
-
-        # Assign properties
-        self.has_gt_shape = None
-        self.has_initial_shape = None
-        self.has_image = None
-
-        # Create children
-        self.mode_title = ipywidgets.Label('Figure mode')
-        self.mode = ipywidgets.RadioButtons(
-            description='', options={'Single': False, 'Multiple': True},
-            value=default_options['subplots_enabled'])
-        self.mode_box = ipywidgets.HBox([self.mode_title, self.mode])
-        self.mode_box.layout.align_items = 'center'
-        self.mode_box.layout.margin = '0px 10px 0px 0px'
-        self.render_image = SwitchWidget(
-            selected_value=default_options['render_image'],
-            description='Render image', description_location='right',
-            switch_type='checkbox')
-        buttons_style = 'primary' if style != '' else ''
-        self.shape_selection = MultipleSelectionTogglesWidget(
-            ['Final', 'Initial', 'Groundtruth'], with_labels=['Final'],
-            description='Shape', allow_no_selection=True,
-            render_function=None, buttons_style=buttons_style)
-        self.shape_selection.layout.margin = '0px 10px 0px 0px'
-        self.container = ipywidgets.HBox([self.mode_box,
-                                          self.shape_selection,
-                                          self.render_image])
-        self.container.layout.align_items = 'center'
-
-        # Create final widget
-        super(ResultOptionsWidget, self).__init__(
-            [self.container], Dict, default_options,
-            render_function=render_function)
-
-        # Set values
-        self.add_callbacks()
-        self.set_widget_state(has_gt_shape, has_initial_shape, has_image,
-                              allow_callback=False)
-
-        # Set style
-        self.predefined_style(style)
-
-    def _save_options(self, change):
-        self.selected_values = {
-            'render_initial_shape': ('Initial' in
-                                     self.shape_selection.selected_values and
-                                     self.has_initial_shape),
-            'render_final_shape': ('Final' in
-                                   self.shape_selection.selected_values),
-            'render_gt_shape': ('Groundtruth' in
-                                self.shape_selection.selected_values and
-                                self.has_gt_shape),
-            'render_image': (self.render_image.selected_values and
-                             self.has_image),
-            'subplots_enabled': self.mode.value}
-
-    def add_callbacks(self):
-        r"""
-        Function that adds the handler callback functions in all the widget
-        components, which are necessary for the internal functionality.
-        """
-        self.render_image.observe(self._save_options, names='selected_values',
-                                  type='change')
-        self.mode.observe(self._save_options, names='value', type='change')
-        self.shape_selection.observe(self._save_options,
-                                     names='selected_values', type='change')
-
-    def remove_callbacks(self):
-        r"""
-        Function that removes all the internal handler callback functions.
-        """
-        self.render_image.unobserve(self._save_options, names='selected_values',
-                                    type='change')
-        self.mode.unobserve(self._save_options, names='value', type='change')
-        self.shape_selection.unobserve(self._save_options,
-                                       names='selected_values', type='change')
-
-    def set_visibility(self):
-        r"""
-        Function that sets the visibility of the various components of the
-        widget, depending on the properties of the current image object, i.e.
-        ``self.n_channels`` and ``self.image_is_masked``.
-        """
-        self.shape_selection.labels_toggles[1].layout.display = (
-            'inline' if self.has_initial_shape else 'none')
-        self.shape_selection.labels_toggles[2].layout.display = (
-            'inline' if self.has_gt_shape else 'none')
-        self.render_image.layout.display = (
-            'flex' if self.has_image else 'none')
-
-    def predefined_style(self, style):
-        r"""
-        Function that sets a predefined style on the widget.
-
-        Parameters
-        ----------
-        style : `str` (see below)
-            Style options:
-
-                ============= ==================
-                Style         Description
-                ============= ==================
-                ``'success'`` Green-based style
-                ``'info'``    Blue-based style
-                ``'warning'`` Yellow-based style
-                ``'danger'``  Red-based style
-                ``''``        No style
-                ============= ==================
-        """
-        self.container.box_style = style
-
-    def set_widget_state(self, has_gt_shape, has_initial_shape, has_image,
-                         allow_callback=True):
-        r"""
-        Method that updates the state of the widget.
-
-        Parameters
-        ----------
-        has_gt_shape : `bool`
-            Whether the fitting result object has the ground truth shape.
-        has_initial_shape : `bool`
-            Whether the fitting result object has the initial shape.
-        has_image : `bool`
-            Whether the fitting result object has the image.
-        allow_callback : `bool`, optional
-            If ``True``, it allows triggering of any callback functions.
-        """
-        # keep old value
-        old_value = self.selected_values
-
-        # check if updates are required
-        if (self.has_gt_shape != has_gt_shape or
-                self.has_initial_shape != has_initial_shape or
-                self.has_image != has_image):
-            # Assign properties
-            self.has_gt_shape = has_gt_shape
-            self.has_initial_shape = has_initial_shape
-            self.has_image = has_image
-
-            # Set widget's visibility
-            self.set_visibility()
-
-            # Get values
-            self._save_options({})
-
-        # trigger render function if allowed
-        if allow_callback:
-            self.call_render_function(old_value, self.selected_values)
-
-
-class IterativeResultOptionsWidget(MenpoWidget):
-    r"""
-    Creates a widget for selecting options when visualizing an iterative
-    fitting result.
-
-    Note that:
-
-    * To update the state of the widget, please refer to the
-      :meth:`set_widget_state` method.
-    * The selected values are stored in the ``self.selected_values`` `trait`
-      which is a `list`.
-    * To set the styling of this widget please refer to the
-      :meth:`predefined_style` method.
-    * To update the handler callback function of the widget, please refer to
-      the :meth:`replace_render_function` method.
-    * To update the handler callback plot functions of the widget, please
-      refer to :meth:`replace_plots_function`, :meth:`replace_errors_function`
-      and :meth:`replace_displacements_function` methods.
-
-    Parameters
-    ----------
-    has_gt_shape : `bool`
-        Whether the fitting result object has the ground truth shape.
-    has_initial_shape : `bool`
-        Whether the fitting result object has the initial shape.
-    has_image : `bool`
-        Whether the fitting result object has the image.
-    n_shapes : `int` or ``None``
-        The total number of shapes. If ``None``, then it is assumed that no
-        iteration shapes are available.
-    has_costs : `bool`
-        Whether the fitting result object has costs attached.
-    render_function : `callable` or ``None``, optional
-        The render function that is executed when a widgets' value changes.
-        It must have signature ``render_function(change)`` where ``change`` is
-        a `dict` with the following keys:
-
-        * ``type`` : The type of notification (normally ``'change'``).
-        * ``owner`` : the `HasTraits` instance
-        * ``old`` : the old value of the modified trait attribute
-        * ``new`` : the new value of the modified trait attribute
-        * ``name`` : the name of the modified trait attribute.
-
-        If ``None``, then nothing is assigned.
-    tab_update_function : `callable` or ``None``, optional
-        A function that gets called when switching between the 'Result' and
-        'Iterations' tabs. If ``None``, then nothing is assigned.
-    displacements_function : `callable` or ``None``, optional
-        The function that is executed when the 'Displacements' button is
-        pressed. It must have signature ``displacements_function(name)``. If
-        ``None``, then nothing is assigned and the button is invisible.
-    errors_function : `callable` or ``None``, optional
-        The function that is executed when the 'Errors' button is pressed. It
-        must have signature ``errors_function(name)``. If  ``None``, then
-        nothing is assigned and the button is invisible.
-    costs_function : `callable` or ``None``, optional
-        The function that is executed when the 'Errors' button is pressed. It
-        must have signature ``displacements_function(name)``. If ``None``,
-        then nothing is assigned and the button is invisible.
-    style : `str` (see below), optional
-        Sets a predefined style at the widget. Possible options are:
-
-            ============= ==================
-            Style         Description
-            ============= ==================
-            ``'success'`` Green-based style
-            ``'info'``    Blue-based style
-            ``'warning'`` Yellow-based style
-            ``'danger'``  Red-based style
-            ``''``        No style
-            ============= ==================
-
-    tabs_style : `str` (see below), optional
-        Sets a predefined style at the tab widgets. Possible options are:
-
-            ============= ==================
-            Style         Description
-            ============= ==================
-            ``'success'`` Green-based style
-            ``'info'``    Blue-based style
-            ``'warning'`` Yellow-based style
-            ``'danger'``  Red-based style
-            ``''``        No style
-            ============= ==================
-
-    Example
-    -------
-    Let's create an iterative result options widget and then update its state.
-    Firstly, we need to import it:
-
-        >>> from menpowidgets.options import IterativeResultOptionsWidget
-
-    Now let's define a render function that will get called on every widget
-    change and will print the selected options:
-
-        >>> def render_function(change):
-        >>>     print(wid.selected_values)
-
-    Let's also define a plot function that will get called when one of the
-    'Errors', 'Costs' or 'Displacements' buttons is pressed:
-
-        >>> def plot_function(name):
-        >>>     print(name)
-
-    Create the widget with some initial options and display it:
-
-        >>> wid = IterativeResultOptionsWidget(
-        >>>         has_gt_shape=True, has_initial_shape=True, has_image=True,
-        >>>         n_shapes=20, has_costs=True, render_function=render_function,
-        >>>         displacements_function=plot_function,
-        >>>         errors_function=plot_function, costs_function=plot_function,
-        >>>         style='info', tabs_style='danger')
-        >>> wid
-
-    By changing the various widgets, the printed message gets updated. Finally,
-    let's change the widget status with a new set of options:
-
-        >>> wid.set_widget_state(has_gt_shape=False, has_initial_shape=True,
-        >>>                      has_image=True, n_shapes=None, has_costs=False,
-        >>>                      allow_callback=True)
-    """
-    def __init__(self, has_gt_shape, has_initial_shape, has_image, n_shapes,
-                 has_costs, render_function=None, tab_update_function=None,
-                 displacements_function=None, errors_function=None,
-                 costs_function=None, style='', tabs_style=''):
-        # Initialise default options dictionary
-        render_image = True if has_image else False
-        default_options = {'render_final_shape': True,
-                           'render_initial_shape': False,
-                           'render_gt_shape': False,
-                           'render_image': render_image,
-                           'subplots_enabled': True}
-
-        # Assign properties
-        self.has_gt_shape = None
-        self.has_initial_shape = None
-        self.has_image = None
-        self.n_shapes = -1
-        self.tab_update_function = tab_update_function
-
-        # Create result tab
-        self.mode_title = ipywidgets.Label('Figure mode')
-        self.mode = ipywidgets.RadioButtons(
-            description='', options={'Single': False, 'Multiple': True},
-            value=default_options['subplots_enabled'])
-        self.mode_box = ipywidgets.HBox([self.mode_title, self.mode])
-        self.mode_box.layout.align_items = 'center'
-        self.render_image = SwitchWidget(
-            selected_value=default_options['render_image'],
-            description='Render image', description_location='right',
-            switch_type='checkbox')
-        self.mode_render_image_box = ipywidgets.VBox([self.mode_box,
-                                                      self.render_image])
-        buttons_style = 'primary' if style != '' else ''
-        self.result_box = MultipleSelectionTogglesWidget(
-            ['Final', 'Initial', 'Groundtruth'], with_labels=['Final'],
-            description='Shape', allow_no_selection=True,
-            render_function=None, buttons_style=buttons_style)
-
-        # Create iterations tab
-        self.iterations_mode = ipywidgets.RadioButtons(
-            options={'Animation': 'animation', 'Static': 'static'},
-            value='animation', description='Iterations')
-        self.iterations_mode.observe(self._stop_animation, names='value',
-                                     type='change')
-        self.iterations_mode.observe(self._index_visibility, names='value',
-                                     type='change')
-        index = {'min': 0, 'max': 1, 'step': 1, 'index': 0}
-        self.index_animation = AnimationOptionsWidget(
-            index, description='', index_style='slider', loop_enabled=False,
-            interval=0., style=tabs_style)
-        slice_options = {'command': 'range({})'.format(1), 'length': 1}
-        self.index_slicing = SlicingCommandWidget(
-            slice_options, description='', example_visible=True,
-            continuous_update=False, orientation='vertical')
-        self.plot_errors_button = ipywidgets.Button(description='Errors',
-                                                    width='63px')
-        self.plot_errors_button.layout.display = (
-            'inline' if has_gt_shape and errors_function is not None
-            else 'none')
-        self.plot_displacements_button = ipywidgets.Button(
-            description='Displacements', width='120px')
-        self.plot_displacements_button.layout.display = (
-            'none' if displacements_function is None else 'inline')
-        self.plot_costs_button = ipywidgets.Button(description='Costs',
-                                                   width='63px')
-        self.plot_costs_button.layout.display = ('inline' if has_costs
-                                                 else 'none')
-        self.buttons_box = ipywidgets.HBox([self.plot_errors_button,
-                                            self.plot_costs_button,
-                                            self.plot_displacements_button])
-        self.buttons_box.layout.align_items = 'center'
-        self.index_buttons_box = ipywidgets.VBox([self.index_animation,
-                                                  self.index_slicing,
-                                                  self.buttons_box])
-        self.mode_index_buttons_box = ipywidgets.HBox([self.iterations_mode,
-                                                       self.index_buttons_box])
-        self.no_iterations_text = ipywidgets.Label(
-                value='No iterations available')
-        self.iterations_box = ipywidgets.VBox([self.mode_index_buttons_box,
-                                               self.no_iterations_text])
-
-        # Create final tab widget
-        self.result_iterations_tab = ipywidgets.Tab([self.result_box,
-                                                     self.iterations_box])
-        self.result_iterations_tab.set_title(0, 'Final')
-        self.result_iterations_tab.set_title(1, 'Iterations')
-        self.result_iterations_tab.observe(self._stop_animation,
-                                           names='selected_index',
-                                           type='change')
-        self.container = ipywidgets.HBox([self.mode_render_image_box,
-                                          self.result_iterations_tab])
-
-        # Function for updating rendering options
-        if tab_update_function is not None:
-            self.result_iterations_tab.observe(tab_update_function,
-                                               names='selected_index',
-                                               type='change')
-            self.iterations_mode.observe(tab_update_function, names='value',
-                                         type='change')
-
-        # Create final widget
-        super(IterativeResultOptionsWidget, self).__init__(
-            [self.container], Dict, default_options,
-            render_function=render_function)
-
-        # Visibility
-        self._index_visibility({'new': 'animation'})
-
-        # Set callbacks
-        self._displacements_function = None
-        self.add_displacements_function(displacements_function)
-        self._errors_function = None
-        self.add_errors_function(errors_function)
-        self._costs_function = None
-        self.add_costs_function(costs_function)
-
-        # Set values
-        self.add_callbacks()
-        self.set_widget_state(has_gt_shape, has_initial_shape, has_image,
-                              n_shapes, has_costs, allow_callback=False)
-
-        # Set style
-        self.predefined_style(style, tabs_style)
-
-    def _index_visibility(self, change):
-        self.index_animation.layout.display = (
-            'flex' if change['new'] == 'animation' else 'none')
-        self.index_slicing.layout.display = (
-            'flex' if change['new'] == 'static' else 'none')
-
-    def _stop_animation(self, change):
-        # Make sure that the animation gets stopped when the 'Static'
-        # radiobutton or 'Final' tab is selected.
-        if change['new'] in ['static', 0]:
-            self.index_animation.stop_animation()
-
-    def add_displacements_function(self, displacements_function):
-        r"""
-        Method that adds the provided `displacements_function` as a callback
-        handler to the `click` event of ``self.plot_displacements_button``. The
-        given function is also stored in ``self._displacements_function``.
-
-        Parameters
-        ----------
-        displacements_function : `callable` or ``None``, optional
-            The function that behaves as a callback handler of the `click`
-            event of ``self.plot_displacements_button``. Its signature is
-            ``displacements_function(name)``. If ``None``, then nothing is
-            added.
-        """
-        self._displacements_function = displacements_function
-        if self._displacements_function is not None:
-            self.plot_displacements_button.on_click(displacements_function)
-
-    def remove_displacements_function(self):
-        r"""
-        Method that removes the current ``self._displacements_function`` as a
-        callback handler to the `click` event of
-        ``self.plot_displacements_button`` and sets
-        ``self._displacements_function = None``.
-        """
-        if self._displacements_function is not None:
-            self.plot_displacements_button.on_click(
-                self._displacements_function, remove=True)
-            self._displacements_function = None
-
-    def replace_displacements_function(self, displacements_function):
-        r"""
-        Method that replaces the current ``self._displacements_function`` with
-        the given `displacements_function` as a callback handler to the `click`
-        event of ``self.plot_displacements_button``.
-
-        Parameters
-        ----------
-        displacements_function : `callable` or ``None``, optional
-            The function that behaves as a callback handler of the `click`
-            event of ``self.plot_displacements_button``. Its signature is
-            ``displacements_function(name)``. If ``None``, then nothing is
-            added.
-        """
-        # remove old function
-        self.remove_displacements_function()
-
-        # add new function
-        self.add_displacements_function(displacements_function)
-
-    def add_errors_function(self, errors_function):
-        r"""
-        Method that adds the provided `errors_function` as a callback handler
-        to the `click` event of ``self.plot_errors_button``. The given
-        function is also stored in ``self._errors_function``.
-
-        Parameters
-        ----------
-        errors_function : `callable` or ``None``, optional
-            The function that behaves as a callback handler of the `click`
-            event of ``self.plot_errors_button``. Its signature is
-            ``errors_function(name)``. If ``None``, then nothing is added.
-        """
-        self._errors_function = errors_function
-        if self._errors_function is not None:
-            self.plot_errors_button.on_click(errors_function)
-
-    def remove_errors_function(self):
-        r"""
-        Method that removes the current ``self._errors_function`` as a
-        callback handler to the `click` event of ``self.plot_errors_button``
-        and sets ``self._errors_function = None``.
-        """
-        if self._errors_function is not None:
-            self.plot_errors_button.on_click(self._errors_function, remove=True)
-            self._errors_function = None
-
-    def replace_errors_function(self, errors_function):
-        r"""
-        Method that replaces the current ``self._errors_function`` with
-        the given `errors_function` as a callback handler to the `click`
-        event of ``self.plot_errors_button``.
-
-        Parameters
-        ----------
-        errors_function : `callable` or ``None``, optional
-            The function that behaves as a callback handler of the `click`
-            event of ``self.plot_errors_button``. Its signature is
-            ``errors_function(name)``. If ``None``, then nothing is added.
-        """
-        # remove old function
-        self.remove_errors_function()
-
-        # add new function
-        self.add_errors_function(errors_function)
-
-    def add_costs_function(self, costs_function):
-        r"""
-        Method that adds the provided `costs_function` as a callback handler
-        to the `click` event of ``self.plot_costs_button``. The given
-        function is also stored in ``self._costs_function``.
-
-        Parameters
-        ----------
-        costs_function : `callable` or ``None``, optional
-            The function that behaves as a callback handler of the `click`
-            event of ``self.plot_costs_button``. Its signature is
-            ``costs_function(name)``. If ``None``, then nothing is added.
-        """
-        self._costs_function = costs_function
-        if self._costs_function is not None:
-            self.plot_costs_button.on_click(costs_function)
-
-    def remove_costs_function(self):
-        r"""
-        Method that removes the current ``self._costs_function`` as a callback
-        handler to the `click` event of ``self.plot_costs_button`` and sets
-        ``self._costs_function = None``.
-        """
-        if self._costs_function is not None:
-            self.plot_costs_button.on_click(self._costs_function, remove=True)
-            self._costs_function = None
-
-    def replace_costs_function(self, costs_function):
-        r"""
-        Method that replaces the current ``self._costs_function`` with the
-        given `costs_function` as a callback handler to the `click` event of
-        ``self.plot_costs_button``.
-
-        Parameters
-        ----------
-        costs_function : `callable` or ``None``, optional
-            The function that behaves as a callback handler of the `click`
-            event of ``self.plot_costs_button``. Its signature is
-            ``costs_function(name)``. If ``None``, then nothing is added.
-        """
-        # remove old function
-        self.remove_costs_function()
-
-        # add new function
-        self.add_costs_function(costs_function)
-
-    def _save_options(self, change):
-        if (self.result_iterations_tab.selected_index == 0 or
-                self.n_shapes is None):
-            # Result tab
-            self.selected_values = {
-                'render_final_shape': ('Final' in
-                                       self.result_box.selected_values),
-                'render_initial_shape': ('Initial' in
-                                         self.result_box.selected_values and
-                                         self.has_initial_shape),
-                'render_gt_shape': ('Groundtruth' in
-                                    self.result_box.selected_values and
-                                    self.has_gt_shape),
-                'render_image': (self.render_image.selected_values and
-                                 self.has_image),
-                'subplots_enabled': self.mode.value}
-        else:
-            # Iterations tab
-            if self.iterations_mode.value == 'animation':
-                # The mode is 'Animation'
-                 iters = self.index_animation.selected_values
-            else:
-                # The mode is 'Static'
-                iters = self.index_slicing.selected_values
-            # Get selected values
-            self.selected_values = {
-                'iters': iters,
-                'render_image': (self.render_image.selected_values and
-                                 self.has_image),
-                'subplots_enabled': self.mode.value}
-
-    def add_callbacks(self):
-        r"""
-        Function that adds the handler callback functions in all the widget
-        components, which are necessary for the internal functionality.
-        """
-        self.render_image.observe(self._save_options, names='selected_values',
-                                  type='change')
-        self.mode.observe(self._save_options, names='value', type='change')
-        self.result_box.observe(self._save_options, names='selected_values',
-                                type='change')
-        self.index_animation.observe(self._save_options,
-                                     names='selected_values', type='change')
-        self.index_slicing.observe(self._save_options,
-                                   names='selected_values', type='change')
-        self.iterations_mode.observe(self._save_options, names='value',
-                                     type='change')
-        self.result_iterations_tab.observe(
-                self._save_options, names='selected_index', type='change')
-
-    def remove_callbacks(self):
-        r"""
-        Function that removes all the internal handler callback functions.
-        """
-        self.render_image.unobserve(self._save_options, names='selected_values',
-                                    type='change')
-        self.mode.unobserve(self._save_options, names='value', type='change')
-        self.result_box.unobserve(self._save_options, names='selected_values',
-                                  type='change')
-        self.index_animation.unobserve(self._save_options,
-                                       names='selected_values', type='change')
-        self.index_slicing.unobserve(self._save_options,
-                                     names='selected_values', type='change')
-        self.iterations_mode.unobserve(self._save_options, names='value',
-                                       type='change')
-        self.result_iterations_tab.unobserve(
-                self._save_options, names='selected_index', type='change')
-
-    def set_visibility(self):
-        r"""
-        Function that sets the visibility of the various components of the
-        widget, depending on the properties of the current image object, i.e.
-        ``self.n_channels`` and ``self.image_is_masked``.
-        """
-        self.result_box.labels_toggles[1].layout.display = (
-            'inline' if self.has_initial_shape else 'none')
-        self.result_box.labels_toggles[2].layout.display = (
-            'inline' if self.has_gt_shape else 'none')
-        self.render_image.layout.display = (
-            'flex' if self.has_image else 'none')
-        self.plot_errors_button.layout.display = (
-            'inline' if self.has_gt_shape and self._errors_function is not
-            None else 'none')
-        self.mode_index_buttons_box.layout.display = (
-            'flex' if self.n_shapes is not None else 'none')
-        self.no_iterations_text.layout.display = (
-            'inline' if self.n_shapes is None else 'none')
-
-    def predefined_style(self, style, tabs_style):
-        r"""
-        Function that sets a predefined style on the widget.
-
-        Parameters
-        ----------
-        style : `str` (see below)
-            Style options:
-
-                ============= ==================
-                Style         Description
-                ============= ==================
-                ``'success'`` Green-based style
-                ``'info'``    Blue-based style
-                ``'warning'`` Yellow-based style
-                ``'danger'``  Red-based style
-                ``''``        No style
-                ============= ==================
-
-        tabs_style : `str` (see below)
-            Tabs style options:
-
-                ============= ==================
-                Style         Description
-                ============= ==================
-                ``'success'`` Green-based style
-                ``'info'``    Blue-based style
-                ``'warning'`` Yellow-based style
-                ``'danger'``  Red-based style
-                ``''``        No style
-                ============= ==================
-        """
-        self.container.box_style = style
-        self.index_animation.predefined_style(tabs_style)
-        self.index_animation.container.layout.border = '0px'
-        self.iterations_box.box_style = tabs_style
-        self.result_box.box_style = tabs_style
-        self.index_slicing.single_slider.slider_color = \
-            map_styles_to_hex_colours(tabs_style)
-        self.index_slicing.multiple_slider.slider_color = \
-            map_styles_to_hex_colours(tabs_style)
-        if style != '' or tabs_style != '':
-            self.plot_displacements_button.button_style = 'primary'
-            self.plot_costs_button.button_style = 'primary'
-            self.plot_errors_button.button_style = 'primary'
-        else:
-            self.plot_displacements_button.button_style = ''
-            self.plot_costs_button.button_style = ''
-            self.plot_errors_button.button_style = ''
-
-    def set_widget_state(self, has_gt_shape, has_initial_shape, has_image,
-                         n_shapes, has_costs, allow_callback=True):
-        r"""
-        Method that updates the state of the widget with a new set of values.
-
-        Parameters
-        ----------
-        has_gt_shape : `bool`
-            Whether the fitting result object has the ground truth shape.
-        has_initial_shape : `bool`
-            Whether the fitting result object has the initial shape.
-        has_image : `bool`
-            Whether the fitting result object has the image.
-        n_shapes : `int` or ``None``
-            The total number of shapes. If ``None``, then it is assumed
-            that no iteration shapes are available.
-        has_costs : `bool`
-            Whether the fitting result object has the costs attached.
-        allow_callback : `bool`, optional
-            If ``True``, it allows triggering of any callback functions.
-        """
-        # keep old value
-        old_value = self.selected_values
-
-        # check if updates are required
-        if (self.has_gt_shape != has_gt_shape or
-                self.has_initial_shape != has_initial_shape or
-                self.has_image != has_image or
-                self.n_shapes != n_shapes):
-            # temporarily remove callbacks
-            render_function = self._render_function
-            self.remove_render_function()
-            self.remove_callbacks()
-
-            # Update widgets
-            if self.n_shapes != n_shapes and n_shapes is not None:
-                index = {'min': 0, 'max': n_shapes - 1, 'step': 1, 'index': 0}
-                self.index_animation.set_widget_state(index,
-                                                      allow_callback=False)
-                slice_options = {'command': 'range({})'.format(n_shapes),
-                                 'length': n_shapes}
-                self.index_slicing.set_widget_state(slice_options,
-                                                    allow_callback=False)
-
-            # Assign properties
-            self.has_gt_shape = has_gt_shape
-            self.has_initial_shape = has_initial_shape
-            self.has_image = has_image
-            self.n_shapes = n_shapes
-
-            # Set widget's visibility
-            self.set_visibility()
-
-            # Get values
-            self._save_options({})
-
-            # Re-assign callbacks
-            self.add_callbacks()
-            self.add_render_function(render_function)
-
-        # set costs button visibility
-        self.plot_costs_button.visible = has_costs
-
-        # trigger render function if allowed
-        if allow_callback:
-            self.call_render_function(old_value, self.selected_values)

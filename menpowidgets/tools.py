@@ -6,7 +6,6 @@ from PIL import Image as PILImage
 from io import BytesIO
 import numpy as np
 from base64 import b64decode
-from IPython.display import HTML
 
 from menpo.compatibility import unicode
 from menpo.image import Image

@@ -4,7 +4,6 @@ from traitlets.traitlets import Dict
 from ..abstract import MenpoWidget
 from ..tools import (SlicingCommandWidget, SwitchWidget,
                      MultipleSelectionTogglesWidget)
-from ..style import map_styles_to_hex_colours
 from ..options import AnimationOptionsWidget
 
 
@@ -106,13 +105,11 @@ class ResultOptionsWidget(MenpoWidget):
         self.has_image = None
 
         # Create children
-        self.mode_title = ipywidgets.Label('Figure mode')
         self.mode = ipywidgets.RadioButtons(
-            description='', options={'Single': False, 'Multiple': True},
-            value=default_options['subplots_enabled'])
-        self.mode_box = ipywidgets.HBox([self.mode_title, self.mode])
-        self.mode_box.layout.align_items = 'center'
-        self.mode_box.layout.margin = '0px 10px 0px 0px'
+            description='Figure mode',
+            options={'Single': False, 'Multiple': True},
+            value=default_options['subplots_enabled'],
+            layout=ipywidgets.Layout(width='5cm', margin='0px 10px 0px 0px'))
         self.render_image = SwitchWidget(
             selected_value=default_options['render_image'],
             description='Render image', description_location='right',
@@ -123,10 +120,9 @@ class ResultOptionsWidget(MenpoWidget):
             description='Shape', allow_no_selection=True,
             render_function=None, buttons_style=buttons_style)
         self.shape_selection.layout.margin = '0px 10px 0px 0px'
-        self.container = ipywidgets.HBox([self.mode_box,
-                                          self.shape_selection,
-                                          self.render_image])
-        self.container.layout.align_items = 'center'
+        self.container = ipywidgets.HBox(
+            [self.mode, self.shape_selection, self.render_image],
+            layout=ipywidgets.Layout(align_items='center'))
 
         # Create final widget
         super(ResultOptionsWidget, self).__init__(
@@ -321,19 +317,6 @@ class IterativeResultOptionsWidget(MenpoWidget):
             ``''``        No style
             ============= ==================
 
-    tabs_style : `str` (see below), optional
-        Sets a predefined style at the tab widgets. Possible options are:
-
-            ============= ==================
-            Style         Description
-            ============= ==================
-            ``'success'`` Green-based style
-            ``'info'``    Blue-based style
-            ``'warning'`` Yellow-based style
-            ``'danger'``  Red-based style
-            ``''``        No style
-            ============= ==================
-
     Example
     -------
     Let's create an iterative result options widget and then update its state.
@@ -360,7 +343,7 @@ class IterativeResultOptionsWidget(MenpoWidget):
         >>>         n_shapes=20, has_costs=True, render_function=render_function,
         >>>         displacements_function=plot_function,
         >>>         errors_function=plot_function, costs_function=plot_function,
-        >>>         style='info', tabs_style='danger')
+        >>>         style='info')
         >>> wid
 
     By changing the various widgets, the printed message gets updated. Finally,
@@ -373,7 +356,7 @@ class IterativeResultOptionsWidget(MenpoWidget):
     def __init__(self, has_gt_shape, has_initial_shape, has_image, n_shapes,
                  has_costs, render_function=None, tab_update_function=None,
                  displacements_function=None, errors_function=None,
-                 costs_function=None, style='', tabs_style=''):
+                 costs_function=None, style=''):
         # Initialise default options dictionary
         render_image = True if has_image else False
         default_options = {'render_final_shape': True,
@@ -390,17 +373,16 @@ class IterativeResultOptionsWidget(MenpoWidget):
         self.tab_update_function = tab_update_function
 
         # Create result tab
-        self.mode_title = ipywidgets.Label('Figure mode')
         self.mode = ipywidgets.RadioButtons(
-            description='', options={'Single': False, 'Multiple': True},
-            value=default_options['subplots_enabled'])
-        self.mode_box = ipywidgets.HBox([self.mode_title, self.mode])
-        self.mode_box.layout.align_items = 'center'
+            description='Figure mode',
+            options={'Single': False, 'Multiple': True},
+            value=default_options['subplots_enabled'],
+            layout=ipywidgets.Layout(width='4.5cm', margin='0px 10px 0px 0px'))
         self.render_image = SwitchWidget(
             selected_value=default_options['render_image'],
             description='Render image', description_location='right',
             switch_type='checkbox')
-        self.mode_render_image_box = ipywidgets.VBox([self.mode_box,
+        self.mode_render_image_box = ipywidgets.VBox([self.mode,
                                                       self.render_image])
         buttons_style = 'primary' if style != '' else ''
         self.result_box = MultipleSelectionTogglesWidget(
@@ -411,7 +393,8 @@ class IterativeResultOptionsWidget(MenpoWidget):
         # Create iterations tab
         self.iterations_mode = ipywidgets.RadioButtons(
             options={'Animation': 'animation', 'Static': 'static'},
-            value='animation', description='Iterations')
+            value='animation', description='Iterations',
+            layout=ipywidgets.Layout(width='5cm'))
         self.iterations_mode.observe(self._stop_animation, names='value',
                                      type='change')
         self.iterations_mode.observe(self._index_visibility, names='value',
@@ -419,22 +402,23 @@ class IterativeResultOptionsWidget(MenpoWidget):
         index = {'min': 0, 'max': 1, 'step': 1, 'index': 0}
         self.index_animation = AnimationOptionsWidget(
             index, description='', index_style='slider', loop_enabled=False,
-            interval=0., style=tabs_style)
+            interval=0., style=style)
         slice_options = {'command': 'range({})'.format(1), 'length': 1}
         self.index_slicing = SlicingCommandWidget(
             slice_options, description='', example_visible=True,
             continuous_update=False, orientation='vertical')
-        self.plot_errors_button = ipywidgets.Button(description='Errors',
-                                                    width='63px')
+        self.plot_errors_button = ipywidgets.Button(
+            description='Errors', layout=ipywidgets.Layout(width='63px'))
         self.plot_errors_button.layout.display = (
             'inline' if has_gt_shape and errors_function is not None
             else 'none')
         self.plot_displacements_button = ipywidgets.Button(
-            description='Displacements', width='120px')
+            description='Displacements',
+            layout=ipywidgets.Layout(width='120px'))
         self.plot_displacements_button.layout.display = (
             'none' if displacements_function is None else 'inline')
-        self.plot_costs_button = ipywidgets.Button(description='Costs',
-                                                   width='63px')
+        self.plot_costs_button = ipywidgets.Button(
+            description='Costs', layout=ipywidgets.Layout(width='63px'))
         self.plot_costs_button.layout.display = ('inline' if has_costs
                                                  else 'none')
         self.buttons_box = ipywidgets.HBox([self.plot_errors_button,
@@ -452,8 +436,8 @@ class IterativeResultOptionsWidget(MenpoWidget):
                                                self.no_iterations_text])
 
         # Create final tab widget
-        self.result_iterations_tab = ipywidgets.Tab([self.result_box,
-                                                     self.iterations_box])
+        self.result_iterations_tab = ipywidgets.Accordion([self.result_box,
+                                                           self.iterations_box])
         self.result_iterations_tab.set_title(0, 'Final')
         self.result_iterations_tab.set_title(1, 'Iterations')
         self.result_iterations_tab.observe(self._stop_animation,
@@ -492,7 +476,7 @@ class IterativeResultOptionsWidget(MenpoWidget):
                               n_shapes, has_costs, allow_callback=False)
 
         # Set style
-        self.predefined_style(style, tabs_style)
+        self.predefined_style(style)
 
     def _index_visibility(self, change):
         self.index_animation.layout.display = (
@@ -736,7 +720,7 @@ class IterativeResultOptionsWidget(MenpoWidget):
         self.no_iterations_text.layout.display = (
             'inline' if self.n_shapes is None else 'none')
 
-    def predefined_style(self, style, tabs_style):
+    def predefined_style(self, style):
         r"""
         Function that sets a predefined style on the widget.
 
@@ -754,30 +738,9 @@ class IterativeResultOptionsWidget(MenpoWidget):
                 ``'danger'``  Red-based style
                 ``''``        No style
                 ============= ==================
-
-        tabs_style : `str` (see below)
-            Tabs style options:
-
-                ============= ==================
-                Style         Description
-                ============= ==================
-                ``'success'`` Green-based style
-                ``'info'``    Blue-based style
-                ``'warning'`` Yellow-based style
-                ``'danger'``  Red-based style
-                ``''``        No style
-                ============= ==================
         """
         self.container.box_style = style
-        self.index_animation.predefined_style(tabs_style)
-        self.index_animation.container.layout.border = '0px'
-        self.iterations_box.box_style = tabs_style
-        self.result_box.box_style = tabs_style
-        self.index_slicing.single_slider.slider_color = \
-            map_styles_to_hex_colours(tabs_style)
-        self.index_slicing.multiple_slider.slider_color = \
-            map_styles_to_hex_colours(tabs_style)
-        if style != '' or tabs_style != '':
+        if style != '':
             self.plot_displacements_button.button_style = 'primary'
             self.plot_costs_button.button_style = 'primary'
             self.plot_errors_button.button_style = 'primary'
@@ -785,6 +748,7 @@ class IterativeResultOptionsWidget(MenpoWidget):
             self.plot_displacements_button.button_style = ''
             self.plot_costs_button.button_style = ''
             self.plot_errors_button.button_style = ''
+        self.index_animation.container.box_style = ''
 
     def set_widget_state(self, has_gt_shape, has_initial_shape, has_image,
                          n_shapes, has_costs, allow_callback=True):
@@ -812,9 +776,9 @@ class IterativeResultOptionsWidget(MenpoWidget):
 
         # check if updates are required
         if (self.has_gt_shape != has_gt_shape or
-                self.has_initial_shape != has_initial_shape or
-                self.has_image != has_image or
-                self.n_shapes != n_shapes):
+                    self.has_initial_shape != has_initial_shape or
+                    self.has_image != has_image or
+                    self.n_shapes != n_shapes):
             # temporarily remove callbacks
             render_function = self._render_function
             self.remove_render_function()
