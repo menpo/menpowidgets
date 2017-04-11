@@ -28,6 +28,7 @@ from ..options import (SaveMatplotlibFigureOptionsWidget, RendererOptionsWidget,
                        PlotMatplotlibOptionsWidget, AnimationOptionsWidget,
                        TextPrintWidget, Shape2DOptionsWidget)
 from ..tools import LogoWidget
+from ..style import map_styles_to_hex_colours
 from ..utils import (render_patches, render_image,
                      extract_groups_labels_from_image)
 
@@ -78,9 +79,6 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
     # Define the styling options
     main_style = 'info'
-    tabs_style = 'danger'
-    tabs_border = '2px solid'
-    tabs_margin = '15px'
 
     # Get the maximum number of components per level
     max_n_shape = [sp.model.n_active_components for sp in aam.shape_models]
@@ -180,7 +178,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             "> Level {}/{}".format(
                 level + 1, aam.n_scales),
             "> {} landmark points".format(
-                instance.landmarks[group].lms.n_points),
+                instance.landmarks[group].n_points),
             "> {} shape components ({:.2f}% of variance)".format(
                 lvl_shape_mod.n_components,
                 lvl_shape_mod.variance_ratio() * 100),
@@ -244,12 +242,12 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         n_shape_parameters[0], render_function, params_str='Parameter ',
         mode=mode, params_bounds=parameters_bounds, params_step=0.1,
         plot_variance_visible=True, plot_variance_function=plot_shape_variance,
-        style=tabs_style, animation_step=0.5, interval=0., loop_enabled=True)
+        animation_step=0.5, interval=0., loop_enabled=True)
     appearance_model_parameters_wid = LinearModelParametersWidget(
         n_appearance_parameters[0], render_function, params_str='Parameter ',
         mode=mode, params_bounds=parameters_bounds, params_step=0.1,
         plot_variance_visible=True,
-        plot_variance_function=plot_appearance_variance, style=tabs_style,
+        plot_variance_function=plot_appearance_variance,
         animation_step=0.5, interval=0., loop_enabled=True)
     groups_keys, labels_keys = extract_groups_labels_from_image(
         aam.appearance_models[0].mean())
@@ -257,28 +255,16 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         n_channels=aam.appearance_models[0].mean().n_channels,
         image_is_masked=isinstance(aam.appearance_models[0].mean(),
                                    MaskedImage),
-        render_function=render_function, style=tabs_style)
-    image_options_wid.container.margin = tabs_margin
-    image_options_wid.container.border = tabs_border
+        render_function=render_function)
     landmark_options_wid = LandmarkOptionsWidget(
         group_keys=groups_keys, labels_keys=labels_keys,
-        type='2D', render_function=render_function, style=main_style,
-        suboptions_style=tabs_style)
-    landmark_options_wid.container.margin = tabs_margin
-    landmark_options_wid.container.border = tabs_border
+        type='2D', render_function=render_function)
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['zoom_one', 'axes', 'numbering_matplotlib', 'legend'],
         labels=None, axes_x_limits=None, axes_y_limits=None,
-        render_function=render_function, style=tabs_style)
-    renderer_options_wid.container.margin = tabs_margin
-    renderer_options_wid.container.border = tabs_border
-    info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
-    info_wid.container.margin = tabs_margin
-    info_wid.container.border = tabs_border
-    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
-                                                        style=tabs_style)
-    save_figure_wid.container.margin = tabs_margin
-    save_figure_wid.container.border = tabs_border
+        render_function=render_function)
+    info_wid = TextPrintWidget(text_per_line=[''])
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget()
 
     # Group widgets
     model_parameters_wid = ipywidgets.HBox(
@@ -286,9 +272,6 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                         appearance_model_parameters_wid])])
     model_parameters_wid.children[0].set_title(0, 'Shape')
     model_parameters_wid.children[0].set_title(1, 'Appearance')
-    model_parameters_wid.box_style = tabs_style
-    model_parameters_wid.margin = tabs_margin
-    model_parameters_wid.border = tabs_border
     tmp_children = [model_parameters_wid]
     if n_levels > 1:
         # Define function that updates options' widgets state
@@ -326,7 +309,8 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             else:
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
-            options=radio_str, description='Pyramid', value=n_levels-1)
+            options=radio_str, description='Pyramid', value=n_levels-1,
+            layout=ipywidgets.Layout(width='6cm'))
         level_wid.observe(update_widgets, names='value', type='change')
         level_wid.observe(render_function, names='value', type='change')
         tmp_children.insert(0, level_wid)
@@ -343,7 +327,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
     # Set widget's style
     wid.box_style = main_style
-    wid.layout.border = '2px solid'
+    wid.layout.border = '2px solid ' + map_styles_to_hex_colours(main_style)
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -398,9 +382,6 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
     # Define the styling options
     main_style = 'info'
-    tabs_style = 'danger'
-    tabs_border = '2px solid'
-    tabs_margin = '15px'
 
     # Get the maximum number of components per level
     max_n_shape = [sp.model.n_active_components for sp in aam.shape_models]
@@ -546,44 +527,31 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
         n_shape_parameters[0], render_function, params_str='Parameter ',
         mode=mode, params_bounds=parameters_bounds, params_step=0.1,
         plot_variance_visible=True, plot_variance_function=plot_shape_variance,
-        style=tabs_style, animation_step=0.5, interval=0., loop_enabled=True)
+        animation_step=0.5, interval=0., loop_enabled=True)
     appearance_model_parameters_wid = LinearModelParametersWidget(
         n_appearance_parameters[0], render_function, params_str='Parameter ',
         mode=mode, params_bounds=parameters_bounds, params_step=0.1,
         plot_variance_visible=True,
-        plot_variance_function=plot_appearance_variance, style=tabs_style,
-        animation_step=0.5, interval=0., loop_enabled=True)
-    shape_options_wid = Shape2DOptionsWidget(
-        labels=None, render_function=None, style=main_style,
-        suboptions_style=tabs_style)
+        plot_variance_function=plot_appearance_variance, animation_step=0.5,
+        interval=0., loop_enabled=True)
+    shape_options_wid = Shape2DOptionsWidget(labels=None, render_function=None)
     shape_options_wid.line_options_wid.render_lines_switch.button_wid.value = False
     shape_options_wid.add_render_function(render_function)
     patch_options_wid = PatchOptionsWidget(
         n_patches=aam.appearance_models[0].mean().pixels.shape[0],
         n_offsets=aam.appearance_models[0].mean().pixels.shape[1],
-        render_function=render_function, style=tabs_style)
-    patch_options_wid.container.margin = tabs_margin
-    patch_options_wid.container.border = tabs_border
+        render_function=render_function)
     image_options_wid = ImageOptionsWidget(
         n_channels=aam.appearance_models[0].mean().pixels.shape[2],
-        image_is_masked=False, render_function=None, style=tabs_style)
+        image_is_masked=False, render_function=None)
     image_options_wid.interpolation_checkbox.button_wid.value = False
     image_options_wid.add_render_function(render_function)
-    image_options_wid.container.margin = tabs_margin
-    image_options_wid.container.border = tabs_border
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['zoom_one', 'axes', 'numbering_matplotlib'], labels=None,
         axes_x_limits=None, axes_y_limits=None,
-        render_function=render_function,  style=tabs_style)
-    renderer_options_wid.container.margin = tabs_margin
-    renderer_options_wid.container.border = tabs_border
-    info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
-    info_wid.container.margin = tabs_margin
-    info_wid.container.border = tabs_border
-    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
-                                                        style=tabs_style)
-    save_figure_wid.container.margin = tabs_margin
-    save_figure_wid.container.border = tabs_border
+        render_function=render_function)
+    info_wid = TextPrintWidget(text_per_line=[''])
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget()
 
     # Group widgets
     model_parameters_wid = ipywidgets.HBox(
@@ -591,9 +559,6 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
                         appearance_model_parameters_wid])])
     model_parameters_wid.children[0].set_title(0, 'Shape')
     model_parameters_wid.children[0].set_title(1, 'Appearance')
-    model_parameters_wid.box_style = tabs_style
-    model_parameters_wid.margin = tabs_margin
-    model_parameters_wid.border = tabs_border
     tmp_children = [model_parameters_wid]
     if n_levels > 1:
         # Define function that updates options' widgets state
@@ -630,7 +595,8 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             else:
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
-            options=radio_str, description='Pyramid', value=n_levels-1)
+            options=radio_str, description='Pyramid', value=n_levels-1,
+            layout=ipywidgets.Layout(width='6cm'))
         level_wid.observe(update_widgets, names='value', type='change')
         level_wid.observe(render_function, names='value', type='change')
         tmp_children.insert(0, level_wid)
@@ -649,7 +615,7 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
     # Set widget's style
     wid.box_style = main_style
-    wid.layout.border = '2px solid'
+    wid.layout.border = '2px solid ' + map_styles_to_hex_colours(main_style)
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -696,9 +662,6 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
 
     # Define the styling options
     main_style = 'info'
-    tabs_style = 'danger'
-    tabs_border = '2px solid'
-    tabs_margin = '15px'
 
     # Get the maximum number of components per level
     max_n_shape = [sp.model.n_active_components for sp in atm.shape_models]
@@ -790,7 +753,7 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
             "> Level {}/{}".format(
                 level + 1, atm.n_scales),
             "> {} landmark points".format(
-                instance.landmarks[group].lms.n_points),
+                instance.landmarks[group].n_points),
             "> {} shape components ({:.2f}% of variance)".format(
                 lvl_shape_mod.n_components,
                 lvl_shape_mod.variance_ratio() * 100),
@@ -830,36 +793,22 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
         n_shape_parameters[0], render_function, params_str='Parameter ',
         mode=mode, params_bounds=parameters_bounds, params_step=0.1,
         plot_variance_visible=True, plot_variance_function=plot_shape_variance,
-        style=tabs_style, animation_step=0.5, interval=0., loop_enabled=True)
-    shape_model_parameters_wid.container.margin = tabs_margin
-    shape_model_parameters_wid.container.border = tabs_border
+        animation_step=0.5, interval=0., loop_enabled=True)
     groups_keys, labels_keys = extract_groups_labels_from_image(
         atm.warped_templates[0])
     image_options_wid = ImageOptionsWidget(
         n_channels=atm.warped_templates[0].n_channels,
         image_is_masked=isinstance(atm.warped_templates[0], MaskedImage),
-        render_function=render_function, style=tabs_style)
-    image_options_wid.container.margin = tabs_margin
-    image_options_wid.container.border = tabs_border
+        render_function=render_function)
     landmark_options_wid = LandmarkOptionsWidget(
         group_keys=groups_keys, labels_keys=labels_keys,
-        type='2D', render_function=render_function, style=main_style,
-        suboptions_style=tabs_style)
-    landmark_options_wid.container.margin = tabs_margin
-    landmark_options_wid.container.border = tabs_border
+        type='2D', render_function=render_function)
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['zoom_one', 'axes', 'numbering_matplotlib', 'legend'],
         labels=None, axes_x_limits=None, axes_y_limits=None,
-        render_function=render_function, style=tabs_style)
-    renderer_options_wid.container.margin = tabs_margin
-    renderer_options_wid.container.border = tabs_border
-    info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
-    info_wid.container.margin = tabs_margin
-    info_wid.container.border = tabs_border
-    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
-                                                        style=tabs_style)
-    save_figure_wid.container.margin = tabs_margin
-    save_figure_wid.container.border = tabs_border
+        render_function=render_function)
+    info_wid = TextPrintWidget(text_per_line=[''])
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget()
 
     # Group widgets
     tmp_children = [shape_model_parameters_wid]
@@ -895,7 +844,8 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
             else:
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
-            options=radio_str, description='Pyramid', value=n_levels-1)
+            options=radio_str, description='Pyramid', value=n_levels-1,
+            layout=ipywidgets.Layout(width='6cm'))
         level_wid.observe(update_widgets, names='value', type='change')
         level_wid.observe(render_function, names='value', type='change')
         tmp_children.insert(0, level_wid)
@@ -912,7 +862,7 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
 
     # Set widget's style
     wid.box_style = main_style
-    wid.layout.border = '2px solid'
+    wid.layout.border = '2px solid ' + map_styles_to_hex_colours(main_style)
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -959,9 +909,6 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
 
     # Define the styling options
     main_style = 'info'
-    tabs_style = 'danger'
-    tabs_border = '2px solid'
-    tabs_margin = '15px'
 
     # Get the maximum number of components per level
     max_n_shape = [sp.n_active_components for sp in atm.shape_models]
@@ -1072,38 +1019,24 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
         n_shape_parameters[0], render_function, params_str='Parameter ',
         mode=mode, params_bounds=parameters_bounds, params_step=0.1,
         plot_variance_visible=True, plot_variance_function=plot_shape_variance,
-        style=tabs_style, animation_step=0.5, interval=0., loop_enabled=True)
-    shape_options_wid = Shape2DOptionsWidget(
-        labels=None, render_function=None, style=main_style,
-        suboptions_style=tabs_style)
+        animation_step=0.5, interval=0., loop_enabled=True)
+    shape_options_wid = Shape2DOptionsWidget(labels=None, render_function=None)
     shape_options_wid.line_options_wid.render_lines_switch.button_wid.value = False
     shape_options_wid.add_render_function(render_function)
     patch_options_wid = PatchOptionsWidget(
         n_patches=atm.warped_templates[0].pixels.shape[0],
         n_offsets=atm.warped_templates[0].pixels.shape[1],
-        render_function=render_function, style=tabs_style)
-    patch_options_wid.container.margin = tabs_margin
-    patch_options_wid.container.border = tabs_border
+        render_function=render_function)
     image_options_wid = ImageOptionsWidget(
         n_channels=atm.warped_templates[0].pixels.shape[2],
-        image_is_masked=False, render_function=None, style=tabs_style)
+        image_is_masked=False, render_function=None)
     image_options_wid.interpolation_checkbox.button_wid.value = False
     image_options_wid.add_render_function(render_function)
-    image_options_wid.container.margin = tabs_margin
-    image_options_wid.container.border = tabs_border
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['zoom_one', 'axes', 'numbering_matplotlib'], labels=None,
-        axes_x_limits=None, axes_y_limits=None,
-        render_function=render_function,  style=tabs_style)
-    renderer_options_wid.container.margin = tabs_margin
-    renderer_options_wid.container.border = tabs_border
-    info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
-    info_wid.container.margin = tabs_margin
-    info_wid.container.border = tabs_border
-    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
-                                                        style=tabs_style)
-    save_figure_wid.container.margin = tabs_margin
-    save_figure_wid.container.border = tabs_border
+        axes_x_limits=None, axes_y_limits=None, render_function=render_function)
+    info_wid = TextPrintWidget(text_per_line=[''])
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget()
 
     # Group widgets
     tmp_children = [shape_model_parameters_wid]
@@ -1137,7 +1070,8 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
             else:
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
-            options=radio_str, description='Pyramid', value=n_levels-1)
+            options=radio_str, description='Pyramid', value=n_levels-1,
+            layout=ipywidgets.Layout(width='6cm'))
         level_wid.observe(update_widgets, names='value', type='change')
         level_wid.observe(render_function, names='value', type='change')
         tmp_children.insert(0, level_wid)
@@ -1156,7 +1090,7 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
 
     # Set widget's style
     wid.box_style = main_style
-    wid.layout.border = '2px solid'
+    wid.layout.border = '2px solid ' + map_styles_to_hex_colours(main_style)
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -1203,9 +1137,6 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
 
     # Define the styling options
     main_style = 'info'
-    tabs_style = 'danger'
-    tabs_border = '2px solid'
-    tabs_margin = '15px'
 
     # Get the maximum number of components per level
     max_n_shape = [sp.n_active_components for sp in clm.shape_models]
@@ -1321,46 +1252,33 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
         n_shape_parameters[0], render_function, params_str='Parameter ',
         mode=mode, params_bounds=parameters_bounds, params_step=0.1,
         plot_variance_visible=True, plot_variance_function=plot_shape_variance,
-        style=tabs_style, animation_step=0.5, interval=0., loop_enabled=True)
-    shape_options_wid = Shape2DOptionsWidget(
-        labels=None, render_function=None, style=main_style,
-        suboptions_style=tabs_style)
+        animation_step=0.5, interval=0., loop_enabled=True)
+    shape_options_wid = Shape2DOptionsWidget(labels=None, render_function=None)
     shape_options_wid.line_options_wid.render_lines_switch.button_wid.value = False
     shape_options_wid.add_render_function(render_function)
     patch_options_wid = PatchOptionsWidget(
         n_patches=clm.expert_ensembles[0].n_experts, n_offsets=1,
-        render_function=None, style=tabs_style)
+        render_function=None)
     patch_options_wid.bboxes_line_colour_widget.set_colours(
         'white', allow_callback=False)
     patch_options_wid.add_render_function(render_function)
-    patch_options_wid.container.border = tabs_border
     patch_options_wid.layout.margin = '10px 0px 0px 0px'
     domain_toggles = ipywidgets.ToggleButtons(
         description='Domain', options=['spatial', 'frequency'], value='spatial')
     domain_toggles.observe(render_function, names='value', type='change')
     experts_box = ipywidgets.VBox([domain_toggles, patch_options_wid])
-    experts_box.margin = tabs_margin
     image_options_wid = ImageOptionsWidget(
         n_channels=clm.expert_ensembles[0].spatial_filter_images[0].n_channels,
-        image_is_masked=False, render_function=None, style=tabs_style)
+        image_is_masked=False, render_function=None)
     image_options_wid.interpolation_checkbox.button_wid.value = False
     image_options_wid.cmap_select.value = 'afmhot'
     image_options_wid.add_render_function(render_function)
-    image_options_wid.container.margin = tabs_margin
-    image_options_wid.container.border = tabs_border
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['zoom_one', 'axes', 'numbering_matplotlib'], labels=None,
         axes_x_limits=None, axes_y_limits=None,
-        render_function=render_function,  style=tabs_style)
-    renderer_options_wid.container.margin = tabs_margin
-    renderer_options_wid.container.border = tabs_border
-    info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
-    info_wid.container.margin = tabs_margin
-    info_wid.container.border = tabs_border
-    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
-                                                        style=tabs_style)
-    save_figure_wid.container.margin = tabs_margin
-    save_figure_wid.container.border = tabs_border
+        render_function=render_function)
+    info_wid = TextPrintWidget(text_per_line=[''])
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget()
 
     # Group widgets
     tmp_children = [shape_model_parameters_wid]
@@ -1394,7 +1312,8 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
             else:
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
-            options=radio_str, description='Pyramid', value=n_levels-1)
+            options=radio_str, description='Pyramid', value=n_levels-1,
+            layout=ipywidgets.Layout(width='6cm'))
         level_wid.observe(update_widgets, names='value', type='change')
         level_wid.observe(render_function, names='value', type='change')
         tmp_children.insert(0, level_wid)
@@ -1412,7 +1331,7 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
 
     # Set widget's style
     wid.box_style = main_style
-    wid.layout.border = '2px solid'
+    wid.layout.border = '2px solid ' + map_styles_to_hex_colours(main_style)
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -1460,9 +1379,6 @@ def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(7, 7)):
 
     # Define the styling options
     main_style = 'info'
-    tabs_style = 'danger'
-    tabs_border = '2px solid'
-    tabs_margin = '15px'
 
     # Define render function
     def render_function(change):
@@ -1528,43 +1444,31 @@ def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(7, 7)):
         info_wid.set_widget_state(text_per_line=text_per_line)
 
     # Create widgets
-    shape_options_wid = Shape2DOptionsWidget(
-        labels=None, render_function=None, style=main_style,
-        suboptions_style=tabs_style)
+    shape_options_wid = Shape2DOptionsWidget(labels=None, render_function=None)
     shape_options_wid.line_options_wid.render_lines_switch.button_wid.value = False
     shape_options_wid.add_render_function(render_function)
     patch_options_wid = PatchOptionsWidget(
         n_patches=expert_ensemble[0].n_experts, n_offsets=1,
-        render_function=None, style=tabs_style)
+        render_function=None)
     patch_options_wid.bboxes_line_colour_widget.set_colours(
         'white', allow_callback=False)
     patch_options_wid.add_render_function(render_function)
-    patch_options_wid.container.border = tabs_border
     patch_options_wid.layout.margin = '10px 0px 0px 0px'
     domain_toggles = ipywidgets.ToggleButtons(
         description='Domain', options=['spatial', 'frequency'], value='spatial')
     domain_toggles.observe(render_function, names='value', type='change')
     image_options_wid = ImageOptionsWidget(
         n_channels=expert_ensemble[0].spatial_filter_images[0].n_channels,
-        image_is_masked=False, render_function=None, style=tabs_style)
+        image_is_masked=False, render_function=None)
     image_options_wid.interpolation_checkbox.button_wid.value = False
     image_options_wid.cmap_select.value = 'afmhot'
     image_options_wid.add_render_function(render_function)
-    image_options_wid.container.margin = tabs_margin
-    image_options_wid.container.border = tabs_border
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['zoom_one', 'axes', 'numbering_matplotlib'], labels=None,
         axes_x_limits=None, axes_y_limits=None,
-        render_function=render_function,  style=tabs_style)
-    renderer_options_wid.container.margin = tabs_margin
-    renderer_options_wid.container.border = tabs_border
-    info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
-    info_wid.container.margin = tabs_margin
-    info_wid.container.border = tabs_border
-    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
-                                                        style=tabs_style)
-    save_figure_wid.container.margin = tabs_margin
-    save_figure_wid.container.border = tabs_border
+        render_function=render_function)
+    info_wid = TextPrintWidget(text_per_line=[''])
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget()
 
     # Group widgets
     tmp_children = [domain_toggles]
@@ -1593,7 +1497,8 @@ def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(7, 7)):
             else:
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
-            options=radio_str, description='Pyramid', value=n_levels-1)
+            options=radio_str, description='Pyramid', value=n_levels-1,
+            layout=ipywidgets.Layout(width='6cm'))
         level_wid.observe(update_widgets, names='value', type='change')
         level_wid.observe(render_function, names='value', type='change')
         tmp_children.insert(0, level_wid)
@@ -1612,7 +1517,7 @@ def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(7, 7)):
 
     # Set widget's style
     wid.box_style = main_style
-    wid.layout.border = '2px solid'
+    wid.layout.border = '2px solid ' + map_styles_to_hex_colours(main_style)
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -1672,9 +1577,6 @@ def plot_ced(errors, legend_entries=None, error_range=None,
 
     # Define the styling options
     main_style = 'danger'
-    tabs_style = 'warning'
-    tabs_border = '2px solid'
-    tabs_margin = '15px'
 
     # Parse options
     if legend_entries is None:
@@ -1727,14 +1629,8 @@ def plot_ced(errors, legend_entries=None, error_range=None,
 
     # Create widgets
     plot_wid = PlotMatplotlibOptionsWidget(
-        legend_entries=legend_entries, render_function=render_function,
-        style='', suboptions_style=tabs_style)
-    plot_wid.container.margin = tabs_margin
-    plot_wid.container.border = tabs_border
-    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
-                                                        style=tabs_style)
-    save_figure_wid.container.margin = tabs_margin
-    save_figure_wid.container.border = tabs_border
+        legend_entries=legend_entries, render_function=render_function)
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget()
 
     # Set values in plot widget
     plot_wid.remove_render_function()
@@ -1756,6 +1652,7 @@ def plot_ced(errors, legend_entries=None, error_range=None,
 
     # Group widgets
     logo = LogoWidget(style=main_style)
+    logo.layout.margin = '0px 10px 0px 0px'
     tmp_children = list(plot_wid.tab_box.children)
     tmp_children.append(save_figure_wid)
     plot_wid.tab_box.children = tmp_children
@@ -1770,7 +1667,7 @@ def plot_ced(errors, legend_entries=None, error_range=None,
     # Display final widget
     wid = ipywidgets.HBox([logo, plot_wid])
     wid.box_style = main_style
-    wid.layout.border = '2px solid'
+    wid.layout.border = '2px solid ' + map_styles_to_hex_colours(main_style)
     plot_wid.container.border = '0px'
     final_box = ipywidgets.Box([wid])
     final_box.layout.display = 'flex'
@@ -1820,9 +1717,6 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7),
 
     # Define the styling options
     main_style = 'info'
-    tabs_style = 'danger'
-    tabs_border = '2px solid'
-    tabs_margin = '15px'
 
     # Define function that plots errors curve
     def plot_errors_function(name):
@@ -2003,7 +1897,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7),
             if error_type_toggles.value == 'RMS':
                 error_fun = root_mean_square_bb_normalised_error
             # Set error options visibility
-            error_box.visible = True
+            error_box.layout.visibility = 'visible'
             # Compute errors
             if fr.initial_shape is not None:
                 text_per_line.append(' > Initial error: {:.4f}'.format(
@@ -2014,7 +1908,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7),
                               norm_type=norm_type_toggles.value)))
         else:
             # Set error options visibility
-            error_box.visible = False
+            error_box.layout.visibility = 'hidden'
             text_per_line.append(' > No groundtruth shape.')
 
         # Landmarks, scales, iterations
@@ -2047,9 +1941,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7),
                       'legend', 'numbering_matplotlib', 'image_matplotlib',
                       'axes'],
         labels=labels, axes_x_limits=None, axes_y_limits=None,
-        render_function=None, style=tabs_style)
-    renderer_options_wid.container.margin = tabs_margin
-    renderer_options_wid.container.border = tabs_border
+        render_function=None)
     # Set initial values
     renderer_options_wid.options_widgets[3].render_legend_switch.set_widget_state(
         True, allow_callback=False)
@@ -2062,7 +1954,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7),
     renderer_options_wid.add_render_function(render_function)
 
     # Create info and error options
-    info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
+    info_wid = TextPrintWidget(text_per_line=[''])
     error_type_toggles = ipywidgets.ToggleButtons(
             options=['Euclidean', 'RMS'], value='Euclidean',
             description='Error type')
@@ -2075,14 +1967,9 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7),
     error_type_toggles.observe(update_info, names='value', type='change')
     norm_type_toggles.observe(update_info, names='value', type='change')
     info_error_box = ipywidgets.HBox([info_wid, error_box])
-    info_error_box.margin = tabs_margin
-    info_wid.container.border = tabs_border
 
     # Create save figure widget
-    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
-                                                        style=tabs_style)
-    save_figure_wid.container.margin = tabs_margin
-    save_figure_wid.container.border = tabs_border
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget()
 
     def update_renderer_options(change):
         # Get selected fitting result object
@@ -2128,8 +2015,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7),
         tab_update_function=update_renderer_options,
         displacements_function=plot_displacements_function,
         errors_function=plot_errors_function,
-        costs_function=plot_costs_function, style=main_style,
-        tabs_style=tabs_style)
+        costs_function=plot_costs_function)
 
     # Group widgets
     if n_fitting_results > 1:
@@ -2163,11 +2049,11 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7),
         index = {'min': 0, 'max': n_fitting_results - 1, 'step': 1, 'index': 0}
         image_number_wid = AnimationOptionsWidget(
             index, render_function=update_widgets, index_style=browser_style,
-            interval=0.2, description='Image', loop_enabled=True,
-            style=main_style)
+            interval=0.2, description='Image', loop_enabled=True)
 
         # Header widget
         logo_wid = LogoWidget(style=main_style)
+        logo_wid.layout.margin = '0px 10px 0px 0px'
         header_wid = ipywidgets.HBox([logo_wid, image_number_wid])
         header_wid.layout.align_items = 'center'
         header_wid.layout.margin = '0px 0px 10px 0px'
@@ -2197,7 +2083,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7),
 
     # Set widget's style
     wid.box_style = main_style
-    wid.layout.border = '2px solid'
+    wid.layout.border = '2px solid ' + map_styles_to_hex_colours(main_style)
 
     # Display final widget
     final_box = ipywidgets.Box([wid])

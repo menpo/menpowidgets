@@ -3312,7 +3312,7 @@ class AxesOptionsWidget(MenpoWidget):
             description_location='right', switch_type=render_checkbox_type)
         self.render_axes_switch.layout.margin = '7px'
         # axes font options
-        self.axes_font_name_title = ipywidgets.HTML(value='Font')
+        self.axes_font_name_title = ipywidgets.HTML(value='Font Family')
         axes_font_name_dict = OrderedDict()
         axes_font_name_dict['serif'] = 'serif'
         axes_font_name_dict['sans-serif'] = 'sans-serif'
@@ -3322,11 +3322,11 @@ class AxesOptionsWidget(MenpoWidget):
         self.axes_font_name_dropdown = ipywidgets.Dropdown(
             options=axes_font_name_dict, value=axes_options['axes_font_name'],
             layout=ipywidgets.Layout(width='3cm'))
-        self.axes_font_size_title = ipywidgets.HTML(value='Size')
+        self.axes_font_size_title = ipywidgets.HTML(value='Font Size')
         self.axes_font_size_text = ipywidgets.BoundedIntText(
             value=axes_options['axes_font_size'], min=0, max=10**6,
             layout=ipywidgets.Layout(width='3cm'))
-        self.axes_font_style_title = ipywidgets.HTML(value='Style')
+        self.axes_font_style_title = ipywidgets.HTML(value='Font Style')
         axes_font_style_dict = OrderedDict()
         axes_font_style_dict['normal'] = 'normal'
         axes_font_style_dict['italic'] = 'italic'
@@ -3334,7 +3334,7 @@ class AxesOptionsWidget(MenpoWidget):
         self.axes_font_style_dropdown = ipywidgets.Dropdown(
             options=axes_font_style_dict, value=axes_options['axes_font_style'],
             layout=ipywidgets.Layout(width='3cm'))
-        self.axes_font_weight_title = ipywidgets.HTML(value='Weight')
+        self.axes_font_weight_title = ipywidgets.HTML(value='Font Weight')
         axes_font_weight_dict = OrderedDict()
         axes_font_weight_dict['normal'] = 'normal'
         axes_font_weight_dict['ultralight'] = 'ultralight'

@@ -23,6 +23,7 @@ from .utils import (extract_group_labels_from_landmarks,
                     extract_groups_labels_from_image, render_image,
                     render_patches)
 from .checks import check_n_parameters
+from .style import map_styles_to_hex_colours
 
 
 def menpowidgets_src_dir_path():
@@ -102,9 +103,6 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
 
     # Define the styling options
     main_style = 'warning'
-    tabs_style = 'info'
-    tabs_border = '2px solid'
-    tabs_margin = '15px'
 
     # Define render function
     def render_function(change):
@@ -194,20 +192,13 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
 
     # Create widgets
     shape_options_wid = Shape2DOptionsWidget(
-        labels=labels, render_function=render_function, style=main_style,
-        suboptions_style=tabs_style)
+        labels=labels, render_function=render_function)
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['zoom_one', 'axes', 'numbering_matplotlib', 'legend'],
         labels=None,  axes_x_limits=0.1, axes_y_limits=0.1,
-        render_function=render_function, style=tabs_style)
-    renderer_options_wid.container.margin = tabs_margin
-    renderer_options_wid.container.border = tabs_border
-    info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
-    info_wid.container.margin = tabs_margin
-    info_wid.container.border = tabs_border
-    save_figure_wid = SaveMatplotlibFigureOptionsWidget(style=tabs_style)
-    save_figure_wid.container.margin = tabs_margin
-    save_figure_wid.container.border = tabs_border
+        render_function=render_function)
+    info_wid = TextPrintWidget(text_per_line=[''])
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget()
 
     # Group widgets
     if n_shapes > 1:
@@ -228,10 +219,11 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
         shape_number_wid = AnimationOptionsWidget(
             index, render_function=update_widgets, index_style=browser_style,
             interval=0.2, description='Shape', loop_enabled=True,
-            continuous_update=False, style=main_style)
+            continuous_update=False)
 
         # Header widget
         logo_wid = LogoWidget(style=main_style)
+        logo_wid.layout.margin = '0px 10px 0px 0px'
         header_wid = ipywidgets.HBox([logo_wid, shape_number_wid])
         header_wid.layout.align_items = 'center'
         header_wid.layout.margin = '0px 0px 10px 0px'
@@ -239,8 +231,8 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
         # Header widget
         header_wid = LogoWidget(style=main_style)
         header_wid.layout.margin = '0px 10px 0px 0px'
-    options_box = ipywidgets.Tab([info_wid, shape_options_wid,
-                                  renderer_options_wid, save_figure_wid])
+    options_box = ipywidgets.Tab(
+        [info_wid, shape_options_wid, renderer_options_wid, save_figure_wid])
     tab_titles = ['Info', 'Shape', 'Renderer', 'Export']
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
@@ -251,7 +243,7 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
 
     # Set widget's style
     wid.box_style = main_style
-    wid.layout.border = '2px solid'
+    wid.layout.border = '2px solid ' + map_styles_to_hex_colours(main_style)
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -434,6 +426,7 @@ def visualize_shapes_3d(shapes, browser_style='buttons',
 
         # Header widget
         logo_wid = LogoWidget(style=main_style)
+        logo_wid.layout.margin = '0px 10px 0px 0px'
         header_wid = ipywidgets.HBox([logo_wid, shape_number_wid])
         header_wid.layout.align_items = 'center'
         header_wid.layout.margin = '0px 0px 10px 0px'
@@ -441,8 +434,9 @@ def visualize_shapes_3d(shapes, browser_style='buttons',
         # Header widget
         header_wid = LogoWidget(style=main_style)
         header_wid.layout.margin = '0px 10px 0px 0px'
-    options_box = ipywidgets.Tab([info_wid, shape_options_wid,
-                                  renderer_options_wid, save_figure_wid])
+    options_box = ipywidgets.Tab(
+        children=[info_wid, shape_options_wid, renderer_options_wid,
+                  save_figure_wid])
     tab_titles = ['Info', 'Shape', 'Renderer', 'Export']
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
@@ -501,9 +495,6 @@ def visualize_landmarks_2d(landmarks, figure_size=(7, 7),
 
     # Define the styling options
     main_style = 'info'
-    tabs_style = 'warning'
-    tabs_border = '2px solid'
-    tabs_margin = '15px'
 
     # Define render function
     def render_function(change):
@@ -604,23 +595,13 @@ def visualize_landmarks_2d(landmarks, figure_size=(7, 7),
     first_label = labels_keys[0] if labels_keys else None
     landmark_options_wid = LandmarkOptionsWidget(
         group_keys=groups_keys, labels_keys=labels_keys,
-        type='2D', render_function=render_function, style=main_style,
-        suboptions_style=tabs_style)
-    landmark_options_wid.container.margin = tabs_margin
-    landmark_options_wid.container.border = tabs_border
+        type='2D', render_function=render_function)
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['zoom_one', 'axes', 'numbering_matplotlib', 'legend'],
         labels=first_label, axes_x_limits=0.1, axes_y_limits=0.1,
-        render_function=render_function,  style=tabs_style)
-    renderer_options_wid.container.margin = tabs_margin
-    renderer_options_wid.container.border = tabs_border
-    info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
-    info_wid.container.margin = tabs_margin
-    info_wid.container.border = tabs_border
-    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
-                                                        style=tabs_style)
-    save_figure_wid.container.margin = tabs_margin
-    save_figure_wid.container.border = tabs_border
+        render_function=render_function)
+    info_wid = TextPrintWidget(text_per_line=[''])
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget()
 
     # Group widgets
     if n_landmarks > 1:
@@ -640,10 +621,11 @@ def visualize_landmarks_2d(landmarks, figure_size=(7, 7),
         landmark_number_wid = AnimationOptionsWidget(
             index, render_function=update_widgets, index_style=browser_style,
             interval=0.2, description='Shape', loop_enabled=True,
-            continuous_update=False, style=main_style)
+            continuous_update=False)
 
         # Header widget
         logo_wid = LogoWidget(style=main_style)
+        logo_wid.layout.margin = '0px 10px 0px 0px'
         header_wid = ipywidgets.HBox([logo_wid, landmark_number_wid])
         header_wid.layout.align_items = 'center'
         header_wid.layout.margin = '0px 0px 10px 0px'
@@ -651,8 +633,9 @@ def visualize_landmarks_2d(landmarks, figure_size=(7, 7),
         # Header widget
         header_wid = LogoWidget(style=main_style)
         header_wid.layout.margin = '0px 10px 0px 0px'
-    options_box = ipywidgets.Tab([info_wid, landmark_options_wid,
-                                  renderer_options_wid, save_figure_wid])
+    options_box = ipywidgets.Tab(
+        children=[info_wid, landmark_options_wid, renderer_options_wid,
+                  save_figure_wid])
     tab_titles = ['Info', 'Landmarks', 'Renderer', 'Export']
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
@@ -663,7 +646,7 @@ def visualize_landmarks_2d(landmarks, figure_size=(7, 7),
 
     # Set widget's style
     wid.box_style = main_style
-    wid.layout.border = '2px solid'
+    wid.layout.border = '2px solid ' + map_styles_to_hex_colours(main_style)
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -836,6 +819,7 @@ def visualize_landmarks_3d(landmarks, browser_style='buttons',
 
         # Header widget
         logo_wid = LogoWidget(style=main_style)
+        logo_wid.layout.margin = '0px 10px 0px 0px'
         header_wid = ipywidgets.HBox([logo_wid, landmark_number_wid])
         header_wid.layout.align_items = 'center'
         header_wid.layout.margin = '0px 0px 10px 0px'
@@ -843,8 +827,9 @@ def visualize_landmarks_3d(landmarks, browser_style='buttons',
         # Header widget
         header_wid = LogoWidget(style=main_style)
         header_wid.layout.margin = '0px 10px 0px 0px'
-    options_box = ipywidgets.Tab([info_wid, landmark_options_wid,
-                                  renderer_options_wid, save_figure_wid])
+    options_box = ipywidgets.Tab(
+        children=[info_wid, landmark_options_wid, renderer_options_wid,
+                  save_figure_wid])
     tab_titles = ['Info', 'Landmarks', 'Renderer', 'Export']
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
@@ -902,9 +887,6 @@ def visualize_images(images, figure_size=(7, 7), browser_style='buttons',
 
     # Define the styling options
     main_style = 'info'
-    tabs_style = 'danger'
-    tabs_border = '2px solid'
-    tabs_margin = '15px'
 
     # Define render function
     def render_function(change):
@@ -1004,28 +986,16 @@ def visualize_images(images, figure_size=(7, 7), browser_style='buttons',
     image_options_wid = ImageOptionsWidget(
         n_channels=images[0].n_channels,
         image_is_masked=isinstance(images[0], MaskedImage),
-        render_function=render_function, style=tabs_style)
-    image_options_wid.container.margin = tabs_margin
-    image_options_wid.container.border = tabs_border
+        render_function=render_function)
     landmark_options_wid = LandmarkOptionsWidget(
         group_keys=groups_keys, labels_keys=labels_keys,
-        type='2D', render_function=render_function, style=main_style,
-        suboptions_style=tabs_style)
-    landmark_options_wid.container.margin = tabs_margin
-    landmark_options_wid.container.border = tabs_border
+        type='2D', render_function=render_function)
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['zoom_one', 'axes', 'numbering_matplotlib', 'legend'],
         labels=first_label, axes_x_limits=None, axes_y_limits=None,
-        render_function=render_function,  style=tabs_style)
-    renderer_options_wid.container.margin = tabs_margin
-    renderer_options_wid.container.border = tabs_border
-    info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
-    info_wid.container.margin = tabs_margin
-    info_wid.container.border = tabs_border
-    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
-                                                        style=tabs_style)
-    save_figure_wid.container.margin = tabs_margin
-    save_figure_wid.container.border = tabs_border
+        render_function=render_function)
+    info_wid = TextPrintWidget(text_per_line=[''])
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget()
 
     # Group widgets
     if n_images > 1:
@@ -1050,10 +1020,11 @@ def visualize_images(images, figure_size=(7, 7), browser_style='buttons',
         image_number_wid = AnimationOptionsWidget(
             index, render_function=update_widgets, index_style=browser_style,
             interval=0.2, description='Image', loop_enabled=True,
-            continuous_update=False, style=main_style)
+            continuous_update=False)
 
         # Header widget
         logo_wid = LogoWidget(style=main_style)
+        logo_wid.layout.margin = '0px 10px 0px 0px'
         header_wid = ipywidgets.HBox([logo_wid, image_number_wid])
         header_wid.layout.align_items = 'center'
         header_wid.layout.margin = '0px 0px 10px 0px'
@@ -1061,9 +1032,9 @@ def visualize_images(images, figure_size=(7, 7), browser_style='buttons',
         # Header widget
         header_wid = LogoWidget(style=main_style)
         header_wid.layout.margin = '0px 10px 0px 0px'
-    options_box = ipywidgets.Tab([info_wid, image_options_wid,
-                                  landmark_options_wid, renderer_options_wid,
-                                  save_figure_wid])
+    options_box = ipywidgets.Tab(
+        children=[info_wid, image_options_wid, landmark_options_wid,
+                  renderer_options_wid, save_figure_wid])
     tab_titles = ['Info', 'Image', 'Landmarks', 'Renderer', 'Export']
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
@@ -1074,7 +1045,7 @@ def visualize_images(images, figure_size=(7, 7), browser_style='buttons',
 
     # Set widget's style
     wid.box_style = main_style
-    wid.layout.border = '2px solid'
+    wid.layout.border = '2px solid ' + map_styles_to_hex_colours(main_style)
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -1150,9 +1121,6 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7),
 
     # Define the styling options
     main_style = 'info'
-    tabs_style = 'danger'
-    tabs_border = '2px solid'
-    tabs_margin = '15px'
 
     # Define render function
     def render_function(change):
@@ -1211,35 +1179,23 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7),
 
     # Create widgets
     shape_options_wid = Shape2DOptionsWidget(
-        labels=None, render_function=None, style=main_style,
-        suboptions_style=tabs_style)
+        labels=None, render_function=None)
     shape_options_wid.line_options_wid.render_lines_switch.button_wid.value = False
     shape_options_wid.add_render_function(render_function)
     patch_options_wid = PatchOptionsWidget(
         n_patches=patches[0].shape[0], n_offsets=patches[0].shape[1],
-        render_function=render_function, style=tabs_style)
-    patch_options_wid.container.margin = tabs_margin
-    patch_options_wid.container.border = tabs_border
+        render_function=render_function)
     image_options_wid = ImageOptionsWidget(
         n_channels=patches[0].shape[2], image_is_masked=False,
-        render_function=None, style=tabs_style)
+        render_function=None)
     image_options_wid.interpolation_checkbox.button_wid.value = False
     image_options_wid.add_render_function(render_function)
-    image_options_wid.container.margin = tabs_margin
-    image_options_wid.container.border = tabs_border
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['zoom_one', 'axes', 'numbering_matplotlib'], labels=None,
         axes_x_limits=None, axes_y_limits=None,
-        render_function=render_function,  style=tabs_style)
-    renderer_options_wid.container.margin = tabs_margin
-    renderer_options_wid.container.border = tabs_border
-    info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
-    info_wid.container.margin = tabs_margin
-    info_wid.container.border = tabs_border
-    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
-                                                        style=tabs_style)
-    save_figure_wid.container.margin = tabs_margin
-    save_figure_wid.container.border = tabs_border
+        render_function=render_function)
+    info_wid = TextPrintWidget(text_per_line=[''])
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget()
 
     # Group widgets
     if n_patches > 1:
@@ -1263,10 +1219,11 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7),
         image_number_wid = AnimationOptionsWidget(
             index, render_function=update_widgets, index_style=browser_style,
             interval=0.2, description='Image', loop_enabled=True,
-            continuous_update=False, style=main_style)
+            continuous_update=False)
 
         # Header widget
         logo_wid = LogoWidget(style=main_style)
+        logo_wid.layout.margin = '0px 10px 0px 0px'
         header_wid = ipywidgets.HBox([logo_wid, image_number_wid])
         header_wid.layout.align_items = 'center'
         header_wid.layout.margin = '0px 0px 10px 0px'
@@ -1274,9 +1231,9 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7),
         # Header widget
         header_wid = LogoWidget(style=main_style)
         header_wid.layout.margin = '0px 10px 0px 0px'
-    options_box = ipywidgets.Tab([info_wid, patch_options_wid,
-                                  image_options_wid, shape_options_wid,
-                                  renderer_options_wid, save_figure_wid])
+    options_box = ipywidgets.Tab(
+        children=[info_wid, patch_options_wid, image_options_wid,
+                  shape_options_wid, renderer_options_wid, save_figure_wid])
     tab_titles = ['Info', 'Patches', 'Image', 'Shape', 'Renderer', 'Export']
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
@@ -1287,7 +1244,7 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7),
 
     # Set widget's style
     wid.box_style = main_style
-    wid.layout.border = '2px solid'
+    wid.layout.border = '2px solid ' + map_styles_to_hex_colours(main_style)
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -1329,9 +1286,6 @@ def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(9, 5)):
 
     # Define the styling options
     main_style = 'danger'
-    tabs_style = 'warning'
-    tabs_border = '2px solid'
-    tabs_margin = '15px'
 
     # Parse options
     if legend_entries is None:
@@ -1359,17 +1313,12 @@ def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(9, 5)):
 
     # Create widgets
     plot_wid = PlotMatplotlibOptionsWidget(
-        legend_entries=legend_entries, render_function=render_function,
-        style='', suboptions_style=tabs_style)
-    plot_wid.container.margin = tabs_margin
-    plot_wid.container.border = tabs_border
-    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
-                                                        style=tabs_style)
-    save_figure_wid.container.margin = tabs_margin
-    save_figure_wid.container.border = tabs_border
+        legend_entries=legend_entries, render_function=render_function)
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget()
 
     # Group widgets
     logo = LogoWidget(style=main_style)
+    logo.layout.margin = '0px 10px 0px 0px'
     tmp_children = list(plot_wid.tab_box.children)
     tmp_children.append(save_figure_wid)
     plot_wid.tab_box.children = tmp_children
@@ -1384,7 +1333,7 @@ def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(9, 5)):
     # Display final widget
     wid = ipywidgets.HBox([logo, plot_wid])
     wid.box_style = main_style
-    wid.layout.border = '2px solid'
+    wid.layout.border = '2px solid' + map_styles_to_hex_colours(main_style)
     plot_wid.container.border = '0px'
     final_box = ipywidgets.Box([wid])
     final_box.layout.display = 'flex'
@@ -1408,7 +1357,7 @@ def save_matplotlib_figure(renderer):
     from .utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
     # Create sub-widgets
-    logo_wid = LogoWidget(style='')
+    logo_wid = LogoWidget()
     logo_wid.layout.margin = '0px 10px 0px 0px'
     save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer,
                                                         style='warning')
@@ -1432,7 +1381,7 @@ def save_mayavi_figure(renderer):
     from .utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
     # Create sub-widgets
-    logo_wid = LogoWidget(style='')
+    logo_wid = LogoWidget()
     logo_wid.layout.margin = '0px 10px 0px 0px'
     save_figure_wid = SaveMayaviFigureOptionsWidget(renderer,
                                                     style='warning')
@@ -1484,9 +1433,6 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
 
     # Define the styling options
     main_style = 'warning'
-    tabs_style = 'info'
-    tabs_border = '2px solid'
-    tabs_margin = '15px'
 
     # Get the maximum number of components per level
     max_n_params = [sp.n_active_components for sp in shape_model]
@@ -1690,8 +1636,9 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
     mode_dict = OrderedDict()
     mode_dict['Deformation'] = 1
     mode_dict['Vectors'] = 2
-    mode_wid = ipywidgets.RadioButtons(options=mode_dict,
-                                       description='Mode', value=1)
+    mode_wid = ipywidgets.RadioButtons(
+        options=mode_dict, description='Mode', value=1,
+        layout=ipywidgets.Layout(width='6cm'))
     mode_wid.observe(render_function, names='value', type='change')
     mean_wid = SwitchWidget(
         selected_value=False, description='Render mean shape',
@@ -1711,27 +1658,18 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
         mode=mode, params_bounds=parameters_bounds, params_step=0.1,
         plot_variance_visible=True, plot_variance_function=plot_variance,
         animation_step=0.5, interval=0., loop_enabled=True,
-        style=tabs_style, continuous_update=False)
-    model_parameters_wid.container.margin = tabs_margin
-    model_parameters_wid.container.border = tabs_border
+        continuous_update=False)
     labels = None
     if hasattr(shape_model[0].mean(), 'labels'):
         labels = shape_model[0].mean().labels
     shape_options_wid = Shape2DOptionsWidget(
-        labels=labels, render_function=render_function, style=main_style,
-        suboptions_style=tabs_style)
+        labels=labels, render_function=render_function)
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['zoom_one', 'axes', 'numbering_matplotlib', 'legend'],
         labels=None,  axes_x_limits=0.1, axes_y_limits=0.1,
-        render_function=render_function, style=tabs_style)
-    renderer_options_wid.container.margin = tabs_margin
-    renderer_options_wid.container.border = tabs_border
-    info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
-    info_wid.container.margin = tabs_margin
-    info_wid.container.border = tabs_border
-    save_figure_wid = SaveMatplotlibFigureOptionsWidget(style=tabs_style)
-    save_figure_wid.container.margin = tabs_margin
-    save_figure_wid.container.border = tabs_border
+        render_function=render_function)
+    info_wid = TextPrintWidget(text_per_line=[''])
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget()
 
     # Group widgets
     if n_levels > 1:
@@ -1752,7 +1690,8 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
             else:
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
-            options=radio_str, description='Pyramid', value=n_levels-1)
+            options=radio_str, description='Pyramid', value=n_levels-1,
+            layout=ipywidgets.Layout(width='6cm'))
         level_wid.observe(update_widgets, names='value', type='change')
         level_wid.observe(render_function, names='value', type='change')
         radio_children = [level_wid, mode_wid, mean_wid]
@@ -1760,9 +1699,9 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
         radio_children = [mode_wid, mean_wid]
     radio_wids = ipywidgets.VBox(radio_children)
     tmp_wid = ipywidgets.HBox([radio_wids, model_parameters_wid])
-    options_box = ipywidgets.Tab([tmp_wid, shape_options_wid,
-                                  renderer_options_wid, info_wid,
-                                  save_figure_wid])
+    options_box = ipywidgets.Tab(
+        children=[tmp_wid, shape_options_wid, renderer_options_wid, info_wid,
+                  save_figure_wid])
     tab_titles = ['Model', 'Shape', 'Renderer', 'Info', 'Export']
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
@@ -1772,7 +1711,7 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
 
     # Set widget's style
     wid.box_style = main_style
-    wid.layout.border = '2px solid'
+    wid.layout.border = '2px solid ' + map_styles_to_hex_colours(main_style)
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -1824,9 +1763,6 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
 
     # Define the styling options
     main_style = 'success'
-    tabs_style = 'info'
-    tabs_border = '2px solid'
-    tabs_margin = '15px'
 
     # Get the maximum number of components per level
     max_n_params = [ap.n_active_components for ap in appearance_model]
@@ -1949,37 +1885,23 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
             mode=mode, params_bounds=parameters_bounds, params_step=0.1,
             plot_variance_visible=True, plot_variance_function=plot_variance,
             animation_step=0.5, interval=0., loop_enabled=True,
-            style=tabs_style, continuous_update=False)
-    model_parameters_wid.container.margin = tabs_margin
-    model_parameters_wid.container.border = tabs_border
+            continuous_update=False)
     groups_keys, labels_keys = extract_groups_labels_from_image(
         appearance_model[0].mean())
     image_options_wid = ImageOptionsWidget(
         n_channels=appearance_model[0].mean().n_channels,
         image_is_masked=isinstance(appearance_model[0].mean(),
                                    MaskedImage),
-        render_function=render_function, style=tabs_style)
-    image_options_wid.container.margin = tabs_margin
-    image_options_wid.container.border = tabs_border
+        render_function=render_function)
     landmark_options_wid = LandmarkOptionsWidget(
         group_keys=groups_keys, labels_keys=labels_keys,
-        type='2D', render_function=render_function, style=main_style,
-        suboptions_style=tabs_style)
-    landmark_options_wid.container.margin = tabs_margin
-    landmark_options_wid.container.border = tabs_border
+        type='2D', render_function=render_function)
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['zoom_one', 'axes', 'numbering_matplotlib', 'legend'],
         axes_x_limits=None, axes_y_limits=None, labels=None,
-        render_function=render_function,  style=tabs_style)
-    renderer_options_wid.container.margin = tabs_margin
-    renderer_options_wid.container.border = tabs_border
-    info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
-    info_wid.container.margin = tabs_margin
-    info_wid.container.border = tabs_border
-    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
-                                                        style=tabs_style)
-    save_figure_wid.container.margin = tabs_margin
-    save_figure_wid.container.border = tabs_border
+        render_function=render_function)
+    info_wid = TextPrintWidget(text_per_line=[''])
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget()
 
     # Group widgets
     tmp_children = [model_parameters_wid]
@@ -2015,14 +1937,15 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
             else:
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
-                options=radio_str, description='Pyramid', value=n_levels-1)
+            options=radio_str, description='Pyramid', value=n_levels-1,
+            layout=ipywidgets.Layout(width='6cm'))
         level_wid.observe(update_widgets, names='value', type='change')
         level_wid.observe(render_function, names='value', type='change')
         tmp_children.insert(0, level_wid)
     tmp_wid = ipywidgets.HBox(tmp_children)
-    options_box = ipywidgets.Tab([tmp_wid, image_options_wid,
-                                  landmark_options_wid, renderer_options_wid,
-                                  info_wid, save_figure_wid])
+    options_box = ipywidgets.Tab(
+        children=[tmp_wid, image_options_wid, landmark_options_wid,
+                  renderer_options_wid, info_wid, save_figure_wid])
     tab_titles = ['Model', 'Image', 'Landmarks', 'Renderer', 'Info', 'Export']
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
@@ -2032,7 +1955,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
 
     # Set widget's style
     wid.box_style = main_style
-    wid.layout.border = '2px solid'
+    wid.layout.border = '2px solid ' + map_styles_to_hex_colours(main_style)
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -2096,9 +2019,6 @@ def visualize_patch_appearance_model(appearance_model, centers,
 
     # Define the styling options
     main_style = 'success'
-    tabs_style = 'info'
-    tabs_border = '2px solid'
-    tabs_margin = '15px'
 
     # Get the maximum number of components per level
     max_n_params = [ap.n_active_components for ap in appearance_model]
@@ -2199,41 +2119,26 @@ def visualize_patch_appearance_model(appearance_model, centers,
             mode=mode, params_bounds=parameters_bounds, params_step=0.1,
             plot_variance_visible=True, plot_variance_function=plot_variance,
             animation_step=0.5, interval=0., loop_enabled=True,
-            style=tabs_style, continuous_update=False)
-    model_parameters_wid.container.margin = tabs_margin
-    model_parameters_wid.container.border = tabs_border
+            continuous_update=False)
     shape_options_wid = Shape2DOptionsWidget(
-        labels=None, render_function=None, style=main_style,
-        suboptions_style=tabs_style)
+        labels=None, render_function=None)
     shape_options_wid.line_options_wid.render_lines_switch.button_wid.value = False
     shape_options_wid.add_render_function(render_function)
     patch_options_wid = PatchOptionsWidget(
         n_patches=appearance_model[0].mean().pixels.shape[0],
         n_offsets=appearance_model[0].mean().pixels.shape[1],
-        render_function=render_function, style=tabs_style)
-    patch_options_wid.container.margin = tabs_margin
-    patch_options_wid.container.border = tabs_border
+        render_function=render_function)
     image_options_wid = ImageOptionsWidget(
         n_channels=appearance_model[0].mean().pixels.shape[2],
         image_is_masked=isinstance(appearance_model[0].mean(), MaskedImage),
-        render_function=None, style=tabs_style)
+        render_function=None)
     image_options_wid.interpolation_checkbox.button_wid.value = False
     image_options_wid.add_render_function(render_function)
-    image_options_wid.container.margin = tabs_margin
-    image_options_wid.container.border = tabs_border
     renderer_options_wid = RendererOptionsWidget(
         options_tabs=['zoom_one', 'axes', 'numbering_matplotlib'], labels=None,
-        axes_x_limits=None, axes_y_limits=None,
-        render_function=render_function,  style=tabs_style)
-    renderer_options_wid.container.margin = tabs_margin
-    renderer_options_wid.container.border = tabs_border
-    info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
-    info_wid.container.margin = tabs_margin
-    info_wid.container.border = tabs_border
-    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
-                                                        style=tabs_style)
-    save_figure_wid.container.margin = tabs_margin
-    save_figure_wid.container.border = tabs_border
+        axes_x_limits=None, axes_y_limits=None, render_function=render_function)
+    info_wid = TextPrintWidget(text_per_line=[''])
+    save_figure_wid = SaveMatplotlibFigureOptionsWidget()
 
     # Group widgets
     tmp_children = [model_parameters_wid]
@@ -2269,15 +2174,16 @@ def visualize_patch_appearance_model(appearance_model, centers,
             else:
                 radio_str["Level {}".format(l)] = l
         level_wid = ipywidgets.RadioButtons(
-            options=radio_str, description='Pyramid', value=n_levels-1)
+            options=radio_str, description='Pyramid', value=n_levels-1,
+            layout=ipywidgets.Layout(width='6cm'))
         level_wid.observe(update_widgets, names='value', type='change')
         level_wid.observe(render_function, names='value', type='change')
         tmp_children.insert(0, level_wid)
     tmp_wid = ipywidgets.HBox(tmp_children)
-    options_box = ipywidgets.Tab([tmp_wid, patch_options_wid,
-                                  image_options_wid, shape_options_wid,
-                                  renderer_options_wid, info_wid,
-                                  save_figure_wid])
+    options_box = ipywidgets.Tab(
+        children=[tmp_wid, patch_options_wid, image_options_wid,
+                  shape_options_wid, renderer_options_wid, info_wid,
+                  save_figure_wid])
     tab_titles = ['Model', 'Patches', 'Channels', 'Shape', 'Renderer', 'Info',
                   'Export']
     for (k, tl) in enumerate(tab_titles):
@@ -2288,7 +2194,7 @@ def visualize_patch_appearance_model(appearance_model, centers,
 
     # Set widget's style
     wid.box_style = main_style
-    wid.layout.border = '2px solid'
+    wid.layout.border = '2px solid ' + map_styles_to_hex_colours(main_style)
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -2337,7 +2243,8 @@ def webcam_widget(canvas_width=640, hd=True, n_preview_windows=5):
         canvas_width=canvas_width, hd=hd, n_preview_windows=n_preview_windows,
         preview_windows_margin=3, style='danger', preview_style='warning',
         render_function=update)
-    wid.container.layout.border = '2px solid'
+    wid.container.layout.border = (
+        '2px solid' + map_styles_to_hex_colours('danger'))
 
     # Display widget
     ipydisplay.display(wid)

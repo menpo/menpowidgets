@@ -39,7 +39,7 @@ def view_widget(items, **kwargs):
         widget in menpowidgets.
     """
     # We use the first item to select the correct widget
-    if not isinstance(items, Sized):
+    if not isinstance(items, Sized) or isinstance(items, LandmarkManager):
         template = items
     else:
         template = items[0]

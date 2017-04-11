@@ -141,8 +141,8 @@ class AnimationOptionsWidget(MenpoWidget):
                 continuous_update=continuous_update)
         elif index_style == 'buttons':
             self.index_wid = IndexButtonsWidget(
-                index, description=description, minus_description='minus',
-                plus_description='plus', loop_enabled=loop_enabled,
+                index, description=description, minus_description='fa-minus',
+                plus_description='fa-plus', loop_enabled=loop_enabled,
                 text_editable=True)
         else:
             raise ValueError('index_style should be either slider or buttons')
@@ -168,6 +168,9 @@ class AnimationOptionsWidget(MenpoWidget):
         self.box_1 = ipywidgets.HBox([self.play_stop_toggle, self.loop_toggle,
                                       self.fast_backward_button,
                                       self.fast_forward_button])
+        # TODO FIX THE ANIMATION WIDGET.
+        # It is set to invisible until it's fixed.
+        self.box_1.layout.visibility = 'hidden'
         self.box_1.layout.align_items = 'center'
         self.box_1.layout.margin = '0px 0px 0px 10px'
         self.container = ipywidgets.HBox([self.index_wid, self.box_1])
@@ -308,29 +311,16 @@ class AnimationOptionsWidget(MenpoWidget):
 
         """
         self.container.box_style = style
-        self.container.border = '0px'
-        if style != '':
-            self.play_stop_toggle.button_style = self._toggle_play_style
-            self.fast_forward_button.button_style = 'info'
-            self.fast_backward_button.button_style = 'info'
-            self.loop_toggle.button_style = 'warning'
-            if self.index_style == 'buttons':
-                self.index_wid.button_plus.button_style = 'primary'
-                self.index_wid.button_minus.button_style = 'primary'
-            else:
-                self.index_wid.slider.slider_color = \
-                    map_styles_to_hex_colours(style, False)
+        self.play_stop_toggle.button_style = self._toggle_play_style
+        self.fast_forward_button.button_style = 'info'
+        self.fast_backward_button.button_style = 'info'
+        self.loop_toggle.button_style = 'warning'
+        if self.index_style == 'buttons':
+            self.index_wid.button_plus.button_style = 'primary'
+            self.index_wid.button_minus.button_style = 'primary'
         else:
-            self.play_stop_toggle.button_style = ''
-            self.fast_forward_button.button_style = ''
-            self.fast_backward_button.button_style = ''
-            self.loop_toggle.button_style = ''
-            if self.index_style == 'buttons':
-                self.index_wid.button_plus.button_style = ''
-                self.index_wid.button_minus.button_style = ''
-            else:
-                self.index_wid.slider.slider_color = \
-                    map_styles_to_hex_colours('', False)
+            self.index_wid.slider.slider_color = \
+                map_styles_to_hex_colours(style, False)
 
     def set_widget_state(self, index, allow_callback=True):
         r"""
@@ -504,9 +494,9 @@ class Shape2DOptionsWidget(MenpoWidget):
         self.marker_options_wid = MarkerMatplotlibOptionsWidget(
             renderer_options['markers'], render_function=None,
             render_checkbox_title='Render markers', labels=labels)
-        self.buttons_style = ''
-        if style != '' or suboptions_style != '':
-            self.buttons_style = 'primary'
+        self.buttons_style = 'primary'
+        # if style != '' or suboptions_style != '':
+        #     self.buttons_style = 'primary'
         if labels is not None:
             self.labels_options_wid = MultipleSelectionTogglesWidget(
                 labels=labels, with_labels=renderer_options['with_labels'],
@@ -517,7 +507,7 @@ class Shape2DOptionsWidget(MenpoWidget):
                 labels=[' '], with_labels=None, render_function=None,
                 description='Labels', buttons_style=self.buttons_style)
         self.labels_options_wid.layout.margin = '0px 0px 10px 0px'
-        self.labels_options_wid.container.layout.border = '2px solid'
+        # self.labels_options_wid.container.layout.border = '2px solid'
 
         # Group widgets
         self.box_1 = ipywidgets.Accordion([self.marker_options_wid,
@@ -525,7 +515,7 @@ class Shape2DOptionsWidget(MenpoWidget):
         self.box_1.set_title(0, 'Markers')
         self.box_1.set_title(1, 'Lines')
         self.box_2 = ipywidgets.Box([self.image_view_switch, self.box_1])
-        self.box_2.layout.border = '2px solid'
+        # self.box_2.layout.border = '2px solid'
         self.box_2.layout.display = 'table'
         self.container = ipywidgets.VBox([self.labels_options_wid, self.box_2])
 
@@ -865,9 +855,9 @@ class Shape3DOptionsWidget(MenpoWidget):
         self.marker_options_wid = MarkerMayaviOptionsWidget(
             renderer_options['markers'], render_function=None,
             render_checkbox_title='Render markers', labels=labels)
-        self.buttons_style = ''
-        if style != '':
-            self.buttons_style = 'primary'
+        self.buttons_style = 'primary'
+        # if style != '':
+        #     self.buttons_style = 'primary'
         if labels is not None:
             self.labels_options_wid = MultipleSelectionTogglesWidget(
                 labels=labels, with_labels=renderer_options['with_labels'],
@@ -1912,6 +1902,15 @@ class RendererOptionsWidget(MenpoWidget):
                 self.options_widgets[i].button_plus.button_style = 'primary'
                 self.options_widgets[i].zoom_slider.slider_color = \
                     map_styles_to_hex_colours('primary')
+            elif o == 'axes':
+                self.options_widgets[i].axes_ticks_widget.axes_x_ticks_toggles.button_style = \
+                    'primary'
+                self.options_widgets[i].axes_ticks_widget.axes_y_ticks_toggles.button_style = \
+                    'primary'
+                self.options_widgets[i].axes_limits_widget.axes_x_limits_toggles.button_style = \
+                    'primary'
+                self.options_widgets[i].axes_limits_widget.axes_y_limits_toggles.button_style = \
+                    'primary'
 
     def set_widget_state(self, labels, allow_callback=True):
         r"""
@@ -2623,8 +2622,8 @@ class LandmarkOptionsWidget(MenpoWidget):
         >>> wid = LandmarkOptionsWidget(
         >>>             group_keys=['PTS', 'ibug_face_68'],
         >>>             labels_keys=[['all'], ['jaw', 'eye', 'mouth']],
-        >>>             type='2D', render_function=render_function,
-        >>>             style='info', suboptions_style='danger')
+        >>>             type='2D', render_function=render_function, 
+        >>>             style='info')
         >>> wid
 
     By playing around with the widget, the printed message gets updated.
@@ -2641,7 +2640,7 @@ class LandmarkOptionsWidget(MenpoWidget):
 
     """
     def __init__(self, group_keys, labels_keys, type, render_function=None,
-                 style='', suboptions_style=''):
+                 style=''):
         # Initialise default options dictionary
         self.default_options = {}
 
@@ -2657,7 +2656,7 @@ class LandmarkOptionsWidget(MenpoWidget):
             selected_value=True, description='Render landmarks',
             description_location='right', switch_type='toggle')
         # Create group description, dropdown and slider
-        self.group_title = ipywidgets.HTML(value='Group')
+        self.group_title = ipywidgets.HTML(value='Group ')
         self.group_slider = ipywidgets.IntSlider(
             readout=False, value=0, continuous_update=False, min=0,
             layout=ipywidgets.Layout(width='4cm'))
@@ -2675,15 +2674,13 @@ class LandmarkOptionsWidget(MenpoWidget):
             raise ValueError("type must be either '2D' or '3D'")
 
         # Group widgets
-        self.box_1 = ipywidgets.HBox([self.group_title, self.group_dropdown])
-        self.box_1.layout.align_items = 'center'
-        self.box_2 = ipywidgets.VBox([self.box_1, self.group_slider])
-        self.box_2.layout.align_items = 'flex-end'
+        self.box_2 = ipywidgets.HBox([self.group_title, self.group_dropdown,
+                                      self.group_slider])
+        self.box_2.layout.align_items = 'center'
         self.box_3 = ipywidgets.VBox([self.box_2, self.group_label])
         self.box_3.layout.margin = '0px 10px 0px 0px'
-        self.box_3.layout.border = '2px solid'
-        self.box_3.layout.display = 'table'
-        self.box_4 = ipywidgets.HBox([self.box_3, self.shape_options_wid])
+        # self.box_3.layout.display = 'table'
+        self.box_4 = ipywidgets.VBox([self.box_3, self.shape_options_wid])
         self.box_4.layout.margin = '10px 0px 0px 0px'
         self.box_5 = ipywidgets.VBox([self.box_4, self.no_landmarks_msg])
         self.container = ipywidgets.VBox([self.render_landmarks_switch,
@@ -2699,7 +2696,7 @@ class LandmarkOptionsWidget(MenpoWidget):
         self.set_widget_state(group_keys, labels_keys, allow_callback=False)
 
         # Set style
-        self.predefined_style(style, suboptions_style)
+        self.predefined_style(style)
 
         # Set visibility
         self.set_visibility()
@@ -2788,7 +2785,7 @@ class LandmarkOptionsWidget(MenpoWidget):
                     'markers':
                         self.shape_options_wid.selected_values['markers']}
 
-    def predefined_style(self, style, suboptions_style):
+    def predefined_style(self, style):
         r"""
         Sets a predefined style to the widget.
 
@@ -2807,26 +2804,9 @@ class LandmarkOptionsWidget(MenpoWidget):
                 ``''``        No style
                 ============= ============================
 
-        suboptions_style : `str` (see below)
-            The style of the widget's sub-options. Possible options are:
-
-                ============= ============================
-                Style         Description
-                ============= ============================
-                ``'success'`` Green-based style
-                ``'info'``    Blue-based style
-                ``'warning'`` Yellow-based style
-                ``'danger'``  Red-based style
-                ``''``        No style
-                ============= ============================
-
         """
         self.container.box_style = style
         self.container.border = '0px'
-        self.shape_options_wid.predefined_style('', suboptions_style)
-        self.box_3.box_style = suboptions_style
-        self.group_slider.slider_color = map_styles_to_hex_colours(
-            suboptions_style)
 
     def get_key(self, group_keys, labels_keys):
         r"""
@@ -3047,7 +3027,6 @@ class TextPrintWidget(ipywidgets.Box):
         self.text_html = ipywidgets.HTML(txt)
         self.container = ipywidgets.VBox([self.text_html])
         super(TextPrintWidget, self).__init__([self.container])
-        self.layout.display = 'flex'
 
         # Assign options
         self.text_per_line = text_per_line
@@ -3226,7 +3205,7 @@ class SaveMatplotlibFigureOptionsWidget(ipywidgets.Box):
         self.filename_title = ipywidgets.HTML(value='Path')
         self.filename_text = ipywidgets.Text(
             description='', value=join(getcwd(), 'Untitled.' + file_format),
-            layout=ipywidgets.Layout(width='10cm'))
+            layout=ipywidgets.Layout(width='9cm'))
         self.overwrite_checkbox = SwitchWidget(
             overwrite, description='Overwrite if file exists',
             description_location='right', switch_type='checkbox')
@@ -3257,9 +3236,10 @@ class SaveMatplotlibFigureOptionsWidget(ipywidgets.Box):
         self.box_77.layout.margin = '0px 10px 0px 0px'
         self.box_7 = ipywidgets.HBox([self.box_77, self.box_4])
         self.box_7.layout.align_items = 'flex-start'
-        self.box_8 = ipywidgets.VBox([self.box_3, self.box_2, self.box_5])
+        self.box_8 = ipywidgets.VBox([self.box_5, self.box_2])
         self.box_8.layout.align_items = 'flex-end'
-        self.box_88 = ipywidgets.HBox([self.box_8])
+        self.box_8.layout.margin = '0px 0px 0px 10px'
+        self.box_88 = ipywidgets.HBox([self.box_3, self.box_8])
         self.box_88.layout.align_items = 'flex-start'
         self.box_9 = ipywidgets.VBox([self.facecolour_widget,
                                       self.edgecolour_widget])
@@ -3267,7 +3247,7 @@ class SaveMatplotlibFigureOptionsWidget(ipywidgets.Box):
         self.box_9.layout.margin = '0px 10px 0px 0px'
         self.box_99 = ipywidgets.HBox([self.box_9, self.transparent_checkbox])
         self.box_99.layout.align_items = 'center'
-        self.box_10 = ipywidgets.Accordion([self.box_7, self.box_88, self.box_99])
+        self.box_10 = ipywidgets.Tab([self.box_7, self.box_88, self.box_99])
         tab_titles = ['Path', 'Page setup', 'Colour']
         for (k, tl) in enumerate(tab_titles):
             self.box_10.set_title(k, tl)
@@ -3280,7 +3260,6 @@ class SaveMatplotlibFigureOptionsWidget(ipywidgets.Box):
         # Create final widget
         super(SaveMatplotlibFigureOptionsWidget, self).__init__(
             children=[self.container])
-        self.layout.display = 'flex'
 
         # Assign renderer
         if renderer is None:
@@ -3361,10 +3340,7 @@ class SaveMatplotlibFigureOptionsWidget(ipywidgets.Box):
         """
         self.container.box_style = style
         self.container.border = '0px'
-        if style != '':
-            self.save_button.button_style = 'primary'
-        else:
-            self.save_button.button_style = ''
+        self.save_button.button_style = 'primary'
 
 
 class SaveMayaviFigureOptionsWidget(ipywidgets.Box):
@@ -3467,7 +3443,6 @@ class SaveMayaviFigureOptionsWidget(ipywidgets.Box):
         # Create final widget
         super(SaveMayaviFigureOptionsWidget, self).__init__(
             children=[self.container])
-        self.layout.display = 'flex'
 
         # Assign renderer
         if renderer is None:
@@ -4184,9 +4159,9 @@ class PlotMatplotlibOptionsWidget(MenpoWidget):
         self.box_1.layout.align_items = 'flex-start'
 
         # Group widgets
-        self.tab_box = ipywidgets.Tab([self.box_1, self.lines_markers_box,
-                                       self.legend_wid, self.axes_wid,
-                                       self.zoom_wid, self.grid_wid])
+        self.tab_box = ipywidgets.Tab(
+            children=[self.box_1, self.lines_markers_box, self.legend_wid,
+                      self.axes_wid, self.zoom_wid, self.grid_wid])
         self.tab_box.set_title(0, 'Labels')
         self.tab_box.set_title(1, 'Lines & Markers')
         self.tab_box.set_title(2, 'Legend')
@@ -4616,6 +4591,9 @@ class LinearModelParametersWidget(MenpoWidget):
         self.animation_buttons = ipywidgets.HBox(
             [self.play_stop_toggle, self.loop_toggle,
              self.fast_backward_button, self.fast_forward_button])
+        # TODO FIX THE ANIMATION WIDGET.
+        # It is set to invisible until it's fixed.
+        self.animation_buttons.layout.visibility = 'hidden'
         self.animation_buttons.layout.display = (
             'flex' if animation_visible else 'none')
         self.animation_buttons.layout.margin = '0px 15px 0px 0px'
@@ -5016,7 +4994,8 @@ class LinearModelParametersWidget(MenpoWidget):
             params_step = self.params_step
 
         # Set plot variance visibility
-        self.plot_button.visible = plot_variance_visible
+        self.plot_button.layout.visibility = (
+            'visible' if plot_variance_visible else 'hidden')
         self.animation_step = animation_step
 
         # Update widget
@@ -5481,7 +5460,8 @@ class ResultOptionsWidget(MenpoWidget):
             selected_value=default_options['render_image'],
             description='Render image', description_location='right',
             switch_type='checkbox')
-        buttons_style = 'primary' if style != '' else ''
+        # buttons_style = 'primary' if style != '' else ''
+        buttons_style = 'primary'
         self.shape_selection = MultipleSelectionTogglesWidget(
             ['Final', 'Initial', 'Groundtruth'], with_labels=['Final'],
             description='Shape', allow_no_selection=True,
@@ -5751,7 +5731,8 @@ class IterativeResultOptionsWidget(MenpoWidget):
             switch_type='checkbox')
         self.mode_render_image_box = ipywidgets.VBox([self.mode,
                                                       self.render_image])
-        buttons_style = 'primary' if style != '' else ''
+        # buttons_style = 'primary' if style != '' else ''
+        buttons_style = 'primary'
         self.result_box = MultipleSelectionTogglesWidget(
             ['Final', 'Initial', 'Groundtruth'], with_labels=['Final'],
             description='Shape', allow_no_selection=True,
@@ -6178,7 +6159,8 @@ class IterativeResultOptionsWidget(MenpoWidget):
             self.add_render_function(render_function)
 
         # set costs button visibility
-        self.plot_costs_button.visible = has_costs
+        self.plot_costs_button.layout.visibility = (
+            'visible' if has_costs else 'hidden')
 
         # trigger render function if allowed
         if allow_callback:
