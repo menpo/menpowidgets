@@ -48,15 +48,9 @@ def view_widget(items, **kwargs):
     if isinstance(template, PointCloud) and template.n_dims == 2:
         from .base import visualize_shapes_2d
         visualize_shapes_2d(items, **kwargs)
-    elif isinstance(template, PointCloud) and template.n_dims == 3:
-        from .base import visualize_shapes_3d
-        visualize_shapes_3d(items, **kwargs)
     elif isinstance(template, LandmarkManager) and template.n_dims == 2:
         from .base import visualize_landmarks_2d
         visualize_landmarks_2d(items, **kwargs)
-    elif isinstance(template, LandmarkManager) and template.n_dims == 3:
-        from .base import visualize_landmarks_3d
-        visualize_landmarks_3d(items, **kwargs)
     elif isinstance(template, Image):
         from .base import visualize_images
         visualize_images(items, **kwargs)
