@@ -30,6 +30,19 @@ In MenpoWidgets, we use legible docstrings, and therefore, all documentation
 should be easily accessible in any sensible IDE (or IPython) via tab completion. 
 However, this section should make most of the core classes available for viewing online.
 
+`view_widget()`
+  Most objects in the Menpo Project can be visualized using the `view_widget()` method directly.
+  The supported objects are PointCloud, PointGraph,
+  LabelledPointUndirectedGraph, TriMesh, Image, MaskedImage, LandmarkManager
+  and shape or appearance PCAModel. Note that patches or patch-based PCAModel
+  are not supported.
+
+  .. toctree::
+       :maxdepth: 2
+
+       menpowidgets/items/index
+
+
 Main Widgets  
   Functions for visualizing the various Menpo, MenpoFit and Menpo3D objects using interactive widgets.
 
@@ -38,7 +51,6 @@ Main Widgets
 
       menpowidgets/base/index
       menpowidgets/menpofitwidgets/base/index
-      menpowidgets/menpo3dwidgets/base/index
 
 
 Options Widgets  
@@ -70,10 +82,10 @@ interactive widget as:
 
     %matplotlib inline
     import menpo.io as mio
-    from menpowidgets import visualize_images
+    from menpowidgets import view_widget
 
     images = mio.import_images('/path/to/images/')
-    visualize_images(images)
+    view_widget(images)
 
 .. image:: visualize_images.png
 

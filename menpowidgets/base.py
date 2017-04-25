@@ -47,16 +47,16 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
     Widget that allows browsing through a `list` of
     2D shapes. The supported objects are:
 
-            ==================================
+            ================================== =
             Object
-            ==================================
+            ================================== =
             `menpo.shape.PointCloud`
             `menpo.shape.PointUndirectedGraph`
             `menpo.shape.PointDirectedGraph`
             `menpo.shape.PointTree`
             `menpo.shape.LabelledPointGraph`
             `menpo.shape.TriMesh`
-            ==================================
+            ================================== =
 
     Any instance of the above can be combined in the input `list`.
 
@@ -65,16 +65,16 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
     shapes : `list`
         The `list` of objects to be visualized. It can contain a combination of
 
-            ==================================
+            ================================== =
             Object
-            ==================================
+            ================================== =
             `menpo.shape.PointCloud`
             `menpo.shape.PointUndirectedGraph`
             `menpo.shape.PointDirectedGraph`
             `menpo.shape.PointTree`
             `menpo.shape.LabelledPointGraph`
             `menpo.shape.TriMesh`
-            ==================================
+            ================================== =
 
         or subclasses of those.
     figure_size : (`int`, `int`), optional
@@ -960,30 +960,6 @@ def save_matplotlib_figure(renderer):
     logo_wid.layout.margin = '0px 10px 0px 0px'
     save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer,
                                                         style='warning')
-    wid = ipywidgets.HBox([logo_wid, save_figure_wid])
-
-    # Display widget
-    ipydisplay.display(wid)
-
-
-def save_mayavi_figure(renderer):
-    r"""
-    Widget that allows to save a figure, which was generated with Mayavi,
-    to file.
-
-    Parameters
-    ----------
-    renderer : `menpo3d.visualize.viewmayavi.MayaviRenderer`
-        The Mayavi renderer object.
-    """
-    # Ensure that the code is being run inside a Jupyter kernel!
-    from .utils import verify_ipython_and_kernel
-    verify_ipython_and_kernel()
-    # Create sub-widgets
-    logo_wid = LogoWidget()
-    logo_wid.layout.margin = '0px 10px 0px 0px'
-    save_figure_wid = SaveMayaviFigureOptionsWidget(renderer,
-                                                    style='warning')
     wid = ipywidgets.HBox([logo_wid, save_figure_wid])
 
     # Display widget

@@ -2464,14 +2464,14 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
         Parameters
         ----------
         marker_options : `dict`
-            The seected marker options. It must be a `dict` with the following
+            The selected marker options. It must be a `dict` with the following
             keys:
 
-        * ``render_markers`` : (`bool`) Flag for rendering the markers.
-        * ``marker_style`` : (`str`) The style of the markers. (e.g. ``'o'``).
-        * ``marker_size`` : (`float`) The size of the markers (e.g. ``1.``).
-        * ``marker_resolution`` : (`int`) The resolution of the markers (e.g. ``8``).
-        * ``marker_colour`` : (`list`) The colours list. (e.g. ``['red', 'blue']``).
+            * ``render_markers`` : (`bool`) Flag for rendering the markers.
+            * ``marker_style`` : (`str`) The style of the markers. (e.g. ``'o'``).
+            * ``marker_size`` : (`float`) The size of the markers (e.g. ``1.``).
+            * ``marker_resolution`` : (`int`) The resolution of the markers (e.g. ``8``).
+            * ``marker_colour`` : (`list`) The colours list. (e.g. ``['red', 'blue']``).
 
         labels : `list` of `str` or ``None``, optional
             A `list` with the labels' names that get passed in to the
