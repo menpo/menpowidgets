@@ -12,9 +12,8 @@ Shapes
 .. toctree::
     :maxdepth: 2
 
-    visualize_pointclouds
-    visualize_landmarkgroups
-    visualize_landmarks
+    visualize_shapes_2d
+    visualize_landmarks_2d
 
 
 Images
@@ -47,4 +46,3 @@ Various
     webcam_widget
     plot_graph
     save_matplotlib_figure
-    save_mayavi_figure

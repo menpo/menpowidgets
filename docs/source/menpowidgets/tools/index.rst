@@ -3,8 +3,7 @@
 :mod:`menpowidgets.tools`
 =========================
 Low-level widget classes that can be used as the main ingredients for creating
-more complex widgets, as the ones in :ref:`api-options-index` and
-:ref:`api-menpofit-options-index`.
+more complex widgets, as the ones in :ref:`api-options-index`.
 
 
 Logo
@@ -41,7 +40,7 @@ Rendering
     AxesTicksWidget
     ColourSelectionWidget
     GridOptionsWidget
-    ImageOptionsWidget
+    ImageMatplotlibOptionsWidget
     LegendOptionsWidget
     LineMatplotlibOptionsWidget
     LineMayaviOptionsWidget

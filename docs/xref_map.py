@@ -5,7 +5,7 @@ xref_map = {
 'CameraWidget': ('class', 'menpowidgets.tools.CameraWidget'),
 'ColourSelectionWidget': ('class', 'menpowidgets.tools.ColourSelectionWidget'),
 'GridOptionsWidget': ('class', 'menpowidgets.tools.GridOptionsWidget'),
-'ImageOptionsWidget': ('class', 'menpowidgets.tools.ImageOptionsWidget'),
+'ImageMatplotlibOptionsWidget': ('class', 'menpowidgets.tools.ImageMatplotlibOptionsWidget'),
 'IndexButtonsWidget': ('class', 'menpowidgets.tools.IndexButtonsWidget'),
 'IndexSliderWidget': ('class', 'menpowidgets.tools.IndexSliderWidget'),
 'LegendOptionsWidget': ('class', 'menpowidgets.tools.LegendOptionsWidget'),
@@ -19,6 +19,7 @@ xref_map = {
 'RendererOptionsWidget': ('class', 'menpowidgets.options.RendererOptionsWidget'),
 'Shape2DOptionsWidget': ('class', 'menpowidgets.options.Shape2DOptionsWidget'),
 'SlicingCommandWidget': ('class', 'menpowidgets.tools.SlicingCommandWidget'),
+'TexturedTriMeshOptionsWidget': ('class', 'menpowidgets.tools.TexturedTriMeshOptionsWidget'),
 'TriMeshOptionsWidget': ('class', 'menpowidgets.tools.TriMeshOptionsWidget'),
 'ZoomOneScaleWidget': ('class', 'menpowidgets.tools.ZoomOneScaleWidget'),
 'ZoomTwoScalesWidget': ('class', 'menpowidgets.tools.ZoomTwoScalesWidget')

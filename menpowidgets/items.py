@@ -11,9 +11,9 @@ def view_widget(items, **kwargs):
     Convenience function that visualizes the provided items with a suitable
     widget. The supported items are:
 
-        ========================================================================
+        ======================================================================== =
         Classes
-        ========================================================================
+        ======================================================================== =
         2D `PointCloud`, `PointGraph`, `LabelledPointUndirectedGraph`, `TriMesh`
         3D `PointCloud`, `PointGraph`, `LabelledPointUndirectedGraph`
         `Image`, `MaskedImage`
@@ -22,7 +22,7 @@ def view_widget(items, **kwargs):
         `PCAModel` of 2D `PointCloud` visualize_shape_model_2d
         `PCAModel` of 3D `PointCloud` visualize_shape_model_3d
         `PCAModel` of `Image` visualize_appearance_model
-        ========================================================================
+        ======================================================================== =
 
     Parameters
     ----------
