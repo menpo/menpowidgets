@@ -2580,7 +2580,7 @@ class SaveMatplotlibFigureOptionsWidget(ipywidgets.Box):
         self.error_latex = ipywidgets.HTML(value='')
         self.save_button = ipywidgets.Button(
             description='  Save', icon='floppy-o',
-            layout=ipywidgets.Layout(width='2cm'))
+            layout=ipywidgets.Layout(width='2.5cm'))
 
         # Group widgets
         self.box_2 = ipywidgets.HBox([self.dpi_title, self.dpi_text])

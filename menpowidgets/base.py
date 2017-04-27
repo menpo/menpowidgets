@@ -153,7 +153,7 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
 
         # Render shape with selected options
-        shapes[i].view(
+        save_figure_wid.renderer = shapes[i].view(
             figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
             figure_size=new_figure_size, **options)
 
@@ -347,7 +347,7 @@ def visualize_landmarks_2d(landmarks, figure_size=(7, 7),
                 figure_size[1])
 
             # Render shape with selected options
-            shape.view(
+            save_figure_wid.renderer = shape.view(
                 figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
                 figure_size=new_figure_size, **options)
 
@@ -542,7 +542,7 @@ def visualize_images(images, figure_size=(7, 7), browser_style='buttons',
             figure_size[1])
 
         # Render shape with selected options
-        render_image(
+        save_figure_wid.renderer = render_image(
             image=images[i], renderer=save_figure_wid.renderer,
             image_is_masked=image_is_masked, figure_size=new_figure_size,
             **options)
@@ -751,7 +751,7 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7),
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
 
         # Render image with selected options
-        render_patches(
+        save_figure_wid.renderer = render_patches(
             patches=patches[i], patch_centers=patch_centers[i],
             renderer=save_figure_wid.renderer, figure_size=new_figure_size,
             **options)
@@ -902,7 +902,7 @@ def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(9, 5)):
             plot_wid.selected_values['zoom'][0] * figure_size[0],
             plot_wid.selected_values['zoom'][1] * figure_size[1])
         del opts['zoom']
-        plot_curve(
+        save_figure_wid.renderer = plot_curve(
             x_axis=x_axis, y_axis=y_axis, figure_size=new_figure_size,
             figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
             **opts)
@@ -1084,7 +1084,7 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
 
             # Render mean shape
             if mean_wid.selected_values:
-                mean.view(
+                save_figure_wid.renderer = mean.view(
                     figure_id=save_figure_wid.renderer.figure_id,
                     new_figure=False, figure_size=None,
                     image_view=options['image_view'],
@@ -1098,7 +1098,7 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
                     marker_edge_width=options['marker_edge_width'])
 
             # Render instance
-            instance.view(
+            save_figure_wid.renderer = instance.view(
                 figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
                 figure_size=new_figure_size, **options)
 
@@ -1111,7 +1111,7 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
             instance_upper = shape_model[level].instance(weights)
 
             # Render mean shape
-            mean.view(
+            save_figure_wid.renderer = mean.view(
                 figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
                 figure_size=new_figure_size, **options)
 
@@ -1199,12 +1199,13 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
             renderer_options_wid.selected_values['zoom_one'] * 10,
             renderer_options_wid.selected_values['zoom_one'] * 3)
         plt.subplot(121)
-        shape_model[level].plot_eigenvalues_ratio(
+        save_figure_wid.renderer = shape_model[level].plot_eigenvalues_ratio(
             figure_id=save_figure_wid.renderer.figure_id, new_figure=False)
         plt.subplot(122)
-        shape_model[level].plot_eigenvalues_cumulative_ratio(
-            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-            figure_size=new_figure_size)
+        save_figure_wid.renderer = \
+            shape_model[level].plot_eigenvalues_cumulative_ratio(
+                figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+                figure_size=new_figure_size)
         save_figure_wid.renderer.force_draw()
 
     # Create widgets
@@ -1405,7 +1406,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
             figure_size[1])
 
         # Render shape with selected options
-        render_image(
+        save_figure_wid.renderer = render_image(
             image=instance, renderer=save_figure_wid.renderer,
             image_is_masked=image_is_masked, figure_size=new_figure_size,
             **options)
@@ -1446,12 +1447,14 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
             renderer_options_wid.selected_values['zoom_one'] * 10,
             renderer_options_wid.selected_values['zoom_one'] * 3)
         plt.subplot(121)
-        appearance_model[level].plot_eigenvalues_ratio(
-            figure_id=save_figure_wid.renderer.figure_id, new_figure=False)
+        save_figure_wid.renderer = \
+            appearance_model[level].plot_eigenvalues_ratio(
+                figure_id=save_figure_wid.renderer.figure_id, new_figure=False)
         plt.subplot(122)
-        appearance_model[level].plot_eigenvalues_cumulative_ratio(
-            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-            figure_size=new_figure_size)
+        save_figure_wid.renderer = \
+            appearance_model[level].plot_eigenvalues_cumulative_ratio(
+                figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+                figure_size=new_figure_size)
         save_figure_wid.renderer.force_draw()
 
     # Create widgets
@@ -1638,7 +1641,7 @@ def visualize_patch_appearance_model(appearance_model, centers,
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
 
         # Render image with selected options
-        render_patches(
+        save_figure_wid.renderer = render_patches(
             patches=instance.pixels, patch_centers=centers[level],
             renderer=save_figure_wid.renderer, figure_size=new_figure_size,
             **options)
@@ -1680,12 +1683,14 @@ def visualize_patch_appearance_model(appearance_model, centers,
             renderer_options_wid.selected_values['zoom_one'] * 10,
             renderer_options_wid.selected_values['zoom_one'] * 3)
         plt.subplot(121)
-        appearance_model[level].plot_eigenvalues_ratio(
-            figure_id=save_figure_wid.renderer.figure_id, new_figure=False)
+        save_figure_wid.renderer = \
+            appearance_model[level].plot_eigenvalues_ratio(
+                figure_id=save_figure_wid.renderer.figure_id, new_figure=False)
         plt.subplot(122)
-        appearance_model[level].plot_eigenvalues_cumulative_ratio(
-            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-            figure_size=new_figure_size)
+        save_figure_wid.renderer = \
+            appearance_model[level].plot_eigenvalues_cumulative_ratio(
+                figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+                figure_size=new_figure_size)
         save_figure_wid.renderer.force_draw()
 
     # Create widgets

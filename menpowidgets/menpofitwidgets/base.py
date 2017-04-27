@@ -150,7 +150,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             figure_size[1])
 
         # show image with selected options
-        render_image(
+        save_figure_wid.renderer = render_image(
             image=instance, renderer=save_figure_wid.renderer,
             image_is_masked=image_is_masked, figure_size=new_figure_size,
             **options)
@@ -206,12 +206,14 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             renderer_options_wid.selected_values['zoom_one'] * 10,
             renderer_options_wid.selected_values['zoom_one'] * 3)
         plt.subplot(121)
-        aam.shape_models[level].model.plot_eigenvalues_ratio(
-            figure_id=save_figure_wid.renderer.figure_id, new_figure=False)
+        save_figure_wid.renderer = \
+            aam.shape_models[level].model.plot_eigenvalues_ratio(
+                figure_id=save_figure_wid.renderer.figure_id, new_figure=False)
         plt.subplot(122)
-        aam.shape_models[level].model.plot_eigenvalues_cumulative_ratio(
-            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-            figure_size=new_figure_size)
+        save_figure_wid.renderer = \
+            aam.shape_models[level].model.plot_eigenvalues_cumulative_ratio(
+                figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+                figure_size=new_figure_size)
         save_figure_wid.renderer.force_draw()
 
     # Plot appearance variance function
@@ -228,13 +230,14 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             renderer_options_wid.selected_values['zoom_one'] * 10,
             renderer_options_wid.selected_values['zoom_one'] * 3)
         plt.subplot(121)
-        aam.appearance_models[level].plot_eigenvalues_ratio(
-            figure_id=save_figure_wid.renderer.figure_id, new_figure=False)
+        save_figure_wid.renderer = \
+            aam.appearance_models[level].plot_eigenvalues_ratio(
+                figure_id=save_figure_wid.renderer.figure_id, new_figure=False)
         plt.subplot(122)
-        aam.appearance_models[level]. \
-            plot_eigenvalues_cumulative_ratio(
-            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-            figure_size=new_figure_size)
+        save_figure_wid.renderer = \
+            aam.appearance_models[level].plot_eigenvalues_cumulative_ratio(
+                figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+                figure_size=new_figure_size)
         save_figure_wid.renderer.force_draw()
 
     # Create widgets
@@ -431,7 +434,7 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
 
         # show image with selected options
-        render_patches(
+        save_figure_wid.renderer = render_patches(
             patches=appearance_instance.pixels, patch_centers=shape_instance,
             renderer=save_figure_wid.renderer, figure_size=new_figure_size,
             **options)
@@ -491,12 +494,14 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             renderer_options_wid.selected_values['zoom_one'] * 10,
             renderer_options_wid.selected_values['zoom_one'] * 3)
         plt.subplot(121)
-        aam.shape_models[level].model.plot_eigenvalues_ratio(
-            figure_id=save_figure_wid.renderer.figure_id, new_figure=False)
+        save_figure_wid.renderer = \
+            aam.shape_models[level].model.plot_eigenvalues_ratio(
+                figure_id=save_figure_wid.renderer.figure_id, new_figure=False)
         plt.subplot(122)
-        aam.shape_models[level].model.plot_eigenvalues_cumulative_ratio(
-            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-            figure_size=new_figure_size)
+        save_figure_wid.renderer = \
+            aam.shape_models[level].model.plot_eigenvalues_cumulative_ratio(
+                figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+                figure_size=new_figure_size)
         save_figure_wid.renderer.force_draw()
 
     # Plot appearance variance function
@@ -513,13 +518,14 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             renderer_options_wid.selected_values['zoom_one'] * 10,
             renderer_options_wid.selected_values['zoom_one'] * 3)
         plt.subplot(121)
-        aam.appearance_models[level].plot_eigenvalues_ratio(
-            figure_id=save_figure_wid.renderer.figure_id, new_figure=False)
+        save_figure_wid.renderer = \
+            aam.appearance_models[level].plot_eigenvalues_ratio(
+                figure_id=save_figure_wid.renderer.figure_id, new_figure=False)
         plt.subplot(122)
-        aam.appearance_models[level]. \
-            plot_eigenvalues_cumulative_ratio(
-            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-            figure_size=new_figure_size)
+        save_figure_wid.renderer = \
+            aam.appearance_models[level].plot_eigenvalues_cumulative_ratio(
+                figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+                figure_size=new_figure_size)
         save_figure_wid.renderer.force_draw()
 
     # Create widgets
@@ -728,7 +734,7 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
             figure_size[1])
 
         # Render shape with selected options
-        render_image(
+        save_figure_wid.renderer = render_image(
             image=instance, renderer=save_figure_wid.renderer,
             image_is_masked=image_is_masked, figure_size=new_figure_size,
             **options)
@@ -780,12 +786,14 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
             renderer_options_wid.selected_values['zoom_one'] * 10,
             renderer_options_wid.selected_values['zoom_one'] * 3)
         plt.subplot(121)
-        atm.shape_models[level].model.plot_eigenvalues_ratio(
-            figure_id=save_figure_wid.renderer.figure_id, new_figure=False)
+        save_figure_wid.renderer = \
+            atm.shape_models[level].model.plot_eigenvalues_ratio(
+                figure_id=save_figure_wid.renderer.figure_id, new_figure=False)
         plt.subplot(122)
-        renderer = atm.shape_models[level].model.plot_eigenvalues_cumulative_ratio(
-            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-            figure_size=new_figure_size)
+        save_figure_wid.renderer = \
+            atm.shape_models[level].model.plot_eigenvalues_cumulative_ratio(
+                figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+                figure_size=new_figure_size)
         save_figure_wid.renderer.force_draw()
 
     # Create widgets
@@ -953,7 +961,7 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
 
         # show image with selected options
-        render_patches(
+        save_figure_wid.renderer = render_patches(
             patches=template.pixels, patch_centers=shape_instance,
             renderer=save_figure_wid.renderer, figure_size=new_figure_size,
             **options)
@@ -1006,12 +1014,14 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
             renderer_options_wid.selected_values['zoom_one'] * 10,
             renderer_options_wid.selected_values['zoom_one'] * 3)
         plt.subplot(121)
-        atm.shape_models[level].model.plot_eigenvalues_ratio(
-            figure_id=save_figure_wid.renderer.figure_id, new_figure=False)
+        save_figure_wid.renderer = \
+            atm.shape_models[level].model.plot_eigenvalues_ratio(
+                figure_id=save_figure_wid.renderer.figure_id, new_figure=False)
         plt.subplot(122)
-        renderer = atm.shape_models[level].model.plot_eigenvalues_cumulative_ratio(
-            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-            figure_size=new_figure_size)
+        save_figure_wid.renderer = \
+            atm.shape_models[level].model.plot_eigenvalues_cumulative_ratio(
+                figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+                figure_size=new_figure_size)
         save_figure_wid.renderer.force_draw()
 
     # Create widgets
@@ -1189,7 +1199,7 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
 
         # show image with selected options
-        render_patches(
+        save_figure_wid.renderer = render_patches(
             patches=patches, patch_centers=shape_instance,
             renderer=save_figure_wid.renderer, figure_size=new_figure_size,
             **options)
@@ -1239,10 +1249,12 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
             renderer_options_wid.selected_values['zoom_one'] * 10,
             renderer_options_wid.selected_values['zoom_one'] * 3)
         plt.subplot(121)
-        clm.shape_models[level].model.plot_eigenvalues_ratio(
+        save_figure_wid.renderer = \
+            clm.shape_models[level].model.plot_eigenvalues_ratio(
                 figure_id=save_figure_wid.renderer.figure_id, new_figure=False)
         plt.subplot(122)
-        clm.shape_models[level].model.plot_eigenvalues_cumulative_ratio(
+        save_figure_wid.renderer = \
+            clm.shape_models[level].model.plot_eigenvalues_cumulative_ratio(
                 figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
                 figure_size=new_figure_size)
         save_figure_wid.renderer.force_draw()
@@ -1419,7 +1431,7 @@ def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(7, 7)):
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
 
         # show image with selected options
-        render_patches(
+        save_figure_wid.renderer = render_patches(
             patches=patches, patch_centers=centers[level],
             renderer=save_figure_wid.renderer, figure_size=new_figure_size,
             **options)
@@ -1619,7 +1631,7 @@ def plot_ced(errors, legend_entries=None, error_range=None,
             tmp_error_range = [opts['axes_x_limits'][0],
                                1.0001 * opts['axes_x_limits'][1],
                                x_axis_step]
-        plot_cumulative_error_distribution(
+        save_figure_wid.renderer = plot_cumulative_error_distribution(
             errors, error_range=tmp_error_range,
             figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
             figure_size=new_figure_size, **opts)
@@ -1731,7 +1743,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7),
         new_figure_size = (
             renderer_options_wid.selected_values['zoom_one'] * 10,
             renderer_options_wid.selected_values['zoom_one'] * 3)
-        fitting_results[i].plot_errors(
+        save_figure_wid.renderer = fitting_results[i].plot_errors(
             figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
             figure_size=new_figure_size)
         save_figure_wid.renderer.force_draw()
@@ -1749,7 +1761,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7),
         new_figure_size = (
             renderer_options_wid.selected_values['zoom_one'] * 10,
             renderer_options_wid.selected_values['zoom_one'] * 3)
-        fitting_results[i].plot_displacements(
+        save_figure_wid.renderer = fitting_results[i].plot_displacements(
             figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
             figure_size=new_figure_size, stat_type='mean')
         save_figure_wid.renderer.force_draw()
@@ -1767,7 +1779,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7),
         new_figure_size = (
             renderer_options_wid.selected_values['zoom_one'] * 10,
             renderer_options_wid.selected_values['zoom_one'] * 3)
-        fitting_results[im].plot_costs(
+        save_figure_wid.renderer = fitting_results[im].plot_costs(
             figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
             figure_size=new_figure_size)
         save_figure_wid.renderer.force_draw()
@@ -1823,7 +1835,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7),
                     gt_marker_edge_colour = tmp1['marker_edge_colour'][1]
                     gt_line_colour = tmp2['line_colour'][1]
             # render
-            fitting_results[i].view(
+            save_figure_wid.renderer = fitting_results[i].view(
                 figure_id=save_figure_wid.renderer.figure_id,
                 new_figure=False, render_markers=tmp1['render_markers'],
                 final_marker_face_colour=final_marker_face_colour,
@@ -1864,7 +1876,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7),
                     for i in fitting_result_wid.selected_values['iters']]
 
             # render
-            fitting_results[i].view_iterations(
+            save_figure_wid.renderer = fitting_results[i].view_iterations(
                 figure_id=save_figure_wid.renderer.figure_id,
                 new_figure=False, render_markers=tmp1['render_markers'],
                 marker_face_colour=marker_face_colour,
