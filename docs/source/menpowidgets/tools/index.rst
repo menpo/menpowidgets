@@ -3,8 +3,7 @@
 :mod:`menpowidgets.tools`
 =========================
 Low-level widget classes that can be used as the main ingredients for creating
-more complex widgets, as the ones in :ref:`api-options-index` and
-:ref:`api-menpofit-options-index`.
+more complex widgets, as the ones in :ref:`api-options-index`.
 
 
 Logo
@@ -16,8 +15,8 @@ Logo
     LogoWidget
 
 
-Indexing
---------
+Low-Level
+---------
 
 .. toctree::
     :maxdepth: 2
@@ -26,6 +25,8 @@ Indexing
     IndexButtonsWidget
     ListWidget
     SlicingCommandWidget
+    SwitchWidget
+    MultipleSelectionTogglesWidget
 
 
 Rendering
@@ -39,26 +40,18 @@ Rendering
     AxesTicksWidget
     ColourSelectionWidget
     GridOptionsWidget
-    ImageOptionsWidget
+    ImageMatplotlibOptionsWidget
     LegendOptionsWidget
-    LineOptionsWidget
-    MarkerOptionsWidget
-    NumberingOptionsWidget
+    LineMatplotlibOptionsWidget
+    LineMayaviOptionsWidget
+    MarkerMatplotlibOptionsWidget
+    MarkerMayaviOptionsWidget
+    NumberingMatplotlibOptionsWidget
+    NumberingMayaviOptionsWidget
+    TexturedTriMeshOptionsWidget
+    TriMeshOptionsWidget
     ZoomOneScaleWidget
     ZoomTwoScalesWidget
-
-
-Features
---------
-
-.. toctree::
-    :maxdepth: 2
-
-    DaisyOptionsWidget
-    DSIFTOptionsWidget
-    HOGOptionsWidget
-    IGOOptionsWidget
-    LBPOptionsWidget
 
 
 Webcam

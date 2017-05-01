@@ -1,5 +1,7 @@
-require(["nbextensions/widgets/widgets/js/widget", "nbextensions/widgets/widgets/js/manager"], function(widget, manager) {
-    var CameraView = widget.DOMWidgetView.extend({
+requirejs.undef('camera');
+
+define('camera', ["jupyter-js-widgets"], function(widgets) {
+    var CameraView = widgets.DOMWidgetView.extend({
         _take_snapshot: function() {
             this.canvas.getContext('2d').drawImage(
                 this.video, 0, 0, this.width, this.height);
@@ -119,6 +121,7 @@ require(["nbextensions/widgets/widgets/js/widget", "nbextensions/widgets/widgets
         }
     });
 
-    // Register the view with the widget manager
-    manager.WidgetManager.register_widget_view('CameraView', CameraView);
+    return {
+        CameraView : CameraView
+    };
 });

@@ -5,19 +5,21 @@
 
 Independent widget classes that can be used as the main components for
 designing high-level widget functions, as the ones in :ref:`api-base-index`
-and :ref:`api-menpofit-base-index`.
+and :ref:`api-menpofitwidgets-base-index`.
 
 .. toctree::
     :maxdepth: 2
 
     AnimationOptionsWidget
     CameraSnapshotWidget
-    ChannelOptionsWidget
-    FeatureOptionsWidget
+    ImageOptionsWidget
     LandmarkOptionsWidget
     LinearModelParametersWidget
     PatchOptionsWidget
-    PlotOptionsWidget
+    PlotMatplotlibOptionsWidget
     RendererOptionsWidget
-    SaveFigureOptionsWidget
+    SaveMatplotlibFigureOptionsWidget
+    Shape2DOptionsWidget
     TextPrintWidget
+    ResultOptionsWidget
+    IterativeResultOptionsWidget

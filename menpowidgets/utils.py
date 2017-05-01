@@ -689,7 +689,7 @@ def list_has_constant_step(l):
         The step value. ``None`` if `has_constant_step` is ``False``.
     """
     if len(l) <= 1:
-        return False, None
+        return False, 1
     step = l[1] - l[0]
     s = step
     i = 2
@@ -699,7 +699,7 @@ def list_has_constant_step(l):
     if i == len(l) and s == step:
         return True, step
     else:
-        return False, None
+        return False, 1
 
 
 def sample_colours_from_colourmap(n_colours, colour_map):
@@ -717,7 +717,12 @@ def extract_group_labels_from_landmarks(landmark_manager):
     labels_keys = None
     if landmark_manager.has_landmarks:
         groups_keys = landmark_manager.group_labels
-        labels_keys = [landmark_manager[g].labels for g in groups_keys]
+        labels_keys = []
+        for g in groups_keys:
+            if hasattr(landmark_manager[g], 'labels'):
+                labels_keys.append(landmark_manager[g].labels)
+            else:
+                labels_keys.append(None)
     return groups_keys, labels_keys
 
 
@@ -932,7 +937,7 @@ def render_image(image, renderer, render_landmarks, image_is_masked,
                 **mask_arguments)
 
     # show plot
-    plt.show()
+    renderer.force_draw()
 
     return renderer
 
@@ -1079,6 +1084,6 @@ def render_patches(patches, patch_centers, patches_indices, offset_index,
             figure_size=figure_size)
 
     # show plot
-    plt.show()
+    renderer.force_draw()
 
     return renderer
