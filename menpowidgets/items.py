@@ -1,8 +1,8 @@
 from collections import Sized
 
-from menpo.shape import PointCloud
-from menpo.landmark import LandmarkManager
 from menpo.image import Image
+from menpo.landmark import LandmarkManager
+from menpo.shape import PointCloud
 from menpo.model import PCAModel
 
 
@@ -38,34 +38,33 @@ def view_widget(items, **kwargs):
         If the type of the first item in the list does not have a suitable
         widget in menpowidgets.
     """
+    from . import (visualize_images, visualize_landmarks_2d, visualize_shapes_2d,
+                   visualize_shape_model_2d)
     # We use the first item to select the correct widget
     if not isinstance(items, Sized) or isinstance(items, LandmarkManager):
         template = items
     else:
         template = items[0]
+    # note that the ordering of this list is important - a TriMesh isa
+    # PointCloud, so we must test for the more specialized case first
+    # if we want to do that. Third item is an optional boolean test.
+    cls_to_items_widget = [
+        (Image, visualize_images, None),
+        (PointCloud, visualize_shapes_2d,
+         lambda pc: pc.n_dims == 2),
+        (LandmarkManager, visualize_landmarks_2d,
+         lambda lms: list(lms.values())[0].n_dims == 2),
+        (PCAModel, visualize_shape_model_2d,
+         lambda m: isinstance(m.template, PointCloud) and
+                   m.template.n_dims == 2),
+    ]
 
-    # Select widget based on template's class
-    if isinstance(template, PointCloud) and template.n_dims == 2:
-        from .base import visualize_shapes_2d
-        visualize_shapes_2d(items, **kwargs)
-    elif isinstance(template, LandmarkManager) and template.n_dims == 2:
-        from .base import visualize_landmarks_2d
-        visualize_landmarks_2d(items, **kwargs)
-    elif isinstance(template, Image):
-        from .base import visualize_images
-        visualize_images(items, **kwargs)
-    elif (isinstance(template, PCAModel)
-          and isinstance(template.template_instance, PointCloud)
-          and template.template_instance.n_dims == 2):
-        from .base import visualize_shape_model_2d
-        visualize_shape_model_2d(items, **kwargs)
-    elif (isinstance(template, PCAModel)
-          and isinstance(template.template_instance, Image)):
-        from .base import visualize_appearance_model
-        visualize_appearance_model(items, **kwargs)
-    else:
-        raise ValueError(
-            "No suitable widget found for type {} - Supported types are "
-            "PointCloud, LandmarkManager, Image, PCAModel or "
-            "subclasses of those.".format(
-                type(template)))
+    for (cls, widget, test) in cls_to_items_widget:
+        if isinstance(template, cls) and (test is None or test(template)):
+            return widget(items, **kwargs)
+
+    raise ValueError(
+        "No suitable list visualization found for type {} - valid types are "
+        "{} or subclasses thereof".format(
+            type(template), ', '.format([x[0] for x in cls_to_items_widget])
+        ))
