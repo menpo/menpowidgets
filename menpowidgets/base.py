@@ -9,6 +9,7 @@ import IPython.display as ipydisplay
 from menpo.base import name_of_callable
 from menpo.image import MaskedImage, Image
 from menpo.image.base import _convert_patches_list_to_single_array
+from menpo.landmark import LandmarkManager
 
 from .options import (RendererOptionsWidget, TextPrintWidget,
                       SaveMatplotlibFigureOptionsWidget, AnimationOptionsWidget,
@@ -280,7 +281,7 @@ def visualize_landmarks_2d(landmarks, figure_size=(7, 7),
     print('Initializing...')
 
     # Make sure that landmarks is a list even with one landmark manager member
-    if not isinstance(landmarks, list):
+    if isinstance(landmarks, LandmarkManager):
         landmarks = [landmarks]
 
     # Get the number of landmark managers
