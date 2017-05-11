@@ -953,7 +953,7 @@ class Shape3DOptionsWidget(MenpoWidget):
             if labels is not None:
                 lc = sample_colours_from_colourmap(len(labels), 'jet')
             self.default_options[key]['lines'] = {
-                'line_colour': lc, 'render_lines': True, 'line_width': 4.}
+                'line_colour': lc, 'render_lines': True, 'line_width': 2.}
 
             # Set markers options
             mc = ['red']

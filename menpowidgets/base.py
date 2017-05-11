@@ -9,6 +9,7 @@ import IPython.display as ipydisplay
 from menpo.base import name_of_callable
 from menpo.image import MaskedImage, Image
 from menpo.image.base import _convert_patches_list_to_single_array
+from menpo.shape import TriMesh
 from menpo.visualize import print_dynamic
 
 from .options import (RendererOptionsWidget, TextPrintWidget,
@@ -325,31 +326,53 @@ def visualize_shapes_3d(shapes, browser_style='buttons',
 
         # Create options dictionary
         options = dict()
-        options.update(shape_options_wid.selected_values['lines'])
-        options.update(shape_options_wid.selected_values['markers'])
-        options.update(
-            renderer_options_wid.selected_values['numbering_mayavi'])
-
-        # Correct options based on the type of the shape
-        if hasattr(shapes[i], 'labels'):
-            # If the shape is a LabelledPointUndirectedGraph ...
-            # ...use with_labels
-            options['with_labels'] = \
-                shape_options_wid.selected_values['with_labels']
-            # ...correct colours
-            line_colour = []
-            marker_colour = []
-            for lbl in options['with_labels']:
-                idx = shapes[i].labels.index(lbl)
-                line_colour.append(options['line_colour'][idx])
-                marker_colour.append(options['marker_colour'][idx])
-            options['line_colour'] = line_colour
-            options['marker_colour'] = marker_colour
+        if isinstance(shapes[i], TriMesh):
+            # Note that 3D TriMesh has a totally different set of options
+            # compared to any other PointCloud or PointGraph. However, in order
+            # for visualize_shapes_3d to support TriMeshes, we simply use the
+            # options that are common. This means that most of the widget's
+            # options will have no effect on rendering...
+            options['mesh_type'] = 'wireframe'
+            if shape_options_wid.selected_values['markers']['render_markers']:
+                options['mesh_type'] = 'fancymesh'
+            options['line_width'] = \
+                shape_options_wid.selected_values['lines']['line_width']
+            options['colour'] = \
+                shape_options_wid.selected_values['lines']['line_colour'][0]
+            options['marker_style'] = \
+                shape_options_wid.selected_values['markers']['marker_style']
+            options['marker_size'] = \
+                shape_options_wid.selected_values['markers']['marker_size']
+            options['marker_resolution'] = \
+                shape_options_wid.selected_values['markers']['marker_resolution']
+            options['step'] = \
+                shape_options_wid.selected_values['markers']['step']
         else:
-            # If shape is PointCloud, TriMesh or PointGraph
-            # ...correct colours
-            options['line_colour'] = options['line_colour'][0]
-            options['marker_colour'] = options['marker_colour'][0]
+            options.update(shape_options_wid.selected_values['lines'])
+            options.update(shape_options_wid.selected_values['markers'])
+            options.update(
+                renderer_options_wid.selected_values['numbering_mayavi'])
+
+            # Correct options based on the type of the shape
+            if hasattr(shapes[i], 'labels'):
+                # If the shape is a LabelledPointUndirectedGraph ...
+                # ...use with_labels
+                options['with_labels'] = \
+                    shape_options_wid.selected_values['with_labels']
+                # ...correct colours
+                line_colour = []
+                marker_colour = []
+                for lbl in options['with_labels']:
+                    idx = shapes[i].labels.index(lbl)
+                    line_colour.append(options['line_colour'][idx])
+                    marker_colour.append(options['marker_colour'][idx])
+                options['line_colour'] = line_colour
+                options['marker_colour'] = marker_colour
+            else:
+                # If shape is PointCloud, TriMesh or PointGraph
+                # ...correct colours
+                options['line_colour'] = options['line_colour'][0]
+                options['marker_colour'] = options['marker_colour'][0]
 
         # Render shape with selected options
         save_figure_wid.renderer = shapes[i].view(
