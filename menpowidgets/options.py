@@ -868,7 +868,7 @@ class Shape3DOptionsWidget(MenpoWidget):
                 labels=[' '], with_labels=None, render_function=None,
                 description='Labels', buttons_style=self.buttons_style)
         self.labels_options_wid.layout.margin = '0px 0px 10px 0px'
-        self.labels_options_wid.container.layout.border = '2px solid'
+        # self.labels_options_wid.container.layout.border = '2px solid'
 
         # Group widgets
         self.box_1 = ipywidgets.Accordion([self.marker_options_wid,
@@ -876,7 +876,7 @@ class Shape3DOptionsWidget(MenpoWidget):
         self.box_1.set_title(0, 'Markers')
         self.box_1.set_title(1, 'Lines')
         self.box_2 = ipywidgets.Box([self.box_1])
-        self.box_2.layout.border = '2px solid'
+        # self.box_2.layout.border = '2px solid'
         self.box_2.layout.display = 'table'
         self.container = ipywidgets.VBox([self.labels_options_wid, self.box_2])
 
@@ -962,7 +962,7 @@ class Shape3DOptionsWidget(MenpoWidget):
             self.default_options[key]['markers'] = {
                 'marker_colour': mc, 'render_markers': True,
                 'marker_size': None, 'marker_style': 'sphere',
-                'marker_resolution': 8}
+                'marker_resolution': 8, 'step': 1}
 
             # Set labels
             self.default_options[key]['with_labels'] = labels
@@ -3526,10 +3526,7 @@ class SaveMayaviFigureOptionsWidget(ipywidgets.Box):
         """
         self.container.box_style = style
         self.container.border = '0px'
-        if style != '':
-            self.save_button.button_style = 'primary'
-        else:
-            self.save_button.button_style = ''
+        self.save_button.button_style = 'primary'
 
 
 class PatchOptionsWidget(MenpoWidget):

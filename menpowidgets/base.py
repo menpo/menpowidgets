@@ -320,6 +320,9 @@ def visualize_shapes_3d(shapes, browser_style='buttons',
         # Get selected shape index
         i = shape_number_wid.selected_values if n_shapes > 1 else 0
 
+        # Update info text widget
+        update_info(shapes[i], custom_info_callback=custom_info_callback)
+
         # Create options dictionary
         options = dict()
         options.update(shape_options_wid.selected_values['lines'])
@@ -339,7 +342,7 @@ def visualize_shapes_3d(shapes, browser_style='buttons',
             for lbl in options['with_labels']:
                 idx = shapes[i].labels.index(lbl)
                 line_colour.append(options['line_colour'][idx])
-                marker_colour.append(options['marker_face_colour'][idx])
+                marker_colour.append(options['marker_colour'][idx])
             options['line_colour'] = line_colour
             options['marker_colour'] = marker_colour
         else:
@@ -351,13 +354,10 @@ def visualize_shapes_3d(shapes, browser_style='buttons',
         # Render shape with selected options
         save_figure_wid.renderer = shapes[i].view(
             figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-            step=1, alpha=1.0, **options)
+            alpha=1.0, **options)
 
         # Force rendering
         save_figure_wid.renderer.force_draw()
-
-        # Update info text widget
-        update_info(shapes[i], custom_info_callback=custom_info_callback)
 
     # Define function that updates the info text
     def update_info(shape, custom_info_callback=None):
