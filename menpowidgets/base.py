@@ -704,9 +704,6 @@ def visualize_landmarks_3d(landmarks, browser_style='buttons',
 
     # Define the styling options
     main_style = 'info'
-    tabs_style = 'warning'
-    tabs_border = '2px solid'
-    tabs_margin = '15px'
 
     # Define render function
     def render_function(change):
@@ -718,50 +715,73 @@ def visualize_landmarks_3d(landmarks, browser_style='buttons',
         i = landmark_number_wid.selected_values if n_landmarks > 1 else 0
         g = landmark_options_wid.selected_values['landmarks']['group']
 
+        # update info text widget
+        update_info(landmarks[i], g, custom_info_callback=custom_info_callback)
+
         if landmark_options_wid.selected_values['landmarks']['render_landmarks']:
             # get shape
             shape = landmarks[i][g]
 
-            # Create options dictionary
             options = dict()
-            options.update(landmark_options_wid.selected_values['lines'])
-            options.update(landmark_options_wid.selected_values['markers'])
-            options.update(
-                renderer_options_wid.selected_values['numbering_mayavi'])
-
-            # Correct options based on the type of the shape
-            if hasattr(shape, 'labels'):
-                # If the shape is a LabelledPointUndirectedGraph ...
-                # ...use with_labels
-                options['with_labels'] = \
-                    landmark_options_wid.selected_values['landmarks']['with_labels']
-                # ...correct colours
-                line_colour = []
-                marker_colour = []
-                for lbl in options['with_labels']:
-                    idx = shape.labels.index(lbl)
-                    line_colour.append(options['line_colour'][idx])
-                    marker_colour.append(options['marker_face_colour'][idx])
-                options['line_colour'] = line_colour
-                options['marker_colour'] = marker_colour
+            if isinstance(shape, TriMesh):
+                # Note that 3D TriMesh has a totally different set of options
+                # compared to any other PointCloud or PointGraph. However, in
+                # order for visualize_landmarks_3d to support TriMeshes, we
+                # simply use the options that are common. This means that most
+                # of the widget's options will have no effect on rendering...
+                options['mesh_type'] = 'wireframe'
+                if landmark_options_wid.selected_values['markers'][
+                    'render_markers']:
+                    options['mesh_type'] = 'fancymesh'
+                options['line_width'] = \
+                    landmark_options_wid.selected_values['lines']['line_width']
+                options['colour'] = \
+                    landmark_options_wid.selected_values['lines']['line_colour'][0]
+                options['marker_style'] = \
+                    landmark_options_wid.selected_values['markers']['marker_style']
+                options['marker_size'] = \
+                    landmark_options_wid.selected_values['markers']['marker_size']
+                options['marker_resolution'] = \
+                    landmark_options_wid.selected_values['markers'][
+                        'marker_resolution']
+                options['step'] = \
+                    landmark_options_wid.selected_values['markers']['step']
             else:
-                # If shape is PointCloud, TriMesh or PointGraph
-                # ...correct colours
-                options['line_colour'] = options['line_colour'][0]
-                options['marker_colour'] = options['marker_colour'][0]
+                options.update(landmark_options_wid.selected_values['lines'])
+                options.update(landmark_options_wid.selected_values['markers'])
+                options.update(
+                    renderer_options_wid.selected_values['numbering_mayavi'])
+
+                # Correct options based on the type of the shape
+                if hasattr(shape, 'labels'):
+                    # If the shape is a LabelledPointUndirectedGraph ...
+                    # ...use with_labels
+                    options['with_labels'] = \
+                        landmark_options_wid.selected_values['landmarks']['with_labels']
+                    # ...correct colours
+                    line_colour = []
+                    marker_colour = []
+                    for lbl in options['with_labels']:
+                        idx = shape.labels.index(lbl)
+                        line_colour.append(options['line_colour'][idx])
+                        marker_colour.append(options['marker_colour'][idx])
+                    options['line_colour'] = line_colour
+                    options['marker_colour'] = marker_colour
+                else:
+                    # If shape is PointCloud, TriMesh or PointGraph
+                    # ...correct colours
+                    options['line_colour'] = options['line_colour'][0]
+                    options['marker_colour'] = options['marker_colour'][0]
 
             # Render shape with selected options
             save_figure_wid.renderer = shape.view(
                 figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-                step=1, alpha=1.0, **options)
+                alpha=1.0, **options)
 
             # Force rendering
             save_figure_wid.renderer.force_draw()
         else:
             ipydisplay.clear_output()
-
-        # update info text widget
-        update_info(landmarks[i], g, custom_info_callback=custom_info_callback)
 
     # Define function that updates the info text
     def update_info(landmarks, group, custom_info_callback=None):
@@ -792,23 +812,12 @@ def visualize_landmarks_3d(landmarks, browser_style='buttons',
     first_label = labels_keys[0] if labels_keys else None
     landmark_options_wid = LandmarkOptionsWidget(
         group_keys=groups_keys, labels_keys=labels_keys,
-        type='2D', render_function=render_function, style=main_style,
-        suboptions_style=tabs_style)
-    landmark_options_wid.container.margin = tabs_margin
-    landmark_options_wid.container.border = tabs_border
+        type='3D', render_function=render_function)
     renderer_options_wid = RendererOptionsWidget(
-        options_tabs=['zoom_one', 'axes', 'numbering_matplotlib', 'legend'],
-        labels=first_label, axes_x_limits=0.1, axes_y_limits=0.1,
-        render_function=render_function,  style=tabs_style)
-    renderer_options_wid.container.margin = tabs_margin
-    renderer_options_wid.container.border = tabs_border
-    info_wid = TextPrintWidget(text_per_line=[''], style=tabs_style)
-    info_wid.container.margin = tabs_margin
-    info_wid.container.border = tabs_border
-    save_figure_wid = SaveMatplotlibFigureOptionsWidget(renderer=None,
-                                                        style=tabs_style)
-    save_figure_wid.container.margin = tabs_margin
-    save_figure_wid.container.border = tabs_border
+        options_tabs=['numbering_mayavi'], labels=first_label,
+        render_function=render_function)
+    info_wid = TextPrintWidget(text_per_line=[''])
+    save_figure_wid = SaveMayaviFigureOptionsWidget()
 
     # Group widgets
     if n_landmarks > 1:
@@ -853,7 +862,7 @@ def visualize_landmarks_3d(landmarks, browser_style='buttons',
 
     # Set widget's style
     wid.box_style = main_style
-    wid.layout.border = '2px solid'
+    wid.layout.border = '2px solid ' + map_styles_to_hex_colours(main_style)
 
     # Display final widget
     final_box = ipywidgets.Box([wid])
@@ -862,6 +871,7 @@ def visualize_landmarks_3d(landmarks, browser_style='buttons',
 
     # Trigger initial visualization
     render_function({})
+    print_dynamic('')
 
 
 def visualize_images(images, figure_size=(7, 7), browser_style='buttons',
