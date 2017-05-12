@@ -13,7 +13,7 @@ requirements:
     - ipython >5.0,<7.0
     - jupyter 1.*
     - ipywidgets >=6.0,<7.0
-    - traitlets >=4.1,<5.0
+    - traitlets >=4.3,<5.0
 
 test:
   imports:
