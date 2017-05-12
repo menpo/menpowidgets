@@ -390,10 +390,13 @@ def visualize_shapes_3d(shapes, browser_style='buttons',
         text_per_line = [
             "> {}".format(name_of_callable(shape)),
             "> {} points".format(shape.n_points),
-            "> Bounds: [{0:.1f}-{1:.1f}]W, [{2:.1f}-{3:.1f}]H".format(
-                min_b[0], max_b[0], min_b[1], max_b[1]),
-            "> Range: {0:.1f}W, {1:.1f}H".format(rang[0], rang[1]),
-            "> Centre of mass: ({0:.1f}, {1:.1f})".format(cm[0], cm[1]),
+            "> Bounds: [{0:.1f}-{1:.1f}]X, [{2:.1f}-{3:.1f}]Y, "
+            "[{4:.1f}-{5:.1f}]Z".format(min_b[0], max_b[0], min_b[1], max_b[1],
+                                        min_b[2], max_b[2]),
+            "> Range: {0:.1f}X, {1:.1f}Y, {2:.1f}Z".format(rang[0], rang[1],
+                                                           rang[2]),
+            "> Centre of mass: ({0:.1f}X, {1:.1f}Y, {2:.1f}Z)".format(
+                cm[0], cm[1], cm[2]),
             "> Norm: {0:.2f}".format(shape.norm())]
         if custom_info_callback is not None:
             # iterate over the list of messages returned by the callback
@@ -420,7 +423,6 @@ def visualize_shapes_3d(shapes, browser_style='buttons',
     if n_shapes > 1:
         # Define function that updates options' widgets state
         def update_widgets(change):
-            # Get current shape and check if it has labels
             # Get current shape and check if it has labels
             i = change['new']
             labels = None
@@ -792,10 +794,13 @@ def visualize_landmarks_3d(landmarks, browser_style='buttons',
             text_per_line = [
                 "> {} landmark points".format(landmarks[group].n_points),
                 "> {}".format(name_of_callable(landmarks[group])),
-                "> Bounds: [{0:.1f}-{1:.1f}]W, [{2:.1f}-{3:.1f}]H".format(
-                    min_b[0], max_b[0], min_b[1], max_b[1]),
-                "> Range: {0:.1f}W, {1:.1f}H".format(rang[0], rang[1]),
-                "> Centre of mass: ({0:.1f}, {1:.1f})".format(cm[0], cm[1]),
+                "> Bounds: [{0:.1f}-{1:.1f}]X, [{2:.1f}-{3:.1f}]Y, "
+                "[{4:.1f}-{5:.1f}]Z".format(
+                    min_b[0], max_b[0], min_b[1], max_b[1], min_b[2], max_b[2]),
+                "> Range: {0:.1f}X, {1:.1f}Y, {2:.1f}Z".format(rang[0], rang[1],
+                                                               rang[2]),
+                "> Centre of mass: ({0:.1f}X, {1:.1f}Y, {2:.1f}Z)".format(
+                    cm[0], cm[1], cm[2]),
                 "> Norm: {0:.2f}".format(landmarks[group].norm())]
             if custom_info_callback is not None:
                 # iterate over the list of messages returned by the callback

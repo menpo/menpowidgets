@@ -3,137 +3,166 @@ from collections import Sized
 import ipywidgets
 import IPython.display as ipydisplay
 
-from menpowidgets.options import (RendererOptionsWidget, TextPrintWidget,
-                                  AnimationOptionsWidget, SaveMayaviFigureOptionsWidget)
+from menpo.base import name_of_callable
+from menpo.shape import ColouredTriMesh, TexturedTriMesh
+from menpo.visualize import print_dynamic
+from menpowidgets.options import (TextPrintWidget, AnimationOptionsWidget,
+                                  SaveMayaviFigureOptionsWidget,
+                                  Mesh3DOptionsWidget)
 from menpowidgets.style import map_styles_to_hex_colours
 from menpowidgets.tools import LogoWidget
 
 
-def visualize_meshes(meshes, style='coloured', browser_style='buttons'):
+def visualize_meshes(meshes, browser_style='buttons', custom_info_callback=None):
+    r"""
+    Widget that allows browsing through a `list` of
+    3D meshes. The supported objects are:
+
+            ==================================
+            Object
+            ==================================
+            `menpo.shape.TriMesh`
+            `menpo.shape.ColouredTriMesdh`
+            `menpo.shape.TexturedTriMesh`
+            ==================================
+
+    Any instance of the above can be combined in the input `list`.
+
+    Parameters
+    ----------
+    meshes : `list`
+        The `list` of objects to be visualized. It can contain a combination of
+
+            ==================================
+            Object
+            ==================================
+            `menpo.shape.TriMesh`
+            `menpo.shape.ColouredTriMesdh`
+            `menpo.shape.TexturedTriMesh`
+            ==================================
+
+        or subclasses of those.
+    browser_style : ``{'buttons', 'slider'}``, optional
+        It defines whether the selector of the objects will have the form of
+        plus/minus buttons or a slider.
+    custom_info_callback: `function` or ``None``, optional
+        If not ``None``, it should be a function that accepts a 3D mesh
+        and returns a list of custom messages to be printed about it. Each
+        custom message will be printed in a separate line.
+    """
     # Ensure that the code is being run inside a Jupyter kernel!!
     from menpowidgets.utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
     print('Initializing...')
 
+    # Make sure that meshes is a list even with one member
     if not isinstance(meshes, Sized):
         meshes = [meshes]
 
+    # Get the number of meshes
     n_meshes = len(meshes)
 
     # Define the styling options
-    if style == 'coloured':
-        logo_style = 'warning'
-        widget_box_style = 'warning'
-        widget_border_radius = 10
-        widget_border_width = 1
-        animation_style = 'warning'
-        info_style = 'info'
-        renderer_style = 'warning'
-        renderer_tabs_style = 'info'
-        save_figure_style = 'danger'
-    else:
-        logo_style = 'minimal'
-        widget_box_style = ''
-        widget_border_radius = 0
-        widget_border_width = 0
-        animation_style = 'minimal'
-        renderer_style = 'minimal'
-        renderer_tabs_style = 'minimal'
-        info_style = 'minimal'
-        save_figure_style = 'minimal'
+    main_style = 'warning'
 
     # Define render function
     def render_function(_):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
+        # Clear current figure
+        save_figure_wid.renderer.clear_figure()
         ipydisplay.clear_output(wait=True)
 
-        # Get selected pointcloud index
-        mesh_no = mesh_number_wid.selected_values if n_meshes > 1 else 0
+        # Get selected mesh index
+        i = mesh_number_wid.selected_values if n_meshes > 1 else 0
 
-        # Render shape instance with selected options
-        options = renderer_options_wid.selected_values['trimesh']
-
-        # Clear figure
-        save_figure_wid.renderer.clear_figure()
+        # Update info text widget
+        update_info(meshes[i], custom_info_callback=custom_info_callback)
 
         # Render instance
-        renderer = meshes[mesh_no].view(
-            figure_id=save_figure_wid.renderer.figure_id,
-            new_figure=False, **options)
-
-        # Save the current figure id
-        save_figure_wid.renderer = renderer
-
-        # Update info
-        update_info(meshes[mesh_no])
+        save_figure_wid.renderer = meshes[i].view(
+            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+            **mesh_options_wid.selected_values)
 
         # Force rendering
-        renderer.force_draw()
+        save_figure_wid.renderer.force_draw()
 
     # Define function that updates the info text
-    def update_info(mesh):
-        from menpo.shape import TriMesh, TexturedTriMesh, ColouredTriMesh
-        label = 'Unknown Mesh Type'
-        cls_to_label = {
-            TriMesh: 'TriMesh',
-            TexturedTriMesh: 'TexturedTriMesh',
-            ColouredTriMesh: 'ColouredTriMesh'
-        }
-        for cls in cls_to_label:
-            if isinstance(mesh, cls):
-                label = cls_to_label[cls]
-
+    def update_info(mesh, custom_info_callback=None):
+        min_b, max_b = mesh.bounds()
+        rang = mesh.range()
+        cm = mesh.centre()
         text_per_line = [
-            "> {}".format(mesh),
-            "> Path : {}".format(mesh.path if hasattr(mesh, 'path') else '-'),
-            "> range : {}".format(mesh.range()),
-            "> min bounds : {}".format(mesh.bounds()[0]),
-            "> max bounds : {}".format(mesh.bounds()[1])
-        ]
+            "> {}".format(name_of_callable(mesh)),
+            "> {} points".format(mesh.n_points),
+            "> Bounds: [{0:.1f}-{1:.1f}]X, [{2:.1f}-{3:.1f}]Y, "
+            "[{4:.1f}-{5:.1f}]Z".format(
+                min_b[0], max_b[0], min_b[1], max_b[1], min_b[2], max_b[2]),
+            "> Range: {0:.1f}X, {1:.1f}Y, {2:.1f}Z".format(rang[0], rang[1],
+                                                           rang[2]),
+            "> Centre of mass: ({0:.1f}X, {1:.1f}Y, {2:.1f}Z)".format(
+                cm[0], cm[1], cm[2]),
+            "> Norm: {0:.2f}".format(mesh.norm())]
+        if custom_info_callback is not None:
+            # iterate over the list of messages returned by the callback
+            # function and append them in the text_per_line.
+            for msg in custom_info_callback(mesh):
+                text_per_line.append('> {}'.format(msg))
         info_wid.set_widget_state(text_per_line=text_per_line)
 
-    renderer_options_wid = RendererOptionsWidget(
-        options_tabs=['trimesh'], labels=None, render_function=render_function,
-        style=renderer_style, tabs_style=renderer_tabs_style)
-    info_wid = TextPrintWidget(text_per_line=[''] * 1, style=info_style)
-    save_figure_wid = SaveMayaviFigureOptionsWidget(renderer=None,
-                                                    style=save_figure_style)
+    # Create widgets
+    mesh_options_wid = Mesh3DOptionsWidget(
+        textured=(isinstance(meshes[0], ColouredTriMesh) or
+                  isinstance(meshes[0], TexturedTriMesh)),
+        render_function=render_function)
+    info_wid = TextPrintWidget(text_per_line=[''])
+    save_figure_wid = SaveMayaviFigureOptionsWidget()
+
     # Group widgets
     if n_meshes > 1:
+        # Define function that updates options' widgets state
+        def update_widgets(change):
+            i = change['new']
+
+            # Update shape options
+            mesh_options_wid.set_widget_state(
+                textured=(isinstance(meshes[i], ColouredTriMesh) or
+                          isinstance(meshes[i], TexturedTriMesh)),
+                allow_callback=True)
+
         # selection slider
         index = {'min': 0, 'max': n_meshes-1, 'step': 1, 'index': 0}
         mesh_number_wid = AnimationOptionsWidget(
-            index, render_function=render_function, index_style=browser_style,
-            interval=0.2, description='Mesh ', loop_enabled=True,
-            continuous_update=False, style=animation_style)
+            index, render_function=update_widgets, index_style=browser_style,
+            interval=0.2, description='Mesh', loop_enabled=True,
+            continuous_update=False)
 
         # Header widget
-        header_wid = ipywidgets.HBox(
-            children=[LogoWidget(style=logo_style), mesh_number_wid],
-            align='start')
+        logo_wid = LogoWidget(style=main_style)
+        logo_wid.layout.margin = '0px 10px 0px 0px'
+        header_wid = ipywidgets.HBox([logo_wid, mesh_number_wid])
+        header_wid.layout.align_items = 'center'
+        header_wid.layout.margin = '0px 0px 10px 0px'
     else:
         # Header widget
-        header_wid = LogoWidget(style=logo_style)
-    header_wid.margin = '0.1cm'
-    options_box = ipywidgets.Tab(children=[info_wid, renderer_options_wid,
-                                           save_figure_wid], margin='0.1cm')
-    tab_titles = ['Info', 'Renderer', 'Export']
+        header_wid = LogoWidget(style=main_style)
+        header_wid.layout.margin = '0px 10px 0px 0px'
+    options_box = ipywidgets.Tab([info_wid, mesh_options_wid, save_figure_wid])
+    tab_titles = ['Info', 'Mesh', 'Export']
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
     if n_meshes > 1:
-        wid = ipywidgets.VBox(children=[header_wid, options_box], align='start')
+        wid = ipywidgets.VBox([header_wid, options_box])
     else:
-        wid = ipywidgets.HBox(children=[header_wid, options_box], align='start')
+        wid = ipywidgets.HBox([header_wid, options_box])
 
     # Set widget's style
-    wid.box_style = widget_box_style
-    wid.border_radius = widget_border_radius
-    wid.border_width = widget_border_width
-    wid.border_color = map_styles_to_hex_colours(widget_box_style)
+    wid.box_style = main_style
+    wid.layout.border = '2px solid ' + map_styles_to_hex_colours(main_style)
 
     # Display final widget
-    ipydisplay.display(wid)
+    final_box = ipywidgets.Box([wid])
+    final_box.layout.display = 'flex'
+    ipydisplay.display(final_box)
 
     # Trigger initial visualization
     render_function({})
+    print_dynamic('')

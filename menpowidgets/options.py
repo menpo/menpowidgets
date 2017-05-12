@@ -1293,7 +1293,7 @@ class Mesh3DOptionsWidget(MenpoWidget):
         if key not in self.default_options:
             if textured:
                 self.default_options[key] = {
-                    'render_texture': True, 'mesh_type': 'wireframe',
+                    'render_texture': True, 'mesh_type': 'surface',
                     'ambient_light': 0.0, 'specular_light': 0.0,
                     'line_width': 2., 'colour': 'red', 'alpha': 1.0}
             else:
