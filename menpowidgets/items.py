@@ -2,7 +2,7 @@ from collections import Sized
 
 from menpo.image import Image
 from menpo.landmark import LandmarkManager
-from menpo.shape import PointCloud
+from menpo.shape import PointCloud, TriMesh
 from menpo.model import PCAModel
 
 
@@ -40,7 +40,8 @@ def view_widget(items, **kwargs):
     """
     from . import (visualize_images, visualize_landmarks_2d,
                    visualize_landmarks_3d, visualize_shapes_2d,
-                   visualize_shapes_3d, visualize_shape_model_2d)
+                   visualize_shapes_3d, visualize_shape_model_2d,
+                   visualize_meshes_3d)
     # We use the first item to select the correct widget
     if not isinstance(items, Sized) or isinstance(items, LandmarkManager):
         template = items
@@ -51,6 +52,8 @@ def view_widget(items, **kwargs):
     # if we want to do that. Third item is an optional boolean test.
     cls_to_items_widget = [
         (Image, visualize_images, None),
+        (TriMesh, visualize_meshes_3d,
+         lambda m: m.n_dims == 3),
         (PointCloud, visualize_shapes_2d,
          lambda pc: pc.n_dims == 2),
         (PointCloud, visualize_shapes_3d,
@@ -60,8 +63,7 @@ def view_widget(items, **kwargs):
         (LandmarkManager, visualize_landmarks_3d,
          lambda lms: list(lms.values())[0].n_dims == 3),
         (PCAModel, visualize_shape_model_2d,
-         lambda m: isinstance(m.template, PointCloud) and
-                   m.template.n_dims == 2)
+         lambda m: isinstance(m.template, PointCloud) and m.template.n_dims == 2)
     ]
 
     for (cls, widget, test) in cls_to_items_widget:

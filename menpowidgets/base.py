@@ -843,7 +843,7 @@ def visualize_landmarks_3d(landmarks, browser_style='buttons',
         landmark_number_wid = AnimationOptionsWidget(
             index, render_function=update_widgets, index_style=browser_style,
             interval=0.2, description='Shape', loop_enabled=True,
-            continuous_update=False, style=main_style)
+            continuous_update=False)
 
         # Header widget
         logo_wid = LogoWidget(style=main_style)
