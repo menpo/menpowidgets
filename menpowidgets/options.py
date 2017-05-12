@@ -319,7 +319,7 @@ class AnimationOptionsWidget(MenpoWidget):
             self.index_wid.button_plus.button_style = 'primary'
             self.index_wid.button_minus.button_style = 'primary'
         else:
-            self.index_wid.slider.slider_color = \
+            self.index_wid.slider.style.handle_color = \
                 map_styles_to_hex_colours(style, False)
 
     def set_widget_state(self, index, allow_callback=True):
@@ -1874,33 +1874,33 @@ class RendererOptionsWidget(MenpoWidget):
                 tmp = self.options_widgets[i].marker_colour_widget
                 tmp.apply_to_all_button.button_style = style
             elif o == 'trimesh':
-                self.options_widgets[i].alpha_slider.slider_color = \
+                self.options_widgets[i].alpha_slider.style.handle_color = \
                     map_styles_to_hex_colours(style)
             elif o == 'textured_trimesh':
-                self.options_widgets[i].ambient_slider.slider_color = \
+                self.options_widgets[i].ambient_slider.style.handle_color = \
                     map_styles_to_hex_colours(style)
-                self.options_widgets[i].specular_slider.slider_color = \
+                self.options_widgets[i].specular_slider.style.handle_color = \
                     map_styles_to_hex_colours(style)
-                self.options_widgets[i].alpha_slider.slider_color = \
+                self.options_widgets[i].alpha_slider.style.handle_color = \
                     map_styles_to_hex_colours(style)
             elif o == 'image_matplotlib':
-                self.options_widgets[i].alpha_slider.slider_color = \
+                self.options_widgets[i].alpha_slider.style.handle_color = \
                     map_styles_to_hex_colours(style)
             elif o == 'zoom_two':
                 self.options_widgets[i].x_button_minus.button_style = 'primary'
                 self.options_widgets[i].x_button_plus.button_style = 'primary'
                 self.options_widgets[i].y_button_minus.button_style = 'primary'
                 self.options_widgets[i].y_button_plus.button_style = 'primary'
-                self.options_widgets[i].x_zoom_slider.slider_color = \
+                self.options_widgets[i].x_zoom_slider.style.handle_color = \
                     map_styles_to_hex_colours('primary')
-                self.options_widgets[i].y_zoom_slider.slider_color = \
+                self.options_widgets[i].y_zoom_slider.style.handle_color = \
                     map_styles_to_hex_colours('primary')
                 self.options_widgets[i].lock_aspect_button.button_style = \
                     'warning'
             elif o == 'zoom_one':
                 self.options_widgets[i].button_minus.button_style = 'primary'
                 self.options_widgets[i].button_plus.button_style = 'primary'
-                self.options_widgets[i].zoom_slider.slider_color = \
+                self.options_widgets[i].zoom_slider.style.handle_color = \
                     map_styles_to_hex_colours('primary')
             elif o == 'axes':
                 self.options_widgets[i].axes_ticks_widget.axes_x_ticks_toggles.button_style = \
@@ -2454,9 +2454,9 @@ class ImageOptionsWidget(MenpoWidget):
         """
         self.container.box_style = style
         self.container.border = '0px'
-        self.channels_wid.single_slider.slider_color = \
+        self.channels_wid.single_slider.style.handle_color = \
             map_styles_to_hex_colours(style)
-        self.channels_wid.multiple_slider.slider_color = \
+        self.channels_wid.multiple_slider.style.handle_color = \
             map_styles_to_hex_colours(style)
 
     def set_widget_state(self, n_channels, image_is_masked,
@@ -2807,6 +2807,8 @@ class LandmarkOptionsWidget(MenpoWidget):
         """
         self.container.box_style = style
         self.container.border = '0px'
+        self.group_slider.style.handle_color = map_styles_to_hex_colours(style,
+                                                                         False)
 
     def get_key(self, group_keys, labels_keys):
         r"""
@@ -3882,9 +3884,9 @@ class PatchOptionsWidget(MenpoWidget):
         """
         self.container.box_style = style
         self.container.border = '0px'
-        self.slicing_wid.single_slider.slider_color = \
+        self.slicing_wid.single_slider.style.handle_color = \
             map_styles_to_hex_colours(style)
-        self.slicing_wid.multiple_slider.slider_color = \
+        self.slicing_wid.multiple_slider.style.handle_color = \
             map_styles_to_hex_colours(style)
 
     def set_widget_state(self, n_patches, n_offsets, allow_callback=True):
@@ -4387,11 +4389,11 @@ class PlotMatplotlibOptionsWidget(MenpoWidget):
         tmp_style = 'primary'
         self.zoom_wid.x_button_minus.button_style = tmp_style
         self.zoom_wid.x_button_plus.button_style = tmp_style
-        self.zoom_wid.x_zoom_slider.slider_color = map_styles_to_hex_colours(
+        self.zoom_wid.x_zoom_slider.style.handle_color = map_styles_to_hex_colours(
             tmp_style)
         self.zoom_wid.y_button_minus.button_style = tmp_style
         self.zoom_wid.y_button_plus.button_style = tmp_style
-        self.zoom_wid.y_zoom_slider.slider_color = map_styles_to_hex_colours(
+        self.zoom_wid.y_zoom_slider.style.handle_color = map_styles_to_hex_colours(
             tmp_style)
         self.zoom_wid.lock_aspect_button.button_style = 'warning'
 
@@ -4879,24 +4881,12 @@ class LinearModelParametersWidget(MenpoWidget):
         """
         self.container.box_style = style
         self.container.border = '0px'
-        if style != '':
-            self.play_stop_toggle.button_style = self._toggle_play_style
-            self.fast_forward_button.button_style = 'info'
-            self.fast_backward_button.button_style = 'info'
-            self.loop_toggle.button_style = 'warning'
-            self.reset_button.button_style = 'danger'
-            self.plot_button.button_style = 'primary'
-            for s in self.sliders:
-                s.slider_color = map_styles_to_hex_colours(style, False)
-        else:
-            self.play_stop_toggle.button_style = ''
-            self.fast_forward_button.button_style = ''
-            self.fast_backward_button.button_style = ''
-            self.loop_toggle.button_style = ''
-            self.reset_button.button_style = ''
-            self.plot_button.button_style = ''
-            for s in self.sliders:
-                s.slider_color = map_styles_to_hex_colours('', False)
+        self.play_stop_toggle.button_style = self._toggle_play_style
+        self.fast_forward_button.button_style = 'info'
+        self.fast_backward_button.button_style = 'info'
+        self.loop_toggle.button_style = 'warning'
+        self.reset_button.button_style = 'danger'
+        self.plot_button.button_style = 'primary'
 
     def stop_animation(self):
         r"""
@@ -5029,7 +5019,7 @@ class LinearModelParametersWidget(MenpoWidget):
                         max=params_bounds[1],
                         step=params_step, value=0., width='8cm',
                         continuous_update=self.continuous_update)
-                    slider_wid.slider_color = map_styles_to_hex_colours(
+                    slider_wid.style.handle_color = map_styles_to_hex_colours(
                         self.container.box_style, False)
                     tmp = ipywidgets.HBox([slider_title, slider_wid])
                     tmp.layout.align_items = 'center'
@@ -5339,14 +5329,14 @@ class CameraSnapshotWidget(MenpoWidget):
             self.close_but.button_style = 'danger'
             self.zoom_widget.button_plus.button_style = 'warning'
             self.zoom_widget.button_minus.button_style = 'warning'
-            self.zoom_widget.zoom_slider.slider_color = \
+            self.zoom_widget.zoom_slider.style.handle_color = \
                 map_styles_to_hex_colours('warning', False)
         else:
             self.snapshot_but.button_style = ''
             self.close_but.button_style = ''
             self.zoom_widget.button_plus.button_style = ''
             self.zoom_widget.button_minus.button_style = ''
-            self.zoom_widget.zoom_slider.slider_color = \
+            self.zoom_widget.zoom_slider.style.handle_color = \
                 map_styles_to_hex_colours('', False)
 
 

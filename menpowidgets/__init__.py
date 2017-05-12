@@ -4,7 +4,8 @@ from .base import (visualize_patches, webcam_widget, plot_graph,
                    visualize_images, visualize_shapes_2d, visualize_shapes_3d,
                    visualize_landmarks_2d, visualize_landmarks_3d,
                    visualize_shape_model_2d, visualize_appearance_model,
-                   visualize_meshes_3d, save_mayavi_figure)
+                   visualize_meshes_3d, save_mayavi_figure,
+                   visualize_shape_model_3d)
 from .menpofitwidgets import *
 from .menpo3dwidgets import *
 

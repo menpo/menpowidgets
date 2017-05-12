@@ -41,7 +41,7 @@ def view_widget(items, **kwargs):
     from . import (visualize_images, visualize_landmarks_2d,
                    visualize_landmarks_3d, visualize_shapes_2d,
                    visualize_shapes_3d, visualize_shape_model_2d,
-                   visualize_meshes_3d)
+                   visualize_meshes_3d, visualize_shape_model_3d)
     # We use the first item to select the correct widget
     if not isinstance(items, Sized) or isinstance(items, LandmarkManager):
         template = items
@@ -63,7 +63,11 @@ def view_widget(items, **kwargs):
         (LandmarkManager, visualize_landmarks_3d,
          lambda lms: list(lms.values())[0].n_dims == 3),
         (PCAModel, visualize_shape_model_2d,
-         lambda m: isinstance(m.template, PointCloud) and m.template.n_dims == 2)
+         lambda m: isinstance(m.template_instance, PointCloud)
+                   and m.template_instance.n_dims == 2),
+        (PCAModel, visualize_shape_model_3d,
+         lambda m: isinstance(m.template_instance, PointCloud)
+                   and m.template_instance.n_dims == 3)
     ]
 
     for (cls, widget, test) in cls_to_items_widget:

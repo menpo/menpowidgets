@@ -1861,7 +1861,6 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
     if n_levels > 1:
         # Define function that updates options' widgets state
         def update_widgets(change):
-            print(n_parameters[change['new']])
             model_parameters_wid.set_widget_state(
                 n_parameters=n_parameters[change['new']],
                 params_str='Parameter ', allow_callback=True)
@@ -1906,6 +1905,203 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
 
     # Trigger initial visualization
     render_function({})
+
+
+def visualize_shape_model_3d(shape_model, n_parameters=5, mode='multiple',
+                             parameters_bounds=(-15.0, 15.0)):
+    r"""
+    Widget that allows the dynamic visualization of a multi-scale linear
+    statistical 3D shape model.
+
+    Parameters
+    ----------
+    shape_model : `list` of `menpo.shape.PCAModel` or `subclass`
+        The multi-scale shape model to be visualized. Note that each level can
+        have different number of components.
+    n_parameters : `int` or `list` of `int` or ``None``, optional
+        The number of principal components to be used for the parameters
+        sliders. If `int`, then the number of sliders per level is the minimum
+        between `n_parameters` and the number of active components per level.
+        If `list` of `int`, then a number of sliders is defined per level.
+        If ``None``, all the active components per level will have a slider.
+    mode : ``{'single', 'multiple'}``, optional
+        If ``'single'``, then only a single slider is constructed along with a
+        drop down menu. If ``'multiple'``, then a slider is constructed for each
+        parameter.
+    parameters_bounds : (`float`, `float`), optional
+        The minimum and maximum bounds, in std units, for the sliders.
+    """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
+    print_dynamic('Initializing...')
+
+    # Make sure that shape_model is a list even with one member
+    if not isinstance(shape_model, list):
+        shape_model = [shape_model]
+
+    # Get the number of levels (i.e. number of shape models)
+    n_levels = len(shape_model)
+
+    # Check if the model is TriMesh or any other 3D shape class
+    is_trimesh = isinstance(shape_model[0].template_instance, TriMesh)
+
+    # Define the styling options
+    main_style = 'warning'
+
+    # Get the maximum number of components per level
+    max_n_params = [sp.n_active_components for sp in shape_model]
+
+    # Check the given number of parameters (the returned n_parameters is a list
+    # of len n_scales)
+    n_parameters = check_n_parameters(n_parameters, n_levels, max_n_params)
+
+    # Define render function
+    def render_function(change):
+        # Clear current figure, but wait until the generation of the new data
+        # that will be rendered
+        save_figure_wid.renderer.clear_figure()
+        ipydisplay.clear_output(wait=True)
+
+        # Get selected level
+        level = 0
+        if n_levels > 1:
+            level = level_wid.value
+
+        # Compute weights
+        parameters = model_parameters_wid.selected_values
+        weights = (parameters *
+                   shape_model[level].eigenvalues[:len(parameters)] ** 0.5)
+
+        # Create options dictionary
+        options = dict()
+        if is_trimesh:
+            options.update(shape_options_wid.selected_values)
+        else:
+            options.update(shape_options_wid.selected_values['lines'])
+            options.update(shape_options_wid.selected_values['markers'])
+            options.update(
+                renderer_options_wid.selected_values['numbering_mayavi'])
+
+        # Compute instance
+        instance = shape_model[level].instance(weights)
+
+        # Update info
+        update_info(level, instance.range())
+
+        # Render instance
+        save_figure_wid.renderer = instance.view(
+            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+            **options)
+
+        # Force rendering
+        save_figure_wid.renderer.force_draw()
+
+    # Define function that updates the info text
+    def update_info(level, instance_range):
+        text_per_line = [
+            "> Level {} out of {}".format(level + 1, n_levels),
+            "> {} components in total".format(shape_model[level].n_components),
+            "> {} active components".format(
+                shape_model[level].n_active_components),
+            "> {:.1f}% variance kept".format(
+                shape_model[level].variance_ratio() * 100),
+            "> Instance range: {:.1f} x {:.1f}".format(instance_range[0],
+                                                       instance_range[1]),
+            "> {} points".format(
+                shape_model[level].mean().n_points)]
+        info_wid.set_widget_state(text_per_line=text_per_line)
+
+    # Plot variance function
+    def plot_variance(name):
+        # Clear current figure, but wait until the generation of the new data
+        # that will be rendered
+        ipydisplay.clear_output(wait=True)
+
+        # Get selected level
+        level = level_wid.value if n_levels > 1 else 0
+
+        # Render
+        plt.subplot(121)
+        shape_model[level].plot_eigenvalues_ratio()
+        plt.subplot(122)
+        shape_model[level].plot_eigenvalues_cumulative_ratio()
+        plt.show()
+
+    # Create widgets
+    model_parameters_wid = LinearModelParametersWidget(
+        n_parameters[0], render_function, params_str='Parameter ',
+        mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+        plot_variance_visible=True, plot_variance_function=plot_variance,
+        animation_step=0.5, interval=0., loop_enabled=True,
+        continuous_update=False)
+    if is_trimesh:
+        shape_options_wid = Mesh3DOptionsWidget(textured=False,
+                                                render_function=render_function)
+    else:
+        labels = None
+        if hasattr(shape_model[0].mean(), 'labels'):
+            labels = shape_model[0].mean().labels
+        shape_options_wid = Shape3DOptionsWidget(labels=labels,
+                                                 render_function=render_function)
+        renderer_options_wid = RendererOptionsWidget(
+            options_tabs=['numbering_mayavi'], labels=None,
+            render_function=render_function)
+    info_wid = TextPrintWidget(text_per_line=[''])
+    save_figure_wid = SaveMayaviFigureOptionsWidget()
+
+    # Group widgets
+    if n_levels > 1:
+        # Define function that updates options' widgets state
+        def update_widgets(change):
+            model_parameters_wid.set_widget_state(
+                n_parameters=n_parameters[change['new']],
+                params_str='Parameter ', allow_callback=True)
+
+        # Create pyramid radiobuttons
+        radio_str = OrderedDict()
+        for l in range(n_levels):
+            if l == 0:
+                radio_str["Level {} (low)".format(l)] = l
+            elif l == n_levels - 1:
+                radio_str["Level {} (high)".format(l)] = l
+            else:
+                radio_str["Level {}".format(l)] = l
+        level_wid = ipywidgets.RadioButtons(
+            options=radio_str, description='Pyramid', value=n_levels-1,
+            layout=ipywidgets.Layout(width='6cm'))
+        level_wid.observe(update_widgets, names='value', type='change')
+        level_wid.observe(render_function, names='value', type='change')
+        tmp_wid = ipywidgets.HBox([level_wid, model_parameters_wid])
+    else:
+        tmp_wid = ipywidgets.HBox(children=[model_parameters_wid])
+    if is_trimesh:
+        options_box = ipywidgets.Tab(
+            children=[tmp_wid, shape_options_wid, info_wid, save_figure_wid])
+        tab_titles = ['Model', 'Mesh', 'Info', 'Export']
+    else:
+        options_box = ipywidgets.Tab(
+            children=[tmp_wid, shape_options_wid, renderer_options_wid, info_wid,
+                      save_figure_wid])
+        tab_titles = ['Model', 'Shape', 'Renderer', 'Info', 'Export']
+    for (k, tl) in enumerate(tab_titles):
+        options_box.set_title(k, tl)
+    logo_wid = LogoWidget(style=main_style)
+    logo_wid.layout.margin = '0px 10px 0px 0px'
+    wid = ipywidgets.HBox([logo_wid, options_box])
+
+    # Set widget's style
+    wid.box_style = main_style
+    wid.layout.border = '2px solid ' + map_styles_to_hex_colours(main_style)
+
+    # Display final widget
+    final_box = ipywidgets.Box([wid])
+    final_box.layout.display = 'flex'
+    ipydisplay.display(final_box)
+
+    # Trigger initial visualization
+    render_function({})
+    print_dynamic('')
 
 
 def visualize_appearance_model(appearance_model, n_parameters=5,
