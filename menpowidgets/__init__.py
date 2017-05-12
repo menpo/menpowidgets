@@ -5,9 +5,8 @@ from .base import (visualize_patches, webcam_widget, plot_graph,
                    visualize_landmarks_2d, visualize_landmarks_3d,
                    visualize_shape_model_2d, visualize_appearance_model,
                    visualize_meshes_3d, save_mayavi_figure,
-                   visualize_shape_model_3d)
+                   visualize_shape_model_3d, visualize_morphable_model)
 from .menpofitwidgets import *
-from .menpo3dwidgets import *
 
 from ._version import get_versions
 __version__ = get_versions()['version']

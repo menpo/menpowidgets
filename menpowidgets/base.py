@@ -2611,6 +2611,167 @@ def visualize_patch_appearance_model(appearance_model, centers,
     render_function({})
 
 
+def visualize_morphable_model(mm, n_shape_parameters=5, n_texture_parameters=5,
+                              mode='multiple', parameters_bounds=(-15.0, 15.0)):
+    r"""
+    Widget that allows the dynamic visualization of a 3D Morphable Model.
+
+    Parameters
+    ----------
+    mm : `menpo3d.morhpablemodel.ColouredMorphableModel` or `subclass`
+        The multi-scale 3D Morphable Model to be visualized.
+    n_shape_parameters : `int` or `list` of `int` or ``None``, optional
+        The number of principal components to be used for the shape parameters
+        sliders. If `int`, then the number of sliders per level is the minimum
+        between `n_parameters` and the number of active components per level.
+        If `list` of `int`, then a number of sliders is defined per level.
+        If ``None``, all the active components per level will have a slider.
+    n_texture_parameters : `int` or `list` of `int` or ``None``, optional
+        The number of principal components to be used for the tecture
+        parameters sliders. If `int`, then the number of sliders per level is
+        the minimum between `n_parameters` and the number of active components
+        per level. If `list` of `int`, then a number of sliders is defined per
+        level. If ``None``, all the active components per level will have a
+        slider.
+    mode : ``{'single', 'multiple'}``, optional
+        If ``'single'``, then only a single slider is constructed along with a
+        drop down menu. If ``'multiple'``, then a slider is constructed for each
+        parameter.
+    parameters_bounds : (`float`, `float`), optional
+        The minimum and maximum bounds, in std units, for the sliders.
+    """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
+    print_dynamic('Initializing...')
+
+    # Define the styling options
+    main_style = 'info'
+
+    # Check the given number of parameters
+    n_shape_parameters = check_n_parameters(
+        n_shape_parameters, 1, [mm.shape_model.n_active_components])
+    n_texture_parameters = check_n_parameters(
+        n_texture_parameters, 1, [mm.texture_model.n_active_components])
+
+    # Define render function
+    def render_function(change):
+        # Clear current figure
+        save_figure_wid.renderer.clear_figure()
+        ipydisplay.clear_output(wait=True)
+
+        # Compute weights
+        shape_weights = shape_model_parameters_wid.selected_values
+        shape_weights = (
+            shape_weights *
+            mm.shape_model.eigenvalues[:len(shape_weights)] ** 0.5)
+        texture_weights = texture_model_parameters_wid.selected_values
+        texture_weights = (
+            texture_weights *
+            mm.texture_model.eigenvalues[:len(texture_weights)] ** 0.5)
+        instance = mm.instance(shape_weights=shape_weights,
+                               texture_weights=texture_weights)
+        # TODO: Is this really needed?
+        instance = instance.clip_texture()
+
+        # Update info
+        update_info(mm, instance)
+
+        # Render instance
+        save_figure_wid.renderer = instance.view(
+            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+            **mesh_options_wid.selected_values)
+
+        # Force rendering
+        save_figure_wid.renderer.force_draw()
+
+    # Define function that updates the info text
+    def update_info(mm, instance):
+        text_per_line = [
+            "> {} vertices, {} triangles".format(mm.n_vertices,
+                                                 mm.n_triangles),
+            "> {} shape components ({:.2f}% of variance)".format(
+                mm.shape_model.n_components,
+                mm.shape_model.variance_ratio() * 100),
+            "> {} texture channels".format(mm.n_channels),
+            "> {} texture components ({:.2f}% of variance)".format(
+                mm.texture_model.n_components,
+                mm.texture_model.variance_ratio() * 100),
+            "> Instance: min={:.3f} , max={:.3f}".format(
+                instance.colours.min(), instance.colours.max())]
+        info_wid.set_widget_state(text_per_line=text_per_line)
+
+    # Plot shape variance function
+    def plot_shape_variance(name):
+        # Clear current figure, but wait until the generation of the new data
+        # that will be rendered
+        ipydisplay.clear_output(wait=True)
+
+        # Render
+        plt.subplot(121)
+        mm.shape_model.plot_eigenvalues_ratio()
+        plt.subplot(122)
+        mm.shape_model.plot_eigenvalues_cumulative_ratio()
+        plt.show()
+
+    # Plot texture variance function
+    def plot_texture_variance(name):
+        # Clear current figure, but wait until the generation of the new data
+        # that will be rendered
+        ipydisplay.clear_output(wait=True)
+
+        # Render
+        plt.subplot(121)
+        mm.texture_model.plot_eigenvalues_ratio()
+        plt.subplot(122)
+        mm.texture_model.plot_eigenvalues_cumulative_ratio()
+        plt.show()
+
+    # Create widgets
+    shape_model_parameters_wid = LinearModelParametersWidget(
+        n_shape_parameters[0], render_function, params_str='Parameter ',
+        mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+        plot_variance_visible=True, plot_variance_function=plot_shape_variance,
+        animation_step=0.5, interval=0., loop_enabled=True)
+    texture_model_parameters_wid = LinearModelParametersWidget(
+        n_texture_parameters[0], render_function, params_str='Parameter ',
+        mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+        plot_variance_visible=True, plot_variance_function=plot_texture_variance,
+        animation_step=0.5, interval=0., loop_enabled=True)
+    mesh_options_wid = Mesh3DOptionsWidget(textured=True,
+                                           render_function=render_function)
+    info_wid = TextPrintWidget(text_per_line=[''])
+    save_figure_wid = SaveMayaviFigureOptionsWidget()
+
+    # Group widgets
+    model_parameters_wid = ipywidgets.HBox(
+        [ipywidgets.Tab([shape_model_parameters_wid,
+                         texture_model_parameters_wid])])
+    model_parameters_wid.children[0].set_title(0, 'Shape')
+    model_parameters_wid.children[0].set_title(1, 'Texture')
+    options_box = ipywidgets.Tab([model_parameters_wid, mesh_options_wid,
+                                  info_wid, save_figure_wid])
+    tab_titles = ['Model', 'Mesh', 'Info', 'Export']
+    for (k, tl) in enumerate(tab_titles):
+        options_box.set_title(k, tl)
+    logo_wid = LogoWidget(style=main_style)
+    logo_wid.layout.margin = '0px 10px 0px 0px'
+    wid = ipywidgets.HBox([logo_wid, options_box])
+
+    # Set widget's style
+    wid.box_style = main_style
+    wid.layout.border = '2px solid ' + map_styles_to_hex_colours(main_style)
+
+    # Display final widget
+    final_box = ipywidgets.Box([wid])
+    final_box.layout.display = 'flex'
+    ipydisplay.display(final_box)
+
+    # Trigger initial visualization
+    render_function({})
+    print_dynamic('')
+
+
 def webcam_widget(canvas_width=640, hd=True, n_preview_windows=5):
     r"""
     Webcam widget for taking snapshots. The snapshots are dynamically previewed
