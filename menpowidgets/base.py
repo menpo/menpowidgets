@@ -1973,6 +1973,9 @@ def visualize_shape_model_3d(shape_model, n_parameters=5, mode='multiple',
         weights = (parameters *
                    shape_model[level].eigenvalues[:len(parameters)] ** 0.5)
 
+        # Compute instance
+        instance = shape_model[level].instance(weights)
+
         # Create options dictionary
         options = dict()
         if is_trimesh:
@@ -1982,9 +1985,26 @@ def visualize_shape_model_3d(shape_model, n_parameters=5, mode='multiple',
             options.update(shape_options_wid.selected_values['markers'])
             options.update(
                 renderer_options_wid.selected_values['numbering_mayavi'])
-
-        # Compute instance
-        instance = shape_model[level].instance(weights)
+            # Correct options based on the type of the shape
+            if hasattr(instance, 'labels'):
+                # If the shape is a LabelledPointUndirectedGraph ...
+                # ...use with_labels
+                options['with_labels'] = \
+                    shape_options_wid.selected_values['with_labels']
+                # ...correct colours
+                line_colour = []
+                marker_colour = []
+                for lbl in options['with_labels']:
+                    idx = instance.labels.index(lbl)
+                    line_colour.append(options['line_colour'][idx])
+                    marker_colour.append(options['marker_colour'][idx])
+                options['line_colour'] = line_colour
+                options['marker_colour'] = marker_colour
+            else:
+                # If shape is PointCloud, TriMesh or PointGraph
+                # ...correct colours
+                options['line_colour'] = options['line_colour'][0]
+                options['marker_colour'] = options['marker_colour'][0]
 
         # Update info
         update_info(level, instance.range())
