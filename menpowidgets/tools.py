@@ -648,6 +648,9 @@ class SlicingCommandWidget(MenpoWidget):
                 '<i class="fa fa-spinner fa-spin" style="color:black"></i>'
         self.cmd_text.observe(typing, names='value', type='change')
 
+        # Set state
+        self.set_widget_state(slice_options, allow_callback=False)
+
     def _example_str(self, length):
         return "<font size='1'><em>e.g. ':2', '-2:', '1:{}:2', '2::', " \
                "'0, {}', '{}', 'range({})' etc.</em></font>".format(
@@ -686,46 +689,45 @@ class SlicingCommandWidget(MenpoWidget):
         # Update example str
         self.example.value = self._example_str(slice_options['length'])
 
-        if not lists_are_the_same(indices, self.selected_values):
-            # Keep old value
-            old_value = self.selected_values
+        # Keep old value
+        old_value = self.selected_values
 
-            # temporarily remove render callback
-            render_function = self._render_function
-            self.remove_render_function()
+        # temporarily remove render callback
+        render_function = self._render_function
+        self.remove_render_function()
 
-            # update selected values
-            self.selected_values = indices
+        # update selected values
+        self.selected_values = indices
 
-            # update single slider
-            vis = self._single_slider_visible(self.selected_values)
-            self.single_slider.layout.display = vis
-            self.single_slider.max = self.length - 1
-            if vis == 'inline':
-                self.single_slider.value = self.selected_values[0]
+        # update single slider
+        vis = self._single_slider_visible(self.selected_values)
+        self.single_slider.layout.display = vis
+        self.single_slider.max = self.length - 1
+        if vis == 'inline':
+            self.single_slider.value = self.selected_values[0]
 
-            # update multiple slider
-            vis, step = self._multiple_slider_visible(self.selected_values)
-            self.multiple_slider.layout.display = vis
-            self.multiple_slider.max = self.length - 1
-            if vis == 'inline':
-                self.multiple_slider.step = step
-                self.multiple_slider.value = (self.selected_values[0],
-                                              self.selected_values[-1])
+        # update multiple slider
+        vis, step = self._multiple_slider_visible(self.selected_values)
+        self.multiple_slider.layout.display = vis
+        self.multiple_slider.max = self.length - 1
+        if vis == 'inline':
+            self.multiple_slider.step = step
+            self.multiple_slider.value = (self.selected_values[0],
+                                          self.selected_values[-1])
 
-            # update command text
-            self.cmd_text.value = slice_options['command']
+        # update command text
+        self.cmd_text.value = slice_options['command']
 
-            # reset status
-            self.state_icon.value = \
-                '<i class="fa fa-check" style="color:green"></i>'
+        # reset status
+        self.state_icon.value = \
+            '<i class="fa fa-check" style="color:green"></i>'
 
-            # re-assign render callback
-            self.add_render_function(render_function)
+        # re-assign render callback
+        self.add_render_function(render_function)
 
-            # trigger render function if allowed
-            if allow_callback:
-                self.call_render_function(old_value, self.selected_values)
+        # trigger render function if allowed
+        if allow_callback:
+            self.call_render_function(old_value, self.selected_values)
 
 
 class IndexSliderWidget(MenpoWidget):
