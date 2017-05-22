@@ -129,10 +129,7 @@ class AnimationOptionsWidget(MenpoWidget):
 
         # Get the kernel to use it later in order to make sure that the widgets'
         # traits changes are passed during a while-loop
-        kernel = get_ipython().kernel
-
-        self._toggle_play_style = '' if style == '' else 'success'
-        self._toggle_stop_style = '' if style == '' else 'danger'
+        self.kernel = get_ipython().kernel
 
         # Create index widget
         if index_style == 'slider':
@@ -148,9 +145,15 @@ class AnimationOptionsWidget(MenpoWidget):
             raise ValueError('index_style should be either slider or buttons')
 
         # Create other widgets
-        self.play_stop_toggle = ipywidgets.ToggleButton(
-            icon='play', description='', value=False,
-            tooltip='Play animation', layout=ipywidgets.Layout(width='40px'))
+        self.play_button = ipywidgets.Button(
+            icon='play', description='', tooltip='Play animation',
+            layout=ipywidgets.Layout(width='40px'))
+        self.pause_button = ipywidgets.Button(
+            icon='pause', description='', tooltip='Pause animation',
+            layout=ipywidgets.Layout(width='40px'))
+        self.stop_button = ipywidgets.Button(
+            icon='stop', description='', tooltip='Stop animation',
+            layout=ipywidgets.Layout(width='40px'))
         self.fast_forward_button = ipywidgets.Button(
             icon='fast-forward', description='',
             tooltip='Increase animation speed',
@@ -165,15 +168,17 @@ class AnimationOptionsWidget(MenpoWidget):
             tooltip='Repeat animation', layout=ipywidgets.Layout(width='40px'))
 
         # Group widgets
-        self.box_1 = ipywidgets.HBox([self.play_stop_toggle, self.loop_toggle,
-                                      self.fast_backward_button,
-                                      self.fast_forward_button])
-        # TODO FIX THE ANIMATION WIDGET.
-        # It is set to invisible until it's fixed.
-        self.box_1.layout.visibility = 'hidden'
+        self.box_1 = ipywidgets.HBox([self.play_button, self.pause_button,
+                                      self.stop_button])
         self.box_1.layout.align_items = 'center'
         self.box_1.layout.margin = '0px 0px 0px 10px'
-        self.container = ipywidgets.HBox([self.index_wid, self.box_1])
+        self.box_2 = ipywidgets.HBox([self.loop_toggle,
+                                      self.fast_backward_button,
+                                      self.fast_forward_button])
+        self.box_2.layout.align_items = 'center'
+        self.box_2.layout.margin = '0px 0px 0px 10px'
+        self.container = ipywidgets.HBox(
+            [self.index_wid, self.box_1, self.box_2])
         self.container.layout.align_items = 'flex-start'
 
         # Assign properties
@@ -185,6 +190,8 @@ class AnimationOptionsWidget(MenpoWidget):
         self.continuous_update = continuous_update
         self.interval = interval
         self.interval_step = interval_step
+        self.please_stop = False
+        self.please_pause = False
 
         # Set style
         self.predefined_style(style)
@@ -194,48 +201,12 @@ class AnimationOptionsWidget(MenpoWidget):
             [self.container], Int, index['index'],
             render_function=render_function)
 
-        # Set functionality
-        def play_stop_pressed(change):
-            value = change['new']
-            if value:
-                # Animation was not playing, so Play was pressed.
-                # Change the button style
-                self.play_stop_toggle.button_style = self._toggle_stop_style
-                # Change the icon and tooltip to Stop
-                self.play_stop_toggle.icon = 'stop'
-                self.play_stop_toggle.tooltip = 'Stop animation'
-                # Disable index widget
-                if self.index_style == 'buttons':
-                    self.index_wid.index_text.disabled = True
-                    self.index_wid.button_plus.disabled = True
-                    self.index_wid.button_minus.disabled = True
-                else:
-                    self.index_wid.slider.disabled = True
-                    self.index_wid.slider_text.disabled = True
-            else:
-                # Animation was playing, so Stop was pressed.
-                # Change the button style
-                self.play_stop_toggle.button_style = self._toggle_play_style
-                # Change the icon and tooltip to Play
-                self.play_stop_toggle.icon = 'play'
-                self.play_stop_toggle.tooltip = 'Play animation'
-                # Enable index widget
-                if self.index_style == 'buttons':
-                    self.index_wid.index_text.disabled = False
-                    self.index_wid.button_plus.disabled = False
-                    self.index_wid.button_minus.disabled = False
-                else:
-                    self.index_wid.slider.disabled = False
-                    self.index_wid.slider_text.disabled = False
-        self.play_stop_toggle.observe(play_stop_pressed, names='value',
-                                      type='change')
-
         def loop_pressed(change):
             if change['new']:
                 self.loop_toggle.icon = 'repeat'
             else:
                 self.loop_toggle.icon = 'long-arrow-right'
-            kernel.do_one_iteration()
+            self.kernel.do_one_iteration()
         self.loop_toggle.observe(loop_pressed, names='value', type='change')
 
         def fast_forward_pressed(name):
@@ -244,22 +215,39 @@ class AnimationOptionsWidget(MenpoWidget):
             if tmp < 0:
                 tmp = 0
             self.interval = tmp
-            kernel.do_one_iteration()
+            self.kernel.do_one_iteration()
         self.fast_forward_button.on_click(fast_forward_pressed)
 
         def fast_backward_pressed(name):
             self.interval += self.interval_step
-            kernel.do_one_iteration()
+            self.kernel.do_one_iteration()
         self.fast_backward_button.on_click(fast_backward_pressed)
 
         def animate(change):
+            # Get current index value
             i = self.selected_values
-            if self.loop_toggle.value and i >= self.max:
-                i = self.min
-            else:
-                i += self.step
-            while i <= self.max and self.play_stop_toggle.value:
-                # update index value
+            # Disable the index widget
+            self.index_wid_disability(True)
+            # Reset stop/pause flags
+            self.please_pause = False
+            self.please_stop = False
+            # Main loop
+            while i <= self.max:
+                # Run IPython iteration.
+                # This is the code that makes this operation non-blocking.
+                # This allows widget messages and callbacks to be processed.
+                self.kernel.do_one_iteration()
+
+                # Check pause/stop flags
+                if self.please_pause or self.please_stop:
+                    break
+
+                # Run IPython iteration.
+                # This is the code that makes this operation non-blocking.
+                # This allows widget messages and callbacks to be processed.
+                self.kernel.do_one_iteration()
+
+                # Update index value
                 if index_style == 'slider':
                     self.index_wid.slider.value = i
                 else:
@@ -272,23 +260,53 @@ class AnimationOptionsWidget(MenpoWidget):
                 # Run IPython iteration.
                 # This is the code that makes this operation non-blocking.
                 # This allows widget messages and callbacks to be processed.
-                kernel.do_one_iteration()
+                self.kernel.do_one_iteration()
 
-                # update counter
+                # Update counter
                 if self.loop_toggle.value and i >= self.max:
                     i = self.min
                 else:
                     i += self.step
-                # wait
+
+                # Wait
                 sleep(self.interval)
-            if not self.loop_toggle.value and i > self.max:
-                self.stop_animation()
-        self.play_stop_toggle.observe(animate, names='value', type='change')
+
+            # If stop was pressed, then reset
+            if self.please_stop:
+                if index_style == 'slider':
+                    self.index_wid.slider.value = 0
+                else:
+                    self.index_wid.set_widget_state(
+                        {'min': self.min, 'max': self.max, 'step': self.step,
+                         'index': 0},
+                        loop_enabled=self.loop_enabled, text_editable=False,
+                        allow_callback=True)
+
+            # Enable the index widget
+            self.index_wid_disability(False)
+        self.play_button.on_click(animate)
+
+        def pause_pressed(_):
+            self.pause_animation()
+        self.pause_button.on_click(pause_pressed)
+
+        def stop_pressed(_):
+            self.stop_animation()
+        self.stop_button.on_click(stop_pressed)
 
         def save_value(change):
             self.selected_values = self.index_wid.selected_values
         self.index_wid.observe(save_value, names='selected_values',
                                type='change')
+
+    def index_wid_disability(self, disabled):
+        if self.index_style == 'buttons':
+            self.index_wid.index_text.disabled = disabled
+            self.index_wid.button_plus.disabled = disabled
+            self.index_wid.button_minus.disabled = disabled
+        else:
+            self.index_wid.slider.disabled = disabled
+            self.index_wid.slider_text.disabled = disabled
 
     def predefined_style(self, style):
         r"""
@@ -311,7 +329,9 @@ class AnimationOptionsWidget(MenpoWidget):
 
         """
         self.container.box_style = style
-        self.play_stop_toggle.button_style = self._toggle_play_style
+        self.play_button.button_style = 'success'
+        self.pause_button.button_style = 'info'
+        self.stop_button.button_style = 'danger'
         self.fast_forward_button.button_style = 'info'
         self.fast_backward_button.button_style = 'info'
         self.loop_toggle.button_style = 'warning'
@@ -375,10 +395,15 @@ class AnimationOptionsWidget(MenpoWidget):
 
     def stop_animation(self):
         r"""
-        Method that stops an active annotation by setting
-        ``self.play_stop_toggle.value = False``.
+        Method that stops an active annotation.
         """
-        self.play_stop_toggle.value = False
+        self.please_stop = True
+
+    def pause_animation(self):
+        r"""
+        Method that pauses an active annotation.
+        """
+        self.please_pause = True
 
 
 class Shape2DOptionsWidget(MenpoWidget):
