@@ -373,8 +373,7 @@ class AnimationOptionsWidget(MenpoWidget):
             self.remove_render_function()
 
             # update
-            if self.play_stop_toggle.value:
-                self.stop_animation()
+            self.stop_animation()
             if self.index_style == 'slider':
                 self.index_wid.set_widget_state(index, allow_callback=False)
             else:
@@ -4113,21 +4112,13 @@ class LinearModelParametersWidget(MenpoWidget):
         """
         self.container.box_style = style
         self.container.border = '0px'
-        if style != '':
-            self.play_button.button_style = 'success'
-            self.stop_button.button_style = 'danger'
-            self.fast_forward_button.button_style = 'info'
-            self.fast_backward_button.button_style = 'info'
-            self.loop_toggle.button_style = 'warning'
-            self.reset_button.button_style = 'danger'
-            self.plot_button.button_style = 'primary'
-        else:
-            self.play_stop_toggle.button_style = ''
-            self.fast_forward_button.button_style = ''
-            self.fast_backward_button.button_style = ''
-            self.loop_toggle.button_style = ''
-            self.reset_button.button_style = ''
-            self.plot_button.button_style = ''
+        self.play_button.button_style = 'success'
+        self.stop_button.button_style = 'danger'
+        self.fast_forward_button.button_style = 'info'
+        self.fast_backward_button.button_style = 'info'
+        self.loop_toggle.button_style = 'warning'
+        self.reset_button.button_style = 'danger'
+        self.plot_button.button_style = 'primary'
 
     def stop_animation(self):
         r"""
@@ -5315,14 +5306,9 @@ class IterativeResultOptionsWidget(MenpoWidget):
                 ============= ==================
         """
         self.container.box_style = style
-        if style != '':
-            self.plot_displacements_button.button_style = 'primary'
-            self.plot_costs_button.button_style = 'primary'
-            self.plot_errors_button.button_style = 'primary'
-        else:
-            self.plot_displacements_button.button_style = ''
-            self.plot_costs_button.button_style = ''
-            self.plot_errors_button.button_style = ''
+        self.plot_displacements_button.button_style = 'primary'
+        self.plot_costs_button.button_style = 'primary'
+        self.plot_errors_button.button_style = 'primary'
         self.index_animation.container.box_style = ''
 
     def set_widget_state(self, has_gt_shape, has_initial_shape, has_image,
