@@ -9,6 +9,8 @@ import IPython.display as ipydisplay
 from menpo.base import name_of_callable
 from menpo.image import MaskedImage, Image
 from menpo.image.base import _convert_patches_list_to_single_array
+from menpo.shape import TriMesh, ColouredTriMesh, TexturedTriMesh
+from menpo.visualize import print_dynamic
 from menpo.landmark import LandmarkManager
 
 from .options import (RendererOptionsWidget, TextPrintWidget,
@@ -16,7 +18,8 @@ from .options import (RendererOptionsWidget, TextPrintWidget,
                       ImageOptionsWidget, LandmarkOptionsWidget,
                       PlotMatplotlibOptionsWidget, PatchOptionsWidget,
                       LinearModelParametersWidget, CameraSnapshotWidget,
-                      Shape2DOptionsWidget)
+                      Shape2DOptionsWidget, Shape3DOptionsWidget,
+                      SaveMayaviFigureOptionsWidget, Mesh3DOptionsWidget)
 from .tools import LogoWidget, SwitchWidget
 from .utils import (extract_group_labels_from_landmarks,
                     extract_groups_labels_from_image, render_image,
@@ -253,6 +256,225 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
     render_function({})
 
 
+def visualize_shapes_3d(shapes, browser_style='buttons',
+                        custom_info_callback=None):
+    r"""
+    Widget that allows browsing through a `list` of
+    3D shapes. The supported objects are:
+
+            ==================================
+            Object
+            ==================================
+            `menpo.shape.PointCloud`
+            `menpo.shape.PointUndirectedGraph`
+            `menpo.shape.PointDirectedGraph`
+            `menpo.shape.PointTree`
+            `menpo.shape.LabelledPointGraph`
+            ==================================
+
+    Any instance of the above can be combined in the input `list`.
+
+    Parameters
+    ----------
+    shapes : `list`
+        The `list` of objects to be visualized. It can contain a combination of
+
+            ==================================
+            Object
+            ==================================
+            `menpo.shape.PointCloud`
+            `menpo.shape.PointUndirectedGraph`
+            `menpo.shape.PointDirectedGraph`
+            `menpo.shape.PointTree`
+            `menpo.shape.LabelledPointGraph`
+            ==================================
+
+        or subclasses of those.
+    browser_style : ``{'buttons', 'slider'}``, optional
+        It defines whether the selector of the objects will have the form of
+        plus/minus buttons or a slider.
+    custom_info_callback: `function` or ``None``, optional
+        If not ``None``, it should be a function that accepts a 2D shape
+        and returns a list of custom messages to be printed about it. Each
+        custom message will be printed in a separate line.
+    """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
+    print_dynamic('Initializing...')
+
+    # Make sure that shapes is a list even with one member
+    if not isinstance(shapes, Sized):
+        shapes = [shapes]
+
+    # Get the number of shapes
+    n_shapes = len(shapes)
+
+    # Define the styling options
+    main_style = 'warning'
+
+    # Define render function
+    def render_function(change):
+        # Clear current figure
+        save_figure_wid.renderer.clear_figure()
+        ipydisplay.clear_output(wait=True)
+
+        # Get selected shape index
+        i = shape_number_wid.selected_values if n_shapes > 1 else 0
+
+        # Update info text widget
+        update_info(shapes[i], custom_info_callback=custom_info_callback)
+
+        # Create options dictionary
+        options = dict()
+        if isinstance(shapes[i], TriMesh):
+            # Note that 3D TriMesh has a totally different set of options
+            # compared to any other PointCloud or PointGraph. However, in order
+            # for visualize_shapes_3d to support TriMeshes, we simply use the
+            # options that are common. This means that most of the widget's
+            # options will have no effect on rendering...
+            options['mesh_type'] = 'wireframe'
+            if shape_options_wid.selected_values['markers']['render_markers']:
+                options['mesh_type'] = 'fancymesh'
+            options['line_width'] = \
+                shape_options_wid.selected_values['lines']['line_width']
+            options['colour'] = \
+                shape_options_wid.selected_values['lines']['line_colour'][0]
+            options['marker_style'] = \
+                shape_options_wid.selected_values['markers']['marker_style']
+            options['marker_size'] = \
+                shape_options_wid.selected_values['markers']['marker_size']
+            options['marker_resolution'] = \
+                shape_options_wid.selected_values['markers']['marker_resolution']
+            options['step'] = \
+                shape_options_wid.selected_values['markers']['step']
+        else:
+            options.update(shape_options_wid.selected_values['lines'])
+            options.update(shape_options_wid.selected_values['markers'])
+            options.update(
+                renderer_options_wid.selected_values['numbering_mayavi'])
+
+            # Correct options based on the type of the shape
+            if hasattr(shapes[i], 'labels'):
+                # If the shape is a LabelledPointUndirectedGraph ...
+                # ...use with_labels
+                options['with_labels'] = \
+                    shape_options_wid.selected_values['with_labels']
+                # ...correct colours
+                line_colour = []
+                marker_colour = []
+                for lbl in options['with_labels']:
+                    idx = shapes[i].labels.index(lbl)
+                    line_colour.append(options['line_colour'][idx])
+                    marker_colour.append(options['marker_colour'][idx])
+                options['line_colour'] = line_colour
+                options['marker_colour'] = marker_colour
+            else:
+                # If shape is PointCloud, TriMesh or PointGraph
+                # ...correct colours
+                options['line_colour'] = options['line_colour'][0]
+                options['marker_colour'] = options['marker_colour'][0]
+
+        # Render shape with selected options
+        save_figure_wid.renderer = shapes[i].view(
+            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+            alpha=1.0, **options)
+
+        # Force rendering
+        save_figure_wid.renderer.force_draw()
+
+    # Define function that updates the info text
+    def update_info(shape, custom_info_callback=None):
+        min_b, max_b = shape.bounds()
+        rang = shape.range()
+        cm = shape.centre()
+        text_per_line = [
+            "> {}".format(name_of_callable(shape)),
+            "> {} points".format(shape.n_points),
+            "> Bounds: [{0:.1f}-{1:.1f}]X, [{2:.1f}-{3:.1f}]Y, "
+            "[{4:.1f}-{5:.1f}]Z".format(min_b[0], max_b[0], min_b[1], max_b[1],
+                                        min_b[2], max_b[2]),
+            "> Range: {0:.1f}X, {1:.1f}Y, {2:.1f}Z".format(rang[0], rang[1],
+                                                           rang[2]),
+            "> Centre of mass: ({0:.1f}X, {1:.1f}Y, {2:.1f}Z)".format(
+                cm[0], cm[1], cm[2]),
+            "> Norm: {0:.2f}".format(shape.norm())]
+        if custom_info_callback is not None:
+            # iterate over the list of messages returned by the callback
+            # function and append them in the text_per_line.
+            for msg in custom_info_callback(shape):
+                text_per_line.append('> {}'.format(msg))
+        info_wid.set_widget_state(text_per_line=text_per_line)
+
+    # If the object is a LabelledPointUndirectedGraph, grab the labels
+    labels = None
+    if hasattr(shapes[0], 'labels'):
+        labels = shapes[0].labels
+
+    # Create widgets
+    shape_options_wid = Shape3DOptionsWidget(
+        labels=labels, render_function=render_function)
+    renderer_options_wid = RendererOptionsWidget(
+        options_tabs=['numbering_mayavi'], labels=None,
+        render_function=render_function)
+    info_wid = TextPrintWidget(text_per_line=[''])
+    save_figure_wid = SaveMayaviFigureOptionsWidget()
+
+    # Group widgets
+    if n_shapes > 1:
+        # Define function that updates options' widgets state
+        def update_widgets(change):
+            # Get current shape and check if it has labels
+            i = change['new']
+            labels = None
+            if hasattr(shapes[i], 'labels'):
+                labels = shapes[i].labels
+
+            # Update shape options
+            shape_options_wid.set_widget_state(labels=labels,
+                                               allow_callback=True)
+
+        # Shape selection slider
+        index = {'min': 0, 'max': n_shapes-1, 'step': 1, 'index': 0}
+        shape_number_wid = AnimationOptionsWidget(
+            index, render_function=update_widgets, index_style=browser_style,
+            interval=0.2, description='Shape', loop_enabled=True,
+            continuous_update=False)
+
+        # Header widget
+        logo_wid = LogoWidget(style=main_style)
+        logo_wid.layout.margin = '0px 10px 0px 0px'
+        header_wid = ipywidgets.HBox([logo_wid, shape_number_wid])
+        header_wid.layout.align_items = 'center'
+        header_wid.layout.margin = '0px 0px 10px 0px'
+    else:
+        # Header widget
+        header_wid = LogoWidget(style=main_style)
+        header_wid.layout.margin = '0px 10px 0px 0px'
+    options_box = ipywidgets.Tab(
+        [info_wid, shape_options_wid, renderer_options_wid, save_figure_wid])
+    tab_titles = ['Info', 'Shape', 'Renderer', 'Export']
+    for (k, tl) in enumerate(tab_titles):
+        options_box.set_title(k, tl)
+    if n_shapes > 1:
+        wid = ipywidgets.VBox([header_wid, options_box])
+    else:
+        wid = ipywidgets.HBox([header_wid, options_box])
+
+    # Set widget's style
+    wid.box_style = main_style
+    wid.layout.border = '2px solid ' + map_styles_to_hex_colours(main_style)
+
+    # Display final widget
+    final_box = ipywidgets.Box([wid])
+    final_box.layout.display = 'flex'
+    ipydisplay.display(final_box)
+
+    # Trigger initial visualization
+    render_function({})
+    print_dynamic('')
+
+
 def visualize_landmarks_2d(landmarks, figure_size=(7, 7),
                            browser_style='buttons', custom_info_callback=None):
     r"""
@@ -449,6 +671,369 @@ def visualize_landmarks_2d(landmarks, figure_size=(7, 7),
 
     # Trigger initial visualization
     render_function({})
+
+
+def visualize_landmarks_3d(landmarks, browser_style='buttons',
+                           custom_info_callback=None):
+    r"""
+    Widget that allows browsing through a `list` of
+    `menpo.landmark.LandmarkManager` (or subclass) objects. The landmark
+    managers can have a combination of different attributes, e.g.
+    landmark groups and labels etc.
+
+    Parameters
+    ----------
+    landmarks : `list` of `menpo.landmark.LandmarkManager` or subclass
+        The `list` of landmark managers to be visualized.
+    browser_style : ``{'buttons', 'slider'}``, optional
+        It defines whether the selector of the objects will have the form of
+        plus/minus buttons or a slider.
+    custom_info_callback: `function` or ``None``, optional
+        If not None, it should be a function that accepts a landmark group and
+        returns a list of custom messages to be printed per landmark group.
+        Each custom message will be printed in a separate line.
+    """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
+    print('Initializing...')
+
+    # Make sure that landmarks is a list even with one landmark manager member
+    if not isinstance(landmarks, list):
+        landmarks = [landmarks]
+
+    # Get the number of landmark managers
+    n_landmarks = len(landmarks)
+
+    # Define the styling options
+    main_style = 'info'
+
+    # Define render function
+    def render_function(change):
+        # Clear current figure
+        save_figure_wid.renderer.clear_figure()
+        ipydisplay.clear_output(wait=True)
+
+        # get selected index and selected group
+        i = landmark_number_wid.selected_values if n_landmarks > 1 else 0
+        g = landmark_options_wid.selected_values['landmarks']['group']
+
+        # update info text widget
+        update_info(landmarks[i], g, custom_info_callback=custom_info_callback)
+
+        if landmark_options_wid.selected_values['landmarks']['render_landmarks']:
+            # get shape
+            shape = landmarks[i][g]
+
+            options = dict()
+            if isinstance(shape, TriMesh):
+                # Note that 3D TriMesh has a totally different set of options
+                # compared to any other PointCloud or PointGraph. However, in
+                # order for visualize_landmarks_3d to support TriMeshes, we
+                # simply use the options that are common. This means that most
+                # of the widget's options will have no effect on rendering...
+                options['mesh_type'] = 'wireframe'
+                if landmark_options_wid.selected_values['markers'][
+                    'render_markers']:
+                    options['mesh_type'] = 'fancymesh'
+                options['line_width'] = \
+                    landmark_options_wid.selected_values['lines']['line_width']
+                options['colour'] = \
+                    landmark_options_wid.selected_values['lines']['line_colour'][0]
+                options['marker_style'] = \
+                    landmark_options_wid.selected_values['markers']['marker_style']
+                options['marker_size'] = \
+                    landmark_options_wid.selected_values['markers']['marker_size']
+                options['marker_resolution'] = \
+                    landmark_options_wid.selected_values['markers'][
+                        'marker_resolution']
+                options['step'] = \
+                    landmark_options_wid.selected_values['markers']['step']
+            else:
+                options.update(landmark_options_wid.selected_values['lines'])
+                options.update(landmark_options_wid.selected_values['markers'])
+                options.update(
+                    renderer_options_wid.selected_values['numbering_mayavi'])
+
+                # Correct options based on the type of the shape
+                if hasattr(shape, 'labels'):
+                    # If the shape is a LabelledPointUndirectedGraph ...
+                    # ...use with_labels
+                    options['with_labels'] = \
+                        landmark_options_wid.selected_values['landmarks']['with_labels']
+                    # ...correct colours
+                    line_colour = []
+                    marker_colour = []
+                    for lbl in options['with_labels']:
+                        idx = shape.labels.index(lbl)
+                        line_colour.append(options['line_colour'][idx])
+                        marker_colour.append(options['marker_colour'][idx])
+                    options['line_colour'] = line_colour
+                    options['marker_colour'] = marker_colour
+                else:
+                    # If shape is PointCloud, TriMesh or PointGraph
+                    # ...correct colours
+                    options['line_colour'] = options['line_colour'][0]
+                    options['marker_colour'] = options['marker_colour'][0]
+
+            # Render shape with selected options
+            save_figure_wid.renderer = shape.view(
+                figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+                alpha=1.0, **options)
+
+            # Force rendering
+            save_figure_wid.renderer.force_draw()
+        else:
+            ipydisplay.clear_output()
+
+    # Define function that updates the info text
+    def update_info(landmarks, group, custom_info_callback=None):
+        if group is not None:
+            min_b, max_b = landmarks[group].bounds()
+            rang = landmarks[group].range()
+            cm = landmarks[group].centre()
+            text_per_line = [
+                "> {} landmark points".format(landmarks[group].n_points),
+                "> {}".format(name_of_callable(landmarks[group])),
+                "> Bounds: [{0:.1f}-{1:.1f}]X, [{2:.1f}-{3:.1f}]Y, "
+                "[{4:.1f}-{5:.1f}]Z".format(
+                    min_b[0], max_b[0], min_b[1], max_b[1], min_b[2], max_b[2]),
+                "> Range: {0:.1f}X, {1:.1f}Y, {2:.1f}Z".format(rang[0], rang[1],
+                                                               rang[2]),
+                "> Centre of mass: ({0:.1f}X, {1:.1f}Y, {2:.1f}Z)".format(
+                    cm[0], cm[1], cm[2]),
+                "> Norm: {0:.2f}".format(landmarks[group].norm())]
+            if custom_info_callback is not None:
+                # iterate over the list of messages returned by the callback
+                # function and append them in the text_per_line.
+                for msg in custom_info_callback(landmarks[group]):
+                    text_per_line.append('> {}'.format(msg))
+        else:
+            text_per_line = ["No landmarks available."]
+
+        info_wid.set_widget_state(text_per_line=text_per_line)
+
+    # Create widgets
+    groups_keys, labels_keys = extract_group_labels_from_landmarks(landmarks[0])
+    first_label = labels_keys[0] if labels_keys else None
+    landmark_options_wid = LandmarkOptionsWidget(
+        group_keys=groups_keys, labels_keys=labels_keys,
+        type='3D', render_function=render_function)
+    renderer_options_wid = RendererOptionsWidget(
+        options_tabs=['numbering_mayavi'], labels=first_label,
+        render_function=render_function)
+    info_wid = TextPrintWidget(text_per_line=[''])
+    save_figure_wid = SaveMayaviFigureOptionsWidget()
+
+    # Group widgets
+    if n_landmarks > 1:
+        # Define function that updates options' widgets state
+        def update_widgets(change):
+            # Get new groups and labels
+            i = landmark_number_wid.selected_values
+            g_keys, l_keys = extract_group_labels_from_landmarks(
+                landmarks[i])
+
+            # Update landmarks options
+            landmark_options_wid.set_widget_state(
+                group_keys=g_keys, labels_keys=l_keys, allow_callback=True)
+
+        # Landmark selection slider
+        index = {'min': 0, 'max': n_landmarks-1, 'step': 1, 'index': 0}
+        landmark_number_wid = AnimationOptionsWidget(
+            index, render_function=update_widgets, index_style=browser_style,
+            interval=0.2, description='Shape', loop_enabled=True,
+            continuous_update=False)
+
+        # Header widget
+        logo_wid = LogoWidget(style=main_style)
+        logo_wid.layout.margin = '0px 10px 0px 0px'
+        header_wid = ipywidgets.HBox([logo_wid, landmark_number_wid])
+        header_wid.layout.align_items = 'center'
+        header_wid.layout.margin = '0px 0px 10px 0px'
+    else:
+        # Header widget
+        header_wid = LogoWidget(style=main_style)
+        header_wid.layout.margin = '0px 10px 0px 0px'
+    options_box = ipywidgets.Tab(
+        children=[info_wid, landmark_options_wid, renderer_options_wid,
+                  save_figure_wid])
+    tab_titles = ['Info', 'Landmarks', 'Renderer', 'Export']
+    for (k, tl) in enumerate(tab_titles):
+        options_box.set_title(k, tl)
+    if n_landmarks > 1:
+        wid = ipywidgets.VBox([header_wid, options_box])
+    else:
+        wid = ipywidgets.HBox([header_wid, options_box])
+
+    # Set widget's style
+    wid.box_style = main_style
+    wid.layout.border = '2px solid ' + map_styles_to_hex_colours(main_style)
+
+    # Display final widget
+    final_box = ipywidgets.Box([wid])
+    final_box.layout.display = 'flex'
+    ipydisplay.display(final_box)
+
+    # Trigger initial visualization
+    render_function({})
+    print_dynamic('')
+
+
+def visualize_meshes_3d(meshes, browser_style='buttons',
+                        custom_info_callback=None):
+    r"""
+    Widget that allows browsing through a `list` of 3D meshes. The supported 
+    objects are:
+
+            ==================================
+            Object
+            ==================================
+            `menpo.shape.TriMesh`
+            `menpo.shape.ColouredTriMesdh`
+            `menpo.shape.TexturedTriMesh`
+            ==================================
+
+    Any instance of the above can be combined in the input `list`.
+
+    Parameters
+    ----------
+    meshes : `list`
+        The `list` of objects to be visualized. It can contain a combination of
+
+            ==================================
+            Object
+            ==================================
+            `menpo.shape.TriMesh`
+            `menpo.shape.ColouredTriMesdh`
+            `menpo.shape.TexturedTriMesh`
+            ==================================
+
+        or subclasses of those.
+    browser_style : ``{'buttons', 'slider'}``, optional
+        It defines whether the selector of the objects will have the form of
+        plus/minus buttons or a slider.
+    custom_info_callback: `function` or ``None``, optional
+        If not ``None``, it should be a function that accepts a 3D mesh
+        and returns a list of custom messages to be printed about it. Each
+        custom message will be printed in a separate line.
+    """
+    # Ensure that the code is being run inside a Jupyter kernel!!
+    from menpowidgets.utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
+    print('Initializing...')
+
+    # Make sure that meshes is a list even with one member
+    if not isinstance(meshes, Sized):
+        meshes = [meshes]
+
+    # Get the number of meshes
+    n_meshes = len(meshes)
+
+    # Define the styling options
+    main_style = 'warning'
+
+    # Define render function
+    def render_function(_):
+        # Clear current figure
+        save_figure_wid.renderer.clear_figure()
+        ipydisplay.clear_output(wait=True)
+
+        # Get selected mesh index
+        i = mesh_number_wid.selected_values if n_meshes > 1 else 0
+
+        # Update info text widget
+        update_info(meshes[i], custom_info_callback=custom_info_callback)
+
+        # Render instance
+        save_figure_wid.renderer = meshes[i].view(
+            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+            **mesh_options_wid.selected_values)
+
+        # Force rendering
+        save_figure_wid.renderer.force_draw()
+
+    # Define function that updates the info text
+    def update_info(mesh, custom_info_callback=None):
+        min_b, max_b = mesh.bounds()
+        rang = mesh.range()
+        cm = mesh.centre()
+        text_per_line = [
+            "> {}".format(name_of_callable(mesh)),
+            "> {} points".format(mesh.n_points),
+            "> Bounds: [{0:.1f}-{1:.1f}]X, [{2:.1f}-{3:.1f}]Y, "
+            "[{4:.1f}-{5:.1f}]Z".format(
+                min_b[0], max_b[0], min_b[1], max_b[1], min_b[2], max_b[2]),
+            "> Range: {0:.1f}X, {1:.1f}Y, {2:.1f}Z".format(rang[0], rang[1],
+                                                           rang[2]),
+            "> Centre of mass: ({0:.1f}X, {1:.1f}Y, {2:.1f}Z)".format(
+                cm[0], cm[1], cm[2]),
+            "> Norm: {0:.2f}".format(mesh.norm())]
+        if custom_info_callback is not None:
+            # iterate over the list of messages returned by the callback
+            # function and append them in the text_per_line.
+            for msg in custom_info_callback(mesh):
+                text_per_line.append('> {}'.format(msg))
+        info_wid.set_widget_state(text_per_line=text_per_line)
+
+    # Create widgets
+    mesh_options_wid = Mesh3DOptionsWidget(
+        textured=(isinstance(meshes[0], ColouredTriMesh) or
+                  isinstance(meshes[0], TexturedTriMesh)),
+        render_function=render_function)
+    info_wid = TextPrintWidget(text_per_line=[''])
+    save_figure_wid = SaveMayaviFigureOptionsWidget()
+
+    # Group widgets
+    if n_meshes > 1:
+        # Define function that updates options' widgets state
+        def update_widgets(change):
+            i = change['new']
+
+            # Update shape options
+            mesh_options_wid.set_widget_state(
+                textured=(isinstance(meshes[i], ColouredTriMesh) or
+                          isinstance(meshes[i], TexturedTriMesh)),
+                allow_callback=True)
+
+        # selection slider
+        index = {'min': 0, 'max': n_meshes-1, 'step': 1, 'index': 0}
+        mesh_number_wid = AnimationOptionsWidget(
+            index, render_function=update_widgets, index_style=browser_style,
+            interval=0.2, description='Mesh', loop_enabled=True,
+            continuous_update=False)
+
+        # Header widget
+        logo_wid = LogoWidget(style=main_style)
+        logo_wid.layout.margin = '0px 10px 0px 0px'
+        header_wid = ipywidgets.HBox([logo_wid, mesh_number_wid])
+        header_wid.layout.align_items = 'center'
+        header_wid.layout.margin = '0px 0px 10px 0px'
+    else:
+        # Header widget
+        header_wid = LogoWidget(style=main_style)
+        header_wid.layout.margin = '0px 10px 0px 0px'
+    options_box = ipywidgets.Tab([info_wid, mesh_options_wid, save_figure_wid])
+    tab_titles = ['Info', 'Mesh', 'Export']
+    for (k, tl) in enumerate(tab_titles):
+        options_box.set_title(k, tl)
+    if n_meshes > 1:
+        wid = ipywidgets.VBox([header_wid, options_box])
+    else:
+        wid = ipywidgets.HBox([header_wid, options_box])
+
+    # Set widget's style
+    wid.box_style = main_style
+    wid.layout.border = '2px solid ' + map_styles_to_hex_colours(main_style)
+
+    # Display final widget
+    final_box = ipywidgets.Box([wid])
+    final_box.layout.display = 'flex'
+    ipydisplay.display(final_box)
+
+    # Trigger initial visualization
+    render_function({})
+    print_dynamic('')
 
 
 def visualize_images(images, figure_size=(7, 7), browser_style='buttons',
@@ -967,6 +1552,30 @@ def save_matplotlib_figure(renderer):
     ipydisplay.display(wid)
 
 
+def save_mayavi_figure(renderer):
+    r"""
+    Widget that allows to save a figure, which was generated with Mayavi,
+    to file.
+
+    Parameters
+    ----------
+    renderer : `menpo3d.visualize.viewmayavi.MayaviRenderer`
+        The Mayavi renderer object.
+    """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
+    # Create sub-widgets
+    logo_wid = LogoWidget()
+    logo_wid.layout.margin = '0px 10px 0px 0px'
+    save_figure_wid = SaveMayaviFigureOptionsWidget(renderer,
+                                                    style='warning')
+    wid = ipywidgets.HBox([logo_wid, save_figure_wid])
+
+    # Display widget
+    ipydisplay.display(wid)
+
+
 def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
                              parameters_bounds=(-3.0, 3.0), figure_size=(7, 7)):
     r"""
@@ -1252,7 +1861,6 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
     if n_levels > 1:
         # Define function that updates options' widgets state
         def update_widgets(change):
-            print(n_parameters[change['new']])
             model_parameters_wid.set_widget_state(
                 n_parameters=n_parameters[change['new']],
                 params_str='Parameter ', allow_callback=True)
@@ -1297,6 +1905,223 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
 
     # Trigger initial visualization
     render_function({})
+
+
+def visualize_shape_model_3d(shape_model, n_parameters=5, mode='multiple',
+                             parameters_bounds=(-15.0, 15.0)):
+    r"""
+    Widget that allows the dynamic visualization of a multi-scale linear
+    statistical 3D shape model.
+
+    Parameters
+    ----------
+    shape_model : `list` of `menpo.shape.PCAModel` or `subclass`
+        The multi-scale shape model to be visualized. Note that each level can
+        have different number of components.
+    n_parameters : `int` or `list` of `int` or ``None``, optional
+        The number of principal components to be used for the parameters
+        sliders. If `int`, then the number of sliders per level is the minimum
+        between `n_parameters` and the number of active components per level.
+        If `list` of `int`, then a number of sliders is defined per level.
+        If ``None``, all the active components per level will have a slider.
+    mode : ``{'single', 'multiple'}``, optional
+        If ``'single'``, then only a single slider is constructed along with a
+        drop down menu. If ``'multiple'``, then a slider is constructed for each
+        parameter.
+    parameters_bounds : (`float`, `float`), optional
+        The minimum and maximum bounds, in std units, for the sliders.
+    """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
+    print_dynamic('Initializing...')
+
+    # Make sure that shape_model is a list even with one member
+    if not isinstance(shape_model, list):
+        shape_model = [shape_model]
+
+    # Get the number of levels (i.e. number of shape models)
+    n_levels = len(shape_model)
+
+    # Check if the model is TriMesh or any other 3D shape class
+    is_trimesh = isinstance(shape_model[0].template_instance, TriMesh)
+
+    # Define the styling options
+    main_style = 'warning'
+
+    # Get the maximum number of components per level
+    max_n_params = [sp.n_active_components for sp in shape_model]
+
+    # Check the given number of parameters (the returned n_parameters is a list
+    # of len n_scales)
+    n_parameters = check_n_parameters(n_parameters, n_levels, max_n_params)
+
+    # Define render function
+    def render_function(change):
+        # Clear current figure, but wait until the generation of the new data
+        # that will be rendered
+        save_figure_wid.renderer.clear_figure()
+        ipydisplay.clear_output(wait=True)
+
+        # Get selected level
+        level = 0
+        if n_levels > 1:
+            level = level_wid.value
+
+        # Compute weights
+        parameters = model_parameters_wid.selected_values
+        weights = (parameters *
+                   shape_model[level].eigenvalues[:len(parameters)] ** 0.5)
+
+        # Compute instance
+        instance = shape_model[level].instance(weights)
+
+        # Create options dictionary
+        options = dict()
+        if is_trimesh:
+            options.update(shape_options_wid.selected_values)
+        else:
+            options.update(shape_options_wid.selected_values['lines'])
+            options.update(shape_options_wid.selected_values['markers'])
+            options.update(
+                renderer_options_wid.selected_values['numbering_mayavi'])
+            # Correct options based on the type of the shape
+            if hasattr(instance, 'labels'):
+                # If the shape is a LabelledPointUndirectedGraph ...
+                # ...use with_labels
+                options['with_labels'] = \
+                    shape_options_wid.selected_values['with_labels']
+                # ...correct colours
+                line_colour = []
+                marker_colour = []
+                for lbl in options['with_labels']:
+                    idx = instance.labels.index(lbl)
+                    line_colour.append(options['line_colour'][idx])
+                    marker_colour.append(options['marker_colour'][idx])
+                options['line_colour'] = line_colour
+                options['marker_colour'] = marker_colour
+            else:
+                # If shape is PointCloud, TriMesh or PointGraph
+                # ...correct colours
+                options['line_colour'] = options['line_colour'][0]
+                options['marker_colour'] = options['marker_colour'][0]
+
+        # Update info
+        update_info(level, instance.range())
+
+        # Render instance
+        save_figure_wid.renderer = instance.view(
+            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+            **options)
+
+        # Force rendering
+        save_figure_wid.renderer.force_draw()
+
+    # Define function that updates the info text
+    def update_info(level, instance_range):
+        text_per_line = [
+            "> Level {} out of {}".format(level + 1, n_levels),
+            "> {} components in total".format(shape_model[level].n_components),
+            "> {} active components".format(
+                shape_model[level].n_active_components),
+            "> {:.1f}% variance kept".format(
+                shape_model[level].variance_ratio() * 100),
+            "> Instance range: {:.1f} x {:.1f}".format(instance_range[0],
+                                                       instance_range[1]),
+            "> {} points".format(
+                shape_model[level].mean().n_points)]
+        info_wid.set_widget_state(text_per_line=text_per_line)
+
+    # Plot variance function
+    def plot_variance(name):
+        # Clear current figure, but wait until the generation of the new data
+        # that will be rendered
+        ipydisplay.clear_output(wait=True)
+
+        # Get selected level
+        level = level_wid.value if n_levels > 1 else 0
+
+        # Render
+        plt.subplot(121)
+        shape_model[level].plot_eigenvalues_ratio()
+        plt.subplot(122)
+        shape_model[level].plot_eigenvalues_cumulative_ratio()
+        plt.show()
+
+    # Create widgets
+    model_parameters_wid = LinearModelParametersWidget(
+        n_parameters[0], render_function, params_str='Parameter ',
+        mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+        plot_variance_visible=True, plot_variance_function=plot_variance,
+        animation_step=0.5, interval=0., loop_enabled=True,
+        continuous_update=False)
+    if is_trimesh:
+        shape_options_wid = Mesh3DOptionsWidget(textured=False,
+                                                render_function=render_function)
+    else:
+        labels = None
+        if hasattr(shape_model[0].mean(), 'labels'):
+            labels = shape_model[0].mean().labels
+        shape_options_wid = Shape3DOptionsWidget(labels=labels,
+                                                 render_function=render_function)
+        renderer_options_wid = RendererOptionsWidget(
+            options_tabs=['numbering_mayavi'], labels=None,
+            render_function=render_function)
+    info_wid = TextPrintWidget(text_per_line=[''])
+    save_figure_wid = SaveMayaviFigureOptionsWidget()
+
+    # Group widgets
+    if n_levels > 1:
+        # Define function that updates options' widgets state
+        def update_widgets(change):
+            model_parameters_wid.set_widget_state(
+                n_parameters=n_parameters[change['new']],
+                params_str='Parameter ', allow_callback=True)
+
+        # Create pyramid radiobuttons
+        radio_str = OrderedDict()
+        for l in range(n_levels):
+            if l == 0:
+                radio_str["Level {} (low)".format(l)] = l
+            elif l == n_levels - 1:
+                radio_str["Level {} (high)".format(l)] = l
+            else:
+                radio_str["Level {}".format(l)] = l
+        level_wid = ipywidgets.RadioButtons(
+            options=radio_str, description='Pyramid', value=n_levels-1,
+            layout=ipywidgets.Layout(width='6cm'))
+        level_wid.observe(update_widgets, names='value', type='change')
+        level_wid.observe(render_function, names='value', type='change')
+        tmp_wid = ipywidgets.HBox([level_wid, model_parameters_wid])
+    else:
+        tmp_wid = ipywidgets.HBox(children=[model_parameters_wid])
+    if is_trimesh:
+        options_box = ipywidgets.Tab(
+            children=[tmp_wid, shape_options_wid, info_wid, save_figure_wid])
+        tab_titles = ['Model', 'Mesh', 'Info', 'Export']
+    else:
+        options_box = ipywidgets.Tab(
+            children=[tmp_wid, shape_options_wid, renderer_options_wid, info_wid,
+                      save_figure_wid])
+        tab_titles = ['Model', 'Shape', 'Renderer', 'Info', 'Export']
+    for (k, tl) in enumerate(tab_titles):
+        options_box.set_title(k, tl)
+    logo_wid = LogoWidget(style=main_style)
+    logo_wid.layout.margin = '0px 10px 0px 0px'
+    wid = ipywidgets.HBox([logo_wid, options_box])
+
+    # Set widget's style
+    wid.box_style = main_style
+    wid.layout.border = '2px solid ' + map_styles_to_hex_colours(main_style)
+
+    # Display final widget
+    final_box = ipywidgets.Box([wid])
+    final_box.layout.display = 'flex'
+    ipydisplay.display(final_box)
+
+    # Trigger initial visualization
+    render_function({})
+    print_dynamic('')
 
 
 def visualize_appearance_model(appearance_model, n_parameters=5,
@@ -1784,6 +2609,167 @@ def visualize_patch_appearance_model(appearance_model, centers,
 
     # Trigger initial visualization
     render_function({})
+
+
+def visualize_morphable_model(mm, n_shape_parameters=5, n_texture_parameters=5,
+                              mode='multiple', parameters_bounds=(-15.0, 15.0)):
+    r"""
+    Widget that allows the dynamic visualization of a 3D Morphable Model.
+
+    Parameters
+    ----------
+    mm : `menpo3d.morhpablemodel.ColouredMorphableModel` or `subclass`
+        The multi-scale 3D Morphable Model to be visualized.
+    n_shape_parameters : `int` or `list` of `int` or ``None``, optional
+        The number of principal components to be used for the shape parameters
+        sliders. If `int`, then the number of sliders per level is the minimum
+        between `n_parameters` and the number of active components per level.
+        If `list` of `int`, then a number of sliders is defined per level.
+        If ``None``, all the active components per level will have a slider.
+    n_texture_parameters : `int` or `list` of `int` or ``None``, optional
+        The number of principal components to be used for the tecture
+        parameters sliders. If `int`, then the number of sliders per level is
+        the minimum between `n_parameters` and the number of active components
+        per level. If `list` of `int`, then a number of sliders is defined per
+        level. If ``None``, all the active components per level will have a
+        slider.
+    mode : ``{'single', 'multiple'}``, optional
+        If ``'single'``, then only a single slider is constructed along with a
+        drop down menu. If ``'multiple'``, then a slider is constructed for each
+        parameter.
+    parameters_bounds : (`float`, `float`), optional
+        The minimum and maximum bounds, in std units, for the sliders.
+    """
+    # Ensure that the code is being run inside a Jupyter kernel!
+    from .utils import verify_ipython_and_kernel
+    verify_ipython_and_kernel()
+    print_dynamic('Initializing...')
+
+    # Define the styling options
+    main_style = 'info'
+
+    # Check the given number of parameters
+    n_shape_parameters = check_n_parameters(
+        n_shape_parameters, 1, [mm.shape_model.n_active_components])
+    n_texture_parameters = check_n_parameters(
+        n_texture_parameters, 1, [mm.texture_model.n_active_components])
+
+    # Define render function
+    def render_function(change):
+        # Clear current figure
+        save_figure_wid.renderer.clear_figure()
+        ipydisplay.clear_output(wait=True)
+
+        # Compute weights
+        shape_weights = shape_model_parameters_wid.selected_values
+        shape_weights = (
+            shape_weights *
+            mm.shape_model.eigenvalues[:len(shape_weights)] ** 0.5)
+        texture_weights = texture_model_parameters_wid.selected_values
+        texture_weights = (
+            texture_weights *
+            mm.texture_model.eigenvalues[:len(texture_weights)] ** 0.5)
+        instance = mm.instance(shape_weights=shape_weights,
+                               texture_weights=texture_weights)
+        # TODO: Is this really needed?
+        instance = instance.clip_texture()
+
+        # Update info
+        update_info(mm, instance)
+
+        # Render instance
+        save_figure_wid.renderer = instance.view(
+            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+            **mesh_options_wid.selected_values)
+
+        # Force rendering
+        save_figure_wid.renderer.force_draw()
+
+    # Define function that updates the info text
+    def update_info(mm, instance):
+        text_per_line = [
+            "> {} vertices, {} triangles".format(mm.n_vertices,
+                                                 mm.n_triangles),
+            "> {} shape components ({:.2f}% of variance)".format(
+                mm.shape_model.n_components,
+                mm.shape_model.variance_ratio() * 100),
+            "> {} texture channels".format(mm.n_channels),
+            "> {} texture components ({:.2f}% of variance)".format(
+                mm.texture_model.n_components,
+                mm.texture_model.variance_ratio() * 100),
+            "> Instance: min={:.3f} , max={:.3f}".format(
+                instance.colours.min(), instance.colours.max())]
+        info_wid.set_widget_state(text_per_line=text_per_line)
+
+    # Plot shape variance function
+    def plot_shape_variance(name):
+        # Clear current figure, but wait until the generation of the new data
+        # that will be rendered
+        ipydisplay.clear_output(wait=True)
+
+        # Render
+        plt.subplot(121)
+        mm.shape_model.plot_eigenvalues_ratio()
+        plt.subplot(122)
+        mm.shape_model.plot_eigenvalues_cumulative_ratio()
+        plt.show()
+
+    # Plot texture variance function
+    def plot_texture_variance(name):
+        # Clear current figure, but wait until the generation of the new data
+        # that will be rendered
+        ipydisplay.clear_output(wait=True)
+
+        # Render
+        plt.subplot(121)
+        mm.texture_model.plot_eigenvalues_ratio()
+        plt.subplot(122)
+        mm.texture_model.plot_eigenvalues_cumulative_ratio()
+        plt.show()
+
+    # Create widgets
+    shape_model_parameters_wid = LinearModelParametersWidget(
+        n_shape_parameters[0], render_function, params_str='Parameter ',
+        mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+        plot_variance_visible=True, plot_variance_function=plot_shape_variance,
+        animation_step=0.5, interval=0., loop_enabled=True)
+    texture_model_parameters_wid = LinearModelParametersWidget(
+        n_texture_parameters[0], render_function, params_str='Parameter ',
+        mode=mode, params_bounds=parameters_bounds, params_step=0.1,
+        plot_variance_visible=True, plot_variance_function=plot_texture_variance,
+        animation_step=0.5, interval=0., loop_enabled=True)
+    mesh_options_wid = Mesh3DOptionsWidget(textured=True,
+                                           render_function=render_function)
+    info_wid = TextPrintWidget(text_per_line=[''])
+    save_figure_wid = SaveMayaviFigureOptionsWidget()
+
+    # Group widgets
+    model_parameters_wid = ipywidgets.HBox(
+        [ipywidgets.Tab([shape_model_parameters_wid,
+                         texture_model_parameters_wid])])
+    model_parameters_wid.children[0].set_title(0, 'Shape')
+    model_parameters_wid.children[0].set_title(1, 'Texture')
+    options_box = ipywidgets.Tab([model_parameters_wid, mesh_options_wid,
+                                  info_wid, save_figure_wid])
+    tab_titles = ['Model', 'Mesh', 'Info', 'Export']
+    for (k, tl) in enumerate(tab_titles):
+        options_box.set_title(k, tl)
+    logo_wid = LogoWidget(style=main_style)
+    logo_wid.layout.margin = '0px 10px 0px 0px'
+    wid = ipywidgets.HBox([logo_wid, options_box])
+
+    # Set widget's style
+    wid.box_style = main_style
+    wid.layout.border = '2px solid ' + map_styles_to_hex_colours(main_style)
+
+    # Display final widget
+    final_box = ipywidgets.Box([wid])
+    final_box.layout.display = 'flex'
+    ipydisplay.display(final_box)
+
+    # Trigger initial visualization
+    render_function({})
+    print_dynamic('')
 
 
 def webcam_widget(canvas_width=640, hd=True, n_preview_windows=5):

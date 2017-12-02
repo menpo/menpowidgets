@@ -2389,6 +2389,10 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
         self.marker_style_dropdown = ipywidgets.Dropdown(
             options=marker_style_dict, value=marker_options['marker_style'],
             layout=ipywidgets.Layout(width='3cm'))
+        self.step_title = ipywidgets.HTML(value='Sampling')
+        self.step_text = ipywidgets.BoundedIntText(
+            value=marker_options['step'], min=0., max=10**6,
+            layout=ipywidgets.Layout(width='2.6cm'))
         self.marker_colour_widget = ColourSelectionWidget(
             marker_options['marker_colour'], description='Colour',
             labels=labels, render_function=None)
@@ -2407,7 +2411,9 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
         self.box_3 = ipywidgets.VBox([self.box_3, self.box_1, self.box_2])
         self.box_3.layout.align_items = 'flex-end'
         self.box_3.layout.margin = '0px 10px 0px 0px'
-        self.box_4 = ipywidgets.VBox([self.marker_colour_widget])
+        self.box_44 = ipywidgets.HBox([self.step_title, self.step_text])
+        self.box_44.layout.align_items = 'center'
+        self.box_4 = ipywidgets.VBox([self.marker_colour_widget, self.box_44])
         self.box_5 = ipywidgets.HBox([self.box_3, self.box_4])
         self.container = ipywidgets.VBox([self.render_markers_switch,
                                           self.box_5])
@@ -2436,7 +2442,8 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
                 'marker_size': marker_size,
                 'marker_colour': self.marker_colour_widget.selected_values,
                 'marker_resolution': int(self.marker_resolution_text.value),
-                'marker_style': self.marker_style_dropdown.value}
+                'marker_style': self.marker_style_dropdown.value,
+                'step': int(self.step_text.value)}
         self.render_markers_switch.observe(
             save_options, names='selected_values', type='change')
         self.marker_size_text.observe(save_options, names='value', type='change')
@@ -2446,6 +2453,7 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
                                            type='change')
         self.marker_resolution_text.observe(save_options, names='value',
                                             type='change')
+        self.step_text.observe(save_options, names='value', type='change')
 
         def button_icon(_):
             if self.marker_size_text.disabled:
@@ -2507,6 +2515,7 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
                 self.marker_size_text.value = float(marker_options['marker_size'])
             self.marker_resolution_text.value = \
                 int(marker_options['marker_resolution'])
+            self.step_text.value = int(marker_options['step'])
 
             # re-assign render callback
             self.add_render_function(render_function)
