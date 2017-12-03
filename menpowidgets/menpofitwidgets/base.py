@@ -2,8 +2,8 @@ from menpo.base import MenpoMissingDependencyError
 
 try:
     import menpofit
-except ImportError:
-    raise MenpoMissingDependencyError('menpofit')
+except ImportError as e:
+    raise MenpoMissingDependencyError(e.name)
 
 # Continue with imports if we have menpofit
 from collections import OrderedDict
