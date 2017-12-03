@@ -14,7 +14,7 @@ requirements:
     - jupyter 1.*
     - ipywidgets >=6.0,<7.0
     - traitlets >=4.3,<5.0
-    - widgetsnbextension 2.0.0
+    - widgetsnbextension >=2.0,<3.0
 
 test:
   imports:
