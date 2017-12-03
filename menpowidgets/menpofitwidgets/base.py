@@ -272,7 +272,7 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     # Group widgets
     model_parameters_wid = ipywidgets.HBox(
         [ipywidgets.Tab([shape_model_parameters_wid,
-                        appearance_model_parameters_wid])])
+                         appearance_model_parameters_wid])])
     model_parameters_wid.children[0].set_title(0, 'Shape')
     model_parameters_wid.children[0].set_title(1, 'Appearance')
     tmp_children = [model_parameters_wid]
