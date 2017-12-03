@@ -4157,7 +4157,7 @@ class PlotMatplotlibOptionsWidget(MenpoWidget):
             children=[self.box_1, self.lines_markers_box, self.legend_wid,
                       self.axes_wid, self.zoom_wid, self.grid_wid])
         self.tab_box.set_title(0, 'Labels')
-        self.tab_box.set_title(1, 'Lines & Markers')
+        self.tab_box.set_title(1, 'Style')
         self.tab_box.set_title(2, 'Legend')
         self.tab_box.set_title(3, 'Axes')
         self.tab_box.set_title(4, 'Zoom')
@@ -5249,7 +5249,7 @@ class CameraSnapshotWidget(MenpoWidget):
 
         # Assign preview callback
         def update_preview(_):
-            self.selected_values = self.camera_wid.snapshots.copy()
+            self.selected_values = list(self.camera_wid.snapshots)
             # Convert image to bytes
             img = self.camera_wid.imageurl.encode('utf-8')
             img = b64decode(img[len('data:image/png;base64,'):])

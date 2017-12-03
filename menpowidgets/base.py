@@ -1508,7 +1508,7 @@ def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(9, 5)):
     tmp_children.append(save_figure_wid)
     plot_wid.tab_box.children = tmp_children
     plot_wid.tab_box.set_title(0, 'Labels')
-    plot_wid.tab_box.set_title(1, 'Lines & Markers')
+    plot_wid.tab_box.set_title(1, 'Style')
     plot_wid.tab_box.set_title(2, 'Legend')
     plot_wid.tab_box.set_title(3, 'Axes')
     plot_wid.tab_box.set_title(4, 'Zoom')
