@@ -1669,7 +1669,7 @@ def plot_ced(errors, legend_entries=None, error_range=None,
     tmp_children.append(save_figure_wid)
     plot_wid.tab_box.children = tmp_children
     plot_wid.tab_box.set_title(0, 'Labels')
-    plot_wid.tab_box.set_title(1, 'Lines & Markers')
+    plot_wid.tab_box.set_title(1, 'Style')
     plot_wid.tab_box.set_title(2, 'Legend')
     plot_wid.tab_box.set_title(3, 'Axes')
     plot_wid.tab_box.set_title(4, 'Zoom')
@@ -2087,9 +2087,8 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7),
         # If animation is activated and the user selects the save figure tab,
         # then the animation stops.
         def save_fig_tab_fun(change):
-            if (change['new'] == 3 and
-                    image_number_wid.play_stop_toggle.value):
-                image_number_wid.stop_animation()
+            if change['new'] == 3:
+                image_number_wid.pause_animation()
         options_box.observe(save_fig_tab_fun, names='selected_index',
                             type='change')
 
