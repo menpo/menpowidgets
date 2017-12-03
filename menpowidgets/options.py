@@ -2113,6 +2113,54 @@ class ImageOptionsWidget(MenpoWidget):
         self.alpha_text = ipywidgets.Label(
             value="{:.2f}".format(1.0), layout=ipywidgets.Layout(width='0.75cm'))
         self.cmap_title = ipywidgets.HTML(value='Colour map')
+        self._add_cmap_select()   # Adds self.cmap_select
+
+        # Group widgets
+        self.box_1 = ipywidgets.HBox([self.glyph_block_size_title,
+                                      self.glyph_block_size_text])
+        self.box_1.layout.align_items = 'center'
+        self.box_2 = ipywidgets.HBox([self.cmap_title, self.cmap_select])
+        self.box_2.layout.align_items = 'center'
+        self.box_3 = ipywidgets.HBox(([self.alpha_title, self.alpha_slider,
+                                       self.alpha_text]))
+        self.box_3.layout.align_items = 'center'
+        self.box_4 = ipywidgets.VBox([self.box_1,
+                                      self.glyph_use_negative_checkbox])
+        self.box_4.layout.display = 'none'
+        self.box_4.layout.border = '1px solid'
+        self.box_5 = ipywidgets.VBox([self.interpolation_checkbox,
+                                      self.masked_checkbox, self.rgb_checkbox])
+        self.box_5.layout.margin = '0px 10px 0px 0px'
+        self.box_6 = ipywidgets.VBox([self.box_2, self.box_3])
+        self.box_6.layout.align_items = 'flex-end'
+        self.glyph_checkbox.layout.margin = '0px 10px 0px 0px'
+        self.box_7 = ipywidgets.HBox([self.glyph_checkbox, self.box_4])
+        self.box_7.layout.align_items = 'flex-start'
+        self.sum_checkbox.layout.margin = '0px 10px 0px 0px'
+        self.box_8 = ipywidgets.HBox([self.sum_checkbox, self.box_7])
+        self.box_8.layout.align_items = 'flex-start'
+        self.box_9 = ipywidgets.VBox([self.box_6, self.box_8])
+        self.box_9.layout.align_items = 'flex-start'
+        self.channels_wid.layout.margin = '0px 10px 0px 0px'
+        self.container = ipywidgets.HBox([self.channels_wid,
+                                          self.box_5, self.box_9])
+
+        # Create final widget
+        super(ImageOptionsWidget, self).__init__(
+            [self.container], Dict, {}, render_function=render_function)
+
+        # Set values
+        self.set_widget_state(n_channels, image_is_masked, allow_callback=False)
+
+        # Set slider update
+        def slider_sync(change):
+            self.alpha_text.value = '{:.2f}'.format(float(change['new']))
+        self.alpha_slider.observe(slider_sync, names='value', type='change')
+
+        # Set style
+        self.predefined_style(style)
+
+    def _add_cmap_select(self):
         cmap_dict = OrderedDict()
         cmap_dict['None'] = None
         cmap_dict['afmhot'] = 'afmhot'
@@ -2124,7 +2172,7 @@ class ImageOptionsWidget(MenpoWidget):
         cmap_dict['cool'] = 'cool'
         cmap_dict['coolwarm'] = 'coolwarm'
         cmap_dict['copper'] = 'copper'
-        cmap_dict['cubehelix']= 'cubehelix'
+        cmap_dict['cubehelix'] = 'cubehelix'
         cmap_dict['flag'] = 'flag'
         cmap_dict['gist_earth'] = 'gist_earth'
         cmap_dict['gist_heat'] = 'gist_heat'
@@ -2173,52 +2221,12 @@ class ImageOptionsWidget(MenpoWidget):
         cmap_dict['YlOrBr'] = 'YlOrBr'
         cmap_dict['YlOrRd'] = 'YlOrRd'
         self.cmap_select = ipywidgets.Dropdown(
-            options=cmap_dict, value=None, layout=ipywidgets.Layout(width='3cm'))
-
-        # Group widgets
-        self.box_1 = ipywidgets.HBox([self.glyph_block_size_title,
-                                      self.glyph_block_size_text])
-        self.box_1.layout.align_items = 'center'
-        self.box_2 = ipywidgets.HBox([self.cmap_title, self.cmap_select])
-        self.box_2.layout.align_items = 'center'
-        self.box_3 = ipywidgets.HBox(([self.alpha_title, self.alpha_slider,
-                                       self.alpha_text]))
-        self.box_3.layout.align_items = 'center'
-        self.box_4 = ipywidgets.VBox([self.box_1,
-                                      self.glyph_use_negative_checkbox])
-        self.box_4.layout.display = 'none'
-        self.box_4.layout.border = '1px solid'
-        self.box_5 = ipywidgets.VBox([self.interpolation_checkbox,
-                                      self.masked_checkbox, self.rgb_checkbox])
-        self.box_5.layout.margin = '0px 10px 0px 0px'
-        self.box_6 = ipywidgets.VBox([self.box_2, self.box_3])
-        self.box_6.layout.align_items = 'flex-end'
-        self.glyph_checkbox.layout.margin = '0px 10px 0px 0px'
-        self.box_7 = ipywidgets.HBox([self.glyph_checkbox, self.box_4])
-        self.box_7.layout.align_items = 'flex-start'
-        self.sum_checkbox.layout.margin = '0px 10px 0px 0px'
-        self.box_8 = ipywidgets.HBox([self.sum_checkbox, self.box_7])
-        self.box_8.layout.align_items = 'flex-start'
-        self.box_9 = ipywidgets.VBox([self.box_6, self.box_8])
-        self.box_9.layout.align_items = 'flex-start'
-        self.channels_wid.layout.margin = '0px 10px 0px 0px'
-        self.container = ipywidgets.HBox([self.channels_wid,
-                                          self.box_5, self.box_9])
-
-        # Create final widget
-        super(ImageOptionsWidget, self).__init__(
-            [self.container], Dict, {}, render_function=render_function)
-
-        # Set values
-        self.set_widget_state(n_channels, image_is_masked, allow_callback=False)
-
-        # Set slider update
-        def slider_sync(change):
-            self.alpha_text.value = '{:.2f}'.format(float(change['new']))
-        self.alpha_slider.observe(slider_sync, names='value', type='change')
-
-        # Set style
-        self.predefined_style(style)
+            options=cmap_dict,
+            value=None,
+            layout=ipywidgets.Layout(width='3cm')
+        )
+        self.cmap_select.observe(self._save_options, names='value',
+                                 type='change')
 
     def add_callbacks(self):
         r"""
