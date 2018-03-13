@@ -1061,7 +1061,10 @@ def visualize_images(images, figure_size=(7, 7), browser_style='buttons',
     # Ensure that the code is being run inside a Jupyter kernel!
     from .utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
-    print('Initializing...')
+    initializer_output = ipywidgets.Output()
+    ipydisplay.display(initializer_output)
+    with initializer_output:
+        print('Initializing...')
 
     # Make sure that images is a list even with one member
     if not isinstance(images, Sized):
@@ -1075,10 +1078,6 @@ def visualize_images(images, figure_size=(7, 7), browser_style='buttons',
 
     # Define render function
     def render_function(change):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # get selected index and selected group
         i = image_number_wid.selected_values if n_images > 1 else 0
         g = landmark_options_wid.selected_values['landmarks']['group']
@@ -1127,15 +1126,20 @@ def visualize_images(images, figure_size=(7, 7), browser_style='buttons',
             renderer_options_wid.selected_values['zoom_one'] *
             figure_size[1])
 
-        # Render shape with selected options
-        save_figure_wid.renderer = render_image(
-            image=images[i], renderer=save_figure_wid.renderer,
-            image_is_masked=image_is_masked, figure_size=new_figure_size,
-            **options)
+        with rendered_output:
+            ipydisplay.clear_output(wait=True)
+            # Render shape with selected options
+            save_figure_wid.renderer = render_image(
+                image=images[i], renderer=save_figure_wid.renderer,
+                image_is_masked=image_is_masked, figure_size=new_figure_size,
+                **options)
 
         # Update info
         update_info(images[i], image_is_masked, g,
                     custom_info_callback=custom_info_callback)
+
+        with initializer_output:
+            ipydisplay.clear_output()
 
     # Define function that updates the info text
     def update_info(img, image_is_masked, group, custom_info_callback=None):
@@ -1236,6 +1240,11 @@ def visualize_images(images, figure_size=(7, 7), browser_style='buttons',
     final_box = ipywidgets.Box([wid])
     final_box.layout.display = 'flex'
     ipydisplay.display(final_box)
+
+    # We want to clear the old image output - but not the widgets so we need
+    # a special output layout
+    rendered_output = ipywidgets.Output()
+    ipydisplay.display(rendered_output)
 
     # Trigger initial visualization
     render_function({})
