@@ -94,7 +94,10 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
     # Ensure that the code is being run inside a Jupyter kernel!
     from .utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
-    print('Initializing...')
+    initializer_output = ipywidgets.Output()
+    ipydisplay.display(initializer_output)
+    with initializer_output:
+        print('Initializing...')
 
     # Make sure that shapes is a list even with one member
     if not isinstance(shapes, Sized):
@@ -108,10 +111,6 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
 
     # Define render function
     def render_function(change):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected shape index
         i = shape_number_wid.selected_values if n_shapes > 1 else 0
 
@@ -162,10 +161,14 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
             figure_size=new_figure_size, **options)
 
         # Force rendering
-        save_figure_wid.renderer.force_draw()
+        with rendered_output:
+            save_figure_wid.renderer.force_draw()
 
         # Update info text widget
         update_info(shapes[i], custom_info_callback=custom_info_callback)
+
+        with initializer_output:
+            ipydisplay.clear_output()
 
     # Define function that updates the info text
     def update_info(shape, custom_info_callback=None):
@@ -252,6 +255,11 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
     final_box.layout.display = 'flex'
     ipydisplay.display(final_box)
 
+    # We want to clear the old image output - but not the widgets so we need
+    # a special output layout
+    rendered_output = ipywidgets.Output()
+    ipydisplay.display(rendered_output)
+
     # Trigger initial visualization
     render_function({})
 
@@ -301,7 +309,10 @@ def visualize_shapes_3d(shapes, browser_style='buttons',
     # Ensure that the code is being run inside a Jupyter kernel!
     from .utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
-    print_dynamic('Initializing...')
+    initializer_output = ipywidgets.Output()
+    ipydisplay.display(initializer_output)
+    with initializer_output:
+        print('Initializing...')
 
     # Make sure that shapes is a list even with one member
     if not isinstance(shapes, Sized):
@@ -315,10 +326,6 @@ def visualize_shapes_3d(shapes, browser_style='buttons',
 
     # Define render function
     def render_function(change):
-        # Clear current figure
-        save_figure_wid.renderer.clear_figure()
-        ipydisplay.clear_output(wait=True)
-
         # Get selected shape index
         i = shape_number_wid.selected_values if n_shapes > 1 else 0
 
@@ -381,7 +388,11 @@ def visualize_shapes_3d(shapes, browser_style='buttons',
             alpha=1.0, **options)
 
         # Force rendering
-        save_figure_wid.renderer.force_draw()
+        with rendered_output:
+            save_figure_wid.renderer.force_draw()
+
+        with initializer_output:
+            ipydisplay.clear_output()
 
     # Define function that updates the info text
     def update_info(shape, custom_info_callback=None):
@@ -470,6 +481,11 @@ def visualize_shapes_3d(shapes, browser_style='buttons',
     final_box.layout.display = 'flex'
     ipydisplay.display(final_box)
 
+    # We want to clear the old image output - but not the widgets so we need
+    # a special output layout
+    rendered_output = ipywidgets.Output()
+    ipydisplay.display(rendered_output)
+
     # Trigger initial visualization
     render_function({})
     print_dynamic('')
@@ -500,7 +516,10 @@ def visualize_landmarks_2d(landmarks, figure_size=(7, 7),
     # Ensure that the code is being run inside a Jupyter kernel!
     from .utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
-    print('Initializing...')
+    initializer_output = ipywidgets.Output()
+    ipydisplay.display(initializer_output)
+    with initializer_output:
+        print('Initializing...')
 
     # Make sure that landmarks is a list even with one landmark manager member
     if isinstance(landmarks, LandmarkManager):
@@ -514,73 +533,70 @@ def visualize_landmarks_2d(landmarks, figure_size=(7, 7),
 
     # Define render function
     def render_function(change):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # get selected index and selected group
         i = landmark_number_wid.selected_values if n_landmarks > 1 else 0
         g = landmark_options_wid.selected_values['landmarks']['group']
 
-        if landmark_options_wid.selected_values['landmarks']['render_landmarks']:
-            # get shape
-            shape = landmarks[i][g]
+        # get shape
+        shape = landmarks[i][g]
 
-            # Create options dictionary
-            options = dict()
-            options.update(landmark_options_wid.selected_values['lines'])
-            options.update(landmark_options_wid.selected_values['markers'])
-            options['image_view'] = landmark_options_wid.selected_values['image_view']
-            options.update(
-                renderer_options_wid.selected_values['numbering_matplotlib'])
-            options.update(renderer_options_wid.selected_values['axes'])
+        # Create options dictionary
+        options = dict()
+        options.update(landmark_options_wid.selected_values['lines'])
+        options.update(landmark_options_wid.selected_values['markers'])
+        options['image_view'] = landmark_options_wid.selected_values['image_view']
+        options.update(
+            renderer_options_wid.selected_values['numbering_matplotlib'])
+        options.update(renderer_options_wid.selected_values['axes'])
 
-            # Correct options based on the type of the shape
-            if hasattr(shape, 'labels'):
-                # If the shape is a LabelledPointUndirectedGraph ...
-                # ...use the legend options
-                options.update(renderer_options_wid.selected_values['legend'])
-                # ...use with_labels
-                options['with_labels'] = \
-                    landmark_options_wid.selected_values['landmarks']['with_labels']
-                # ...correct colours
-                line_colour = []
-                marker_face_colour = []
-                marker_edge_colour = []
-                for lbl in options['with_labels']:
-                    id = shape.labels.index(lbl)
-                    line_colour.append(options['line_colour'][id])
-                    marker_face_colour.append(options['marker_face_colour'][id])
-                    marker_edge_colour.append(options['marker_edge_colour'][id])
-                options['line_colour'] = line_colour
-                options['marker_face_colour'] = marker_face_colour
-                options['marker_edge_colour'] = marker_edge_colour
-            else:
-                # If shape is PointCloud, TriMesh or PointGraph
-                # ...correct colours
-                options['line_colour'] = options['line_colour'][0]
-                options['marker_face_colour'] = options['marker_face_colour'][0]
-                options['marker_edge_colour'] = options['marker_edge_colour'][0]
-
-            # Get figure size
-            new_figure_size = (
-                renderer_options_wid.selected_values['zoom_one'] *
-                figure_size[0],
-                renderer_options_wid.selected_values['zoom_one'] *
-                figure_size[1])
-
-            # Render shape with selected options
-            save_figure_wid.renderer = shape.view(
-                figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-                figure_size=new_figure_size, **options)
-
-            # Force rendering
-            save_figure_wid.renderer.force_draw()
+        # Correct options based on the type of the shape
+        if hasattr(shape, 'labels'):
+            # If the shape is a LabelledPointUndirectedGraph ...
+            # ...use the legend options
+            options.update(renderer_options_wid.selected_values['legend'])
+            # ...use with_labels
+            options['with_labels'] = \
+                landmark_options_wid.selected_values['landmarks']['with_labels']
+            # ...correct colours
+            line_colour = []
+            marker_face_colour = []
+            marker_edge_colour = []
+            for lbl in options['with_labels']:
+                id = shape.labels.index(lbl)
+                line_colour.append(options['line_colour'][id])
+                marker_face_colour.append(options['marker_face_colour'][id])
+                marker_edge_colour.append(options['marker_edge_colour'][id])
+            options['line_colour'] = line_colour
+            options['marker_face_colour'] = marker_face_colour
+            options['marker_edge_colour'] = marker_edge_colour
         else:
-            ipydisplay.clear_output()
+            # If shape is PointCloud, TriMesh or PointGraph
+            # ...correct colours
+            options['line_colour'] = options['line_colour'][0]
+            options['marker_face_colour'] = options['marker_face_colour'][0]
+            options['marker_edge_colour'] = options['marker_edge_colour'][0]
+
+        # Get figure size
+        new_figure_size = (
+            renderer_options_wid.selected_values['zoom_one'] *
+            figure_size[0],
+            renderer_options_wid.selected_values['zoom_one'] *
+            figure_size[1])
+
+        # Render shape with selected options
+        save_figure_wid.renderer = shape.view(
+            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+            figure_size=new_figure_size, **options)
+
+        # Force rendering
+        with rendered_output:
+            save_figure_wid.renderer.force_draw()
 
         # update info text widget
         update_info(landmarks[i], g, custom_info_callback=custom_info_callback)
+
+        with initializer_output:
+            ipydisplay.clear_output()
 
     # Define function that updates the info text
     def update_info(landmarks, group, custom_info_callback=None):
@@ -669,6 +685,11 @@ def visualize_landmarks_2d(landmarks, figure_size=(7, 7),
     final_box.layout.display = 'flex'
     ipydisplay.display(final_box)
 
+    # We want to clear the old image output - but not the widgets so we need
+    # a special output layout
+    rendered_output = ipywidgets.Output()
+    ipydisplay.display(rendered_output)
+
     # Trigger initial visualization
     render_function({})
 
@@ -696,7 +717,10 @@ def visualize_landmarks_3d(landmarks, browser_style='buttons',
     # Ensure that the code is being run inside a Jupyter kernel!
     from .utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
-    print('Initializing...')
+    initializer_output = ipywidgets.Output()
+    ipydisplay.display(initializer_output)
+    with initializer_output:
+        print('Initializing...')
 
     # Make sure that landmarks is a list even with one landmark manager member
     if not isinstance(landmarks, list):
@@ -712,7 +736,6 @@ def visualize_landmarks_3d(landmarks, browser_style='buttons',
     def render_function(change):
         # Clear current figure
         save_figure_wid.renderer.clear_figure()
-        ipydisplay.clear_output(wait=True)
 
         # get selected index and selected group
         i = landmark_number_wid.selected_values if n_landmarks > 1 else 0
@@ -721,69 +744,70 @@ def visualize_landmarks_3d(landmarks, browser_style='buttons',
         # update info text widget
         update_info(landmarks[i], g, custom_info_callback=custom_info_callback)
 
-        if landmark_options_wid.selected_values['landmarks']['render_landmarks']:
-            # get shape
-            shape = landmarks[i][g]
+        # get shape
+        shape = landmarks[i][g]
 
-            options = dict()
-            if isinstance(shape, TriMesh):
-                # Note that 3D TriMesh has a totally different set of options
-                # compared to any other PointCloud or PointGraph. However, in
-                # order for visualize_landmarks_3d to support TriMeshes, we
-                # simply use the options that are common. This means that most
-                # of the widget's options will have no effect on rendering...
-                options['mesh_type'] = 'wireframe'
-                if landmark_options_wid.selected_values['markers'][
-                    'render_markers']:
-                    options['mesh_type'] = 'fancymesh'
-                options['line_width'] = \
-                    landmark_options_wid.selected_values['lines']['line_width']
-                options['colour'] = \
-                    landmark_options_wid.selected_values['lines']['line_colour'][0]
-                options['marker_style'] = \
-                    landmark_options_wid.selected_values['markers']['marker_style']
-                options['marker_size'] = \
-                    landmark_options_wid.selected_values['markers']['marker_size']
-                options['marker_resolution'] = \
-                    landmark_options_wid.selected_values['markers'][
-                        'marker_resolution']
-                options['step'] = \
-                    landmark_options_wid.selected_values['markers']['step']
-            else:
-                options.update(landmark_options_wid.selected_values['lines'])
-                options.update(landmark_options_wid.selected_values['markers'])
-                options.update(
-                    renderer_options_wid.selected_values['numbering_mayavi'])
-
-                # Correct options based on the type of the shape
-                if hasattr(shape, 'labels'):
-                    # If the shape is a LabelledPointUndirectedGraph ...
-                    # ...use with_labels
-                    options['with_labels'] = \
-                        landmark_options_wid.selected_values['landmarks']['with_labels']
-                    # ...correct colours
-                    line_colour = []
-                    marker_colour = []
-                    for lbl in options['with_labels']:
-                        idx = shape.labels.index(lbl)
-                        line_colour.append(options['line_colour'][idx])
-                        marker_colour.append(options['marker_colour'][idx])
-                    options['line_colour'] = line_colour
-                    options['marker_colour'] = marker_colour
-                else:
-                    # If shape is PointCloud, TriMesh or PointGraph
-                    # ...correct colours
-                    options['line_colour'] = options['line_colour'][0]
-                    options['marker_colour'] = options['marker_colour'][0]
-
-            # Render shape with selected options
-            save_figure_wid.renderer = shape.view(
-                figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
-                alpha=1.0, **options)
-
-            # Force rendering
-            save_figure_wid.renderer.force_draw()
+        options = dict()
+        if isinstance(shape, TriMesh):
+            # Note that 3D TriMesh has a totally different set of options
+            # compared to any other PointCloud or PointGraph. However, in
+            # order for visualize_landmarks_3d to support TriMeshes, we
+            # simply use the options that are common. This means that most
+            # of the widget's options will have no effect on rendering...
+            options['mesh_type'] = 'wireframe'
+            if landmark_options_wid.selected_values['markers'][
+                'render_markers']:
+                options['mesh_type'] = 'fancymesh'
+            options['line_width'] = \
+                landmark_options_wid.selected_values['lines']['line_width']
+            options['colour'] = \
+                landmark_options_wid.selected_values['lines']['line_colour'][0]
+            options['marker_style'] = \
+                landmark_options_wid.selected_values['markers']['marker_style']
+            options['marker_size'] = \
+                landmark_options_wid.selected_values['markers']['marker_size']
+            options['marker_resolution'] = \
+                landmark_options_wid.selected_values['markers'][
+                    'marker_resolution']
+            options['step'] = \
+                landmark_options_wid.selected_values['markers']['step']
         else:
+            options.update(landmark_options_wid.selected_values['lines'])
+            options.update(landmark_options_wid.selected_values['markers'])
+            options.update(
+                renderer_options_wid.selected_values['numbering_mayavi'])
+
+            # Correct options based on the type of the shape
+            if hasattr(shape, 'labels'):
+                # If the shape is a LabelledPointUndirectedGraph ...
+                # ...use with_labels
+                options['with_labels'] = \
+                    landmark_options_wid.selected_values['landmarks']['with_labels']
+                # ...correct colours
+                line_colour = []
+                marker_colour = []
+                for lbl in options['with_labels']:
+                    idx = shape.labels.index(lbl)
+                    line_colour.append(options['line_colour'][idx])
+                    marker_colour.append(options['marker_colour'][idx])
+                options['line_colour'] = line_colour
+                options['marker_colour'] = marker_colour
+            else:
+                # If shape is PointCloud, TriMesh or PointGraph
+                # ...correct colours
+                options['line_colour'] = options['line_colour'][0]
+                options['marker_colour'] = options['marker_colour'][0]
+
+        # Render shape with selected options
+        save_figure_wid.renderer = shape.view(
+            figure_id=save_figure_wid.renderer.figure_id, new_figure=False,
+            alpha=1.0, **options)
+
+        # Force rendering
+        with rendered_output:
+            save_figure_wid.renderer.force_draw()
+    
+        with initializer_output:
             ipydisplay.clear_output()
 
     # Define function that updates the info text
@@ -875,6 +899,11 @@ def visualize_landmarks_3d(landmarks, browser_style='buttons',
     final_box.layout.display = 'flex'
     ipydisplay.display(final_box)
 
+    # We want to clear the old image output - but not the widgets so we need
+    # a special output layout
+    rendered_output = ipywidgets.Output()
+    ipydisplay.display(rendered_output)
+
     # Trigger initial visualization
     render_function({})
     print_dynamic('')
@@ -921,7 +950,10 @@ def visualize_meshes_3d(meshes, browser_style='buttons',
     # Ensure that the code is being run inside a Jupyter kernel!!
     from menpowidgets.utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
-    print('Initializing...')
+    initializer_output = ipywidgets.Output()
+    ipydisplay.display(initializer_output)
+    with initializer_output:
+        print('Initializing...')
 
     # Make sure that meshes is a list even with one member
     if not isinstance(meshes, Sized):
@@ -937,7 +969,6 @@ def visualize_meshes_3d(meshes, browser_style='buttons',
     def render_function(_):
         # Clear current figure
         save_figure_wid.renderer.clear_figure()
-        ipydisplay.clear_output(wait=True)
 
         # Get selected mesh index
         i = mesh_number_wid.selected_values if n_meshes > 1 else 0
@@ -951,7 +982,11 @@ def visualize_meshes_3d(meshes, browser_style='buttons',
             **mesh_options_wid.selected_values)
 
         # Force rendering
-        save_figure_wid.renderer.force_draw()
+        with rendered_output:
+            save_figure_wid.renderer.force_draw()
+
+        with initializer_output:
+            ipydisplay.clear_output()
 
     # Define function that updates the info text
     def update_info(mesh, custom_info_callback=None):
@@ -1030,6 +1065,11 @@ def visualize_meshes_3d(meshes, browser_style='buttons',
     final_box = ipywidgets.Box([wid])
     final_box.layout.display = 'flex'
     ipydisplay.display(final_box)
+
+    # We want to clear the old image output - but not the widgets so we need
+    # a special output layout
+    rendered_output = ipywidgets.Output()
+    ipydisplay.display(rendered_output)
 
     # Trigger initial visualization
     render_function({})
@@ -1291,7 +1331,10 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7),
     # Ensure that the code is being run inside a Jupyter kernel!
     from .utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
-    print('Initializing...')
+    initializer_output = ipywidgets.Output()
+    ipydisplay.display(initializer_output)
+    with initializer_output:
+        print('Initializing...')
 
     # Make sure that patches is a list even with one member
     if (isinstance(patches, list) and isinstance(patches[0], Image)) or \
@@ -1318,10 +1361,6 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7),
 
     # Define render function
     def render_function(change):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # get selected index
         i = image_number_wid.selected_values if n_patches > 1 else 0
 
@@ -1346,13 +1385,17 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7),
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
 
         # Render image with selected options
-        save_figure_wid.renderer = render_patches(
-            patches=patches[i], patch_centers=patch_centers[i],
-            renderer=save_figure_wid.renderer, figure_size=new_figure_size,
-            **options)
+        with rendered_output:
+            save_figure_wid.renderer = render_patches(
+                patches=patches[i], patch_centers=patch_centers[i],
+                renderer=save_figure_wid.renderer, figure_size=new_figure_size,
+                **options)
 
         # update info text widget
         update_info(patches[i], custom_info_callback=custom_info_callback)
+
+        with initializer_output:
+            ipydisplay.clear_output()
 
     # Define function that updates the info text
     def update_info(ptchs, custom_info_callback=None):
@@ -1445,6 +1488,11 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7),
     final_box.layout.display = 'flex'
     ipydisplay.display(final_box)
 
+    # We want to clear the old image output - but not the widgets so we need
+    # a special output layout
+    rendered_output = ipywidgets.Output()
+    ipydisplay.display(rendered_output)
+
     # Trigger initial visualization
     render_function({})
 
@@ -1473,7 +1521,10 @@ def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(9, 5)):
     from .utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
     from menpo.visualize import plot_curve
-    print('Initializing...')
+    initializer_output = ipywidgets.Output()
+    ipydisplay.display(initializer_output)
+    with initializer_output:
+        print('Initializing...')
 
     # Get number of curves to be plotted
     n_curves = len(y_axis)
@@ -1487,10 +1538,6 @@ def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(9, 5)):
 
     # Define render function
     def render_function(change):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # plot with selected options
         opts = plot_wid.selected_values.copy()
         new_figure_size = (
@@ -1532,6 +1579,11 @@ def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(9, 5)):
     final_box = ipywidgets.Box([wid])
     final_box.layout.display = 'flex'
     ipydisplay.display(final_box)
+
+    # We want to clear the old image output - but not the widgets so we need
+    # a special output layout
+    rendered_output = ipywidgets.Output()
+    ipydisplay.display(rendered_output)
 
     # Trigger initial visualization
     render_function({})
@@ -1616,7 +1668,10 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
     verify_ipython_and_kernel()
     from menpo.visualize.viewmatplotlib import (_set_axes_options,
                                                 _parse_axes_limits)
-    print('Initializing...')
+    initializer_output = ipywidgets.Output()
+    ipydisplay.display(initializer_output)
+    with initializer_output:
+        print('Initializing...')
 
     # Make sure that shape_model is a list even with one member
     if not isinstance(shape_model, list):
@@ -1637,10 +1692,6 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
 
     # Define render function
     def render_function(change):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = 0
         if n_levels > 1:
@@ -1783,10 +1834,14 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
             instance_range = mean.range()
 
         # Force rendering
-        save_figure_wid.renderer.force_draw()
+        with rendered_output:
+            save_figure_wid.renderer.force_draw()
 
         # Update info
         update_info(level, instance_range)
+
+        with initializer_output:
+            ipydisplay.clear_output()
 
     # Define function that updates the info text
     def update_info(level, instance_range):
@@ -1806,10 +1861,6 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
 
     # Plot variance function
     def plot_variance(name):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -1912,6 +1963,11 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
     final_box.layout.display = 'flex'
     ipydisplay.display(final_box)
 
+    # We want to clear the old image output - but not the widgets so we need
+    # a special output layout
+    rendered_output = ipywidgets.Output()
+    ipydisplay.display(rendered_output)
+
     # Trigger initial visualization
     render_function({})
 
@@ -1943,7 +1999,10 @@ def visualize_shape_model_3d(shape_model, n_parameters=5, mode='multiple',
     # Ensure that the code is being run inside a Jupyter kernel!
     from .utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
-    print_dynamic('Initializing...')
+    initializer_output = ipywidgets.Output()
+    ipydisplay.display(initializer_output)
+    with initializer_output:
+        print('Initializing...')
 
     # Make sure that shape_model is a list even with one member
     if not isinstance(shape_model, list):
@@ -1967,10 +2026,7 @@ def visualize_shape_model_3d(shape_model, n_parameters=5, mode='multiple',
 
     # Define render function
     def render_function(change):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
         save_figure_wid.renderer.clear_figure()
-        ipydisplay.clear_output(wait=True)
 
         # Get selected level
         level = 0
@@ -2024,7 +2080,11 @@ def visualize_shape_model_3d(shape_model, n_parameters=5, mode='multiple',
             **options)
 
         # Force rendering
-        save_figure_wid.renderer.force_draw()
+        with rendered_output:
+            save_figure_wid.renderer.force_draw()
+
+        with initializer_output:
+            ipydisplay.clear_output()       
 
     # Define function that updates the info text
     def update_info(level, instance_range):
@@ -2128,6 +2188,11 @@ def visualize_shape_model_3d(shape_model, n_parameters=5, mode='multiple',
     final_box.layout.display = 'flex'
     ipydisplay.display(final_box)
 
+    # We want to clear the old image output - but not the widgets so we need
+    # a special output layout
+    rendered_output = ipywidgets.Output()
+    ipydisplay.display(rendered_output)
+
     # Trigger initial visualization
     render_function({})
     print_dynamic('')
@@ -2163,7 +2228,10 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
     # Ensure that the code is being run inside a Jupyter kernel!
     from .utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
-    print('Initializing...')
+    initializer_output = ipywidgets.Output()
+    ipydisplay.display(initializer_output)
+    with initializer_output:
+        print('Initializing...')
 
     # Make sure that appearance_model is a list even with one member
     if not isinstance(appearance_model, list):
@@ -2184,10 +2252,6 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
 
     # Define render function
     def render_function(change):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -2241,13 +2305,17 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
             figure_size[1])
 
         # Render shape with selected options
-        save_figure_wid.renderer = render_image(
-            image=instance, renderer=save_figure_wid.renderer,
-            image_is_masked=image_is_masked, figure_size=new_figure_size,
-            **options)
+        with rendered_output:
+            save_figure_wid.renderer = render_image(
+                image=instance, renderer=save_figure_wid.renderer,
+                image_is_masked=image_is_masked, figure_size=new_figure_size,
+                **options)
 
         # Update info
         update_info(instance, level, g)
+
+        with initializer_output:
+            ipydisplay.clear_output()
 
     # Define function that updates the info text
     def update_info(image, level, group):
@@ -2270,10 +2338,6 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
 
     # Plot variance function
     def plot_variance(name):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -2375,6 +2439,11 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
     final_box.layout.display = 'flex'
     ipydisplay.display(final_box)
 
+    # We want to clear the old image output - but not the widgets so we need
+    # a special output layout
+    rendered_output = ipywidgets.Output()
+    ipydisplay.display(rendered_output)
+
     # Trigger initial visualization
     render_function({})
 
@@ -2415,7 +2484,10 @@ def visualize_patch_appearance_model(appearance_model, centers,
     # Ensure that the code is being run inside a Jupyter kernel!
     from .utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
-    print('Initializing...')
+    initializer_output = ipywidgets.Output()
+    ipydisplay.display(initializer_output)
+    with initializer_output:
+        print('Initializing...')
 
     # Make sure that appearance_model is a list even with one member
     if not isinstance(appearance_model, list):
@@ -2442,10 +2514,6 @@ def visualize_patch_appearance_model(appearance_model, centers,
 
     # Define render function
     def render_function(change):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -2476,13 +2544,17 @@ def visualize_patch_appearance_model(appearance_model, centers,
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
 
         # Render image with selected options
-        save_figure_wid.renderer = render_patches(
-            patches=instance.pixels, patch_centers=centers[level],
-            renderer=save_figure_wid.renderer, figure_size=new_figure_size,
-            **options)
+        with rendered_output:
+            save_figure_wid.renderer = render_patches(
+                patches=instance.pixels, patch_centers=centers[level],
+                renderer=save_figure_wid.renderer, figure_size=new_figure_size,
+                **options)
 
         # Update info
         update_info(instance, level)
+
+        with initializer_output:
+            ipydisplay.clear_output()
 
     # Define function that updates the info text
     def update_info(image, level):
@@ -2504,10 +2576,6 @@ def visualize_patch_appearance_model(appearance_model, centers,
 
     # Plot variance function
     def plot_variance(name):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = 0
         if n_levels > 1:
@@ -2616,6 +2684,11 @@ def visualize_patch_appearance_model(appearance_model, centers,
     final_box.layout.display = 'flex'
     ipydisplay.display(final_box)
 
+    # We want to clear the old image output - but not the widgets so we need
+    # a special output layout
+    rendered_output = ipywidgets.Output()
+    ipydisplay.display(rendered_output)
+
     # Trigger initial visualization
     render_function({})
 
@@ -2652,7 +2725,10 @@ def visualize_morphable_model(mm, n_shape_parameters=5, n_texture_parameters=5,
     # Ensure that the code is being run inside a Jupyter kernel!
     from .utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
-    print_dynamic('Initializing...')
+    initializer_output = ipywidgets.Output()
+    ipydisplay.display(initializer_output)
+    with initializer_output:
+        print_dynamic('Initializing...')
 
     # Define the styling options
     main_style = 'info'
@@ -2665,9 +2741,7 @@ def visualize_morphable_model(mm, n_shape_parameters=5, n_texture_parameters=5,
 
     # Define render function
     def render_function(change):
-        # Clear current figure
         save_figure_wid.renderer.clear_figure()
-        ipydisplay.clear_output(wait=True)
 
         # Compute weights
         shape_weights = shape_model_parameters_wid.selected_values
@@ -2692,7 +2766,11 @@ def visualize_morphable_model(mm, n_shape_parameters=5, n_texture_parameters=5,
             **mesh_options_wid.selected_values)
 
         # Force rendering
-        save_figure_wid.renderer.force_draw()
+        with rendered_output:
+            save_figure_wid.renderer.force_draw()
+
+        with initializer_output:
+            ipydisplay.clear_output()
 
     # Define function that updates the info text
     def update_info(mm, instance):
@@ -2712,10 +2790,6 @@ def visualize_morphable_model(mm, n_shape_parameters=5, n_texture_parameters=5,
 
     # Plot shape variance function
     def plot_shape_variance(name):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Render
         plt.subplot(121)
         mm.shape_model.plot_eigenvalues_ratio()
@@ -2725,10 +2799,6 @@ def visualize_morphable_model(mm, n_shape_parameters=5, n_texture_parameters=5,
 
     # Plot texture variance function
     def plot_texture_variance(name):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Render
         plt.subplot(121)
         mm.texture_model.plot_eigenvalues_ratio()
@@ -2775,6 +2845,11 @@ def visualize_morphable_model(mm, n_shape_parameters=5, n_texture_parameters=5,
     final_box = ipywidgets.Box([wid])
     final_box.layout.display = 'flex'
     ipydisplay.display(final_box)
+
+    # We want to clear the old image output - but not the widgets so we need
+    # a special output layout
+    rendered_output = ipywidgets.Output()
+    ipydisplay.display(rendered_output)
 
     # Trigger initial visualization
     render_function({})

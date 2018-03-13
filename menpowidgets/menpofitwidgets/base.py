@@ -379,7 +379,10 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     # Ensure that the code is being run inside a Jupyter kernel!
     from menpowidgets.utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
-    print('Initializing...')
+    initializer_output = ipywidgets.Output()
+    ipydisplay.display(initializer_output)
+    with initializer_output:
+        print('Initializing...')
 
     # Get the number of levels
     n_levels = aam.n_scales
@@ -400,10 +403,6 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
     # Define render function
     def render_function(change):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -435,13 +434,17 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
 
         # show image with selected options
-        save_figure_wid.renderer = render_patches(
-            patches=appearance_instance.pixels, patch_centers=shape_instance,
-            renderer=save_figure_wid.renderer, figure_size=new_figure_size,
-            **options)
+        with rendered_output:
+            save_figure_wid.renderer = render_patches(
+                patches=appearance_instance.pixels, patch_centers=shape_instance,
+                renderer=save_figure_wid.renderer, figure_size=new_figure_size,
+                **options)
 
         # Update info
         update_info(aam, appearance_instance, level)
+
+        with initializer_output:
+            ipydisplay.clear_output()
 
     # Define function that updates the info text
     def update_info(aam, appearance_instance, level):
@@ -483,10 +486,6 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
     # Plot shape variance function
     def plot_shape_variance(name):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -507,10 +506,6 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
     # Plot appearance variance function
     def plot_appearance_variance(name):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -629,6 +624,11 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     final_box.layout.display = 'flex'
     ipydisplay.display(final_box)
 
+    # We want to clear the old image output - but not the widgets so we need
+    # a special output layout
+    rendered_output = ipywidgets.Output()
+    ipydisplay.display(rendered_output)
+
     # Trigger initial visualization
     render_function({})
 
@@ -662,7 +662,10 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
     # Ensure that the code is being run inside a Jupyter kernel!
     from menpowidgets.utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
-    print('Initializing...')
+    initializer_output = ipywidgets.Output()
+    ipydisplay.display(initializer_output)
+    with initializer_output:
+        print('Initializing...')
 
     # Get the number of levels
     n_levels = atm.n_scales
@@ -680,10 +683,6 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
 
     # Define render function
     def render_function(change):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -735,13 +734,17 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
             figure_size[1])
 
         # Render shape with selected options
-        save_figure_wid.renderer = render_image(
-            image=instance, renderer=save_figure_wid.renderer,
-            image_is_masked=image_is_masked, figure_size=new_figure_size,
-            **options)
+        with rendered_output:
+            save_figure_wid.renderer = render_image(
+                image=instance, renderer=save_figure_wid.renderer,
+                image_is_masked=image_is_masked, figure_size=new_figure_size,
+                **options)
 
         # Update info
         update_info(atm, instance, level, g)
+
+        with initializer_output:
+            ipydisplay.clear_output()
 
     # Define function that updates the info text
     def update_info(atm, instance, level, group):
@@ -775,10 +778,6 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
 
     # Plot shape variance function
     def plot_shape_variance(name):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -878,6 +877,11 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
     final_box.layout.display = 'flex'
     ipydisplay.display(final_box)
 
+    # We want to clear the old image output - but not the widgets so we need
+    # a special output layout
+    rendered_output = ipywidgets.Output()
+    ipydisplay.display(rendered_output)
+
     # Trigger initial visualization
     render_function({})
 
@@ -911,7 +915,10 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
     # Ensure that the code is being run inside a Jupyter kernel!
     from menpowidgets.utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
-    print('Initializing...')
+    initializer_output = ipywidgets.Output()
+    ipydisplay.display(initializer_output)
+    with initializer_output:
+        print('Initializing...')
 
     # Get the number of levels
     n_levels = atm.n_scales
@@ -929,10 +936,6 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
 
     # Define render function
     def render_function(change):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -962,13 +965,17 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
 
         # show image with selected options
-        save_figure_wid.renderer = render_patches(
-            patches=template.pixels, patch_centers=shape_instance,
-            renderer=save_figure_wid.renderer, figure_size=new_figure_size,
-            **options)
+        with rendered_output:
+            save_figure_wid.renderer = render_patches(
+                patches=template.pixels, patch_centers=shape_instance,
+                renderer=save_figure_wid.renderer, figure_size=new_figure_size,
+                **options)
 
         # Update info
         update_info(atm, template, level)
+
+        with initializer_output:
+            ipydisplay.clear_output()
 
     # Define function that updates the info text
     def update_info(atm, instance, level):
@@ -1003,10 +1010,6 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
 
     # Plot shape variance function
     def plot_shape_variance(name):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -1108,6 +1111,11 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
     final_box.layout.display = 'flex'
     ipydisplay.display(final_box)
 
+    # We want to clear the old image output - but not the widgets so we need
+    # a special output layout
+    rendered_output = ipywidgets.Output()
+    ipydisplay.display(rendered_output)
+
     # Trigger initial visualization
     render_function({})
 
@@ -1141,7 +1149,10 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
     # Ensure that the code is being run inside a Jupyter kernel!
     from menpowidgets.utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
-    print('Initializing...')
+    initializer_output = ipywidgets.Output()
+    ipydisplay.display(initializer_output)
+    with initializer_output:
+        print('Initializing...')
 
     # Get the number of levels
     n_levels = clm.n_scales
@@ -1159,10 +1170,6 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
 
     # Define render function
     def render_function(change):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -1200,13 +1207,17 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
 
         # show image with selected options
-        save_figure_wid.renderer = render_patches(
-            patches=patches, patch_centers=shape_instance,
-            renderer=save_figure_wid.renderer, figure_size=new_figure_size,
-            **options)
+        with rendered_output:
+            save_figure_wid.renderer = render_patches(
+                patches=patches, patch_centers=shape_instance,
+                renderer=save_figure_wid.renderer, figure_size=new_figure_size,
+                **options)
 
         # Update info
         update_info(clm, patches, level)
+
+        with initializer_output:
+            ipydisplay.clear_output()
 
     # Define function that updates the info text
     def update_info(clm, patches, level):
@@ -1238,10 +1249,6 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
 
     # Plot shape variance function
     def plot_shape_variance(name):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -1351,6 +1358,11 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
     final_box.layout.display = 'flex'
     ipydisplay.display(final_box)
 
+    # We want to clear the old image output - but not the widgets so we need
+    # a special output layout
+    rendered_output = ipywidgets.Output()
+    ipydisplay.display(rendered_output)
+
     # Trigger initial visualization
     render_function({})
 
@@ -1375,7 +1387,10 @@ def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(7, 7)):
     # Ensure that the code is being run inside a Jupyter kernel!
     from menpowidgets.utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
-    print('Initializing...')
+    initializer_output = ipywidgets.Output()
+    ipydisplay.display(initializer_output)
+    with initializer_output:
+        print('Initializing...')
 
     # Make sure that expert_ensemble is a list even with one member
     if not isinstance(expert_ensemble, list):
@@ -1395,10 +1410,6 @@ def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(7, 7)):
 
     # Define render function
     def render_function(change):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -1432,13 +1443,17 @@ def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(7, 7)):
             renderer_options_wid.selected_values['zoom_one'] * figure_size[1])
 
         # show image with selected options
-        save_figure_wid.renderer = render_patches(
-            patches=patches, patch_centers=centers[level],
-            renderer=save_figure_wid.renderer, figure_size=new_figure_size,
-            **options)
+        with rendered_output:
+            save_figure_wid.renderer = render_patches(
+                patches=patches, patch_centers=centers[level],
+                renderer=save_figure_wid.renderer, figure_size=new_figure_size,
+                **options)
 
         # Update info
         update_info(expert_ensemble, patches, level)
+
+        with initializer_output:
+            ipydisplay.clear_output()
 
     # Define function that updates the info text
     def update_info(expert_ensemble, patches, level):
@@ -1537,6 +1552,11 @@ def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(7, 7)):
     final_box.layout.display = 'flex'
     ipydisplay.display(final_box)
 
+    # We want to clear the old image output - but not the widgets so we need
+    # a special output layout
+    rendered_output = ipywidgets.Output()
+    ipydisplay.display(rendered_output)
+
     # Trigger initial visualization
     render_function({})
 
@@ -1579,7 +1599,10 @@ def plot_ced(errors, legend_entries=None, error_range=None,
     from menpowidgets.utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
     from menpofit.visualize import plot_cumulative_error_distribution
-    print('Initializing...')
+    initializer_output = ipywidgets.Output()
+    ipydisplay.display(initializer_output)
+    with initializer_output:
+        print('Initializing...')
 
     # Make sure that errors is a list even with one list member
     if not isinstance(errors[0], list):
@@ -1719,7 +1742,10 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7),
     # Ensure that the code is being run inside a Jupyter kernel!
     from menpowidgets.utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
-    print('Initializing...')
+    initializer_output = ipywidgets.Output()
+    ipydisplay.display(initializer_output)
+    with initializer_output:
+        print('Initializing...')
 
     # Make sure that fitting_results is a list even with one fitting_result
     if not isinstance(fitting_results, list):
@@ -1769,10 +1795,6 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7),
 
     # Define function that plots errors curve
     def plot_costs_function(name):
-        # Clear current figure, but wait until the new data to be displayed are
-        # generated
-        ipydisplay.clear_output(wait=True)
-
         # Get selected index
         im = image_number_wid.selected_values if n_fitting_results > 1 else 0
 
@@ -1787,10 +1809,6 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7),
 
     # Define render function
     def render_function(change):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # get selected object
         i = image_number_wid.selected_values if n_fitting_results > 1 else 0
 
@@ -1891,10 +1909,14 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7),
                 **options)
 
         # Show figure
-        save_figure_wid.renderer.force_draw()
+        with rendered_output:
+            save_figure_wid.renderer.force_draw()
 
         # update info text widget
         update_info({}, custom_info_callback=custom_info_callback)
+
+        with initializer_output:
+            ipydisplay.clear_output()
 
     # Define function that updates info text
     def update_info(change, custom_info_callback=None):
@@ -2101,6 +2123,16 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7),
     final_box = ipywidgets.Box([wid])
     final_box.layout.display = 'flex'
     ipydisplay.display(final_box)
+
+    # We want to clear the old image output - but not the widgets so we need
+    # a special output layout
+    rendered_output = ipywidgets.Output()
+    ipydisplay.display(rendered_output)
+
+    # We want to clear the old image output - but not the widgets so we need
+    # a special output layout
+    rendered_output = ipywidgets.Output()
+    ipydisplay.display(rendered_output)
 
     # Trigger initial visualization
     render_function({})
