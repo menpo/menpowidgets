@@ -435,6 +435,7 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
         # show image with selected options
         with rendered_output:
+            ipydisplay.clear_output(wait=True)
             save_figure_wid.renderer = render_patches(
                 patches=appearance_instance.pixels, patch_centers=shape_instance,
                 renderer=save_figure_wid.renderer, figure_size=new_figure_size,
@@ -735,6 +736,7 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
 
         # Render shape with selected options
         with rendered_output:
+            ipydisplay.clear_output(wait=True)
             save_figure_wid.renderer = render_image(
                 image=instance, renderer=save_figure_wid.renderer,
                 image_is_masked=image_is_masked, figure_size=new_figure_size,
@@ -966,6 +968,7 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
 
         # show image with selected options
         with rendered_output:
+            ipydisplay.clear_output(wait=True)
             save_figure_wid.renderer = render_patches(
                 patches=template.pixels, patch_centers=shape_instance,
                 renderer=save_figure_wid.renderer, figure_size=new_figure_size,
@@ -1208,6 +1211,7 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
 
         # show image with selected options
         with rendered_output:
+            ipydisplay.clear_output(wait=True)
             save_figure_wid.renderer = render_patches(
                 patches=patches, patch_centers=shape_instance,
                 renderer=save_figure_wid.renderer, figure_size=new_figure_size,
@@ -1444,6 +1448,7 @@ def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(7, 7)):
 
         # show image with selected options
         with rendered_output:
+            ipydisplay.clear_output(wait=True)
             save_figure_wid.renderer = render_patches(
                 patches=patches, patch_centers=centers[level],
                 renderer=save_figure_wid.renderer, figure_size=new_figure_size,
@@ -1910,6 +1915,7 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7),
 
         # Show figure
         with rendered_output:
+            ipydisplay.clear_output(wait=True)
             save_figure_wid.renderer.force_draw()
 
         # update info text widget

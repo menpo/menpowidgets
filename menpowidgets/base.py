@@ -162,6 +162,7 @@ def visualize_shapes_2d(shapes, figure_size=(7, 7), browser_style='buttons',
 
         # Force rendering
         with rendered_output:
+            ipydisplay.clear_output(wait=True)
             save_figure_wid.renderer.force_draw()
 
         # Update info text widget
@@ -389,6 +390,7 @@ def visualize_shapes_3d(shapes, browser_style='buttons',
 
         # Force rendering
         with rendered_output:
+            ipydisplay.clear_output(wait=True)
             save_figure_wid.renderer.force_draw()
 
         with initializer_output:
@@ -590,6 +592,7 @@ def visualize_landmarks_2d(landmarks, figure_size=(7, 7),
 
         # Force rendering
         with rendered_output:
+            ipydisplay.clear_output(wait=True)
             save_figure_wid.renderer.force_draw()
 
         # update info text widget
@@ -805,6 +808,7 @@ def visualize_landmarks_3d(landmarks, browser_style='buttons',
 
         # Force rendering
         with rendered_output:
+            ipydisplay.clear_output(wait=True)
             save_figure_wid.renderer.force_draw()
     
         with initializer_output:
@@ -983,6 +987,7 @@ def visualize_meshes_3d(meshes, browser_style='buttons',
 
         # Force rendering
         with rendered_output:
+            ipydisplay.clear_output(wait=True)
             save_figure_wid.renderer.force_draw()
 
         with initializer_output:
@@ -1386,6 +1391,7 @@ def visualize_patches(patches, patch_centers, figure_size=(7, 7),
 
         # Render image with selected options
         with rendered_output:
+            ipydisplay.clear_output(wait=True)
             save_figure_wid.renderer = render_patches(
                 patches=patches[i], patch_centers=patch_centers[i],
                 renderer=save_figure_wid.renderer, figure_size=new_figure_size,
@@ -1835,6 +1841,7 @@ def visualize_shape_model_2d(shape_model, n_parameters=5, mode='multiple',
 
         # Force rendering
         with rendered_output:
+            ipydisplay.clear_output(wait=True)
             save_figure_wid.renderer.force_draw()
 
         # Update info
@@ -2081,6 +2088,7 @@ def visualize_shape_model_3d(shape_model, n_parameters=5, mode='multiple',
 
         # Force rendering
         with rendered_output:
+            ipydisplay.clear_output(wait=True)
             save_figure_wid.renderer.force_draw()
 
         with initializer_output:
@@ -2306,6 +2314,7 @@ def visualize_appearance_model(appearance_model, n_parameters=5,
 
         # Render shape with selected options
         with rendered_output:
+            ipydisplay.clear_output(wait=True)
             save_figure_wid.renderer = render_image(
                 image=instance, renderer=save_figure_wid.renderer,
                 image_is_masked=image_is_masked, figure_size=new_figure_size,
@@ -2545,6 +2554,7 @@ def visualize_patch_appearance_model(appearance_model, centers,
 
         # Render image with selected options
         with rendered_output:
+            ipydisplay.clear_output(wait=True)
             save_figure_wid.renderer = render_patches(
                 patches=instance.pixels, patch_centers=centers[level],
                 renderer=save_figure_wid.renderer, figure_size=new_figure_size,
@@ -2767,6 +2777,7 @@ def visualize_morphable_model(mm, n_shape_parameters=5, n_texture_parameters=5,
 
         # Force rendering
         with rendered_output:
+            ipydisplay.clear_output(wait=True)
             save_figure_wid.renderer.force_draw()
 
         with initializer_output:
