@@ -72,7 +72,10 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     # Ensure that the code is being run inside a Jupyter kernel!
     from menpowidgets.utils import verify_ipython_and_kernel
     verify_ipython_and_kernel()
-    print('Initializing...')
+    initializer_output = ipywidgets.Output()
+    ipydisplay.display(initializer_output)
+    with initializer_output:
+        print('Initializing...')
 
     # Get the number of levels
     n_levels = aam.n_scales
@@ -93,10 +96,6 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
     # Define render function
     def render_function(change):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -150,13 +149,18 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
             figure_size[1])
 
         # show image with selected options
-        save_figure_wid.renderer = render_image(
-            image=instance, renderer=save_figure_wid.renderer,
-            image_is_masked=image_is_masked, figure_size=new_figure_size,
-            **options)
+        with rendered_output:
+            ipydisplay.clear_output(wait=True)
+            save_figure_wid.renderer = render_image(
+                image=instance, renderer=save_figure_wid.renderer,
+                image_is_masked=image_is_masked, figure_size=new_figure_size,
+                **options)
 
         # Update info
         update_info(aam, instance, level, g)
+
+        with initializer_output:
+            ipydisplay.clear_output()
 
     # Define function that updates the info text
     def update_info(aam, instance, level, group):
@@ -194,10 +198,6 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
     # Plot shape variance function
     def plot_shape_variance(name):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -218,10 +218,6 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
 
     # Plot appearance variance function
     def plot_appearance_variance(name):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -336,6 +332,11 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     final_box = ipywidgets.Box([wid])
     final_box.layout.display = 'flex'
     ipydisplay.display(final_box)
+
+    # We want to clear the old image output - but not the widgets so we need
+    # a special output layout
+    rendered_output = ipywidgets.Output()
+    ipydisplay.display(rendered_output)
 
     # Trigger initial visualization
     render_function({})
