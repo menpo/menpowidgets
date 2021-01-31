@@ -69,11 +69,6 @@ def visualize_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     figure_size : (`int`, `int`), optional
         The size of the plotted figures.
     """
-    # Ensure that the code is being run inside a Jupyter kernel!
-    from menpowidgets.utils import verify_ipython_and_kernel
-    verify_ipython_and_kernel()
-    print('Initializing...')
-
     # Get the number of levels
     n_levels = aam.n_scales
 
@@ -375,11 +370,6 @@ def visualize_patch_aam(aam, n_shape_parameters=5, n_appearance_parameters=5,
     figure_size : (`int`, `int`), optional
         The size of the plotted figures.
     """
-    # Ensure that the code is being run inside a Jupyter kernel!
-    from menpowidgets.utils import verify_ipython_and_kernel
-    verify_ipython_and_kernel()
-    print('Initializing...')
-
     # Get the number of levels
     n_levels = aam.n_scales
 
@@ -658,11 +648,6 @@ def visualize_atm(atm, n_shape_parameters=5, mode='multiple',
     figure_size : (`int`, `int`), optional
         The size of the plotted figures.
     """
-    # Ensure that the code is being run inside a Jupyter kernel!
-    from menpowidgets.utils import verify_ipython_and_kernel
-    verify_ipython_and_kernel()
-    print('Initializing...')
-
     # Get the number of levels
     n_levels = atm.n_scales
 
@@ -907,11 +892,6 @@ def visualize_patch_atm(atm, n_shape_parameters=5, mode='multiple',
     figure_size : (`int`, `int`), optional
         The size of the plotted figures.
     """
-    # Ensure that the code is being run inside a Jupyter kernel!
-    from menpowidgets.utils import verify_ipython_and_kernel
-    verify_ipython_and_kernel()
-    print('Initializing...')
-
     # Get the number of levels
     n_levels = atm.n_scales
 
@@ -1137,11 +1117,6 @@ def visualize_clm(clm, n_shape_parameters=5, mode='multiple',
     figure_size : (`int`, `int`), optional
         The size of the plotted figures.
     """
-    # Ensure that the code is being run inside a Jupyter kernel!
-    from menpowidgets.utils import verify_ipython_and_kernel
-    verify_ipython_and_kernel()
-    print('Initializing...')
-
     # Get the number of levels
     n_levels = clm.n_scales
 
@@ -1371,13 +1346,8 @@ def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(7, 7)):
     figure_size : (`int`, `int`), optional
         The size of the plotted figures.
     """
-    # Ensure that the code is being run inside a Jupyter kernel!
-    from menpowidgets.utils import verify_ipython_and_kernel
-    verify_ipython_and_kernel()
-    print('Initializing...')
-
     # Make sure that expert_ensemble is a list even with one member
-    if not isinstance(expert_ensemble, list):
+    if not isinstance(expert_ensemble, Sized):
         expert_ensemble = [expert_ensemble]
 
     # Get the number of levels (i.e. number of expert ensembles)
@@ -1574,14 +1544,10 @@ def plot_ced(errors, legend_entries=None, error_range=None,
         as part of a parent widget. If ``False``, the widget object is not
         returned, it is just visualized.
     """
-    # Ensure that the code is being run inside a Jupyter kernel!
-    from menpowidgets.utils import verify_ipython_and_kernel
-    verify_ipython_and_kernel()
     from menpofit.visualize import plot_cumulative_error_distribution
-    print('Initializing...')
 
     # Make sure that errors is a list even with one list member
-    if not isinstance(errors[0], list):
+    if not isinstance(errors[0], Sized):
         errors = [errors]
 
     # Get number of curves to be plotted
@@ -1715,13 +1681,8 @@ def visualize_fitting_results(fitting_results, figure_size=(7, 7),
         and returns a list of custom messages to be printed per result.
         Each custom message will be printed in a separate line.
     """
-    # Ensure that the code is being run inside a Jupyter kernel!
-    from menpowidgets.utils import verify_ipython_and_kernel
-    verify_ipython_and_kernel()
-    print('Initializing...')
-
     # Make sure that fitting_results is a list even with one fitting_result
-    if not isinstance(fitting_results, list):
+    if not isinstance(fitting_results, Sized):
         fitting_results = [fitting_results]
 
     # Get the number of fitting_results
