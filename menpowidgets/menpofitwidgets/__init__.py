@@ -11,7 +11,7 @@ try:
         plot_ced,
         visualize_fitting_results,
     )
-except MenpoMissingDependencyError:
+except (MenpoMissingDependencyError, ModuleNotFoundError, ImportError):
     pass
 
 
