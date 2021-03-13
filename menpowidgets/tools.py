@@ -148,7 +148,9 @@ class SwitchWidget(MenpoWidget):
                 value=selected_value, button_style=button_style, description=description
             )
         elif switch_type == "checkbox":
-            self.button_wid = ipywidgets.Checkbox(value=selected_value, description=description)
+            self.button_wid = ipywidgets.Checkbox(
+                value=selected_value, description=description
+            )
         else:
             raise ValueError("switch_type can be either 'toggle' or 'checkbox'")
         self.switch_type = switch_type
@@ -4158,7 +4160,8 @@ class LegendOptionsWidget(MenpoWidget):
             tmp2 = legend_options["legend_bbox_to_anchor"][0]
             tmp3 = legend_options["legend_bbox_to_anchor"][1]
         self.bbox_to_anchor_enable_checkbox = SwitchWidget(
-            tmp1, description="Offset",
+            tmp1,
+            description="Offset",
         )
         self.bbox_to_anchor_x_text = ipywidgets.FloatText(
             value=tmp2, layout=ipywidgets.Layout(width="1.6cm")

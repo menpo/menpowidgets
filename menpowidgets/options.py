@@ -2430,18 +2430,19 @@ class ImageOptionsWidget(MenpoWidget):
 
         # Group widgets
         self.box_2 = ipywidgets.HBox([self.cmap_title, self.cmap_select])
-        self.box_2.layout.align_items = 'center'
-        self.box_3 = ipywidgets.HBox(([self.alpha_title, self.alpha_slider,
-                                       self.alpha_text]))
-        self.box_3.layout.align_items = 'center'
-        self.box_5 = ipywidgets.VBox([self.interpolation_checkbox,
-                                      self.masked_checkbox, self.rgb_checkbox])
-        self.box_5.layout.margin = '0px 10px 0px 0px'
+        self.box_2.layout.align_items = "center"
+        self.box_3 = ipywidgets.HBox(
+            ([self.alpha_title, self.alpha_slider, self.alpha_text])
+        )
+        self.box_3.layout.align_items = "center"
+        self.box_5 = ipywidgets.VBox(
+            [self.interpolation_checkbox, self.masked_checkbox, self.rgb_checkbox]
+        )
+        self.box_5.layout.margin = "0px 10px 0px 0px"
         self.box_6 = ipywidgets.VBox([self.box_2, self.box_3])
-        self.box_6.layout.align_items = 'flex-end'
-        self.channels_wid.layout.margin = '0px 10px 0px 0px'
-        self.container = ipywidgets.HBox([self.channels_wid,
-                                          self.box_5, self.box_6])
+        self.box_6.layout.align_items = "flex-end"
+        self.channels_wid.layout.margin = "0px 10px 0px 0px"
+        self.container = ipywidgets.HBox([self.channels_wid, self.box_5, self.box_6])
 
         # Create final widget
         super(ImageOptionsWidget, self).__init__(
@@ -2860,7 +2861,7 @@ class LandmarkOptionsWidget(MenpoWidget):
         >>> wid = LandmarkOptionsWidget(
         >>>             group_keys=['PTS', 'ibug_face_68'],
         >>>             labels_keys=[['all'], ['jaw', 'eye', 'mouth']],
-        >>>             type='2D', render_function=render_function, 
+        >>>             type='2D', render_function=render_function,
         >>>             style='info')
         >>> wid
 
@@ -3643,7 +3644,7 @@ class SaveMayaviFigureOptionsWidget(ipywidgets.Box):
         The size of the image created (unless magnification is set, in which
         case it is the size of the window used for rendering). If ``None``, then
         the figure size is used.
-    magnification :	`double` or ``'auto'``, optional
+    magnification : `double` or ``'auto'``, optional
         The magnification is the scaling between the pixels on the screen, and
         the pixels in the file saved. If you do not specify it, it will be
         calculated so that the file is saved with the specified size. If you

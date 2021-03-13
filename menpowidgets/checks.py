@@ -4,8 +4,10 @@ def check_n_parameters(n_params, n_levels, max_n_params):
     or the appearance model. It must be ``None`` or `int` or `float` or a `list`
     of those containing ``1`` or ``n_scales`` elements.
     """
-    str_error = ("n_params must be None or 1 <= int <= max_n_params or "
-                 "a list of those containing 1 or {} elements").format(n_levels)
+    str_error = (
+        "n_params must be None or 1 <= int <= max_n_params or "
+        "a list of those containing 1 or {} elements"
+    ).format(n_levels)
     if not isinstance(n_params, list):
         n_params_list = [n_params] * n_levels
     elif len(n_params) == 1:
