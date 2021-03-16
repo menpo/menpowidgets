@@ -1,19 +1,31 @@
 from setuptools import setup, find_packages
-import versioneer
 
 
-setup(name='menpowidgets',
-      version=versioneer.get_version(),
-      cmdclass=versioneer.get_cmdclass(),
-      description="Menpo's Jupyter widgets for fancy visualization",
-      author='The Menpo Development Team',
-      author_email='hello@menpo.org',
-      packages=find_packages(),
-      install_requires=['menpo>=0.8,<0.9',
-                        'ipywidgets>=6.0,<7.0',
-                        'widgetsnbextension>=2.0,<3.0',
-                        'traitlets>=4.3,<5.0',
-                        'ipython>=5.0.0,<7.0',
-                        'jupyter>=1.0,<2.0'],
-      package_data={'menpowidgets': ['logos/*', 'js/*']}
-      )
+def get_version_and_cmdclass(package_path):
+    """Load version.py module without importing the whole package.
+
+    Template code from miniver
+    """
+    import os
+    from importlib.util import module_from_spec, spec_from_file_location
+
+    spec = spec_from_file_location("version", os.path.join(package_path, "_version.py"))
+    module = module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.__version__, module.cmdclass
+
+
+version, cmdclass = get_version_and_cmdclass("menpowidgets")
+
+
+setup(
+    name="menpowidgets",
+    version=version,
+    cmdclass=cmdclass,
+    description="Menpo's Jupyter widgets for fancy visualization",
+    author="The Menpo Development Team",
+    author_email="hello@menpo.org",
+    packages=find_packages(),
+    install_requires=["menpo>=0.11", "ipywidgets"],
+    package_data={"menpowidgets": ["logos/*", "js/*"]},
+)

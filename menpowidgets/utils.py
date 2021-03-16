@@ -1,52 +1,6 @@
 from struct import pack as struct_pack
 import binascii
 import numpy as np
-import matplotlib.pyplot as plt
-
-from menpo.compatibility import unicode
-from menpo.feature import glyph, sum_channels
-
-
-def verify_ipython_and_kernel():
-    r"""
-    Verify that the current environment is a valid IPython environment that
-    contains a communication kernel. There is no solid way of identifying a
-    notebook vs. the QT console, but the QT console will at least visualise the
-    matplotlib commands without the widget functionality.
-
-    Raises
-    ------
-    ValueError
-        Unable to import IPython, ipykernel or traitlets
-    ValueError
-        No valid IPython kernel found
-    ValueError
-        The IPython kernel does not contain a communication manager (the
-        default IPython shell rather than a notebook or a QT console).
-    """
-    try:
-        from IPython import get_ipython
-        from ipykernel.comm import Comm
-        from traitlets.traitlets import TraitError
-
-        if get_ipython() is None:
-            raise ValueError('menpowidgets can only be used from inside '
-                             'a Jupyter notebook. We were unable to detect '
-                             'an active IPython session. Please re-run your '
-                             'code from inside a Jupyter Notebook.')
-        try:
-            Comm()
-        except TraitError:
-            raise ValueError('menpowidgets can only be used from inside '
-                             'a Jupyter notebook. We were unable to detect '
-                             'a valid active kernel. Please ensure your code '
-                             'is running inside a Jupyter notebook and not '
-                             'a standalone script or the default IPython '
-                             'shell.')
-    except ImportError:
-        raise ValueError('menpowidgets can only be used from inside '
-                         'a Jupyter notebook. We were unable to import '
-                         'IPython, please ensure it is installed.')
 
 
 def lists_are_the_same(a, b):
@@ -69,11 +23,11 @@ def lists_are_the_same(a, b):
 
 
 def rgb2hex(rgb):
-    return '#' + binascii.hexlify(struct_pack('BBB', *rgb)).decode('ascii')
+    return "#" + binascii.hexlify(struct_pack("BBB", *rgb)).decode("ascii")
 
 
 def decode_colour(colour):
-    if not (isinstance(colour, str) or isinstance(colour, unicode)):
+    if not isinstance(colour, str):
         # we assume that RGB was passed in. Convert it to unicode hex
         return rgb2hex(colour)
     else:
@@ -90,7 +44,7 @@ def str_is_int(s):
     s : `str`
         The command string.
     """
-    return s.isdigit() or (s.startswith('-') and s[1:].isdigit())
+    return s.isdigit() or (s.startswith("-") and s[1:].isdigit())
 
 
 def str_is_float(s):
@@ -103,7 +57,7 @@ def str_is_float(s):
     s : `str`
         The command string.
     """
-    return s.count(".") == 1 and str_is_int(s.replace('.', '', 1))
+    return s.count(".") == 1 and str_is_int(s.replace(".", "", 1))
 
 
 def parse_int_range_command_with_comma(cmd):
@@ -138,12 +92,12 @@ def parse_int_range_command_with_comma(cmd):
     ValueError
         Only integers allowed.
     """
-    if cmd.startswith(',') or cmd.endswith(','):
+    if cmd.startswith(",") or cmd.endswith(","):
         # if cmd starts or ends with ',', raise an error
         raise ValueError("Command cannot start or end with ','.")
     else:
         # get the parts in between commas
-        tmp_cmd = cmd.split(',')
+        tmp_cmd = cmd.split(",")
         # for each part
         final_cmd = []
         for i in tmp_cmd:
@@ -255,12 +209,12 @@ def parse_float_range_command_with_comma(cmd):
     ValueError
         Only integers allowed.
     """
-    if cmd.startswith(',') or cmd.endswith(','):
+    if cmd.startswith(",") or cmd.endswith(","):
         # if cmd starts or ends with ',', raise an error
         raise ValueError("Command cannot start or end with ','.")
     else:
         # get the parts in between commas
-        tmp_cmd = cmd.split(',')
+        tmp_cmd = cmd.split(",")
         # for each part
         final_cmd = []
         for i in tmp_cmd:
@@ -312,15 +266,15 @@ def parse_float_range_command(cmd):
     # cmd has the form of "range(1, 10, 2)" or "range(10)"
     if cmd.startswith("range("):
         if cmd.endswith(")"):
-            nums = cmd[6:-1].split(',')
+            nums = cmd[6:-1].split(",")
             if len(nums) == 1:
-                arg1 = 0.
+                arg1 = 0.0
                 arg2 = float(nums[0])
-                arg3 = 1.
+                arg3 = 1.0
             elif len(nums) == 2:
                 arg1 = float(nums[0])
                 arg2 = float(nums[1])
-                arg3 = 1.
+                arg3 = 1.0
             elif len(nums) == 3:
                 arg1 = float(nums[0])
                 arg2 = float(nums[1])
@@ -385,31 +339,35 @@ def parse_slicing_command_with_comma(cmd, length):
     ValueError
         Command must contain positive or negative integers.
     """
-    if cmd.startswith(',') or cmd.endswith(','):
+    if cmd.startswith(",") or cmd.endswith(","):
         # if cmd starts or ends with ',', raise an error
         raise ValueError("Command cannot start or end with ','.")
     else:
         # get the parts in between commas
-        tmp_cmd = cmd.split(',')
+        tmp_cmd = cmd.split(",")
         # for each part
         final_cmd = []
         for i in tmp_cmd:
             if len(i) == 0:
                 # this means that there was the ',,' pattern
-                raise ValueError("Command cannot contain a pattern of the "
-                                 "form ',,'.")
+                raise ValueError(
+                    "Command cannot contain a pattern of the " "form ',,'."
+                )
             elif str_is_int(i):
                 # if it is a positive or negative integer convert it to int
                 n = int(i)
                 if n >= length:
-                    raise ValueError("Command cannot contain numbers greater "
-                                     "than {}.".format(length))
+                    raise ValueError(
+                        "Command cannot contain numbers greater "
+                        "than {}.".format(length)
+                    )
                 else:
                     final_cmd.append(n)
             else:
                 # else raise an error
-                raise ValueError("Command must contain positive or negative "
-                                 "integers.")
+                raise ValueError(
+                    "Command must contain positive or negative " "integers."
+                )
         return final_cmd
 
 
@@ -449,7 +407,7 @@ def parse_slicing_command_with_one_colon(cmd, length):
     # this is necessary in order to return ranges with negative slices
     tmp_list = list(range(length))
 
-    if cmd.startswith(':'):
+    if cmd.startswith(":"):
         # cmd has the form ":3" or ":"
         if len(cmd) > 1:
             # cmd has the form ":3"
@@ -457,8 +415,10 @@ def parse_slicing_command_with_one_colon(cmd, length):
             if str_is_int(i):
                 n = int(i)
                 if n > length:
-                    raise ValueError("Command cannot contain numbers greater "
-                                     "than {}.".format(length))
+                    raise ValueError(
+                        "Command cannot contain numbers greater "
+                        "than {}.".format(length)
+                    )
                 else:
                     return tmp_list[:n]
             else:
@@ -466,7 +426,7 @@ def parse_slicing_command_with_one_colon(cmd, length):
         else:
             # cmd is ":"
             return tmp_list
-    elif cmd.endswith(':'):
+    elif cmd.endswith(":"):
         # cmd has the form "3:" or ":"
         if len(cmd) > 1:
             # cmd has the form "3:"
@@ -474,8 +434,10 @@ def parse_slicing_command_with_one_colon(cmd, length):
             if str_is_int(i):
                 n = int(i)
                 if n >= length:
-                    raise ValueError("Command cannot contain numbers greater "
-                                     "than {}.".format(length))
+                    raise ValueError(
+                        "Command cannot contain numbers greater "
+                        "than {}.".format(length)
+                    )
                 else:
                     return tmp_list[n:]
             else:
@@ -486,7 +448,7 @@ def parse_slicing_command_with_one_colon(cmd, length):
     else:
         # cmd has the form "3:10"
         # get the parts before and after colon
-        tmp_cmd = cmd.split(':')
+        tmp_cmd = cmd.split(":")
         start = tmp_cmd[0]
         end = tmp_cmd[1]
 
@@ -494,8 +456,9 @@ def parse_slicing_command_with_one_colon(cmd, length):
             start = int(start)
             end = int(end)
             if start >= length or end > length:
-                raise ValueError("Command cannot contain numbers greater "
-                                 "than {}.".format(length))
+                raise ValueError(
+                    "Command cannot contain numbers greater " "than {}.".format(length)
+                )
             else:
                 return tmp_list[start:end]
         else:
@@ -538,7 +501,7 @@ def parse_slicing_command_with_two_colon(cmd, length):
     # this is necessary in order to return ranges with negative slices
     tmp_list = list(range(length))
 
-    if cmd.startswith('::'):
+    if cmd.startswith("::"):
         # cmd has the form "::3" or "::"
         if len(cmd) > 2:
             # cmd has the form "::3"
@@ -551,7 +514,7 @@ def parse_slicing_command_with_two_colon(cmd, length):
         else:
             # cmd is "::"
             return tmp_list
-    elif cmd.endswith('::'):
+    elif cmd.endswith("::"):
         # cmd has the form "3::" or "::"
         if len(cmd) > 2:
             # cmd has the form "3::"
@@ -559,8 +522,10 @@ def parse_slicing_command_with_two_colon(cmd, length):
             if str_is_int(i):
                 n = int(i)
                 if n >= length:
-                    raise ValueError("Command cannot contain numbers greater "
-                                     "than {}.".format(length))
+                    raise ValueError(
+                        "Command cannot contain numbers greater "
+                        "than {}.".format(length)
+                    )
                 else:
                     return tmp_list[n::]
             else:
@@ -571,7 +536,7 @@ def parse_slicing_command_with_two_colon(cmd, length):
     else:
         # cmd has the form "1:8:2"
         # get the parts in between colons
-        tmp_cmd = cmd.split(':')
+        tmp_cmd = cmd.split(":")
 
         start = tmp_cmd[0]
         end = tmp_cmd[1]
@@ -582,8 +547,9 @@ def parse_slicing_command_with_two_colon(cmd, length):
             end = int(end)
             step = int(step)
             if start >= length or end > length:
-                raise ValueError("Command cannot contain numbers greater "
-                                 "than {}.".format(length))
+                raise ValueError(
+                    "Command cannot contain numbers greater " "than {}.".format(length)
+                )
             else:
                 return tmp_list[start:end:step]
         else:
@@ -661,8 +627,9 @@ def parse_slicing_command(cmd, length):
         if str_is_int(cmd):
             n = int(cmd)
             if n >= length:
-                raise ValueError("Cannot contain numbers greater "
-                                 "than {}".format(length))
+                raise ValueError(
+                    "Cannot contain numbers greater " "than {}".format(length)
+                )
             else:
                 return [n]
         else:
@@ -704,10 +671,11 @@ def list_has_constant_step(l):
 
 def sample_colours_from_colourmap(n_colours, colour_map):
     import matplotlib.pyplot as plt
+
     cm = plt.get_cmap(colour_map)
     colours = []
     for i in range(n_colours):
-        c = cm(1.*i/n_colours)[:3]
+        c = cm(1.0 * i / n_colours)[:3]
         colours.append(decode_colour([int(i * 255) for i in c]))
     return colours
 
@@ -719,7 +687,7 @@ def extract_group_labels_from_landmarks(landmark_manager):
         groups_keys = landmark_manager.group_labels
         labels_keys = []
         for g in groups_keys:
-            if hasattr(landmark_manager[g], 'labels'):
+            if hasattr(landmark_manager[g], "labels"):
                 labels_keys.append(landmark_manager[g].labels)
             else:
                 labels_keys.append(None)
@@ -747,194 +715,145 @@ def extract_groups_labels_from_image(image):
     return groups_keys, labels_keys
 
 
-def render_image(image, renderer, render_landmarks, image_is_masked,
-                 masked_enabled, channels, glyph_enabled, glyph_block_size,
-                 glyph_use_negative, sum_enabled, group, with_labels,
-                 render_lines, line_style, line_width, line_colour,
-                 render_markers, marker_style, marker_size,
-                 marker_edge_width, marker_edge_colour, marker_face_colour,
-                 render_numbering, numbers_font_name, numbers_font_size,
-                 numbers_font_style, numbers_font_weight,
-                 numbers_font_colour, numbers_horizontal_align,
-                 numbers_vertical_align, legend_n_columns,
-                 legend_border_axes_pad, legend_rounded_corners,
-                 legend_title, legend_horizontal_spacing, legend_shadow,
-                 legend_location, legend_font_name, legend_bbox_to_anchor,
-                 legend_border, legend_marker_scale,
-                 legend_vertical_spacing, legend_font_weight,
-                 legend_font_size, render_legend, legend_font_style,
-                 legend_border_padding, figure_size, render_axes,
-                 axes_font_name, axes_font_size, axes_font_style,
-                 axes_font_weight, axes_x_limits, axes_y_limits, axes_x_ticks,
-                 axes_y_ticks, interpolation, alpha, cmap_name):
+def render_image(
+    image,
+    renderer,
+    render_landmarks,
+    image_is_masked,
+    masked_enabled,
+    channels,
+    group,
+    with_labels,
+    render_lines,
+    line_style,
+    line_width,
+    line_colour,
+    render_markers,
+    marker_style,
+    marker_size,
+    marker_edge_width,
+    marker_edge_colour,
+    marker_face_colour,
+    render_numbering,
+    numbers_font_name,
+    numbers_font_size,
+    numbers_font_style,
+    numbers_font_weight,
+    numbers_font_colour,
+    numbers_horizontal_align,
+    numbers_vertical_align,
+    legend_n_columns,
+    legend_border_axes_pad,
+    legend_rounded_corners,
+    legend_title,
+    legend_horizontal_spacing,
+    legend_shadow,
+    legend_location,
+    legend_font_name,
+    legend_bbox_to_anchor,
+    legend_border,
+    legend_marker_scale,
+    legend_vertical_spacing,
+    legend_font_weight,
+    legend_font_size,
+    render_legend,
+    legend_font_style,
+    legend_border_padding,
+    figure_size,
+    render_axes,
+    axes_font_name,
+    axes_font_size,
+    axes_font_style,
+    axes_font_weight,
+    axes_x_limits,
+    axes_y_limits,
+    axes_x_ticks,
+    axes_y_ticks,
+    interpolation,
+    alpha,
+    cmap_name,
+):
     # This makes the code shorter for dealing with masked images vs non-masked
     # images
-    mask_arguments = ({'masked': masked_enabled} if image_is_masked else {})
+    mask_arguments = {"masked": masked_enabled} if image_is_masked else {}
 
     # plot
     if render_landmarks and group is not None:
-        # show image with landmarks
-        if glyph_enabled:
-            # image, landmarks, masked, glyph
-            renderer = glyph(image, vectors_block_size=glyph_block_size,
-                             use_negative=glyph_use_negative,
-                             channels=channels).view_landmarks(
-                group=group, with_labels=with_labels, without_labels=None,
-                figure_id=renderer.figure_id, new_figure=False,
-                render_lines=render_lines, line_colour=line_colour,
-                line_style=line_style, line_width=line_width,
-                render_markers=render_markers, marker_style=marker_style,
-                marker_size=marker_size, marker_face_colour=marker_face_colour,
-                marker_edge_colour=marker_edge_colour,
-                marker_edge_width=marker_edge_width,
-                render_numbering=render_numbering,
-                numbers_horizontal_align=numbers_horizontal_align,
-                numbers_vertical_align=numbers_vertical_align,
-                numbers_font_name=numbers_font_name,
-                numbers_font_size=numbers_font_size,
-                numbers_font_style=numbers_font_style,
-                numbers_font_weight=numbers_font_weight,
-                numbers_font_colour=numbers_font_colour,
-                render_legend=render_legend, legend_title=legend_title,
-                legend_font_name=legend_font_name,
-                legend_font_style=legend_font_style,
-                legend_font_size=legend_font_size,
-                legend_font_weight=legend_font_weight,
-                legend_marker_scale=legend_marker_scale,
-                legend_location=legend_location,
-                legend_bbox_to_anchor=legend_bbox_to_anchor,
-                legend_border_axes_pad=legend_border_axes_pad,
-                legend_n_columns=legend_n_columns,
-                legend_horizontal_spacing=legend_horizontal_spacing,
-                legend_vertical_spacing=legend_vertical_spacing,
-                legend_border=legend_border,
-                legend_border_padding=legend_border_padding,
-                legend_shadow=legend_shadow,
-                legend_rounded_corners=legend_rounded_corners,
-                render_axes=render_axes, axes_font_name=axes_font_name,
-                axes_font_size=axes_font_size, axes_font_style=axes_font_style,
-                axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-                axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
-                axes_y_ticks=axes_y_ticks, figure_size=figure_size,
-                interpolation=interpolation, alpha=alpha, cmap_name=cmap_name,
-                **mask_arguments)
-        elif sum_enabled:
-            # image, landmarks, masked, sum
-            renderer = sum_channels(image, channels=channels).view_landmarks(
-                group=group, with_labels=with_labels, without_labels=None,
-                figure_id=renderer.figure_id, new_figure=False,
-                render_lines=render_lines, line_colour=line_colour,
-                line_style=line_style, line_width=line_width,
-                render_markers=render_markers, marker_style=marker_style,
-                marker_size=marker_size, marker_face_colour=marker_face_colour,
-                marker_edge_colour=marker_edge_colour,
-                marker_edge_width=marker_edge_width,
-                render_numbering=render_numbering,
-                numbers_horizontal_align=numbers_horizontal_align,
-                numbers_vertical_align=numbers_vertical_align,
-                numbers_font_name=numbers_font_name,
-                numbers_font_size=numbers_font_size,
-                numbers_font_style=numbers_font_style,
-                numbers_font_weight=numbers_font_weight,
-                numbers_font_colour=numbers_font_colour,
-                render_legend=render_legend, legend_title=legend_title,
-                legend_font_name=legend_font_name,
-                legend_font_style=legend_font_style,
-                legend_font_size=legend_font_size,
-                legend_font_weight=legend_font_weight,
-                legend_marker_scale=legend_marker_scale,
-                legend_location=legend_location,
-                legend_bbox_to_anchor=legend_bbox_to_anchor,
-                legend_border_axes_pad=legend_border_axes_pad,
-                legend_n_columns=legend_n_columns,
-                legend_horizontal_spacing=legend_horizontal_spacing,
-                legend_vertical_spacing=legend_vertical_spacing,
-                legend_border=legend_border,
-                legend_border_padding=legend_border_padding,
-                legend_shadow=legend_shadow,
-                legend_rounded_corners=legend_rounded_corners,
-                render_axes=render_axes, axes_font_name=axes_font_name,
-                axes_font_size=axes_font_size, axes_font_style=axes_font_style,
-                axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-                axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
-                axes_y_ticks=axes_y_ticks, figure_size=figure_size,
-                interpolation=interpolation, alpha=alpha, cmap_name=cmap_name,
-                **mask_arguments)
-        else:
-            renderer = image.view_landmarks(
-                channels=channels, group=group, with_labels=with_labels,
-                without_labels=None, figure_id=renderer.figure_id,
-                new_figure=False, render_lines=render_lines,
-                line_colour=line_colour, line_style=line_style,
-                line_width=line_width, render_markers=render_markers,
-                marker_style=marker_style, marker_size=marker_size,
-                marker_face_colour=marker_face_colour,
-                marker_edge_colour=marker_edge_colour,
-                marker_edge_width=marker_edge_width,
-                render_numbering=render_numbering,
-                numbers_horizontal_align=numbers_horizontal_align,
-                numbers_vertical_align=numbers_vertical_align,
-                numbers_font_name=numbers_font_name,
-                numbers_font_size=numbers_font_size,
-                numbers_font_style=numbers_font_style,
-                numbers_font_weight=numbers_font_weight,
-                numbers_font_colour=numbers_font_colour,
-                render_legend=render_legend, legend_title=legend_title,
-                legend_font_name=legend_font_name,
-                legend_font_style=legend_font_style,
-                legend_font_size=legend_font_size,
-                legend_font_weight=legend_font_weight,
-                legend_marker_scale=legend_marker_scale,
-                legend_location=legend_location,
-                legend_bbox_to_anchor=legend_bbox_to_anchor,
-                legend_border_axes_pad=legend_border_axes_pad,
-                legend_n_columns=legend_n_columns,
-                legend_horizontal_spacing=legend_horizontal_spacing,
-                legend_vertical_spacing=legend_vertical_spacing,
-                legend_border=legend_border,
-                legend_border_padding=legend_border_padding,
-                legend_shadow=legend_shadow,
-                legend_rounded_corners=legend_rounded_corners,
-                render_axes=render_axes, axes_font_name=axes_font_name,
-                axes_font_size=axes_font_size, axes_font_style=axes_font_style,
-                axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-                axes_y_limits=axes_y_limits, axes_x_ticks=axes_x_ticks,
-                axes_y_ticks=axes_y_ticks, figure_size=figure_size,
-                interpolation=interpolation, alpha=alpha, cmap_name=cmap_name,
-                **mask_arguments)
+        renderer = image.view_landmarks(
+            channels=channels,
+            group=group,
+            with_labels=with_labels,
+            without_labels=None,
+            figure_id=renderer.figure_id,
+            new_figure=False,
+            render_lines=render_lines,
+            line_colour=line_colour,
+            line_style=line_style,
+            line_width=line_width,
+            render_markers=render_markers,
+            marker_style=marker_style,
+            marker_size=marker_size,
+            marker_face_colour=marker_face_colour,
+            marker_edge_colour=marker_edge_colour,
+            marker_edge_width=marker_edge_width,
+            render_numbering=render_numbering,
+            numbers_horizontal_align=numbers_horizontal_align,
+            numbers_vertical_align=numbers_vertical_align,
+            numbers_font_name=numbers_font_name,
+            numbers_font_size=numbers_font_size,
+            numbers_font_style=numbers_font_style,
+            numbers_font_weight=numbers_font_weight,
+            numbers_font_colour=numbers_font_colour,
+            render_legend=render_legend,
+            legend_title=legend_title,
+            legend_font_name=legend_font_name,
+            legend_font_style=legend_font_style,
+            legend_font_size=legend_font_size,
+            legend_font_weight=legend_font_weight,
+            legend_marker_scale=legend_marker_scale,
+            legend_location=legend_location,
+            legend_bbox_to_anchor=legend_bbox_to_anchor,
+            legend_border_axes_pad=legend_border_axes_pad,
+            legend_n_columns=legend_n_columns,
+            legend_horizontal_spacing=legend_horizontal_spacing,
+            legend_vertical_spacing=legend_vertical_spacing,
+            legend_border=legend_border,
+            legend_border_padding=legend_border_padding,
+            legend_shadow=legend_shadow,
+            legend_rounded_corners=legend_rounded_corners,
+            render_axes=render_axes,
+            axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits,
+            axes_x_ticks=axes_x_ticks,
+            axes_y_ticks=axes_y_ticks,
+            figure_size=figure_size,
+            interpolation=interpolation,
+            alpha=alpha,
+            cmap_name=cmap_name,
+            **mask_arguments
+        )
     else:
         # either there are not any landmark groups selected or they won't
         # be displayed
-        if glyph_enabled:
-            # image, not landmarks, masked, glyph
-            renderer = glyph(image, vectors_block_size=glyph_block_size,
-                             use_negative=glyph_use_negative,
-                             channels=channels).view(
-                render_axes=render_axes, axes_font_name=axes_font_name,
-                axes_font_size=axes_font_size, axes_font_style=axes_font_style,
-                axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-                axes_y_limits=axes_y_limits, figure_size=figure_size,
-                interpolation=interpolation, alpha=alpha, cmap_name=cmap_name,
-                **mask_arguments)
-        elif sum_enabled:
-            # image, not landmarks, masked, sum
-            renderer = sum_channels(image, channels=channels).view(
-                render_axes=render_axes, axes_font_name=axes_font_name,
-                axes_font_size=axes_font_size, axes_font_style=axes_font_style,
-                axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-                axes_y_limits=axes_y_limits, figure_size=figure_size,
-                interpolation=interpolation, alpha=alpha, cmap_name=cmap_name,
-                **mask_arguments)
-        else:
-            # image, not landmarks, masked, not glyph/sum
-            renderer = image.view(
-                channels=channels, render_axes=render_axes,
-                axes_font_name=axes_font_name, axes_font_size=axes_font_size,
-                axes_font_style=axes_font_style,
-                axes_font_weight=axes_font_weight, axes_x_limits=axes_x_limits,
-                axes_y_limits=axes_y_limits, figure_size=figure_size,
-                interpolation=interpolation, alpha=alpha, cmap_name=cmap_name,
-                **mask_arguments)
+        renderer = image.view(
+            channels=channels,
+            render_axes=render_axes,
+            axes_font_name=axes_font_name,
+            axes_font_size=axes_font_size,
+            axes_font_style=axes_font_style,
+            axes_font_weight=axes_font_weight,
+            axes_x_limits=axes_x_limits,
+            axes_y_limits=axes_y_limits,
+            figure_size=figure_size,
+            interpolation=interpolation,
+            alpha=alpha,
+            cmap_name=cmap_name,
+            **mask_arguments
+        )
 
     # show plot
     renderer.force_draw()
@@ -942,146 +861,102 @@ def render_image(image, renderer, render_landmarks, image_is_masked,
     return renderer
 
 
-def render_patches(patches, patch_centers, patches_indices, offset_index,
-                   renderer, background, render_patches, channels,
-                   glyph_enabled, glyph_block_size, glyph_use_negative,
-                   sum_enabled, interpolation, cmap_name, alpha,
-                   render_patches_bboxes, bboxes_line_colour,
-                   bboxes_line_style, bboxes_line_width, render_centers,
-                   render_lines, line_colour, line_style, line_width,
-                   render_markers, marker_style, marker_size,
-                   marker_face_colour, marker_edge_colour,
-                   marker_edge_width, render_numbering,
-                   numbers_horizontal_align, numbers_vertical_align,
-                   numbers_font_name, numbers_font_size, numbers_font_style,
-                   numbers_font_weight, numbers_font_colour, render_axes,
-                   axes_font_name, axes_font_size, axes_font_style,
-                   axes_font_weight, axes_x_limits, axes_y_limits,
-                   axes_x_ticks, axes_y_ticks, figure_size):
+def render_patches(
+    patches,
+    patch_centers,
+    patches_indices,
+    offset_index,
+    renderer,
+    background,
+    render_patches,
+    channels,
+    interpolation,
+    cmap_name,
+    alpha,
+    render_patches_bboxes,
+    bboxes_line_colour,
+    bboxes_line_style,
+    bboxes_line_width,
+    render_centers,
+    render_lines,
+    line_colour,
+    line_style,
+    line_width,
+    render_markers,
+    marker_style,
+    marker_size,
+    marker_face_colour,
+    marker_edge_colour,
+    marker_edge_width,
+    render_numbering,
+    numbers_horizontal_align,
+    numbers_vertical_align,
+    numbers_font_name,
+    numbers_font_size,
+    numbers_font_style,
+    numbers_font_weight,
+    numbers_font_colour,
+    render_axes,
+    axes_font_name,
+    axes_font_size,
+    axes_font_style,
+    axes_font_weight,
+    axes_x_limits,
+    axes_y_limits,
+    axes_x_ticks,
+    axes_y_ticks,
+    figure_size,
+):
     from menpo.transform import UniformScale
     from menpo.visualize import view_patches
 
-    if glyph_enabled and render_patches:
-        # compute glyph size
-        glyph_patch0 = glyph(patches[0, offset_index, ...],
-                             vectors_block_size=glyph_block_size,
-                             use_negative=glyph_use_negative)
-        # compute glyph of each patch
-        glyph_patches = np.zeros((patches.shape[0], 1, 1, glyph_patch0.shape[1],
-                                  glyph_patch0.shape[2]))
-        glyph_patches[0, 0, ...] = glyph_patch0
-        for i in range(1, patches.shape[0]):
-            glyph_patches[i, 0, ...] = glyph(
-                patches[i, offset_index, ...],
-                vectors_block_size=glyph_block_size,
-                use_negative=glyph_use_negative)
-        # correct patch centers
-        glyph_patch_centers = UniformScale(glyph_block_size, 2).apply(
-            patch_centers)
-        # visualize glyph patches
-        renderer = view_patches(
-            glyph_patches, glyph_patch_centers, patches_indices=patches_indices,
-            offset_index=0, figure_id=renderer.figure_id, new_figure=False,
-            background=background, render_patches=render_patches, channels=0,
-            interpolation=interpolation, cmap_name=cmap_name, alpha=alpha,
-            render_patches_bboxes=render_patches_bboxes,
-            bboxes_line_colour=bboxes_line_colour,
-            bboxes_line_style=bboxes_line_style,
-            bboxes_line_width=bboxes_line_width,
-            render_centers=render_centers, render_lines=render_lines,
-            line_colour=line_colour, line_style=line_style,
-            line_width=line_width, render_markers=render_markers,
-            marker_style=marker_style, marker_size=marker_size,
-            marker_face_colour=marker_face_colour,
-            marker_edge_colour=marker_edge_colour,
-            marker_edge_width=marker_edge_width,
-            render_numbering=render_numbering,
-            numbers_horizontal_align=numbers_horizontal_align,
-            numbers_vertical_align=numbers_vertical_align,
-            numbers_font_name=numbers_font_name,
-            numbers_font_size=numbers_font_size,
-            numbers_font_style=numbers_font_style,
-            numbers_font_weight=numbers_font_weight,
-            numbers_font_colour=numbers_font_colour,
-            render_axes=render_axes, axes_font_name=axes_font_name,
-            axes_font_size=axes_font_size,
-            axes_font_style=axes_font_style,
-            axes_font_weight=axes_font_weight,
-            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
-            axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks,
-            figure_size=figure_size)
-    elif sum_enabled and render_patches:
-        # compute sum of each patch
-        sum_patches = np.zeros((patches.shape[0], 1, 1, patches.shape[3],
-                                patches.shape[4]))
-        for i in patches_indices:
-            sum_patches[i, 0, ...] = sum_channels(
-                patches[i, offset_index, ...], channels=channels)
-        # visualize sum patches
-        renderer = view_patches(
-            sum_patches, patch_centers, patches_indices=patches_indices,
-            offset_index=0, figure_id=renderer.figure_id, new_figure=False,
-            background=background, render_patches=render_patches, channels=0,
-            interpolation=interpolation, cmap_name=cmap_name, alpha=alpha,
-            render_patches_bboxes=render_patches_bboxes,
-            bboxes_line_colour=bboxes_line_colour,
-            bboxes_line_style=bboxes_line_style,
-            bboxes_line_width=bboxes_line_width,
-            render_centers=render_centers, render_lines=render_lines,
-            line_colour=line_colour, line_style=line_style,
-            line_width=line_width, render_markers=render_markers,
-            marker_style=marker_style, marker_size=marker_size,
-            marker_face_colour=marker_face_colour,
-            marker_edge_colour=marker_edge_colour,
-            marker_edge_width=marker_edge_width,
-            render_numbering=render_numbering,
-            numbers_horizontal_align=numbers_horizontal_align,
-            numbers_vertical_align=numbers_vertical_align,
-            numbers_font_name=numbers_font_name,
-            numbers_font_size=numbers_font_size,
-            numbers_font_style=numbers_font_style,
-            numbers_font_weight=numbers_font_weight,
-            numbers_font_colour=numbers_font_colour,
-            render_axes=render_axes, axes_font_name=axes_font_name,
-            axes_font_size=axes_font_size,
-            axes_font_style=axes_font_style,
-            axes_font_weight=axes_font_weight,
-            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
-            axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks,
-            figure_size=figure_size)
-    else:
-        renderer = view_patches(
-            patches, patch_centers, patches_indices=patches_indices,
-            offset_index=offset_index, figure_id=renderer.figure_id,
-            new_figure=False, background=background,
-            render_patches=render_patches, channels=channels,
-            interpolation=interpolation, cmap_name=cmap_name, alpha=alpha,
-            render_patches_bboxes=render_patches_bboxes,
-            bboxes_line_colour=bboxes_line_colour,
-            bboxes_line_style=bboxes_line_style,
-            bboxes_line_width=bboxes_line_width,
-            render_centers=render_centers, render_lines=render_lines,
-            line_colour=line_colour, line_style=line_style,
-            line_width=line_width, render_markers=render_markers,
-            marker_style=marker_style, marker_size=marker_size,
-            marker_face_colour=marker_face_colour,
-            marker_edge_colour=marker_edge_colour,
-            marker_edge_width=marker_edge_width,
-            render_numbering=render_numbering,
-            numbers_horizontal_align=numbers_horizontal_align,
-            numbers_vertical_align=numbers_vertical_align,
-            numbers_font_name=numbers_font_name,
-            numbers_font_size=numbers_font_size,
-            numbers_font_style=numbers_font_style,
-            numbers_font_weight=numbers_font_weight,
-            numbers_font_colour=numbers_font_colour,
-            render_axes=render_axes, axes_font_name=axes_font_name,
-            axes_font_size=axes_font_size,
-            axes_font_style=axes_font_style,
-            axes_font_weight=axes_font_weight,
-            axes_x_limits=axes_x_limits, axes_y_limits=axes_y_limits,
-            axes_x_ticks=axes_x_ticks, axes_y_ticks=axes_y_ticks,
-            figure_size=figure_size)
+    renderer = view_patches(
+        patches,
+        patch_centers,
+        patches_indices=patches_indices,
+        offset_index=offset_index,
+        figure_id=renderer.figure_id,
+        new_figure=False,
+        background=background,
+        render_patches=render_patches,
+        channels=channels,
+        interpolation=interpolation,
+        cmap_name=cmap_name,
+        alpha=alpha,
+        render_patches_bboxes=render_patches_bboxes,
+        bboxes_line_colour=bboxes_line_colour,
+        bboxes_line_style=bboxes_line_style,
+        bboxes_line_width=bboxes_line_width,
+        render_centers=render_centers,
+        render_lines=render_lines,
+        line_colour=line_colour,
+        line_style=line_style,
+        line_width=line_width,
+        render_markers=render_markers,
+        marker_style=marker_style,
+        marker_size=marker_size,
+        marker_face_colour=marker_face_colour,
+        marker_edge_colour=marker_edge_colour,
+        marker_edge_width=marker_edge_width,
+        render_numbering=render_numbering,
+        numbers_horizontal_align=numbers_horizontal_align,
+        numbers_vertical_align=numbers_vertical_align,
+        numbers_font_name=numbers_font_name,
+        numbers_font_size=numbers_font_size,
+        numbers_font_style=numbers_font_style,
+        numbers_font_weight=numbers_font_weight,
+        numbers_font_colour=numbers_font_colour,
+        render_axes=render_axes,
+        axes_font_name=axes_font_name,
+        axes_font_size=axes_font_size,
+        axes_font_style=axes_font_style,
+        axes_font_weight=axes_font_weight,
+        axes_x_limits=axes_x_limits,
+        axes_y_limits=axes_y_limits,
+        axes_x_ticks=axes_x_ticks,
+        axes_y_ticks=axes_y_ticks,
+        figure_size=figure_size,
+    )
 
     # show plot
     renderer.force_draw()

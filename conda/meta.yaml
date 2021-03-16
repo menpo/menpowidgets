@@ -9,12 +9,9 @@ requirements:
 
   run:
     - python
-    - menpo 0.8.*
-    - ipython >5.0,<7.0
-    - jupyter 1.*
-    - ipywidgets >=6.0,<7.0
-    - traitlets >=4.3,<5.0
-    - widgetsnbextension >=2.0,<3.0
+    - menpo >=0.9.0,<0.12.0
+    - ipywidgets
+    - ipyevents
 
 test:
   imports:
@@ -22,4 +19,11 @@ test:
 
 about:
   home: https://github.com/menpo/menpowidgets/
-  license: BSD
+  license: BSD 3-Clause
+  summary: The Menpo Project Python package for visualizing data using Jupyter widgets
+  description: |
+    A library inside the Menpo Project that makes visualizing data inside
+    Jupyter notebooks simple. It supports a number of useful widgets for visualizing
+    both images and meshes.
+  doc_url: https://menpowidgets.readthedocs.io/en/stable/
+  dev_url: https://github.com/menpo/menpowidgets

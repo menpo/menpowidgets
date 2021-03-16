@@ -35,14 +35,14 @@ class MenpoWidget(Box):
 
         If ``None``, then nothing is added.
     """
-    def __init__(self, children, trait, trait_initial_value,
-                 render_function=None):
+
+    def __init__(self, children, trait, trait_initial_value, render_function=None):
         # Create box object
         super(MenpoWidget, self).__init__(children=children)
 
         # Add trait for selected values
         selected_values = trait(default_value=trait_initial_value)
-        selected_values_trait = {'selected_values': selected_values}
+        selected_values_trait = {"selected_values": selected_values}
         self.add_traits(**selected_values_trait)
         self.selected_values = trait_initial_value
 
@@ -74,8 +74,7 @@ class MenpoWidget(Box):
         """
         self._render_function = render_function
         if self._render_function is not None:
-            self.observe(self._render_function, names='selected_values',
-                         type='change')
+            self.observe(self._render_function, names="selected_values", type="change")
 
     def remove_render_function(self):
         r"""
@@ -84,8 +83,9 @@ class MenpoWidget(Box):
         ``self._render_function = None``.
         """
         if self._render_function is not None:
-            self.unobserve(self._render_function, names='selected_values',
-                           type='change')
+            self.unobserve(
+                self._render_function, names="selected_values", type="change"
+            )
             self._render_function = None
 
     def replace_render_function(self, render_function):
@@ -116,7 +116,7 @@ class MenpoWidget(Box):
         # add new function
         self.add_render_function(render_function)
 
-    def call_render_function(self, old_value, new_value, type_value='change'):
+    def call_render_function(self, old_value, new_value, type_value="change"):
         r"""
         Method that calls the existing `render_function()` callback handler.
 
@@ -130,7 +130,11 @@ class MenpoWidget(Box):
             The trait event type.
         """
         if self._render_function is not None:
-            change_dict = {'type': 'change', 'old': old_value,
-                           'name': type_value, 'new': new_value,
-                           'owner': self.__str__()}
+            change_dict = {
+                "type": "change",
+                "old": old_value,
+                "name": type_value,
+                "new": new_value,
+                "owner": self.__str__(),
+            }
             self._render_function(change_dict)

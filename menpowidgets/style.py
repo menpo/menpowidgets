@@ -23,29 +23,29 @@ def map_styles_to_hex_colours(style, background=False):
         The corresponding hex colour.
     """
     if background:
-        if style == 'info':
-            return '#D9EDF7'
-        elif style == 'danger':
-            return '#F2DEDE'
-        elif style == 'success':
-            return '#DFF0D8'
-        elif style == 'warning':
-            return '#FCF8E3'
-        elif style == 'primary':
-            return '#337ab7'
+        if style == "info":
+            return "#D9EDF7"
+        elif style == "danger":
+            return "#F2DEDE"
+        elif style == "success":
+            return "#DFF0D8"
+        elif style == "warning":
+            return "#FCF8E3"
+        elif style == "primary":
+            return "#337ab7"
         else:
             return None
     else:
-        if style == 'info':
-            return '#31708f'
-        elif style == 'danger':
-            return '#A52A2A'
-        elif style == 'success':
-            return '#228B22'
-        elif style == 'warning':
-            return '#8A6D3B'
-        elif style == 'primary':
-            return '#337ab7'
+        if style == "info":
+            return "#31708f"
+        elif style == "danger":
+            return "#A52A2A"
+        elif style == "success":
+            return "#228B22"
+        elif style == "warning":
+            return "#8A6D3B"
+        elif style == "primary":
+            return "#337ab7"
         else:
             return None
 
@@ -71,9 +71,9 @@ def parse_font_awesome_icon(option):
     if option is None:
         icon = description = None
     else:
-        if len(option) > 3 and option[:3] == 'fa-':
+        if len(option) > 3 and option[:3] == "fa-":
             icon = option
-            description = ''
+            description = ""
         else:
             icon = None
             description = option
@@ -86,6 +86,6 @@ def convert_image_to_bytes(image):
     bytes format that can be used by IPython.html.widgets.Image().
     """
     fp = BytesIO()
-    image.as_PILImage().save(fp, format='png')
+    image.as_PILImage().save(fp, format="png")
     fp.seek(0)
     return fp.read()
