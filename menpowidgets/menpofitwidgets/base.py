@@ -7,6 +7,7 @@ except ImportError as e:
 
 # Continue with imports if we have menpofit
 from collections import OrderedDict
+from typing import Sized
 import numpy as np
 
 import ipywidgets
@@ -99,12 +100,10 @@ def visualize_aam(
         n_appearance_parameters, n_levels, max_n_appearance
     )
 
-    # Define render function
-    def render_function(change):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
+    output = ipywidgets.Output()
 
+    @output.capture(clear_output=True, wait=True)
+    def render_function(change):
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -209,12 +208,8 @@ def visualize_aam(
         ]
         info_wid.set_widget_state(text_per_line=text_per_line)
 
-    # Plot shape variance function
+    @output.capture(clear_output=True, wait=True)
     def plot_shape_variance(name):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -237,12 +232,8 @@ def visualize_aam(
         )
         save_figure_wid.renderer.force_draw()
 
-    # Plot appearance variance function
+    @output.capture(clear_output=True, wait=True)
     def plot_appearance_variance(name):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -460,12 +451,10 @@ def visualize_patch_aam(
         n_appearance_parameters, n_levels, max_n_appearance
     )
 
-    # Define render function
-    def render_function(change):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
+    output = ipywidgets.Output()
 
+    @output.capture(clear_output=True, wait=True)
+    def render_function(change):
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -555,12 +544,8 @@ def visualize_patch_aam(
         ]
         info_wid.set_widget_state(text_per_line=text_per_line)
 
-    # Plot shape variance function
+    @output.capture(clear_output=True, wait=True)
     def plot_shape_variance(name):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -583,12 +568,8 @@ def visualize_patch_aam(
         )
         save_figure_wid.renderer.force_draw()
 
-    # Plot appearance variance function
+    @output.capture(clear_output=True, wait=True)
     def plot_appearance_variance(name):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -794,12 +775,10 @@ def visualize_atm(
     # of len n_scales)
     n_shape_parameters = check_n_parameters(n_shape_parameters, n_levels, max_n_shape)
 
-    # Define render function
-    def render_function(change):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
+    output = ipywidgets.Output()
 
+    @output.capture(clear_output=True, wait=True)
+    def render_function(change):
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -893,12 +872,8 @@ def visualize_atm(
         ]
         info_wid.set_widget_state(text_per_line=text_per_line)
 
-    # Plot shape variance function
+    @output.capture(clear_output=True, wait=True)
     def plot_shape_variance(name):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -1076,12 +1051,10 @@ def visualize_patch_atm(
     # of len n_scales)
     n_shape_parameters = check_n_parameters(n_shape_parameters, n_levels, max_n_shape)
 
-    # Define render function
-    def render_function(change):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
+    output = ipywidgets.Output()
 
+    @output.capture(clear_output=True, wait=True)
+    def render_function(change):
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -1164,12 +1137,8 @@ def visualize_patch_atm(
         ]
         info_wid.set_widget_state(text_per_line=text_per_line)
 
-    # Plot shape variance function
+    @output.capture(clear_output=True, wait=True)
     def plot_shape_variance(name):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -1350,12 +1319,10 @@ def visualize_clm(
     # of len n_scales)
     n_shape_parameters = check_n_parameters(n_shape_parameters, n_levels, max_n_shape)
 
-    # Define render function
-    def render_function(change):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
+    output = ipywidgets.Output()
 
+    @output.capture(clear_output=True, wait=True)
+    def render_function(change):
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -1439,12 +1406,8 @@ def visualize_clm(
         ]
         info_wid.set_widget_state(text_per_line=text_per_line)
 
-    # Plot shape variance function
+    @output.capture(clear_output=True, wait=True)
     def plot_shape_variance(name):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -1625,12 +1588,10 @@ def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(7, 7)):
     # Define the styling options
     main_style = "info"
 
-    # Define render function
-    def render_function(change):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
+    output = ipywidgets.Output()
 
+    @output.capture(clear_output=True, wait=True)
+    def render_function(change):
         # Get selected level
         level = level_wid.value if n_levels > 1 else 0
 
@@ -1850,6 +1811,8 @@ def plot_ced(
     # Define the styling options
     main_style = "danger"
 
+    output = ipywidgets.Output()
+
     # Parse options
     if legend_entries is None:
         legend_entries = ["Curve {}".format(i) for i in range(n_curves)]
@@ -1871,12 +1834,8 @@ def plot_ced(
         x_axis_step = error_range[2]
         x_label = "Error"
 
-    # Define render function
+    @output.capture(clear_output=True, wait=True)
     def render_function(change):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # plot with selected options
         opts = plot_wid.selected_values.copy()
         new_figure_size = (
@@ -1999,12 +1958,10 @@ def visualize_fitting_results(
     # Define the styling options
     main_style = "info"
 
-    # Define function that plots errors curve
-    def plot_errors_function(name):
-        # Clear current figure, but wait until the new data to be displayed are
-        # generated
-        ipydisplay.clear_output(wait=True)
+    output = ipywidgets.Output()
 
+    @output.capture(clear_output=True, wait=True)
+    def plot_errors_function(name):
         # Get selected index
         i = image_number_wid.selected_values if n_fitting_results > 1 else 0
 
@@ -2020,12 +1977,8 @@ def visualize_fitting_results(
         )
         save_figure_wid.renderer.force_draw()
 
-    # Define function that plots displacements curve
+    @output.capture(clear_output=True, wait=True)
     def plot_displacements_function(name):
-        # Clear current figure, but wait until the new data to be displayed are
-        # generated
-        ipydisplay.clear_output(wait=True)
-
         # Get selected index
         i = image_number_wid.selected_values if n_fitting_results > 1 else 0
 
@@ -2042,12 +1995,8 @@ def visualize_fitting_results(
         )
         save_figure_wid.renderer.force_draw()
 
-    # Define function that plots errors curve
+    @output.capture(clear_output=True, wait=True)
     def plot_costs_function(name):
-        # Clear current figure, but wait until the new data to be displayed are
-        # generated
-        ipydisplay.clear_output(wait=True)
-
         # Get selected index
         im = image_number_wid.selected_values if n_fitting_results > 1 else 0
 
@@ -2063,12 +2012,8 @@ def visualize_fitting_results(
         )
         save_figure_wid.renderer.force_draw()
 
-    # Define render function
+    @output.capture(clear_output=True, wait=True)
     def render_function(change):
-        # Clear current figure, but wait until the generation of the new data
-        # that will be rendered
-        ipydisplay.clear_output(wait=True)
-
         # get selected object
         i = image_number_wid.selected_values if n_fitting_results > 1 else 0
 
