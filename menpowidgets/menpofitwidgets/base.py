@@ -2359,12 +2359,12 @@ def visualize_fitting_results(
     )
     for (k, tl) in enumerate(tab_titles):
         options_box.set_title(k, tl)
+    
+    output.layout.align_self = "center"
     if n_fitting_results > 1:
-        output.layout.align_self = "center"
-    wid = ipywidgets.VBox([header_wid, options_box, output])
+        wid = ipywidgets.VBox([header_wid, options_box, output])
     else:
-        output.layout.align_self = "center"
-    wid = ipywidgets.HBox([header_wid, options_box, output])
+        wid = ipywidgets.HBox([header_wid, options_box, output])
     if n_fitting_results > 1:
         # If animation is activated and the user selects the save figure tab,
         # then the animation stops.
