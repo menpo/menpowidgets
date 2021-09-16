@@ -2359,7 +2359,7 @@ def visualize_fitting_results(
     )
     for k, tl in enumerate(tab_titles):
         options_box.set_title(k, tl)
-    
+
     output.layout.align_self = "center"
     if n_fitting_results > 1:
         wid = ipywidgets.VBox([header_wid, options_box, output])
