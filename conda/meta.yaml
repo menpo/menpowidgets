@@ -19,6 +19,7 @@ requirements:
     - menpo >=0.9.0,<0.12.0
     - ipywidgets
     - ipyevents
+    - nest-asyncio
 
 test:
   imports:
