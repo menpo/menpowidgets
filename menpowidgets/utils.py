@@ -1,6 +1,27 @@
+import asyncio
 from struct import pack as struct_pack
 import binascii
+
+import nest_asyncio
 import numpy as np
+
+
+def do_one_iteration(kernel):
+    nest_asyncio.apply()
+
+    loop = asyncio.get_running_loop()
+
+    task = loop.create_task(kernel.do_one_iteration())
+    loop.run_until_complete(task)
+
+
+def sync_asyncio_sleep(interval):
+    nest_asyncio.apply()
+
+    loop = asyncio.get_running_loop()
+
+    task = loop.create_task(asyncio.sleep(interval))
+    loop.run_until_complete(task)
 
 
 def lists_are_the_same(a, b):

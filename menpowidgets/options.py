@@ -32,7 +32,12 @@ from .tools import (
     MultipleSelectionTogglesWidget,
 )
 from .style import map_styles_to_hex_colours
-from .utils import sample_colours_from_colourmap, lists_are_the_same
+from .utils import (
+    do_one_iteration,
+    sample_colours_from_colourmap,
+    lists_are_the_same,
+    sync_asyncio_sleep,
+)
 
 
 class AnimationOptionsWidget(MenpoWidget):
@@ -249,7 +254,7 @@ class AnimationOptionsWidget(MenpoWidget):
                 self.loop_toggle.icon = "repeat"
             else:
                 self.loop_toggle.icon = "long-arrow-right"
-            self.kernel.do_one_iteration()
+            do_one_iteration(self.kernel)
 
         self.loop_toggle.observe(loop_pressed, names="value", type="change")
 
@@ -259,13 +264,13 @@ class AnimationOptionsWidget(MenpoWidget):
             if tmp < 0:
                 tmp = 0
             self.interval = tmp
-            self.kernel.do_one_iteration()
+            do_one_iteration(self.kernel)
 
         self.fast_forward_button.on_click(fast_forward_pressed)
 
         def fast_backward_pressed(name):
             self.interval += self.interval_step
-            self.kernel.do_one_iteration()
+            do_one_iteration(self.kernel)
 
         self.fast_backward_button.on_click(fast_backward_pressed)
 
@@ -282,7 +287,7 @@ class AnimationOptionsWidget(MenpoWidget):
                 # Run IPython iteration.
                 # This is the code that makes this operation non-blocking.
                 # This allows widget messages and callbacks to be processed.
-                self.kernel.do_one_iteration()
+                do_one_iteration(self.kernel)
 
                 # Check pause/stop flags
                 if self.please_pause or self.please_stop:
@@ -291,7 +296,7 @@ class AnimationOptionsWidget(MenpoWidget):
                 # Run IPython iteration.
                 # This is the code that makes this operation non-blocking.
                 # This allows widget messages and callbacks to be processed.
-                self.kernel.do_one_iteration()
+                do_one_iteration(self.kernel)
 
                 # Update index value
                 if index_style == "slider":
@@ -312,7 +317,7 @@ class AnimationOptionsWidget(MenpoWidget):
                 # Run IPython iteration.
                 # This is the code that makes this operation non-blocking.
                 # This allows widget messages and callbacks to be processed.
-                self.kernel.do_one_iteration()
+                do_one_iteration(self.kernel)
 
                 # Update counter
                 if self.loop_toggle.value and i >= self.max:
@@ -321,7 +326,7 @@ class AnimationOptionsWidget(MenpoWidget):
                     i += self.step
 
                 # Wait
-                sleep(self.interval)
+                sync_asyncio_sleep(self.interval)
 
             # If stop was pressed, then reset
             if self.please_stop:
@@ -339,6 +344,8 @@ class AnimationOptionsWidget(MenpoWidget):
                         text_editable=False,
                         allow_callback=True,
                     )
+
+            do_one_iteration(self.kernel)
 
             # Enable the index widget
             self.index_wid_disability(False)
@@ -5190,7 +5197,7 @@ class LinearModelParametersWidget(MenpoWidget):
                 self.loop_toggle.icon = "repeat"
             else:
                 self.loop_toggle.icon = "long-arrow-right"
-            self.kernel.do_one_iteration()
+            do_one_iteration(self.kernel)
 
         self.loop_toggle.observe(loop_pressed, names="value", type="change")
 
@@ -5200,13 +5207,13 @@ class LinearModelParametersWidget(MenpoWidget):
             if tmp < 0:
                 tmp = 0
             self.interval = tmp
-            self.kernel.do_one_iteration()
+            do_one_iteration(self.kernel)
 
         self.fast_forward_button.on_click(fast_forward_pressed)
 
         def fast_backward_pressed(name):
             self.interval += self.interval_step
-            self.kernel.do_one_iteration()
+            do_one_iteration(self.kernel)
 
         self.fast_backward_button.on_click(fast_backward_pressed)
 
@@ -5223,7 +5230,7 @@ class LinearModelParametersWidget(MenpoWidget):
                     slider_val = 0.0
                     while slider_val > self.params_bounds[0]:
                         # Run IPython iteration.
-                        self.kernel.do_one_iteration()
+                        do_one_iteration(self.kernel)
 
                         # Check stop flag
                         if self.please_stop:
@@ -5236,16 +5243,16 @@ class LinearModelParametersWidget(MenpoWidget):
                         self.sliders[slider_id].value = slider_val
 
                         # wait
-                        sleep(self.interval)
+                        sync_asyncio_sleep(self.interval)
 
                         # Run IPython iteration.
-                        self.kernel.do_one_iteration()
+                        do_one_iteration(self.kernel)
 
                     # animate from min to max
                     slider_val = self.params_bounds[0]
                     while slider_val < self.params_bounds[1]:
                         # Run IPython iteration.
-                        self.kernel.do_one_iteration()
+                        do_one_iteration(self.kernel)
 
                         # Check stop flag
                         if self.please_stop:
@@ -5258,16 +5265,16 @@ class LinearModelParametersWidget(MenpoWidget):
                         self.sliders[slider_id].value = slider_val
 
                         # wait
-                        sleep(self.interval)
+                        sync_asyncio_sleep(self.interval)
 
                         # Run IPython iteration.
-                        self.kernel.do_one_iteration()
+                        do_one_iteration(self.kernel)
 
                     # animate from max to 0
                     slider_val = self.params_bounds[1]
                     while slider_val > 0.0:
                         # Run IPython iteration.
-                        self.kernel.do_one_iteration()
+                        do_one_iteration(self.kernel)
 
                         # Check stop flag
                         if self.please_stop:
@@ -5280,10 +5287,10 @@ class LinearModelParametersWidget(MenpoWidget):
                         self.sliders[slider_id].value = slider_val
 
                         # wait
-                        sleep(self.interval)
+                        sync_asyncio_sleep(self.interval)
 
                         # Run IPython iteration.
-                        self.kernel.do_one_iteration()
+                        do_one_iteration(self.kernel)
 
                     # reset value
                     self.sliders[slider_id].value = 0.0
@@ -5312,7 +5319,7 @@ class LinearModelParametersWidget(MenpoWidget):
                     slider_val = 0.0
                     while slider_val > self.params_bounds[0]:
                         # Run IPython iteration.
-                        self.kernel.do_one_iteration()
+                        do_one_iteration(self.kernel)
 
                         # Check stop flag
                         if self.please_stop:
@@ -5325,16 +5332,16 @@ class LinearModelParametersWidget(MenpoWidget):
                         self.parameters_wid.children[1].value = slider_val
 
                         # wait
-                        sleep(self.interval)
+                        sync_asyncio_sleep(self.interval)
 
                         # Run IPython iteration.
-                        self.kernel.do_one_iteration()
+                        do_one_iteration(self.kernel)
 
                     # animate from min to max
                     slider_val = self.params_bounds[0]
                     while slider_val < self.params_bounds[1]:
                         # Run IPython iteration.
-                        self.kernel.do_one_iteration()
+                        do_one_iteration(self.kernel)
 
                         # Check stop flag
                         if self.please_stop:
@@ -5347,16 +5354,16 @@ class LinearModelParametersWidget(MenpoWidget):
                         self.parameters_wid.children[1].value = slider_val
 
                         # wait
-                        sleep(self.interval)
+                        sync_asyncio_sleep(self.interval)
 
                         # Run IPython iteration.
-                        self.kernel.do_one_iteration()
+                        do_one_iteration(self.kernel)
 
                     # animate from max to 0
                     slider_val = self.params_bounds[1]
                     while slider_val > 0.0:
                         # Run IPython iteration.
-                        self.kernel.do_one_iteration()
+                        do_one_iteration(self.kernel)
 
                         # Check stop flag
                         if self.please_stop:
@@ -5369,10 +5376,10 @@ class LinearModelParametersWidget(MenpoWidget):
                         self.parameters_wid.children[1].value = slider_val
 
                         # wait
-                        sleep(self.interval)
+                        sync_asyncio_sleep(self.interval)
 
                         # Run IPython iteration.
-                        self.kernel.do_one_iteration()
+                        do_one_iteration(self.kernel)
 
                     # reset value
                     self.parameters_wid.children[1].value = 0.0
