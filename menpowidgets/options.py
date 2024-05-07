@@ -284,19 +284,9 @@ class AnimationOptionsWidget(MenpoWidget):
             self.please_stop = False
             # Main loop
             while i <= self.max:
-                # Run IPython iteration.
-                # This is the code that makes this operation non-blocking.
-                # This allows widget messages and callbacks to be processed.
-                do_one_iteration(self.kernel)
-
                 # Check pause/stop flags
                 if self.please_pause or self.please_stop:
                     break
-
-                # Run IPython iteration.
-                # This is the code that makes this operation non-blocking.
-                # This allows widget messages and callbacks to be processed.
-                do_one_iteration(self.kernel)
 
                 # Update index value
                 if index_style == "slider":
@@ -314,11 +304,6 @@ class AnimationOptionsWidget(MenpoWidget):
                         allow_callback=True,
                     )
 
-                # Run IPython iteration.
-                # This is the code that makes this operation non-blocking.
-                # This allows widget messages and callbacks to be processed.
-                do_one_iteration(self.kernel)
-
                 # Update counter
                 if self.loop_toggle.value and i >= self.max:
                     i = self.min
@@ -327,6 +312,10 @@ class AnimationOptionsWidget(MenpoWidget):
 
                 # Wait
                 sync_asyncio_sleep(self.interval)
+                # Run IPython iteration.
+                # This is the code that makes this operation non-blocking.
+                # This allows widget messages and callbacks to be processed.
+                do_one_iteration(self.kernel)
 
             # If stop was pressed, then reset
             if self.please_stop:
@@ -344,8 +333,6 @@ class AnimationOptionsWidget(MenpoWidget):
                         text_editable=False,
                         allow_callback=True,
                     )
-
-            do_one_iteration(self.kernel)
 
             # Enable the index widget
             self.index_wid_disability(False)
