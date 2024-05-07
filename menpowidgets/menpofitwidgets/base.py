@@ -380,7 +380,8 @@ def visualize_aam(
         options_box.set_title(k, tl)
     logo_wid = LogoWidget(style=main_style)
     logo_wid.layout.margin = "0px 10px 0px 0px"
-    wid = ipywidgets.HBox([logo_wid, options_box])
+    output.layout.align_self = "center"
+    wid = ipywidgets.HBox([logo_wid, options_box, output])
 
     # Set widget's style
     wid.box_style = main_style
@@ -716,7 +717,8 @@ def visualize_patch_aam(
         options_box.set_title(k, tl)
     logo_wid = LogoWidget(style=main_style)
     logo_wid.layout.margin = "0px 10px 0px 0px"
-    wid = ipywidgets.HBox([logo_wid, options_box])
+    output.layout.align_self = "center"
+    wid = ipywidgets.HBox([logo_wid, options_box, output])
 
     # Set widget's style
     wid.box_style = main_style
@@ -992,7 +994,8 @@ def visualize_atm(
         options_box.set_title(k, tl)
     logo_wid = LogoWidget(style=main_style)
     logo_wid.layout.margin = "0px 10px 0px 0px"
-    wid = ipywidgets.HBox([logo_wid, options_box])
+    output.layout.align_self = "center"
+    wid = ipywidgets.HBox([logo_wid, options_box, output])
 
     # Set widget's style
     wid.box_style = main_style
@@ -1260,7 +1263,8 @@ def visualize_patch_atm(
         options_box.set_title(k, tl)
     logo_wid = LogoWidget(style=main_style)
     logo_wid.layout.margin = "0px 10px 0px 0px"
-    wid = ipywidgets.HBox([logo_wid, options_box])
+    output.layout.align_self = "center"
+    wid = ipywidgets.HBox([logo_wid, options_box, output])
 
     # Set widget's style
     wid.box_style = main_style
@@ -1540,7 +1544,8 @@ def visualize_clm(
         options_box.set_title(k, tl)
     logo_wid = LogoWidget(style=main_style)
     logo_wid.layout.margin = "0px 10px 0px 0px"
-    wid = ipywidgets.HBox([logo_wid, options_box])
+    output.layout.align_self = "center"
+    wid = ipywidgets.HBox([logo_wid, options_box, output])
 
     # Set widget's style
     wid.box_style = main_style
@@ -1744,7 +1749,8 @@ def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(7, 7)):
         options_box.set_title(k, tl)
     logo_wid = LogoWidget(style=main_style)
     logo_wid.layout.margin = "0px 10px 0px 0px"
-    wid = ipywidgets.HBox([logo_wid, options_box])
+    output.layout.align_self = "center"
+    wid = ipywidgets.HBox([logo_wid, options_box, output])
 
     # Set widget's style
     wid.box_style = main_style
@@ -1907,7 +1913,8 @@ def plot_ced(
     plot_wid.tab_box.set_title(6, "Export")
 
     # Display final widget
-    wid = ipywidgets.HBox([logo, plot_wid])
+    output.layout.align_self = "center"
+    wid = ipywidgets.HBox([logo, plot_wid, output])
     wid.box_style = main_style
     wid.layout.border = "2px solid " + map_styles_to_hex_colours(main_style)
     plot_wid.container.border = "0px"
@@ -2352,10 +2359,12 @@ def visualize_fitting_results(
     )
     for k, tl in enumerate(tab_titles):
         options_box.set_title(k, tl)
+    
+    output.layout.align_self = "center"
     if n_fitting_results > 1:
-        wid = ipywidgets.VBox([header_wid, options_box])
+        wid = ipywidgets.VBox([header_wid, options_box, output])
     else:
-        wid = ipywidgets.HBox([header_wid, options_box])
+        wid = ipywidgets.HBox([header_wid, options_box, output])
     if n_fitting_results > 1:
         # If animation is activated and the user selects the save figure tab,
         # then the animation stops.
