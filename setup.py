@@ -26,6 +26,6 @@ setup(
     author="The Menpo Development Team",
     author_email="hello@menpo.org",
     packages=find_packages(),
-    install_requires=["menpo>=0.11", "ipywidgets"],
+    install_requires=["menpo>=0.11", "ipywidgets", "ipyevents", "nest-asyncio"],
     package_data={"menpowidgets": ["logos/*", "js/*"]},
 )
