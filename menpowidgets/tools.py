@@ -2131,7 +2131,7 @@ class LineMatplotlibOptionsWidget(MenpoWidget):
         self.line_width_text = ipywidgets.BoundedFloatText(
             value=line_options["line_width"],
             min=0.0,
-            max=10 ** 6,
+            max=10**6,
             layout=ipywidgets.Layout(width="3cm"),
         )
         self.line_style_title = ipywidgets.HTML(value="Style")
@@ -2296,7 +2296,7 @@ class LineMayaviOptionsWidget(MenpoWidget):
         self.line_width_text = ipywidgets.BoundedFloatText(
             value=line_options["line_width"],
             min=0.0,
-            max=10 ** 6,
+            max=10**6,
             layout=ipywidgets.Layout(width="3cm"),
         )
         self.line_colour_widget = ColourSelectionWidget(
@@ -2449,14 +2449,14 @@ class MarkerMatplotlibOptionsWidget(MenpoWidget):
         self.marker_size_text = ipywidgets.BoundedIntText(
             value=marker_options["marker_size"],
             min=0,
-            max=10 ** 6,
+            max=10**6,
             layout=ipywidgets.Layout(width="3cm"),
         )
         self.marker_edge_width_title = ipywidgets.HTML(value="Edge width")
         self.marker_edge_width_text = ipywidgets.BoundedFloatText(
             value=marker_options["marker_edge_width"],
             min=0.0,
-            max=10 ** 6,
+            max=10**6,
             layout=ipywidgets.Layout(width="3cm"),
         )
         self.marker_style_title = ipywidgets.HTML(value="Style")
@@ -2684,7 +2684,7 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
             value=m1,
             disabled=m2,
             min=0,
-            max=10 ** 6,
+            max=10**6,
             layout=ipywidgets.Layout(width="1.9cm"),
         )
         self.marker_size_none = ipywidgets.Button(
@@ -2696,7 +2696,7 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
         self.marker_resolution_text = ipywidgets.BoundedIntText(
             value=marker_options["marker_resolution"],
             min=0.0,
-            max=10 ** 6,
+            max=10**6,
             layout=ipywidgets.Layout(width="3cm"),
         )
         self.marker_style_title = ipywidgets.HTML(value="Style")
@@ -2728,7 +2728,7 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
         self.step_text = ipywidgets.BoundedIntText(
             value=marker_options["step"],
             min=0.0,
-            max=10 ** 6,
+            max=10**6,
             layout=ipywidgets.Layout(width="2.6cm"),
         )
         self.marker_colour_widget = ColourSelectionWidget(
@@ -2933,7 +2933,7 @@ class NumberingMatplotlibOptionsWidget(MenpoWidget):
         self.numbers_font_size_title = ipywidgets.HTML(value="Size")
         self.numbers_font_size_text = ipywidgets.BoundedIntText(
             min=0,
-            max=10 ** 6,
+            max=10**6,
             value=numbers_options["numbers_font_size"],
             layout=ipywidgets.Layout(width="3cm"),
         )
@@ -3202,7 +3202,7 @@ class NumberingMayaviOptionsWidget(MenpoWidget):
             value=n1,
             disabled=n2,
             min=0.0,
-            max=10 ** 6,
+            max=10**6,
             layout=ipywidgets.Layout(width="1.9cm"),
         )
         self.numbers_size_none = ipywidgets.Button(
@@ -3802,7 +3802,7 @@ class AxesOptionsWidget(MenpoWidget):
         self.axes_font_size_text = ipywidgets.BoundedIntText(
             value=axes_options["axes_font_size"],
             min=0,
-            max=10 ** 6,
+            max=10**6,
             layout=ipywidgets.Layout(width="3cm"),
         )
         self.axes_font_style_title = ipywidgets.HTML(value="Font Style")
@@ -4064,7 +4064,7 @@ class LegendOptionsWidget(MenpoWidget):
         self.legend_font_size_title = ipywidgets.HTML(value="Size")
         self.legend_font_size_text = ipywidgets.BoundedIntText(
             min=0,
-            max=10 ** 6,
+            max=10**6,
             value=legend_options["legend_font_size"],
             layout=ipywidgets.Layout(width="3cm"),
         )
@@ -4574,7 +4574,7 @@ class GridOptionsWidget(MenpoWidget):
         self.grid_line_width_text = ipywidgets.BoundedFloatText(
             value=grid_options["grid_line_width"],
             min=0.0,
-            max=10 ** 6,
+            max=10**6,
             layout=ipywidgets.Layout(width="3cm"),
         )
         self.grid_line_style_title = ipywidgets.HTML(value="Style")
@@ -4686,6 +4686,7 @@ class CameraWidget(ipywidgets.DOMWidget):
         If ``True``, then the webcam will be set to high definition (HD), i.e.
         720 x 1280. Otherwise the default resolution will be used.
     """
+
     _view_name = Unicode("CameraView").tag(sync=True)
     _view_module = Unicode("camera").tag(sync=True)
     imageurl = Unicode("").tag(sync=True)
@@ -4759,7 +4760,7 @@ class TriMeshOptionsWidget(MenpoWidget):
         self.line_width_text = ipywidgets.BoundedFloatText(
             value=float(mesh_options["line_width"]),
             min=0.0,
-            max=10 ** 6,
+            max=10**6,
             layout=ipywidgets.Layout(width="1.1cm"),
         )
         self.colour_widget = ColourSelectionWidget(
@@ -4815,7 +4816,7 @@ class TriMeshOptionsWidget(MenpoWidget):
             value=m1,
             disabled=m2,
             min=0.0,
-            max=10 ** 6,
+            max=10**6,
             layout=ipywidgets.Layout(width="1.9cm"),
         )
         self.marker_size_none = ipywidgets.Button(
@@ -4827,14 +4828,14 @@ class TriMeshOptionsWidget(MenpoWidget):
         self.marker_resolution_text = ipywidgets.BoundedIntText(
             value=mesh_options["marker_resolution"],
             min=0,
-            max=10 ** 6,
+            max=10**6,
             layout=ipywidgets.Layout(width="3cm"),
         )
         self.step_title = ipywidgets.HTML(value="Step")
         self.step_text = ipywidgets.BoundedIntText(
             value=mesh_options["step"],
             min=1,
-            max=10 ** 6,
+            max=10**6,
             layout=ipywidgets.Layout(width="3cm"),
         )
 
@@ -5062,7 +5063,7 @@ class TexturedTriMeshOptionsWidget(MenpoWidget):
         self.line_width_text = ipywidgets.BoundedFloatText(
             value=float(mesh_options["line_width"]),
             min=0.0,
-            max=10 ** 6,
+            max=10**6,
             layout=ipywidgets.Layout(width="1.2cm"),
         )
         self.ambient_title = ipywidgets.HTML(value="Ambient")

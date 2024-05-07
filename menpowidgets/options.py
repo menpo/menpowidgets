@@ -1873,7 +1873,7 @@ class RendererOptionsWidget(MenpoWidget):
         self.suboptions_tab.layout.flex = "1"  # flex-grow
 
         # set titles
-        for (k, tl) in enumerate(self.tab_titles):
+        for k, tl in enumerate(self.tab_titles):
             self.suboptions_tab.set_title(k, tl)
 
         # Create final widget
@@ -1904,17 +1904,17 @@ class RendererOptionsWidget(MenpoWidget):
         # update default values
         current_key = self.get_key(self.labels)
         if "lines_matplotlib" in self.options_tabs:
-            self.default_options[current_key][
-                "lines_matplotlib"
-            ] = self.selected_values["lines_matplotlib"].copy()
+            self.default_options[current_key]["lines_matplotlib"] = (
+                self.selected_values["lines_matplotlib"].copy()
+            )
         if "lines_mayavi" in self.options_tabs:
             self.default_options[current_key]["lines_mayavi"] = self.selected_values[
                 "lines_mayavi"
             ].copy()
         if "markers_matplotlib" in self.options_tabs:
-            self.default_options[current_key][
-                "markers_matplotlib"
-            ] = self.selected_values["markers_matplotlib"].copy()
+            self.default_options[current_key]["markers_matplotlib"] = (
+                self.selected_values["markers_matplotlib"].copy()
+            )
         if "markers_mayavi" in self.options_tabs:
             self.default_options[current_key]["markers_mayavi"] = self.selected_values[
                 "markers_mayavi"
@@ -3522,7 +3522,7 @@ class SaveMatplotlibFigureOptionsWidget(ipywidgets.Box):
         self.box_99.layout.align_items = "center"
         self.box_10 = ipywidgets.Tab([self.box_7, self.box_88, self.box_99])
         tab_titles = ["Path", "Page setup", "Colour"]
-        for (k, tl) in enumerate(tab_titles):
+        for k, tl in enumerate(tab_titles):
             self.box_10.set_title(k, tl)
         self.box_11 = ipywidgets.VBox([self.box_10])
         self.box_12 = ipywidgets.HBox([self.save_button])
@@ -3990,7 +3990,7 @@ class PatchOptionsWidget(MenpoWidget):
         )
         self.bboxes_line_width_title = ipywidgets.HTML(value="Line width")
         self.bboxes_line_width_text = ipywidgets.BoundedFloatText(
-            value=1, min=0.0, max=10 ** 6, layout=ipywidgets.Layout(width="2.2cm")
+            value=1, min=0.0, max=10**6, layout=ipywidgets.Layout(width="2.2cm")
         )
         self.bboxes_line_style_title = ipywidgets.HTML(value="Line style")
         line_style_dict = OrderedDict()
@@ -5697,6 +5697,7 @@ class CameraSnapshotWidget(MenpoWidget):
     thumbnails below the stream. The video stream can be interrupted by pressing
     the "Close" button.
     """
+
     javascript_exported = False
 
     def __init__(

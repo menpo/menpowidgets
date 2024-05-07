@@ -1,4 +1,6 @@
-from collections import Sized, OrderedDict
+from collections import OrderedDict
+from collections.abc import Sized
+
 import matplotlib.pyplot as plt
 from matplotlib import collections as mc
 import numpy as np
@@ -252,7 +254,7 @@ def visualize_shapes_2d(
         [info_wid, shape_options_wid, renderer_options_wid, save_figure_wid]
     )
     tab_titles = ["Info", "Shape", "Renderer", "Export"]
-    for (k, tl) in enumerate(tab_titles):
+    for k, tl in enumerate(tab_titles):
         options_box.set_title(k, tl)
 
     output.layout.align_self = "center"
@@ -479,7 +481,7 @@ def visualize_shapes_3d(shapes, browser_style="buttons", custom_info_callback=No
         [info_wid, shape_options_wid, renderer_options_wid, save_figure_wid]
     )
     tab_titles = ["Info", "Shape", "Renderer", "Export"]
-    for (k, tl) in enumerate(tab_titles):
+    for k, tl in enumerate(tab_titles):
         options_box.set_title(k, tl)
 
     output.layout.align_self = "center"
@@ -686,7 +688,7 @@ def visualize_landmarks_2d(
         children=[info_wid, landmark_options_wid, renderer_options_wid, save_figure_wid]
     )
     tab_titles = ["Info", "Landmarks", "Renderer", "Export"]
-    for (k, tl) in enumerate(tab_titles):
+    for k, tl in enumerate(tab_titles):
         options_box.set_title(k, tl)
 
     output.layout.align_self = "center"
@@ -908,7 +910,7 @@ def visualize_landmarks_3d(
         children=[info_wid, landmark_options_wid, renderer_options_wid, save_figure_wid]
     )
     tab_titles = ["Info", "Landmarks", "Renderer", "Export"]
-    for (k, tl) in enumerate(tab_titles):
+    for k, tl in enumerate(tab_titles):
         options_box.set_title(k, tl)
 
     output.layout.align_self = "center"
@@ -1075,7 +1077,7 @@ def visualize_meshes_3d(meshes, browser_style="buttons", custom_info_callback=No
         header_wid.layout.margin = "0px 10px 0px 0px"
     options_box = ipywidgets.Tab([info_wid, mesh_options_wid, save_figure_wid])
     tab_titles = ["Info", "Mesh", "Export"]
-    for (k, tl) in enumerate(tab_titles):
+    for k, tl in enumerate(tab_titles):
         options_box.set_title(k, tl)
 
     output.layout.align_self = "center"
@@ -1295,7 +1297,7 @@ def visualize_images(
         ]
     )
     tab_titles = ["Info", "Image", "Landmarks", "Renderer", "Export"]
-    for (k, tl) in enumerate(tab_titles):
+    for k, tl in enumerate(tab_titles):
         options_box.set_title(k, tl)
 
     # Set widget's style
@@ -1522,7 +1524,7 @@ def visualize_patches(
         ]
     )
     tab_titles = ["Info", "Patches", "Image", "Shape", "Renderer", "Export"]
-    for (k, tl) in enumerate(tab_titles):
+    for k, tl in enumerate(tab_titles):
         options_box.set_title(k, tl)
 
     output.layout.align_self = "center"
@@ -2031,7 +2033,7 @@ def visualize_shape_model_2d(
         ]
     )
     tab_titles = ["Model", "Shape", "Renderer", "Info", "Export"]
-    for (k, tl) in enumerate(tab_titles):
+    for k, tl in enumerate(tab_titles):
         options_box.set_title(k, tl)
     logo_wid = LogoWidget(style=main_style)
     logo_wid.layout.margin = "0px 10px 0px 0px"
@@ -2262,7 +2264,7 @@ def visualize_shape_model_3d(
             ]
         )
         tab_titles = ["Model", "Shape", "Renderer", "Info", "Export"]
-    for (k, tl) in enumerate(tab_titles):
+    for k, tl in enumerate(tab_titles):
         options_box.set_title(k, tl)
     logo_wid = LogoWidget(style=main_style)
     logo_wid.layout.margin = "0px 10px 0px 0px"
@@ -2537,7 +2539,7 @@ def visualize_appearance_model(
         ]
     )
     tab_titles = ["Model", "Image", "Landmarks", "Renderer", "Info", "Export"]
-    for (k, tl) in enumerate(tab_titles):
+    for k, tl in enumerate(tab_titles):
         options_box.set_title(k, tl)
     logo_wid = LogoWidget(style=main_style)
     logo_wid.layout.margin = "0px 10px 0px 0px"
@@ -2808,7 +2810,7 @@ def visualize_patch_appearance_model(
         ]
     )
     tab_titles = ["Model", "Patches", "Channels", "Shape", "Renderer", "Info", "Export"]
-    for (k, tl) in enumerate(tab_titles):
+    for k, tl in enumerate(tab_titles):
         options_box.set_title(k, tl)
     logo_wid = LogoWidget(style=main_style)
     logo_wid.layout.margin = "0px 10px 0px 0px"
@@ -2987,7 +2989,7 @@ def visualize_morphable_model(
         [model_parameters_wid, mesh_options_wid, info_wid, save_figure_wid]
     )
     tab_titles = ["Model", "Mesh", "Info", "Export"]
-    for (k, tl) in enumerate(tab_titles):
+    for k, tl in enumerate(tab_titles):
         options_box.set_title(k, tl)
     logo_wid = LogoWidget(style=main_style)
     logo_wid.layout.margin = "0px 10px 0px 0px"

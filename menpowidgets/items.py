@@ -1,4 +1,4 @@
-from collections import Sized
+from collections.abc import Sized
 
 from menpo.image import Image
 from menpo.landmark import LandmarkManager
@@ -86,7 +86,7 @@ def view_widget(items, **kwargs):
         ),
     ]
 
-    for (cls, widget, test) in cls_to_items_widget:
+    for cls, widget, test in cls_to_items_widget:
         if isinstance(template, cls) and (test is None or test(template)):
             return widget(items, **kwargs)
 

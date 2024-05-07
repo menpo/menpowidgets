@@ -376,7 +376,7 @@ def visualize_aam(
         ]
     )
     tab_titles = ["Model", "Image", "Landmarks", "Renderer", "Info", "Export"]
-    for (k, tl) in enumerate(tab_titles):
+    for k, tl in enumerate(tab_titles):
         options_box.set_title(k, tl)
     logo_wid = LogoWidget(style=main_style)
     logo_wid.layout.margin = "0px 10px 0px 0px"
@@ -712,7 +712,7 @@ def visualize_patch_aam(
         ]
     )
     tab_titles = ["Model", "Patches", "Channels", "Shape", "Renderer", "Info", "Export"]
-    for (k, tl) in enumerate(tab_titles):
+    for k, tl in enumerate(tab_titles):
         options_box.set_title(k, tl)
     logo_wid = LogoWidget(style=main_style)
     logo_wid.layout.margin = "0px 10px 0px 0px"
@@ -988,7 +988,7 @@ def visualize_atm(
         ]
     )
     tab_titles = ["Model", "Image", "Landmarks", "Renderer", "Info", "Export"]
-    for (k, tl) in enumerate(tab_titles):
+    for k, tl in enumerate(tab_titles):
         options_box.set_title(k, tl)
     logo_wid = LogoWidget(style=main_style)
     logo_wid.layout.margin = "0px 10px 0px 0px"
@@ -1256,7 +1256,7 @@ def visualize_patch_atm(
         ]
     )
     tab_titles = ["Model", "Patches", "Image", "Shape", "Renderer", "Info", "Export"]
-    for (k, tl) in enumerate(tab_titles):
+    for k, tl in enumerate(tab_titles):
         options_box.set_title(k, tl)
     logo_wid = LogoWidget(style=main_style)
     logo_wid.layout.margin = "0px 10px 0px 0px"
@@ -1536,7 +1536,7 @@ def visualize_clm(
         ]
     )
     tab_titles = ["Model", "Experts", "Image", "Shape", "Renderer", "Info", "Export"]
-    for (k, tl) in enumerate(tab_titles):
+    for k, tl in enumerate(tab_titles):
         options_box.set_title(k, tl)
     logo_wid = LogoWidget(style=main_style)
     logo_wid.layout.margin = "0px 10px 0px 0px"
@@ -1740,7 +1740,7 @@ def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(7, 7)):
         ]
     )
     tab_titles = ["Experts", "Image", "Shape", "Renderer", "Info", "Export"]
-    for (k, tl) in enumerate(tab_titles):
+    for k, tl in enumerate(tab_titles):
         options_box.set_title(k, tl)
     logo_wid = LogoWidget(style=main_style)
     logo_wid.layout.margin = "0px 10px 0px 0px"
@@ -2350,7 +2350,7 @@ def visualize_fitting_results(
     options_box = ipywidgets.Tab(
         [fitting_result_wid, info_error_box, renderer_options_wid, save_figure_wid]
     )
-    for (k, tl) in enumerate(tab_titles):
+    for k, tl in enumerate(tab_titles):
         options_box.set_title(k, tl)
     if n_fitting_results > 1:
         wid = ipywidgets.VBox([header_wid, options_box])
