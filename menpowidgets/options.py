@@ -9,6 +9,7 @@ from base64 import b64decode
 
 from .abstract import MenpoWidget
 from .tools import (
+    MenpoTab,
     IndexSliderWidget,
     IndexButtonsWidget,
     SlicingCommandWidget,
@@ -1849,7 +1850,7 @@ class RendererOptionsWidget(MenpoWidget):
                     )
                 )
                 self.tab_titles.append("Grid")
-        self.suboptions_tab = ipywidgets.Tab(children=self.options_widgets)
+        self.suboptions_tab = MenpoTab(children=self.options_widgets)
         self.suboptions_tab.layout.flex = "1"  # flex-grow
 
         # set titles
@@ -3500,7 +3501,7 @@ class SaveMatplotlibFigureOptionsWidget(ipywidgets.Box):
         self.box_9.layout.margin = "0px 10px 0px 0px"
         self.box_99 = ipywidgets.HBox([self.box_9, self.transparent_checkbox])
         self.box_99.layout.align_items = "center"
-        self.box_10 = ipywidgets.Tab([self.box_7, self.box_88, self.box_99])
+        self.box_10 = MenpoTab([self.box_7, self.box_88, self.box_99])
         tab_titles = ["Path", "Page setup", "Colour"]
         for k, tl in enumerate(tab_titles):
             self.box_10.set_title(k, tl)
@@ -4547,7 +4548,7 @@ class PlotMatplotlibOptionsWidget(MenpoWidget):
         self.box_1.layout.align_items = "flex-start"
 
         # Group widgets
-        self.tab_box = ipywidgets.Tab(
+        self.tab_box = MenpoTab(
             children=[
                 self.box_1,
                 self.lines_markers_box,

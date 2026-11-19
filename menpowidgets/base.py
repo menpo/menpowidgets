@@ -31,7 +31,7 @@ from .options import (
     SaveMayaviFigureOptionsWidget,
     Mesh3DOptionsWidget,
 )
-from .tools import LogoWidget, SwitchWidget
+from .tools import LogoWidget, MenpoTab, SwitchWidget
 from .utils import (
     extract_group_labels_from_landmarks,
     extract_groups_labels_from_image,
@@ -250,7 +250,7 @@ def visualize_shapes_2d(
     header_wid.layout.align_items = "center"
     header_wid.layout.margin = "0px 0px 10px 0px"
 
-    options_box = ipywidgets.Tab(
+    options_box = MenpoTab(
         [info_wid, shape_options_wid, renderer_options_wid, save_figure_wid]
     )
     tab_titles = ["Info", "Shape", "Renderer", "Export"]
@@ -477,7 +477,7 @@ def visualize_shapes_3d(shapes, browser_style="buttons", custom_info_callback=No
         # Header widget
         header_wid = LogoWidget(style=main_style)
         header_wid.layout.margin = "0px 10px 0px 0px"
-    options_box = ipywidgets.Tab(
+    options_box = MenpoTab(
         [info_wid, shape_options_wid, renderer_options_wid, save_figure_wid]
     )
     tab_titles = ["Info", "Shape", "Renderer", "Export"]
@@ -684,7 +684,7 @@ def visualize_landmarks_2d(
         # Header widget
         header_wid = LogoWidget(style=main_style)
         header_wid.layout.margin = "0px 10px 0px 0px"
-    options_box = ipywidgets.Tab(
+    options_box = MenpoTab(
         children=[info_wid, landmark_options_wid, renderer_options_wid, save_figure_wid]
     )
     tab_titles = ["Info", "Landmarks", "Renderer", "Export"]
@@ -906,7 +906,7 @@ def visualize_landmarks_3d(
         # Header widget
         header_wid = LogoWidget(style=main_style)
         header_wid.layout.margin = "0px 10px 0px 0px"
-    options_box = ipywidgets.Tab(
+    options_box = MenpoTab(
         children=[info_wid, landmark_options_wid, renderer_options_wid, save_figure_wid]
     )
     tab_titles = ["Info", "Landmarks", "Renderer", "Export"]
@@ -1075,7 +1075,7 @@ def visualize_meshes_3d(meshes, browser_style="buttons", custom_info_callback=No
         # Header widget
         header_wid = LogoWidget(style=main_style)
         header_wid.layout.margin = "0px 10px 0px 0px"
-    options_box = ipywidgets.Tab([info_wid, mesh_options_wid, save_figure_wid])
+    options_box = MenpoTab([info_wid, mesh_options_wid, save_figure_wid])
     tab_titles = ["Info", "Mesh", "Export"]
     for k, tl in enumerate(tab_titles):
         options_box.set_title(k, tl)
@@ -1287,7 +1287,7 @@ def visualize_images(
     header_wid.layout.align_items = "center"
     header_wid.layout.margin = "0px 0px 10px 0px"
 
-    options_box = ipywidgets.Tab(
+    options_box = MenpoTab(
         children=[
             info_wid,
             image_options_wid,
@@ -1513,7 +1513,7 @@ def visualize_patches(
         # Header widget
         header_wid = LogoWidget(style=main_style)
         header_wid.layout.margin = "0px 10px 0px 0px"
-    options_box = ipywidgets.Tab(
+    options_box = MenpoTab(
         children=[
             info_wid,
             patch_options_wid,
@@ -2023,7 +2023,7 @@ def visualize_shape_model_2d(
         radio_children = [mode_wid, mean_wid]
     radio_wids = ipywidgets.VBox(radio_children)
     tmp_wid = ipywidgets.HBox([radio_wids, model_parameters_wid])
-    options_box = ipywidgets.Tab(
+    options_box = MenpoTab(
         children=[
             tmp_wid,
             shape_options_wid,
@@ -2249,12 +2249,12 @@ def visualize_shape_model_3d(
     else:
         tmp_wid = ipywidgets.HBox(children=[model_parameters_wid])
     if is_trimesh:
-        options_box = ipywidgets.Tab(
+        options_box = MenpoTab(
             children=[tmp_wid, shape_options_wid, info_wid, save_figure_wid]
         )
         tab_titles = ["Model", "Mesh", "Info", "Export"]
     else:
-        options_box = ipywidgets.Tab(
+        options_box = MenpoTab(
             children=[
                 tmp_wid,
                 shape_options_wid,
@@ -2528,7 +2528,7 @@ def visualize_appearance_model(
         level_wid.observe(render_function, names="value", type="change")
         tmp_children.insert(0, level_wid)
     tmp_wid = ipywidgets.HBox(tmp_children)
-    options_box = ipywidgets.Tab(
+    options_box = MenpoTab(
         children=[
             tmp_wid,
             image_options_wid,
@@ -2798,7 +2798,7 @@ def visualize_patch_appearance_model(
         level_wid.observe(render_function, names="value", type="change")
         tmp_children.insert(0, level_wid)
     tmp_wid = ipywidgets.HBox(tmp_children)
-    options_box = ipywidgets.Tab(
+    options_box = MenpoTab(
         children=[
             tmp_wid,
             patch_options_wid,
@@ -2981,11 +2981,11 @@ def visualize_morphable_model(
 
     # Group widgets
     model_parameters_wid = ipywidgets.HBox(
-        [ipywidgets.Tab([shape_model_parameters_wid, texture_model_parameters_wid])]
+        [MenpoTab([shape_model_parameters_wid, texture_model_parameters_wid])]
     )
     model_parameters_wid.children[0].set_title(0, "Shape")
     model_parameters_wid.children[0].set_title(1, "Texture")
-    options_box = ipywidgets.Tab(
+    options_box = MenpoTab(
         [model_parameters_wid, mesh_options_wid, info_wid, save_figure_wid]
     )
     tab_titles = ["Model", "Mesh", "Info", "Export"]

@@ -37,7 +37,7 @@ from ..options import (
     TextPrintWidget,
     Shape2DOptionsWidget,
 )
-from ..tools import LogoWidget
+from ..tools import LogoWidget, MenpoTab
 from ..style import map_styles_to_hex_colours
 from ..utils import render_patches, render_image, extract_groups_labels_from_image
 
@@ -309,7 +309,7 @@ def visualize_aam(
 
     # Group widgets
     model_parameters_wid = ipywidgets.HBox(
-        [ipywidgets.Tab([shape_model_parameters_wid, appearance_model_parameters_wid])]
+        [MenpoTab([shape_model_parameters_wid, appearance_model_parameters_wid])]
     )
     model_parameters_wid.children[0].set_title(0, "Shape")
     model_parameters_wid.children[0].set_title(1, "Appearance")
@@ -365,7 +365,7 @@ def visualize_aam(
         level_wid.observe(render_function, names="value", type="change")
         tmp_children.insert(0, level_wid)
     tmp_wid = ipywidgets.HBox(tmp_children)
-    options_box = ipywidgets.Tab(
+    options_box = MenpoTab(
         [
             tmp_wid,
             image_options_wid,
@@ -647,7 +647,7 @@ def visualize_patch_aam(
 
     # Group widgets
     model_parameters_wid = ipywidgets.HBox(
-        [ipywidgets.Tab([shape_model_parameters_wid, appearance_model_parameters_wid])]
+        [MenpoTab([shape_model_parameters_wid, appearance_model_parameters_wid])]
     )
     model_parameters_wid.children[0].set_title(0, "Shape")
     model_parameters_wid.children[0].set_title(1, "Appearance")
@@ -701,7 +701,7 @@ def visualize_patch_aam(
         level_wid.observe(render_function, names="value", type="change")
         tmp_children.insert(0, level_wid)
     tmp_wid = ipywidgets.HBox(tmp_children)
-    options_box = ipywidgets.Tab(
+    options_box = MenpoTab(
         [
             tmp_wid,
             patch_options_wid,
@@ -979,7 +979,7 @@ def visualize_atm(
         level_wid.observe(render_function, names="value", type="change")
         tmp_children.insert(0, level_wid)
     tmp_wid = ipywidgets.HBox(tmp_children)
-    options_box = ipywidgets.Tab(
+    options_box = MenpoTab(
         [
             tmp_wid,
             image_options_wid,
@@ -1247,7 +1247,7 @@ def visualize_patch_atm(
         level_wid.observe(render_function, names="value", type="change")
         tmp_children.insert(0, level_wid)
     tmp_wid = ipywidgets.HBox(tmp_children)
-    options_box = ipywidgets.Tab(
+    options_box = MenpoTab(
         [
             tmp_wid,
             patch_options_wid,
@@ -1528,7 +1528,7 @@ def visualize_clm(
         level_wid.observe(render_function, names="value", type="change")
         tmp_children.insert(0, level_wid)
     tmp_wid = ipywidgets.HBox(tmp_children)
-    options_box = ipywidgets.Tab(
+    options_box = MenpoTab(
         [
             tmp_wid,
             experts_box,
@@ -1734,7 +1734,7 @@ def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(7, 7)):
     tmp_wid = ipywidgets.HBox(tmp_children)
     tmp_wid.layout.align_items = "center"
     experts_box = ipywidgets.VBox([tmp_wid, patch_options_wid])
-    options_box = ipywidgets.Tab(
+    options_box = MenpoTab(
         [
             experts_box,
             image_options_wid,
@@ -2354,7 +2354,7 @@ def visualize_fitting_results(
         header_wid.layout.margin = "0px 10px 0px 0px"
     # Widget titles
     tab_titles = ["Result", "Info", "Renderer", "Export"]
-    options_box = ipywidgets.Tab(
+    options_box = MenpoTab(
         [fitting_result_wid, info_error_box, renderer_options_wid, save_figure_wid]
     )
     for k, tl in enumerate(tab_titles):
