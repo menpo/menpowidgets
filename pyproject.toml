@@ -15,7 +15,6 @@ dependencies = [
     "menpo>=0.12",
     "ipywidgets>=8",
     "ipyevents>=2",
-    "nest-asyncio",
 ]
 
 [project.optional-dependencies]

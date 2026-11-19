@@ -1837,10 +1837,10 @@ def visualize_shape_model_2d(
 
             # Render vectors
             ax = plt.gca()
-            x_min = np.Inf
-            y_min = np.Inf
-            x_max = -np.Inf
-            y_max = -np.Inf
+            x_min = np.inf
+            y_min = np.inf
+            x_max = -np.inf
+            y_max = -np.inf
             for p in range(mean.n_points):
                 xm = mean.points[p, 0]
                 ym = mean.points[p, 1]

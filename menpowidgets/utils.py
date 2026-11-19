@@ -2,26 +2,27 @@ import asyncio
 from struct import pack as struct_pack
 import binascii
 
-import nest_asyncio
 import numpy as np
 
 
-def do_one_iteration(kernel):
-    nest_asyncio.apply()
+def start_animation(widget, animate):
+    r"""
+    Run the coroutine function `animate` as a task on the kernel's event loop
+    and return immediately, so that the widget messages of the other buttons
+    (pause, stop, speed...) are processed between the animation frames.
 
-    loop = asyncio.get_running_loop()
-
-    task = loop.create_task(kernel.do_one_iteration())
-    loop.run_until_complete(task)
-
-
-def sync_asyncio_sleep(interval):
-    nest_asyncio.apply()
-
-    loop = asyncio.get_running_loop()
-
-    task = loop.create_task(asyncio.sleep(interval))
-    loop.run_until_complete(task)
+    Starting an animation while one is running on the same widget is ignored.
+    Outside an event loop (a plain script) the animation runs to completion.
+    """
+    task = getattr(widget, "_animation_task", None)
+    if task is not None and not task.done():
+        return
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        asyncio.run(animate())
+        return
+    widget._animation_task = loop.create_task(animate())
 
 
 def lists_are_the_same(a, b):
