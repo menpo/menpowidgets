@@ -25,6 +25,31 @@ def start_animation(widget, animate):
     widget._animation_task = loop.create_task(animate())
 
 
+def colourmap_options():
+    r"""
+    The colour maps offered by the image widgets, as an ordered ``{label: name}``
+    dictionary with ``None`` (the default colour map) first. The names that the
+    installed Matplotlib does not know are left out: the list used to be hard
+    coded and contained removed names like ``spectral``, which raise when selected.
+    """
+    from collections import OrderedDict
+    import matplotlib
+
+    names = (
+        "afmhot autumn binary bone brg bwr cool coolwarm copper cubehelix flag "
+        "gist_earth gist_heat gist_gray gist_ncar gist_rainbow gist_stern gist_yarg "
+        "gnuplot gnuplot2 gray hot hsv inferno jet magma nipy_spectral ocean pink "
+        "plasma prism rainbow seismic spring summer terrain viridis winter "
+        "Blues BuGn BuPu GnBu Greens Greys Oranges OrRd PuBu PuBuGn PuRd Purples "
+        "RdPu Reds YlGn YlGnBu YlOrBr YlOrRd"
+    ).split()
+    options = OrderedDict([("None", None)])
+    for name in names:
+        if name in matplotlib.colormaps:
+            options[name] = name
+    return options
+
+
 def lists_are_the_same(a, b):
     r"""
     Function that checks if two `lists` have the same elements in the same
