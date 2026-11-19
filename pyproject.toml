@@ -15,6 +15,7 @@ dependencies = [
     "menpo>=0.12.1",  # 0.12.1 fixes the colour maps and subplot grids with Matplotlib >= 3.9
     "ipywidgets>=8",
     "ipyevents>=2",
+    "anywidget>=0.9",
 ]
 
 [project.optional-dependencies]
