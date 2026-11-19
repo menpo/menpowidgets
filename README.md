@@ -2,9 +2,7 @@
   <img src="menpowidgets-logo.png" alt="menpo" width="30%"></center>
   <br><br>
   <a href="https://github.com/menpo/menpowidgets/blob/master/LICENSE.txt"><img src="http://img.shields.io/badge/License-BSD-green.svg" alt="BSD License"/></a>
-  <img src="https://img.shields.io/badge/Python-2.7-green.svg" alt="Python 2.7 Support"/>
-  <img src="https://img.shields.io/badge/Python-3.4-green.svg" alt="Python 3.4 Support"/>
-  <img src="https://img.shields.io/badge/Python-3.5-green.svg" alt="Python 3.5 Support"/>
+  <a href="https://github.com/menpo/menpowidgets/actions/workflows/ci.yml"><img src="https://github.com/menpo/menpowidgets/actions/workflows/ci.yml/badge.svg" alt="CI"/></a>
 </p>
 
 
@@ -20,14 +18,20 @@ and results demonstration as simple as possible.
 
 Installation
 ------------
-Unfortunately, the Menpo Project is a complex project that relies on satisfying
-a number of complex 3rd party library dependencies. The default Python packing
-environment does not make this an easy task. Therefore, we evangelise the use
-of the conda ecosystem, provided by
-[Anaconda](https://store.continuum.io/cshop/anaconda/). In order to make things
-as simple as possible, we suggest that you use conda too! To try and persuade
-you, go to the [Menpo website](http://www.menpo.org/installation/) to find
-installation instructions for all major platforms.
+```
+pip install menpowidgets                # the widgets for menpo's images, shapes and models
+pip install "menpowidgets[menpofit]"    # + the visualizations of menpofit's models and fitting results
+```
+or, from conda-forge:
+```
+conda install -c conda-forge menpowidgets menpofit
+```
+Use it in JupyterLab or the Jupyter notebook (ipywidgets 8).
+
+Releases
+--------
+Releases are built and published to PyPI from GitHub Actions by pushing a signed `vX.Y.Z` tag (PyPI
+trusted publishing, no tokens); the version number comes from the tag.
 
 API Documentation
 -----------------

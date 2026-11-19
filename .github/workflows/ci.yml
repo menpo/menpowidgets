@@ -1,0 +1,75 @@
+name: CI
+on:
+  push: { branches: [master] }
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --group dev
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+
+  test:
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.10", "3.14"]
+    runs-on: ${{ matrix.os }}
+    env:
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      # menpofit is installed so the visualisations of its models are tested too
+      - run: uv sync --python ${{ matrix.python }} --group dev --extra menpofit
+      - run: uv run pytest -q
+
+  sdist:
+    runs-on: ubuntu-latest
+    env:
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: astral-sh/setup-uv@v5
+      - run: uv build --sdist
+      - name: Build and test from the sdist (conda-forge builds from it; no git)
+        run: |
+          uv venv .venv-sdist
+          uv pip install --python .venv-sdist "$(ls dist/*.tar.gz)[menpofit]"
+          cd "$(mktemp -d)"
+          "$GITHUB_WORKSPACE/.venv-sdist/bin/python" -c "import menpowidgets; print(menpowidgets.__version__)"
+          uv pip install --python "$GITHUB_WORKSPACE/.venv-sdist" pytest pytest-mock
+          "$GITHUB_WORKSPACE/.venv-sdist/bin/python" -m pytest --pyargs menpowidgets -q
+
+  docs:
+    runs-on: ubuntu-latest
+    env:
+      READTHEDOCS: "True"   # as on Read the Docs: use the installed menpowidgets 
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: astral-sh/setup-uv@v5
+      - name: Only one Read the Docs config (it prefers a legacy readthedocs.yml over .readthedocs.yaml)
+        run: |
+          if ls readthedocs.yml readthedocs.yaml .readthedocs.yml 2>/dev/null; then
+            echo "legacy Read the Docs config file(s) above must be removed"; exit 1
+          fi
+      - name: Validate the Read the Docs configuration against its schema
+        run: uvx check-jsonschema --builtin-schema vendor.readthedocs .readthedocs.yaml
+      - name: Install what Read the Docs installs
+        run: |
+          uv venv --python 3.13 .venv-docs
+          uv pip install --python .venv-docs -r docs/requirements.txt ".[menpofit]"
+      - name: Build the docs
+        run: .venv-docs/bin/python -m sphinx -b html -j auto docs/source docs/_build 2>&1 | tee docs-build.log
+      - name: Autodoc must be able to import everything
+        run: |
+          if grep "autodoc: failed to import" docs-build.log; then exit 1; fi
