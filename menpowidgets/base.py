@@ -1972,7 +1972,7 @@ def visualize_shape_model_2d(
         animation_step=0.5,
         interval=0.0,
         loop_enabled=True,
-        continuous_update=False,
+        continuous_update=True,
     )
     labels = None
     if hasattr(shape_model[0].mean(), "labels"):

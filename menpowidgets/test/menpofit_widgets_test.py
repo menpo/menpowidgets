@@ -112,3 +112,18 @@ def test_visualize_fitting_results(training, shown, errors):
         for image in training[:3]
     ]
     check(lambda: mw.visualize_fitting_results(results), shown, errors)
+
+    # The static iterations (a range slider and a command) are hidden until
+    # selected, so poke them again, in both figure modes
+    from menpowidgets.options import IterativeResultOptionsWidget
+    from menpowidgets.test.helpers import walk
+
+    options = next(
+        w for w in walk(shown[-1]) if isinstance(w, IterativeResultOptionsWidget)
+    )
+    options.result_iterations_tab.selected_index = 1
+    options.iterations_mode.value = "static"
+    for mode in (True, False):
+        options.mode.value = mode
+        assert exercise(options.index_slicing, errors) >= 4
+        assert not errors, "\n".join(errors[:10])

@@ -67,6 +67,15 @@ def interactions(root):
             high = min(high, low + 50)
             for value in (low, high, (low + high) / 2):
                 yield f"{name}={value}", lambda w=w, v=value: setattr(w, "value", v)
+        elif isinstance(w, (ipw.IntRangeSlider, ipw.FloatRangeSlider)):
+            low, high = w.min, w.max
+            middle = (
+                (low + high) // 2
+                if isinstance(w, ipw.IntRangeSlider)
+                else (low + high) / 2
+            )
+            for value in ((low, high), (low, middle), (middle, high), (middle, middle)):
+                yield f"{name}={value}", lambda w=w, v=value: setattr(w, "value", v)
         elif isinstance(w, CHOICE) and w._options_full:
             for label, value in list(w._options_full)[:8]:
                 yield f"{name}={label!r}", lambda w=w, v=value: setattr(w, "value", v)
