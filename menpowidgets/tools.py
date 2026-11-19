@@ -110,6 +110,28 @@ class LogoWidget(ipywidgets.Box):
                 "given.".format(style)
             )
         super(LogoWidget, self).__init__(children=[self.image])
+        # Keep the logo at the top with its own size: in a tall HBox (e.g. next to
+        # the plot widgets) flexbox would otherwise stretch it vertically
+        self.layout.align_self = "flex-start"
+        self.layout.flex = "0 0 auto"
+
+
+class MenpoTab(ipywidgets.Tab):
+    r"""
+    An `ipywidgets.Tab` whose labels are never clipped. The frontends let the
+    tabs shrink down to a few pixels when the widget is narrow, which cuts
+    labels like "Landmarks" to "Landmar"; here the minimum width of the tab bar
+    follows from its titles. The tabs shrink by the same amount, so what is
+    needed is the number of tabs times the widest label.
+    """
+
+    def set_title(self, index, title):
+        super().set_title(index, title)
+        self._fit_labels()
+
+    def _fit_labels(self):
+        widths = [max(7 * len(title or "") + 30, 60) for title in self.titles]
+        self.layout.min_width = "{}px".format(len(widths) * max(widths, default=0))
 
 
 class SwitchWidget(MenpoWidget):
