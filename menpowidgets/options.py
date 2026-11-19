@@ -1,6 +1,6 @@
 import asyncio
 import ipywidgets
-from IPython.display import display, Javascript
+from IPython.display import display
 from traitlets.traitlets import Int, Dict, List
 from traitlets import link
 from collections import OrderedDict
@@ -3960,15 +3960,25 @@ class PatchOptionsWidget(MenpoWidget):
         self.box_8 = ipywidgets.VBox([self.box_1, self.box_2])
         self.box_8.layout.align_items = "flex-end"
         self.box_8.layout.margin = "0px 15px 0px 0px"
-        self.container = ipywidgets.HBox(
-            [self.slicing_wid, self.box_8, self.box_7, self.box_5]
-        )
+        # Two fixed rows, so that showing or hiding the bounding box line
+        # options (the last box) does not move anything else around
+        self.box_7.layout.align_self = "flex-start"
+        self.box_5.layout.align_self = "flex-start"
+        self.row_1 = ipywidgets.HBox([self.slicing_wid, self.box_8])
+        self.row_1.layout.margin = "0px 0px 8px 0px"
+        self.row_2 = ipywidgets.HBox([self.box_7, self.box_5])
+        self.container = ipywidgets.VBox([self.row_1, self.row_2])
         # Do not let the frontend shrink the groups below their content, which
         # clips labels ("Background") and adds scrollbars inside the groups
-        for box in (self.slicing_wid, self.box_8, self.box_7, self.box_5):
+        for box in (
+            self.slicing_wid,
+            self.box_8,
+            self.box_7,
+            self.box_5,
+            self.row_1,
+            self.row_2,
+        ):
             box.layout.flex = "0 0 auto"
-        # and wrap them onto a second line when the widget is narrow
-        self.container.layout.flex_flow = "row wrap"
 
         # Create final widget
         super(PatchOptionsWidget, self).__init__(
@@ -5582,8 +5592,6 @@ class CameraSnapshotWidget(MenpoWidget):
     the "Close" button.
     """
 
-    javascript_exported = False
-
     def __init__(
         self,
         canvas_width=640,
@@ -5594,17 +5602,6 @@ class CameraSnapshotWidget(MenpoWidget):
         style="",
         preview_style="",
     ):
-        # Publish javascript - only occurs once on construction of first
-        # webcam widget
-        if not self.javascript_exported:
-            import os.path
-            from pathlib import Path
-
-            menpowidgets_path = Path(os.path.abspath(__file__)).parent
-            with open(str(menpowidgets_path / "js" / "webcam.js"), "r") as f:
-                display(Javascript(data=f.read()))
-            self.javascript_exported = True
-
         # Check arguments
         if n_preview_windows < 4:
             n_preview_windows = 4
@@ -5680,7 +5677,9 @@ class CameraSnapshotWidget(MenpoWidget):
         )
 
         # Assign properties
-        self.selected_values = self.camera_wid.snapshots
+        # a copy: the camera widget appends to its own list before this one is
+        # updated, which would hide the first snapshot from the render function
+        self.selected_values = list(self.camera_wid.snapshots)
         self.preview_windows_margin = preview_windows_margin
         self.n_preview_windows = n_preview_windows
 
