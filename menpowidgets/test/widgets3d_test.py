@@ -66,3 +66,40 @@ def test_visualize_landmarks_3d(shown, errors):
 def test_visualize_shape_model_3d(shown, errors):
     model = PCAModel([a_shape(i) for i in range(5)])
     check(lambda: mw.visualize_shape_model_3d(model), shown, errors)
+
+
+def test_visualize_morphable_model(shown, errors):
+    from scipy.spatial import Delaunay
+    from menpo.shape import PointUndirectedGraph, TriMesh
+    from menpo.model import PCAVectorModel
+    from menpo3d.morphablemodel import ColouredMorphableModel
+
+    xy = np.stack(np.meshgrid(np.linspace(0, 1, 15), np.linspace(0, 1, 15)), -1)
+    xy = xy.reshape(-1, 2)
+    base = np.c_[xy, 0.2 * np.sin(4 * xy[:, 0])]
+    trilist = Delaunay(xy).simplices
+    rng = np.random.RandomState(0)
+    shape_model = PCAModel(
+        [TriMesh(base + 0.01 * rng.randn(*base.shape), trilist) for _ in range(5)]
+    )
+    texture_model = PCAVectorModel(rng.rand(5, len(base) * 3))
+    landmarks = PointUndirectedGraph.init_from_edges(
+        base[:6], np.array([[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]])
+    )
+    model = ColouredMorphableModel(shape_model, texture_model, landmarks, None, 100)
+    check(
+        lambda: mw.visualize_morphable_model(
+            model, n_shape_parameters=3, n_texture_parameters=3
+        ),
+        shown,
+        errors,
+    )
+
+
+def test_view_widget_picks_the_3d_widgets(shown, errors):
+    james = m3io.import_builtin_asset.james_obj()
+    mw.view_widget([a_shape(0), a_shape(1)])
+    mw.view_widget([james])
+    mw.view_widget([james.landmarks])
+    mw.view_widget(PCAModel([a_shape(i) for i in range(5)]))
+    assert len(shown) == 4
