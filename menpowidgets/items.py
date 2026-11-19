@@ -93,6 +93,7 @@ def view_widget(items, **kwargs):
     raise ValueError(
         "No suitable list visualization found for type {} - valid types are "
         "{} or subclasses thereof".format(
-            type(template), ", ".format([x[0] for x in cls_to_items_widget])
+            type(template),
+            ", ".join(str(x[0]) for x in cls_to_items_widget),
         )
     )
