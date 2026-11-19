@@ -75,14 +75,18 @@ def view_widget(items, **kwargs):
         (
             PCAModel,
             visualize_shape_model_2d,
-            lambda m: isinstance(m.template_instance, PointCloud)
-            and m.template_instance.n_dims == 2,
+            lambda m: (
+                isinstance(m.template_instance, PointCloud)
+                and m.template_instance.n_dims == 2
+            ),
         ),
         (
             PCAModel,
             visualize_shape_model_3d,
-            lambda m: isinstance(m.template_instance, PointCloud)
-            and m.template_instance.n_dims == 3,
+            lambda m: (
+                isinstance(m.template_instance, PointCloud)
+                and m.template_instance.n_dims == 3
+            ),
         ),
     ]
 
