@@ -45,7 +45,8 @@ testpaths = ["menpowidgets"]
 
 [tool.ruff]
 line-length = 88
-extend-exclude = ["docs", "menpowidgets/_version.py"]
+# the notebooks are demos that are run by hand: ruff would also format their JSON
+extend-exclude = ["docs", "menpowidgets/_version.py", "notebooks"]
 
 [tool.ruff.lint]
 select = ["E9", "F"]
