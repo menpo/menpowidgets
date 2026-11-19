@@ -2098,7 +2098,7 @@ class LineMatplotlibOptionsWidget(MenpoWidget):
         self.line_width_title = ipywidgets.HTML(value="Width")
         self.line_width_text = ipywidgets.BoundedFloatText(
             value=line_options["line_width"],
-            min=0.0,
+            min=0.1,
             max=10**6,
             layout=ipywidgets.Layout(width="3cm"),
         )
@@ -2263,7 +2263,7 @@ class LineMayaviOptionsWidget(MenpoWidget):
         self.line_width_title = ipywidgets.HTML(value="Width")
         self.line_width_text = ipywidgets.BoundedFloatText(
             value=line_options["line_width"],
-            min=0.0,
+            min=0.1,
             max=10**6,
             layout=ipywidgets.Layout(width="3cm"),
         )
@@ -4541,7 +4541,7 @@ class GridOptionsWidget(MenpoWidget):
         self.grid_line_width_title = ipywidgets.HTML(value="Width")
         self.grid_line_width_text = ipywidgets.BoundedFloatText(
             value=grid_options["grid_line_width"],
-            min=0.0,
+            min=0.1,
             max=10**6,
             layout=ipywidgets.Layout(width="3cm"),
         )

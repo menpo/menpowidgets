@@ -3914,7 +3914,7 @@ class PatchOptionsWidget(MenpoWidget):
         )
         self.bboxes_line_width_title = ipywidgets.HTML(value="Line width")
         self.bboxes_line_width_text = ipywidgets.BoundedFloatText(
-            value=1, min=0.0, max=10**6, layout=ipywidgets.Layout(width="2.2cm")
+            value=1, min=0.1, max=10**6, layout=ipywidgets.Layout(width="2.2cm")
         )
         self.bboxes_line_style_title = ipywidgets.HTML(value="Line style")
         line_style_dict = OrderedDict()
