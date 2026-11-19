@@ -162,7 +162,7 @@ def visualize_aam(
             renderer=save_figure_wid.renderer,
             image_is_masked=image_is_masked,
             figure_size=new_figure_size,
-            **options
+            **options,
         )
 
         # Update info
@@ -494,7 +494,7 @@ def visualize_patch_aam(
             patch_centers=shape_instance,
             renderer=save_figure_wid.renderer,
             figure_size=new_figure_size,
-            **options
+            **options,
         )
 
         # Update info
@@ -834,7 +834,7 @@ def visualize_atm(
             renderer=save_figure_wid.renderer,
             image_is_masked=image_is_masked,
             figure_size=new_figure_size,
-            **options
+            **options,
         )
 
         # Update info
@@ -1093,7 +1093,7 @@ def visualize_patch_atm(
             patch_centers=shape_instance,
             renderer=save_figure_wid.renderer,
             figure_size=new_figure_size,
-            **options
+            **options,
         )
 
         # Update info
@@ -1372,7 +1372,7 @@ def visualize_clm(
             patch_centers=shape_instance,
             renderer=save_figure_wid.renderer,
             figure_size=new_figure_size,
-            **options
+            **options,
         )
 
         # Update info
@@ -1637,7 +1637,7 @@ def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(7, 7)):
             patch_centers=centers[level],
             renderer=save_figure_wid.renderer,
             figure_size=new_figure_size,
-            **options
+            **options,
         )
 
         # Update info
@@ -1865,7 +1865,7 @@ def plot_ced(
             figure_id=save_figure_wid.renderer.figure_id,
             new_figure=False,
             figure_size=new_figure_size,
-            **opts
+            **opts,
         )
 
         # show plot
@@ -2089,7 +2089,7 @@ def visualize_fitting_results(
                 line_style=tmp2["line_style"],
                 line_width=tmp2["line_width"],
                 figure_size=new_figure_size,
-                **options
+                **options,
             )
         else:
             # use view_iterations()
@@ -2130,7 +2130,7 @@ def visualize_fitting_results(
                 line_width=tmp2["line_width"],
                 line_colour=line_colour,
                 figure_size=new_figure_size,
-                **options
+                **options,
             )
 
         # Show figure

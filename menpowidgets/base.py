@@ -169,7 +169,7 @@ def visualize_shapes_2d(
             figure_id=save_figure_wid.renderer.figure_id,
             new_figure=False,
             figure_size=new_figure_size,
-            **options
+            **options,
         )
 
         # Force rendering
@@ -395,7 +395,7 @@ def visualize_shapes_3d(shapes, browser_style="buttons", custom_info_callback=No
             figure_id=save_figure_wid.renderer.figure_id,
             new_figure=False,
             alpha=1.0,
-            **options
+            **options,
         )
 
         # Force rendering
@@ -593,7 +593,7 @@ def visualize_landmarks_2d(
                 figure_id=save_figure_wid.renderer.figure_id,
                 new_figure=False,
                 figure_size=new_figure_size,
-                **options
+                **options,
             )
 
             # Force rendering
@@ -815,7 +815,7 @@ def visualize_landmarks_3d(
                 figure_id=save_figure_wid.renderer.figure_id,
                 new_figure=False,
                 alpha=1.0,
-                **options
+                **options,
             )
 
             # Force rendering
@@ -995,7 +995,7 @@ def visualize_meshes_3d(meshes, browser_style="buttons", custom_info_callback=No
         save_figure_wid.renderer = meshes[i].view(
             figure_id=save_figure_wid.renderer.figure_id,
             new_figure=False,
-            **mesh_options_wid.selected_values
+            **mesh_options_wid.selected_values,
         )
 
         # Force rendering
@@ -1185,7 +1185,7 @@ def visualize_images(
             renderer=save_figure_wid.renderer,
             image_is_masked=image_is_masked,
             figure_size=new_figure_size,
-            **options
+            **options,
         )
 
         # Update info
@@ -1416,7 +1416,7 @@ def visualize_patches(
             patch_centers=patch_centers[i],
             renderer=save_figure_wid.renderer,
             figure_size=new_figure_size,
-            **options
+            **options,
         )
 
         # update info text widget
@@ -1592,7 +1592,7 @@ def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(9, 5)):
             figure_size=new_figure_size,
             figure_id=save_figure_wid.renderer.figure_id,
             new_figure=False,
-            **opts
+            **opts,
         )
 
         # show plot
@@ -1816,7 +1816,7 @@ def visualize_shape_model_2d(
                 figure_id=save_figure_wid.renderer.figure_id,
                 new_figure=False,
                 figure_size=new_figure_size,
-                **options
+                **options,
             )
 
             # Get instance range
@@ -1832,7 +1832,7 @@ def visualize_shape_model_2d(
                 figure_id=save_figure_wid.renderer.figure_id,
                 new_figure=False,
                 figure_size=new_figure_size,
-                **options
+                **options,
             )
 
             # Render vectors
@@ -2394,7 +2394,7 @@ def visualize_appearance_model(
             renderer=save_figure_wid.renderer,
             image_is_masked=image_is_masked,
             figure_size=new_figure_size,
-            **options
+            **options,
         )
 
         # Update info
@@ -2660,7 +2660,7 @@ def visualize_patch_appearance_model(
             patch_centers=centers[level],
             renderer=save_figure_wid.renderer,
             figure_size=new_figure_size,
-            **options
+            **options,
         )
 
         # Update info
@@ -2905,7 +2905,7 @@ def visualize_morphable_model(
         save_figure_wid.renderer = instance.view(
             figure_id=save_figure_wid.renderer.figure_id,
             new_figure=False,
-            **mesh_options_wid.selected_values
+            **mesh_options_wid.selected_values,
         )
 
         # Force rendering

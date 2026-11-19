@@ -371,24 +371,19 @@ def parse_slicing_command_with_comma(cmd, length):
         for i in tmp_cmd:
             if len(i) == 0:
                 # this means that there was the ',,' pattern
-                raise ValueError(
-                    "Command cannot contain a pattern of the " "form ',,'."
-                )
+                raise ValueError("Command cannot contain a pattern of the form ',,'.")
             elif str_is_int(i):
                 # if it is a positive or negative integer convert it to int
                 n = int(i)
                 if n >= length:
                     raise ValueError(
-                        "Command cannot contain numbers greater "
-                        "than {}.".format(length)
+                        "Command cannot contain numbers greater than {}.".format(length)
                     )
                 else:
                     final_cmd.append(n)
             else:
                 # else raise an error
-                raise ValueError(
-                    "Command must contain positive or negative " "integers."
-                )
+                raise ValueError("Command must contain positive or negative integers.")
         return final_cmd
 
 
@@ -437,8 +432,7 @@ def parse_slicing_command_with_one_colon(cmd, length):
                 n = int(i)
                 if n > length:
                     raise ValueError(
-                        "Command cannot contain numbers greater "
-                        "than {}.".format(length)
+                        "Command cannot contain numbers greater than {}.".format(length)
                     )
                 else:
                     return tmp_list[:n]
@@ -456,8 +450,7 @@ def parse_slicing_command_with_one_colon(cmd, length):
                 n = int(i)
                 if n >= length:
                     raise ValueError(
-                        "Command cannot contain numbers greater "
-                        "than {}.".format(length)
+                        "Command cannot contain numbers greater than {}.".format(length)
                     )
                 else:
                     return tmp_list[n:]
@@ -478,7 +471,7 @@ def parse_slicing_command_with_one_colon(cmd, length):
             end = int(end)
             if start >= length or end > length:
                 raise ValueError(
-                    "Command cannot contain numbers greater " "than {}.".format(length)
+                    "Command cannot contain numbers greater than {}.".format(length)
                 )
             else:
                 return tmp_list[start:end]
@@ -544,8 +537,7 @@ def parse_slicing_command_with_two_colon(cmd, length):
                 n = int(i)
                 if n >= length:
                     raise ValueError(
-                        "Command cannot contain numbers greater "
-                        "than {}.".format(length)
+                        "Command cannot contain numbers greater than {}.".format(length)
                     )
                 else:
                     return tmp_list[n::]
@@ -569,7 +561,7 @@ def parse_slicing_command_with_two_colon(cmd, length):
             step = int(step)
             if start >= length or end > length:
                 raise ValueError(
-                    "Command cannot contain numbers greater " "than {}.".format(length)
+                    "Command cannot contain numbers greater than {}.".format(length)
                 )
             else:
                 return tmp_list[start:end:step]
@@ -649,7 +641,7 @@ def parse_slicing_command(cmd, length):
             n = int(cmd)
             if n >= length:
                 raise ValueError(
-                    "Cannot contain numbers greater " "than {}".format(length)
+                    "Cannot contain numbers greater than {}".format(length)
                 )
             else:
                 return [n]
@@ -855,7 +847,7 @@ def render_image(
             interpolation=interpolation,
             alpha=alpha,
             cmap_name=cmap_name,
-            **mask_arguments
+            **mask_arguments,
         )
     else:
         # either there are not any landmark groups selected or they won't
@@ -873,7 +865,7 @@ def render_image(
             interpolation=interpolation,
             alpha=alpha,
             cmap_name=cmap_name,
-            **mask_arguments
+            **mask_arguments,
         )
 
     # show plot
