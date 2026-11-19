@@ -131,7 +131,7 @@ class MenpoTab(ipywidgets.Tab):
         self._fit_labels()
 
     def _fit_labels(self):
-        widths = [max(7 * len(title or "") + 30, 60) for title in self.titles]
+        widths = [max(7 * len(title or "") + 34, 64) for title in self.titles]
         self.layout.min_width = "{}px".format(len(widths) * max(widths, default=0))
 
 
