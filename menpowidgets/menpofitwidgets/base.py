@@ -39,7 +39,12 @@ from ..options import (
 )
 from ..tools import LogoWidget, MenpoTab
 from ..style import map_styles_to_hex_colours
-from ..utils import render_patches, render_image, extract_groups_labels_from_image
+from ..utils import (
+    FigureOutput,
+    render_patches,
+    render_image,
+    extract_groups_labels_from_image,
+)
 
 from ..options import IterativeResultOptionsWidget
 
@@ -100,7 +105,7 @@ def visualize_aam(
         n_appearance_parameters, n_levels, max_n_appearance
     )
 
-    output = ipywidgets.Output()
+    output = FigureOutput()
 
     @output.capture(clear_output=True, wait=True)
     def render_function(change):
@@ -452,7 +457,7 @@ def visualize_patch_aam(
         n_appearance_parameters, n_levels, max_n_appearance
     )
 
-    output = ipywidgets.Output()
+    output = FigureOutput()
 
     @output.capture(clear_output=True, wait=True)
     def render_function(change):
@@ -777,7 +782,7 @@ def visualize_atm(
     # of len n_scales)
     n_shape_parameters = check_n_parameters(n_shape_parameters, n_levels, max_n_shape)
 
-    output = ipywidgets.Output()
+    output = FigureOutput()
 
     @output.capture(clear_output=True, wait=True)
     def render_function(change):
@@ -1054,7 +1059,7 @@ def visualize_patch_atm(
     # of len n_scales)
     n_shape_parameters = check_n_parameters(n_shape_parameters, n_levels, max_n_shape)
 
-    output = ipywidgets.Output()
+    output = FigureOutput()
 
     @output.capture(clear_output=True, wait=True)
     def render_function(change):
@@ -1323,7 +1328,7 @@ def visualize_clm(
     # of len n_scales)
     n_shape_parameters = check_n_parameters(n_shape_parameters, n_levels, max_n_shape)
 
-    output = ipywidgets.Output()
+    output = FigureOutput()
 
     @output.capture(clear_output=True, wait=True)
     def render_function(change):
@@ -1593,7 +1598,7 @@ def visualize_expert_ensemble(expert_ensemble, centers, figure_size=(7, 7)):
     # Define the styling options
     main_style = "info"
 
-    output = ipywidgets.Output()
+    output = FigureOutput()
 
     @output.capture(clear_output=True, wait=True)
     def render_function(change):
@@ -1817,7 +1822,7 @@ def plot_ced(
     # Define the styling options
     main_style = "danger"
 
-    output = ipywidgets.Output()
+    output = FigureOutput()
 
     # Parse options
     if legend_entries is None:
@@ -1965,7 +1970,7 @@ def visualize_fitting_results(
     # Define the styling options
     main_style = "info"
 
-    output = ipywidgets.Output()
+    output = FigureOutput()
 
     @output.capture(clear_output=True, wait=True)
     def plot_errors_function(name):

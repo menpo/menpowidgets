@@ -33,6 +33,7 @@ from .options import (
 )
 from .tools import LogoWidget, MenpoTab, SwitchWidget
 from .utils import (
+    FigureOutput,
     extract_group_labels_from_landmarks,
     extract_groups_labels_from_image,
     render_image,
@@ -117,7 +118,7 @@ def visualize_shapes_2d(
     # Define the styling options
     main_style = "warning"
 
-    output = ipywidgets.Output()
+    output = FigureOutput()
 
     @output.capture(clear_output=True, wait=True)
     def render_function(change):
@@ -324,7 +325,7 @@ def visualize_shapes_3d(shapes, browser_style="buttons", custom_info_callback=No
     # Define the styling options
     main_style = "warning"
 
-    output = ipywidgets.Output()
+    output = FigureOutput()
 
     @output.capture(clear_output=True, wait=True)
     def render_function(change):
@@ -400,7 +401,6 @@ def visualize_shapes_3d(shapes, browser_style="buttons", custom_info_callback=No
 
         # Force rendering
         save_figure_wid.renderer.force_draw()
-        output.append_display_data(save_figure_wid.renderer.figure)
 
     # Define function that updates the info text
     def update_info(shape, custom_info_callback=None):
@@ -534,7 +534,7 @@ def visualize_landmarks_2d(
     # Define the styling options
     main_style = "info"
 
-    output = ipywidgets.Output()
+    output = FigureOutput()
 
     @output.capture(clear_output=True, wait=True)
     def render_function(change):
@@ -738,7 +738,7 @@ def visualize_landmarks_3d(
     # Define the styling options
     main_style = "info"
 
-    output = ipywidgets.Output()
+    output = FigureOutput()
 
     @output.capture(clear_output=True, wait=True)
     def render_function(change):
@@ -977,7 +977,7 @@ def visualize_meshes_3d(meshes, browser_style="buttons", custom_info_callback=No
     # Define the styling options
     main_style = "warning"
 
-    output = ipywidgets.Output()
+    output = FigureOutput()
 
     # Define render function
     @output.capture(clear_output=True, wait=True)
@@ -1000,7 +1000,6 @@ def visualize_meshes_3d(meshes, browser_style="buttons", custom_info_callback=No
 
         # Force rendering
         save_figure_wid.renderer.force_draw()
-        output.append_display_data(save_figure_wid.renderer.figure)
 
     # Define function that updates the info text
     def update_info(mesh, custom_info_callback=None):
@@ -1130,7 +1129,7 @@ def visualize_images(
     # Define the styling options
     main_style = "info"
 
-    output = ipywidgets.Output()
+    output = FigureOutput()
 
     @output.capture(clear_output=True, wait=True)
     def render_function(change):
@@ -1383,7 +1382,7 @@ def visualize_patches(
     # Define the styling options
     main_style = "info"
 
-    output = ipywidgets.Output()
+    output = FigureOutput()
 
     @output.capture(clear_output=True, wait=True)
     def render_function(change):
@@ -1571,7 +1570,7 @@ def plot_graph(x_axis, y_axis, legend_entries=None, figure_size=(9, 5)):
     # Define the styling options
     main_style = "danger"
 
-    output = ipywidgets.Output()
+    output = FigureOutput()
 
     # Parse options
     if legend_entries is None:
@@ -1642,7 +1641,7 @@ def save_matplotlib_figure(renderer):
     renderer : `menpo.visualize.viewmatplotlib.MatplotlibRenderer`
         The Matplotlib renderer object.
     """
-    output = ipywidgets.Output()
+    output = FigureOutput()
     with output:
         # Create sub-widgets
         logo_wid = LogoWidget()
@@ -1666,7 +1665,7 @@ def save_mayavi_figure(renderer):
     renderer : `menpo3d.visualize.viewmayavi.MayaviRenderer`
         The Mayavi renderer object.
     """
-    output = ipywidgets.Output()
+    output = FigureOutput()
     with output:
         # Create sub-widgets
         logo_wid = LogoWidget()
@@ -1730,7 +1729,7 @@ def visualize_shape_model_2d(
     # of len n_scales)
     n_parameters = check_n_parameters(n_parameters, n_levels, max_n_params)
 
-    output = ipywidgets.Output()
+    output = FigureOutput()
 
     @output.capture(clear_output=True, wait=True)
     def render_function(change):
@@ -2099,7 +2098,7 @@ def visualize_shape_model_3d(
     # of len n_scales)
     n_parameters = check_n_parameters(n_parameters, n_levels, max_n_params)
 
-    output = ipywidgets.Output()
+    output = FigureOutput()
 
     @output.capture(clear_output=True, wait=True)
     def render_function(change):
@@ -2334,7 +2333,7 @@ def visualize_appearance_model(
     # of len n_scales)
     n_parameters = check_n_parameters(n_parameters, n_levels, max_n_params)
 
-    output = ipywidgets.Output()
+    output = FigureOutput()
 
     @output.capture(clear_output=True, wait=True)
     def render_function(change):
@@ -2620,7 +2619,7 @@ def visualize_patch_appearance_model(
     # of len n_scales)
     n_parameters = check_n_parameters(n_parameters, n_levels, max_n_params)
 
-    output = ipywidgets.Output()
+    output = FigureOutput()
 
     @output.capture(clear_output=True, wait=True)
     def render_function(change):
@@ -2876,7 +2875,7 @@ def visualize_morphable_model(
         n_texture_parameters, 1, [mm.texture_model.n_active_components]
     )
 
-    output = ipywidgets.Output()
+    output = FigureOutput()
 
     @output.capture(clear_output=True, wait=True)
     def render_function(change):

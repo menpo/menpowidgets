@@ -62,6 +62,9 @@ def interactions(root):
             high = getattr(w, "max", None)
             if low is None or high is None:
                 low, high = w.value, w.value + 1
+            # Widgets with a huge maximum (a line width of 10**6): the figure is
+            # really rasterised, and such a figure needs gigabytes
+            high = min(high, low + 50)
             for value in (low, high, (low + high) / 2):
                 yield f"{name}={value}", lambda w=w, v=value: setattr(w, "value", v)
         elif isinstance(w, CHOICE) and w._options_full:
