@@ -45,7 +45,9 @@ jobs:
           sudo apt-get install -y xvfb libgl1 libglx-mesa0 libgl1-mesa-dri libegl1 libxrender1 libxkbcommon0 libxcb-cursor0
       - run: uv sync --python 3.13 --group dev --extra menpofit --extra menpo3d
       - name: The 3D widget tests must run, not skip
-        run: xvfb-run -a uv run pytest menpowidgets/test/widgets3d_test.py -q -rs -p no:cacheprovider
+        run: |
+          xvfb-run -a uv run pytest menpowidgets/test/widgets3d_test.py -q -rs -p no:cacheprovider | tee 3d.log
+          if grep -q "skipped" 3d.log; then echo "the 3D tests were skipped (a missing dependency?)"; exit 1; fi
 
   sdist:
     runs-on: ubuntu-latest
