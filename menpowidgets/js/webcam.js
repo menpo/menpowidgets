@@ -1,127 +1,81 @@
-requirejs.undef('camera');
+// The front end of menpowidgets.tools.CameraWidget (an anywidget module).
+// It streams the webcam in a <video> and, when `take_snapshot` changes, copies
+// the current frame to a canvas and sends it to Python as a PNG data URL.
 
-define('camera', ["jupyter-js-widgets"], function(widgets) {
-    var CameraView = widgets.DOMWidgetView.extend({
-        _take_snapshot: function() {
-            this.canvas.getContext('2d').drawImage(
-                this.video, 0, 0, this.width, this.height);
+function showError(el, error) {
+  const message = document.createElement("div");
+  message.style.width = "300px";
+  message.style.textAlign = "center";
+  message.textContent =
+    "The webcam could not be opened (the browser needs a secure context such " +
+    "as https or localhost, and the permission to use the camera): " + error;
+  el.append(message);
+}
 
-            this.model.set('imageurl', this.canvas.toDataURL('image/png'));
-            this.touch();
-        },
-        _destroy_video: function() {
-            if (this.video) {
-                this.video.stream.getVideoTracks()[0].stop();
-                delete this.video.stream;
-                this.video.remove();
-                delete this.video;
-            }
-            if (this.canvas) {
-                this.canvas.remove();
-                delete this.canvas;
-            }
-        },
-        _resize_video: function() {
-            this.width  = this.model.get('canvas_width');
-            this.height = this.video.videoHeight / (this.video.videoWidth / this.width);
-            this.video.setAttribute('width', this.width);
-            this.video.setAttribute('height', this.height);
-            this.canvas.setAttribute('width', this.width);
-            this.canvas.setAttribute('height', this.height);
-            this.model.set('canvas_height', this.height);
-            this.touch();
-        },
-        _wire_handlers: function() {
-            var that = this;
-            window.addEventListener('beforeunload', function(_) {
-                that._destroy_video();
-            });
+async function render({ model, el }) {
+  const video = document.createElement("video");
+  video.autoplay = true;
+  video.muted = true;
+  video.playsInline = true;
+  const canvas = document.createElement("canvas");
+  canvas.style.display = "none";
+  el.append(video, canvas);
 
-            that.on("remove", that._destroy_video, that);
-            that.on("comm:dead", that._destroy_video, that);
-            that.model.on('change:take_snapshot', that._take_snapshot, that);
-            that.model.on('change:canvas_width', that._resize_video, that);
-        },
-        _attach_dom_elements: function() {
-            this.$el.append(this.video).append(this.canvas);
-            this.canvas.style.display = 'none';
-        },
-        _attach_error_dom_elements: function(err) {
-            var err_dom = document.createElement('div');
-            err_dom.innerHTML = "An error has occurred, your browser does not appear " +
-                                "to support the HTML5 getUserMedia API. The " +
-                                "following error was thrown: <br/>" + err;
-            err_dom.style.width = '300px';
-            err_dom.style.textAlign = 'center';
-            this.$el.append(err_dom);
-        },
-        render: function() {
-            var that = this;
-            that.video  = $('<video>')[0];
-            that.canvas = $('<canvas>')[0];
-            that.width  = that.model.get('canvas_width');
-            // Default value, will be overridden
-            that.height = 0;
-            that.streaming = false;
+  let width = model.get("canvas_width");
+  let height = 0;
+  let stream = null;
+  let closed = false;
 
-            // Set video constraints (resolution)
-            var video_constraints = true;
-            if (that.model.get('hd')) {
-                video_constraints = {
-                    mandatory: {
-                        minWidth: 1280,
-                        minHeight: 720
-                    }
-                };
-            }
+  function resize() {
+    if (!video.videoWidth) return;
+    width = model.get("canvas_width");
+    height = Math.round(video.videoHeight / (video.videoWidth / width));
+    for (const node of [video, canvas]) {
+      node.setAttribute("width", width);
+      node.setAttribute("height", height);
+    }
+    model.set("canvas_height", height);
+    model.save_changes();
+  }
 
-            // Initialize the webcam
-            navigator.getMedia = navigator.getUserMedia       ||
-                                 navigator.webkitGetUserMedia ||
-                                 navigator.mozGetUserMedia    ||
-                                 navigator.msGetUserMedia;
+  function takeSnapshot() {
+    if (!height) return;
+    canvas.getContext("2d").drawImage(video, 0, 0, width, height);
+    model.set("imageurl", canvas.toDataURL("image/png"));
+    model.save_changes();
+  }
 
-            if (navigator.getMedia !== undefined) {
-                navigator.getMedia({video: video_constraints, audio: false},
-                    function (stream) { // Success
-                        // Add the video/hidden canvas to the DOM
-                        that._attach_dom_elements();
+  model.on("change:canvas_width", resize);
+  model.on("change:take_snapshot", takeSnapshot);
+  video.addEventListener("loadedmetadata", resize);
 
-                        // Create the stream and display it
-                        if (navigator.mozGetUserMedia) {
-                            that.video.mozSrcObject = stream;
-                        } else {
-                            var vendorURL = window.URL || window.webkitURL;
-                            that.video.src = vendorURL.createObjectURL(stream);
-                        }
-                        that.video.stream = stream;
-                        that.video.play();
-
-                        // When the video is ready resize it.
-                        that.video.addEventListener('canplay', function (_) {
-                            if (!that.streaming) {
-                                that._resize_video();
-                                that.streaming = true;
-                            }
-                        }, false);
-
-                        // Wire up event handlers
-                        that._wire_handlers();
-                    },
-                    function (err) {  // Error
-                        console.log("CameraView ERROR: " + err);
-                        that._attach_error_dom_elements(err);
-                    }
-                );
-            } else {
-                var err = 'getUserMedia === undefined';
-                console.log("CameraView ERROR: " + err);
-                that._attach_error_dom_elements(err);
-            }
-        }
-    });
-
-    return {
-        CameraView : CameraView
+  try {
+    // hd asks for 1280x720 or better, but accepts what the camera has
+    const constraints = {
+      video: model.get("hd")
+        ? { width: { ideal: 1280 }, height: { ideal: 720 } }
+        : true,
+      audio: false,
     };
-});
+    stream = await navigator.mediaDevices.getUserMedia(constraints);
+  } catch (error) {
+    console.log("CameraView ERROR: " + error);
+    showError(el, error);
+    return;
+  }
+  if (closed) {
+    stream.getTracks().forEach((track) => track.stop());
+    return;
+  }
+  video.srcObject = stream;
+  await video.play().catch(() => {});
+
+  // Stop the camera when the widget is removed from the page
+  return () => {
+    closed = true;
+    if (stream) stream.getTracks().forEach((track) => track.stop());
+    video.srcObject = null;
+  };
+}
+
+export default { render };

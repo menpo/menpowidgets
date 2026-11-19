@@ -1,4 +1,7 @@
 from collections import OrderedDict
+from pathlib import Path
+
+import anywidget
 import ipywidgets
 from traitlets.traitlets import List, Int, Float, Dict, Bool, Unicode
 from traitlets import link, dlink
@@ -4637,7 +4640,7 @@ class GridOptionsWidget(MenpoWidget):
                 self.call_render_function(old_value, self.selected_values)
 
 
-class CameraWidget(ipywidgets.DOMWidget):
+class CameraWidget(anywidget.AnyWidget):
     r"""
     Creates a webcam widget.
 
@@ -4652,14 +4655,14 @@ class CameraWidget(ipywidgets.DOMWidget):
         720 x 1280. Otherwise the default resolution will be used.
     """
 
-    _view_name = Unicode("CameraView").tag(sync=True)
-    _view_module = Unicode("camera").tag(sync=True)
+    _esm = Path(__file__).parent / "js" / "webcam.js"
     imageurl = Unicode("").tag(sync=True)
     take_snapshot = Bool(False).tag(sync=True)
     canvas_width = Int(640).tag(sync=True)
     canvas_height = Int().tag(sync=True)
     hd = Bool(True).tag(sync=True)
-    snapshots = List().tag(sync=True)
+    # menpo images: they are not sent to the front end
+    snapshots = List()
 
     def __init__(self, canvas_width=640, hd=True, *args):
         super(CameraWidget, self).__init__(*args)
