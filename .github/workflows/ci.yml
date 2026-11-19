@@ -30,6 +30,23 @@ jobs:
       - run: uv sync --python ${{ matrix.python }} --group dev --extra menpofit
       - run: uv run pytest -q
 
+  test-3d:
+    # the 3D widgets draw with Mayavi, offscreen here (a virtual display and Mesa, Qt "offscreen")
+    needs: lint
+    runs-on: ubuntu-latest
+    env:
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Virtual display and software OpenGL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgl1 libglx-mesa0 libgl1-mesa-dri libegl1 libxrender1 libxkbcommon0 libxcb-cursor0
+      - run: uv sync --python 3.13 --group dev --extra menpofit --extra menpo3d
+      - name: The 3D widget tests must run, not skip
+        run: xvfb-run -a uv run pytest menpowidgets/test/widgets3d_test.py -q -rs -p no:cacheprovider
+
   sdist:
     runs-on: ubuntu-latest
     env:
