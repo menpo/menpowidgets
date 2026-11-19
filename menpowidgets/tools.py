@@ -4202,7 +4202,7 @@ class LegendOptionsWidget(MenpoWidget):
         self.legend_n_columns_title = ipywidgets.HTML(value="# Columns")
         self.legend_n_columns_text = ipywidgets.BoundedIntText(
             value=legend_options["legend_n_columns"],
-            min=0,
+            min=1,  # matplotlib cannot draw a legend with 0 columns
             layout=ipywidgets.Layout(width="1.6cm"),
         )
         self.legend_marker_scale_title = ipywidgets.HTML(value="Marker scale")
