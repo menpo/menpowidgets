@@ -3963,6 +3963,12 @@ class PatchOptionsWidget(MenpoWidget):
         self.container = ipywidgets.HBox(
             [self.slicing_wid, self.box_8, self.box_7, self.box_5]
         )
+        # Do not let the frontend shrink the groups below their content, which
+        # clips labels ("Background") and adds scrollbars inside the groups
+        for box in (self.slicing_wid, self.box_8, self.box_7, self.box_5):
+            box.layout.flex = "0 0 auto"
+        # and wrap them onto a second line when the widget is narrow
+        self.container.layout.flex_flow = "row wrap"
 
         # Create final widget
         super(PatchOptionsWidget, self).__init__(
