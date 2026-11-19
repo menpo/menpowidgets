@@ -12,6 +12,7 @@ from menpo.image import Image
 from .abstract import MenpoWidget
 from .style import convert_image_to_bytes, parse_font_awesome_icon
 from .utils import (
+    colourmap_options,
     lists_are_the_same,
     decode_colour,
     parse_slicing_command,
@@ -1960,65 +1961,7 @@ class ImageMatplotlibOptionsWidget(MenpoWidget):
             value="{:.2f}".format(image_options["alpha"]),
             layout=ipywidgets.Layout(width="0.9cm"),
         )
-        cmap_dict = OrderedDict()
-        cmap_dict["None"] = None
-        cmap_dict["afmhot"] = "afmhot"
-        cmap_dict["autumn"] = "autumn"
-        cmap_dict["binary"] = "binary"
-        cmap_dict["bone"] = "bone"
-        cmap_dict["brg"] = "brg"
-        cmap_dict["bwr"] = "bwr"
-        cmap_dict["cool"] = "cool"
-        cmap_dict["coolwarm"] = "coolwarm"
-        cmap_dict["copper"] = "copper"
-        cmap_dict["cubehelix"] = "cubehelix"
-        cmap_dict["flag"] = "flag"
-        cmap_dict["gist_earth"] = "gist_earth"
-        cmap_dict["gist_heat"] = "gist_heat"
-        cmap_dict["gist_gray"] = "gist_gray"
-        cmap_dict["gist_ncar"] = "gist_ncar"
-        cmap_dict["gist_rainbow"] = "gist_rainbow"
-        cmap_dict["gist_stern"] = "gist_stern"
-        cmap_dict["gist_yarg"] = "gist_yarg"
-        cmap_dict["gnuplot"] = "gnuplot"
-        cmap_dict["gnuplot2"] = "gnuplot2"
-        cmap_dict["gray"] = "gray"
-        cmap_dict["hot"] = "hot"
-        cmap_dict["hsv"] = "hsv"
-        cmap_dict["inferno"] = "inferno"
-        cmap_dict["jet"] = "jet"
-        cmap_dict["magma"] = "magma"
-        cmap_dict["nipy_spectral"] = "nipy_spectral"
-        cmap_dict["ocean"] = "ocean"
-        cmap_dict["pink"] = "pink"
-        cmap_dict["plasma"] = "plasma"
-        cmap_dict["prism"] = "prism"
-        cmap_dict["rainbow"] = "rainbow"
-        cmap_dict["seismic"] = "seismic"
-        cmap_dict["spectral"] = "spectral"
-        cmap_dict["spring"] = "spring"
-        cmap_dict["summer"] = "summer"
-        cmap_dict["terrain"] = "terrain"
-        cmap_dict["viridis"] = "viridis"
-        cmap_dict["winter"] = "winter"
-        cmap_dict["Blues"] = "Blues"
-        cmap_dict["BuGn"] = "BuGn"
-        cmap_dict["BuPu"] = "BuPu"
-        cmap_dict["GnBu"] = "GnBu"
-        cmap_dict["Greens"] = "Greens"
-        cmap_dict["Greys"] = "Greys"
-        cmap_dict["Oranges"] = "Oranges"
-        cmap_dict["OrRd"] = "OrRd"
-        cmap_dict["PuBu"] = "PuBu"
-        cmap_dict["PuBuGn"] = "PuBuGn"
-        cmap_dict["PuRd"] = "PuRd"
-        cmap_dict["Purples"] = "Purples"
-        cmap_dict["RdPu"] = "RdPu"
-        cmap_dict["Reds"] = "Reds"
-        cmap_dict["YlGn"] = "YlGn"
-        cmap_dict["YlGnBu"] = "YlGnBu"
-        cmap_dict["YlOrBr"] = "YlOrBr"
-        cmap_dict["YlOrRd"] = "YlOrRd"
+        cmap_dict = colourmap_options()
         self.cmap_select = ipywidgets.Select(
             options=cmap_dict,
             value="gray",
