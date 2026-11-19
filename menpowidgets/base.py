@@ -401,6 +401,8 @@ def visualize_shapes_3d(shapes, browser_style="buttons", custom_info_callback=No
 
         # Force rendering
         save_figure_wid.renderer.force_draw()
+        # shown inline by Mayavi's notebook backend (mlab.init_notebook)
+        output.append_display_data(save_figure_wid.renderer.figure)
 
     # Define function that updates the info text
     def update_info(shape, custom_info_callback=None):
@@ -1000,6 +1002,8 @@ def visualize_meshes_3d(meshes, browser_style="buttons", custom_info_callback=No
 
         # Force rendering
         save_figure_wid.renderer.force_draw()
+        # shown inline by Mayavi's notebook backend (mlab.init_notebook)
+        output.append_display_data(save_figure_wid.renderer.figure)
 
     # Define function that updates the info text
     def update_info(mesh, custom_info_callback=None):
