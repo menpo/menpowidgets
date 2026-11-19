@@ -127,3 +127,19 @@ def test_play_updates_the_figure_without_the_kernel_routing_output():
 
     before = run(scenario())
     assert frame() != before
+
+
+def test_a_displayed_object_replaces_the_previous_one():
+    """e.g. the Mayavi scene of the 3D widgets: ``capture(clear_output=True, wait=True)`` replaces it."""
+    from IPython.display import Image
+    from menpowidgets.utils import FigureOutput
+
+    output = FigureOutput()
+
+    @output.capture(clear_output=True, wait=True)
+    def render(colour):
+        output.append_display_data(Image(data=b"\x89PNG-" + colour, format="png"))
+
+    render(b"a")
+    render(b"b")
+    assert len(output.outputs) == 1

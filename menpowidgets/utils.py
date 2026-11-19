@@ -23,10 +23,22 @@ class FigureOutput(ipywidgets.Output):
     to a PNG and closed when leaving.
     """
 
+    _replace_on_next_output = False
+
     def clear_output(self, *args, wait=False, **kwargs):
         # With ``wait`` the old figure stays until the new one replaces it
-        if not wait:
+        if wait:
+            self._replace_on_next_output = True
+        else:
             self.outputs = ()
+
+    def append_display_data(self, display_object):
+        # e.g. a Mayavi scene, which its notebook backend (``mlab.init_notebook``)
+        # shows as a PNG or an X3D scene
+        if self._replace_on_next_output:
+            self.outputs = ()
+        super().append_display_data(display_object)
+        self._replace_on_next_output = False
 
     def __enter__(self):
         import matplotlib.pyplot as plt
@@ -66,6 +78,7 @@ class FigureOutput(ipywidgets.Output):
             plt.close(fig)
         if outputs:
             self.outputs = tuple(outputs)
+            self._replace_on_next_output = False
 
 
 def start_animation(widget, animate):

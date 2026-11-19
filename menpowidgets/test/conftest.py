@@ -1,7 +1,14 @@
+import os
+
 import matplotlib
 import pytest
 
 matplotlib.use("Agg")
+
+# Mayavi (the 3D widgets) renders offscreen through Qt: choose the toolkit before it is imported
+os.environ.setdefault("ETS_TOOLKIT", "qt")
+os.environ.setdefault("QT_API", "pyside6")
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 
 @pytest.fixture(autouse=True)

@@ -2663,8 +2663,8 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
         self.marker_resolution_title = ipywidgets.HTML(value="Resolution")
         self.marker_resolution_text = ipywidgets.BoundedIntText(
             value=marker_options["marker_resolution"],
-            min=0.0,
-            max=10**6,
+            min=3,
+            max=1024,
             layout=ipywidgets.Layout(width="3cm"),
         )
         self.marker_style_title = ipywidgets.HTML(value="Style")
@@ -2695,7 +2695,7 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
         self.step_title = ipywidgets.HTML(value="Sampling")
         self.step_text = ipywidgets.BoundedIntText(
             value=marker_options["step"],
-            min=0.0,
+            min=1,
             max=10**6,
             layout=ipywidgets.Layout(width="2.6cm"),
         )
@@ -4795,8 +4795,8 @@ class TriMeshOptionsWidget(MenpoWidget):
         self.marker_resolution_title = ipywidgets.HTML(value="Resolution")
         self.marker_resolution_text = ipywidgets.BoundedIntText(
             value=mesh_options["marker_resolution"],
-            min=0,
-            max=10**6,
+            min=3,
+            max=1024,
             layout=ipywidgets.Layout(width="3cm"),
         )
         self.step_title = ipywidgets.HTML(value="Step")
