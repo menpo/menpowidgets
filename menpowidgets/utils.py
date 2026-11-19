@@ -2,7 +2,70 @@ import asyncio
 from struct import pack as struct_pack
 import binascii
 
+import ipywidgets
 import numpy as np
+
+
+class FigureOutput(ipywidgets.Output):
+    r"""
+    An `ipywidgets.Output` that shows the matplotlib figures drawn inside it
+    (``with output:`` or ``@output.capture(...)``) by setting its own
+    ``outputs`` from Python, instead of letting the kernel route them to the
+    widget.
+
+    The usual Output widget works by remembering the id of the message that is
+    being handled, and the browser then diverts the figures published with that
+    id into the widget. That only works while the handler is running: the
+    figures drawn by an animation (the play button), which keeps going after
+    the click that started it has been handled, were silently dropped.
+
+    ``plt.show()`` is a no-op while inside, and every open figure is rendered
+    to a PNG and closed when leaving.
+    """
+
+    def clear_output(self, *args, wait=False, **kwargs):
+        # With ``wait`` the old figure stays until the new one replaces it
+        if not wait:
+            self.outputs = ()
+
+    def __enter__(self):
+        import matplotlib.pyplot as plt
+
+        self._plt_show = plt.show
+        plt.show = lambda *args, **kwargs: None
+        return super().__enter__()
+
+    def __exit__(self, etype, evalue, tb):
+        import matplotlib.pyplot as plt
+
+        plt.show = self._plt_show
+        result = super().__exit__(etype, evalue, tb)
+        if etype is None:
+            self._show_open_figures()
+        return result
+
+    def _show_open_figures(self):
+        import matplotlib.pyplot as plt
+        from IPython.core.pylabtools import print_figure
+
+        outputs = []
+        for number in plt.get_fignums():
+            fig = plt.figure(number)
+            outputs.append(
+                {
+                    "output_type": "display_data",
+                    "data": {
+                        "image/png": print_figure(
+                            fig, "png", base64=True, bbox_inches="tight"
+                        ),
+                        "text/plain": "<Figure>",
+                    },
+                    "metadata": {},
+                }
+            )
+            plt.close(fig)
+        if outputs:
+            self.outputs = tuple(outputs)
 
 
 def start_animation(widget, animate):

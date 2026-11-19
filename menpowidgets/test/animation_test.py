@@ -84,3 +84,46 @@ def test_animation_runs_to_completion_without_an_event_loop():
     widget.loop_toggle.value = False  # play once through
     widget.play_button.click()  # no running loop here: it runs synchronously
     assert not widget.please_stop
+
+
+def test_play_updates_the_figure_without_the_kernel_routing_output():
+    """Play redraws from a task, after the click was handled, so the figure is set from Python."""
+    import menpo.io as mio
+    import menpowidgets as mw
+    import IPython.display
+
+    shown = []
+    original = IPython.display.display
+    IPython.display.display = lambda *a, **k: shown.extend(a)
+    try:
+        images = [
+            mio.import_builtin_asset.takeo_ppm(),
+            mio.import_builtin_asset.lenna_png(),
+        ]
+        mw.visualize_images(images)
+    finally:
+        IPython.display.display = original
+    root = shown[0]
+
+    from menpowidgets.utils import FigureOutput
+    from menpowidgets.test.helpers import walk
+    from menpowidgets.options import AnimationOptionsWidget
+
+    output = next(w for w in walk(root) if isinstance(w, FigureOutput))
+    animation = next(w for w in walk(root) if isinstance(w, AnimationOptionsWidget))
+    animation.interval = 0.2
+
+    def frame():
+        return output.outputs[0]["data"]["image/png"] if output.outputs else None
+
+    async def scenario():
+        before = frame()
+        assert before is not None
+        animation.play_button.click()
+        await asyncio.sleep(0.3)  # one step at 0.2 s
+        animation.pause_animation()
+        await asyncio.sleep(0.3)
+        return before
+
+    before = run(scenario())
+    assert frame() != before
