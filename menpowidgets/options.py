@@ -3683,9 +3683,9 @@ class SaveMayaviFigureOptionsWidget(ipywidgets.Box):
 
         # Assign renderer
         if renderer is None:
-            from menpo3d.visualize.viewmayavi import MayaviRenderer
+            from menpo3d.visualize import Renderer3d
 
-            renderer = MayaviRenderer(figure_id=None, new_figure=True)
+            renderer = Renderer3d(figure_id=None, new_figure=True)
         self.renderer = renderer
 
         # Set style

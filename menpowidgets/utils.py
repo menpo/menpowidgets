@@ -33,10 +33,13 @@ class FigureOutput(ipywidgets.Output):
             self.outputs = ()
 
     def append_display_data(self, display_object):
-        # e.g. a Mayavi scene, which its notebook backend (``mlab.init_notebook``)
-        # shows as a PNG or an X3D scene
+        # e.g. a 3D figure: menpo3d's interactive viewer, or a Mayavi scene which its
+        # notebook backend (``mlab.init_notebook``) shows as a PNG or an X3D scene
         if self._replace_on_next_output:
             self.outputs = ()
+        # menpo3d's viewer keeps a saved picture in the notebook output; inside this widget that is not wanted
+        if hasattr(display_object, "persist_still"):
+            display_object.persist_still = False
         super().append_display_data(display_object)
         self._replace_on_next_output = False
 
@@ -1077,3 +1080,40 @@ def render_patches(
     renderer.force_draw()
 
     return renderer
+
+
+class PerItemCamera:
+    r"""
+    Gives every item of a browsing widget its own camera in menpo3d's
+    interactive viewer. Call :meth:`leave` before the figure is cleared and
+    :meth:`arrive` after the new item is drawn. A new item starts from the
+    default view, framed to fit; an item seen before gets its view back.
+    Does nothing when disabled, or when the figure has no camera of its own
+    (Mayavi).
+    """
+
+    def __init__(self, enabled):
+        self.enabled = enabled
+        self.poses = {}
+        self.default = None
+        self.current = None
+
+    def _active(self, figure):
+        return self.enabled and hasattr(figure, "get_pose")
+
+    def leave(self, figure):
+        if self._active(figure) and self.current is not None:
+            self.poses[self.current] = figure.get_pose()
+
+    def arrive(self, figure, i):
+        if not self._active(figure):
+            return
+        if i in self.poses:
+            figure.set_pose(**self.poses[i])
+        elif self.default is None:
+            figure.reset_camera()
+            self.default = figure.get_pose()  # the view every new item starts from
+        else:
+            figure.set_pose(**self.default)
+            figure.reset_camera()
+        self.current = i

@@ -34,6 +34,7 @@ from .options import (
 from .tools import LogoWidget, MenpoTab, SwitchWidget
 from .utils import (
     FigureOutput,
+    PerItemCamera,
     extract_group_labels_from_landmarks,
     extract_groups_labels_from_image,
     render_image,
@@ -107,6 +108,12 @@ def visualize_shapes_2d(
         If not ``None``, it should be a function that accepts a 2D shape
         and returns a list of custom messages to be printed about it. Each
         custom message will be printed in a separate line.
+    per_shape_camera : `bool`, optional
+        If ``False`` the camera is kept when moving between shapes (the
+        default). If ``True`` every shape has its own camera: it starts from
+        the default view, framed to fit, and your view of it is restored when
+        you come back to it. Needs the moderngl viewer of menpo3d (ignored
+        with Mayavi).
     """
     # Make sure that shapes is a list even with one member
     if not isinstance(shapes, Sized):
@@ -274,7 +281,12 @@ def visualize_shapes_2d(
     render_function({})
 
 
-def visualize_shapes_3d(shapes, browser_style="buttons", custom_info_callback=None):
+def visualize_shapes_3d(
+    shapes,
+    browser_style="buttons",
+    custom_info_callback=None,
+    per_shape_camera=False,
+):
     r"""
     Widget that allows browsing through a `list` of
     3D shapes. The supported objects are:
@@ -326,9 +338,11 @@ def visualize_shapes_3d(shapes, browser_style="buttons", custom_info_callback=No
     main_style = "warning"
 
     output = FigureOutput()
+    camera = PerItemCamera(per_shape_camera)
 
     @output.capture(clear_output=True, wait=True)
     def render_function(change):
+        camera.leave(save_figure_wid.renderer.figure)
         save_figure_wid.renderer.clear_figure()
 
         # Get selected shape index
@@ -398,10 +412,11 @@ def visualize_shapes_3d(shapes, browser_style="buttons", custom_info_callback=No
             alpha=1.0,
             **options,
         )
+        camera.arrive(save_figure_wid.renderer.figure, i)
 
         # Force rendering
         save_figure_wid.renderer.force_draw()
-        # shown inline by Mayavi's notebook backend (mlab.init_notebook)
+        # shown inline: menpo3d's interactive viewer (or Mayavi's notebook backend)
         output.append_display_data(save_figure_wid.renderer.figure)
 
     # Define function that updates the info text
@@ -525,6 +540,12 @@ def visualize_landmarks_2d(
         If not None, it should be a function that accepts a landmark group and
         returns a list of custom messages to be printed per landmark group.
         Each custom message will be printed in a separate line.
+    per_landmarks_camera : `bool`, optional
+        If ``False`` the camera is kept when moving between landmark managers (the
+        default). If ``True`` every landmark manager has its own camera: it starts from
+        the default view, framed to fit, and your view of it is restored when
+        you come back to it. Needs the moderngl viewer of menpo3d (ignored
+        with Mayavi).
     """
     # Make sure that landmarks is a list even with one landmark manager member
     if isinstance(landmarks, LandmarkManager):
@@ -710,7 +731,10 @@ def visualize_landmarks_2d(
 
 
 def visualize_landmarks_3d(
-    landmarks, browser_style="buttons", custom_info_callback=None
+    landmarks,
+    browser_style="buttons",
+    custom_info_callback=None,
+    per_landmarks_camera=False,
 ):
     r"""
     Widget that allows browsing through a `list` of
@@ -741,9 +765,11 @@ def visualize_landmarks_3d(
     main_style = "info"
 
     output = FigureOutput()
+    camera = PerItemCamera(per_landmarks_camera)
 
     @output.capture(clear_output=True, wait=True)
     def render_function(change):
+        camera.leave(save_figure_wid.renderer.figure)
         save_figure_wid.renderer.clear_figure()
 
         # get selected index and selected group
@@ -819,6 +845,7 @@ def visualize_landmarks_3d(
                 alpha=1.0,
                 **options,
             )
+            camera.arrive(save_figure_wid.renderer.figure, i)
 
             # Force rendering
             save_figure_wid.renderer.force_draw()
@@ -932,7 +959,12 @@ def visualize_landmarks_3d(
     print_dynamic("")
 
 
-def visualize_meshes_3d(meshes, browser_style="buttons", custom_info_callback=None):
+def visualize_meshes_3d(
+    meshes,
+    browser_style="buttons",
+    custom_info_callback=None,
+    per_mesh_camera=False,
+):
     r"""
     Widget that allows browsing through a `list` of 3D meshes. The supported
     objects are:
@@ -968,6 +1000,11 @@ def visualize_meshes_3d(meshes, browser_style="buttons", custom_info_callback=No
         If not ``None``, it should be a function that accepts a 3D mesh
         and returns a list of custom messages to be printed about it. Each
         custom message will be printed in a separate line.
+    per_mesh_camera : `bool`, optional
+        If ``False`` the camera is kept when moving between meshes (the
+        default). If ``True`` every mesh has its own camera: it starts from
+        the default view, framed to fit, and your view of it is restored when
+        you come back to it. Needs the moderngl viewer of menpo3d (ignored with Mayavi).
     """
     # Make sure that meshes is a list even with one member
     if not isinstance(meshes, Sized):
@@ -981,9 +1018,14 @@ def visualize_meshes_3d(meshes, browser_style="buttons", custom_info_callback=No
 
     output = FigureOutput()
 
+    camera = PerItemCamera(per_mesh_camera)
+
     # Define render function
     @output.capture(clear_output=True, wait=True)
     def render_function(_):
+        # Remember the view of the mesh being left
+        camera.leave(save_figure_wid.renderer.figure)
+
         # Clear current figure
         save_figure_wid.renderer.clear_figure()
 
@@ -1000,9 +1042,12 @@ def visualize_meshes_3d(meshes, browser_style="buttons", custom_info_callback=No
             **mesh_options_wid.selected_values,
         )
 
+        # A mesh seen before gets its view back, a new one is framed
+        camera.arrive(save_figure_wid.renderer.figure, i)
+
         # Force rendering
         save_figure_wid.renderer.force_draw()
-        # shown inline by Mayavi's notebook backend (mlab.init_notebook)
+        # shown inline: menpo3d's interactive viewer (or Mayavi's notebook backend)
         output.append_display_data(save_figure_wid.renderer.figure)
 
     # Define function that updates the info text
