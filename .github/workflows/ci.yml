@@ -31,7 +31,7 @@ jobs:
       - run: uv run pytest -q
 
   test-3d:
-    # the 3D widgets draw with Mayavi, offscreen here (a virtual display and Mesa, Qt "offscreen")
+    # the 3D widgets draw with menpo3d's moderngl viewer: software OpenGL (Mesa) on a virtual display. Needs menpo3d >= 0.10
     needs: lint
     runs-on: ubuntu-latest
     env:
@@ -42,7 +42,7 @@ jobs:
       - name: Virtual display and software OpenGL
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb libgl1 libglx-mesa0 libgl1-mesa-dri libegl1 libxrender1 libxkbcommon0 libxcb-cursor0
+          sudo apt-get install -y xvfb libgl1 libglx-mesa0 libgl1-mesa-dri libegl1 libxrender1
       - run: uv sync --python 3.13 --group dev --extra menpofit --extra menpo3d
       - name: The 3D widget tests must run, not skip
         run: |

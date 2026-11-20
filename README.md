@@ -21,6 +21,7 @@ Installation
 ```
 pip install menpowidgets                # the widgets for menpo's images, shapes and models
 pip install "menpowidgets[menpofit]"    # + the visualizations of menpofit's models and fitting results
+pip install "menpowidgets[menpo3d]"      # + the 3D widgets (visualize_meshes_3d...), drawn by menpo3d's moderngl viewer
 ```
 or, from conda-forge:
 ```

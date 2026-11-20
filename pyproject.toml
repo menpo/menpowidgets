@@ -20,8 +20,8 @@ dependencies = [
 
 [project.optional-dependencies]
 menpofit = ["menpofit>=0.8"]  # menpowidgets.menpofitwidgets (AAM, SDM, CLM... visualizations)
-# the 3D widgets (visualize_meshes_3d...) draw with Mayavi, which needs a Qt binding
-menpo3d = ["menpo3d>=0.9.1", "PySide6"]
+# the 3D widgets (visualize_meshes_3d...) draw with menpo3d's moderngl viewer
+menpo3d = ["menpo3d[viz_notebook]>=0.10"]
 
 [project.urls]
 Homepage = "https://www.menpo.org"
