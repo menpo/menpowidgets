@@ -72,6 +72,16 @@ Tools Widgets
       menpowidgets/tools/index
 
 
+Changelog
+~~~~~~~~~
+Please refer to the :ref:`changelog` for a list of changes per release.
+
+.. toctree::
+    :maxdepth: 1
+
+    changelog
+
+
 Usage Example
 ~~~~~~~~~~~~~
 A short example is often more illustrative than a verbose explanation. Let's assume that you want to quickly explore a folder of numerous annotated images, 
