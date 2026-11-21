@@ -33,8 +33,7 @@ class FigureOutput(ipywidgets.Output):
             self.outputs = ()
 
     def append_display_data(self, display_object):
-        # e.g. a 3D figure: menpo3d's interactive viewer, or a Mayavi scene which its
-        # notebook backend (``mlab.init_notebook``) shows as a PNG or an X3D scene
+        # e.g. a 3D figure: menpo3d's interactive viewer
         if self._replace_on_next_output:
             self.outputs = ()
         # menpo3d's viewer keeps a saved picture in the notebook output; inside this widget that is not wanted
@@ -1088,8 +1087,7 @@ class PerItemCamera:
     interactive viewer. Call :meth:`leave` before the figure is cleared and
     :meth:`arrive` after the new item is drawn. A new item starts from the
     default view, framed to fit; an item seen before gets its view back.
-    Does nothing when disabled, or when the figure has no camera of its own
-    (Mayavi).
+    Does nothing when disabled.
     """
 
     def __init__(self, enabled):
@@ -1099,7 +1097,7 @@ class PerItemCamera:
         self.current = None
 
     def _active(self, figure):
-        return self.enabled and hasattr(figure, "get_pose")
+        return self.enabled
 
     def leave(self, figure):
         if self._active(figure) and self.current is not None:

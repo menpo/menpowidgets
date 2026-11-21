@@ -130,7 +130,7 @@ def test_play_updates_the_figure_without_the_kernel_routing_output():
 
 
 def test_a_displayed_object_replaces_the_previous_one():
-    """e.g. the Mayavi scene of the 3D widgets: ``capture(clear_output=True, wait=True)`` replaces it."""
+    """e.g. the 3D figure of the widgets: ``capture(clear_output=True, wait=True)`` replaces it."""
     from IPython.display import Image
     from menpowidgets.utils import FigureOutput
 

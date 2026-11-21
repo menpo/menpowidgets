@@ -112,8 +112,7 @@ def visualize_shapes_2d(
         If ``False`` the camera is kept when moving between shapes (the
         default). If ``True`` every shape has its own camera: it starts from
         the default view, framed to fit, and your view of it is restored when
-        you come back to it. Needs the moderngl viewer of menpo3d (ignored
-        with Mayavi).
+        you come back to it.
     """
     # Make sure that shapes is a list even with one member
     if not isinstance(shapes, Sized):
@@ -416,7 +415,7 @@ def visualize_shapes_3d(
 
         # Force rendering
         save_figure_wid.renderer.force_draw()
-        # shown inline: menpo3d's interactive viewer (or Mayavi's notebook backend)
+        # shown inline: menpo3d's interactive viewer
         output.append_display_data(save_figure_wid.renderer.figure)
 
     # Define function that updates the info text
@@ -544,8 +543,7 @@ def visualize_landmarks_2d(
         If ``False`` the camera is kept when moving between landmark managers (the
         default). If ``True`` every landmark manager has its own camera: it starts from
         the default view, framed to fit, and your view of it is restored when
-        you come back to it. Needs the moderngl viewer of menpo3d (ignored
-        with Mayavi).
+        you come back to it.
     """
     # Make sure that landmarks is a list even with one landmark manager member
     if isinstance(landmarks, LandmarkManager):
@@ -1004,7 +1002,7 @@ def visualize_meshes_3d(
         If ``False`` the camera is kept when moving between meshes (the
         default). If ``True`` every mesh has its own camera: it starts from
         the default view, framed to fit, and your view of it is restored when
-        you come back to it. Needs the moderngl viewer of menpo3d (ignored with Mayavi).
+        you come back to it.
     """
     # Make sure that meshes is a list even with one member
     if not isinstance(meshes, Sized):
@@ -1047,7 +1045,7 @@ def visualize_meshes_3d(
 
         # Force rendering
         save_figure_wid.renderer.force_draw()
-        # shown inline: menpo3d's interactive viewer (or Mayavi's notebook backend)
+        # shown inline: menpo3d's interactive viewer
         output.append_display_data(save_figure_wid.renderer.figure)
 
     # Define function that updates the info text
@@ -1706,13 +1704,13 @@ def save_matplotlib_figure(renderer):
 
 def save_mayavi_figure(renderer):
     r"""
-    Widget that allows to save a figure, which was generated with Mayavi,
-    to file.
+    Widget that allows to save a figure, which was generated with menpo3d's
+    3D viewer, to file.
 
     Parameters
     ----------
-    renderer : `menpo3d.visualize.viewmayavi.MayaviRenderer`
-        The Mayavi renderer object.
+    renderer : `menpo3d.visualize.Renderer3d`
+        The renderer object returned by ``view()`` of a 3D object.
     """
     output = FigureOutput()
     with output:
