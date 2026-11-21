@@ -3553,14 +3553,14 @@ class SaveMatplotlibFigureOptionsWidget(ipywidgets.Box):
 
 class SaveMayaviFigureOptionsWidget(ipywidgets.Box):
     r"""
-    Creates a widget for saving a Mayavi figure to file.
+    Creates a widget for saving a figure of menpo3d's 3D viewer to file.
 
     To set the styling of this widget please refer to the
     :meth:`predefined_style` method.
 
     Parameters
     ----------
-    renderer : `menpo3d.visualize.MayaviViewer` or subclass or ``None``
+    renderer : `menpo3d.visualize.Renderer3d` or subclass or ``None``
         The renderer object that was used to render the figure.
     file_format : `str`, optional
         The initial value of the file format.
@@ -3572,7 +3572,7 @@ class SaveMayaviFigureOptionsWidget(ipywidgets.Box):
         The magnification is the scaling between the pixels on the screen, and
         the pixels in the file saved. If you do not specify it, it will be
         calculated so that the file is saved with the specified size. If you
-        specify a magnification, Mayavi will use the given size as a screen
+        specify a magnification, the viewer will use the given size as a screen
         size, and the file size will be ``magnification * size``. If ``'auto'``,
         then the magnification will be set automatically.
     overwrite : `bool`, optional
