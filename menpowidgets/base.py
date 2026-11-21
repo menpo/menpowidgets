@@ -28,7 +28,7 @@ from .options import (
     CameraSnapshotWidget,
     Shape2DOptionsWidget,
     Shape3DOptionsWidget,
-    SaveMayaviFigureOptionsWidget,
+    Save3dFigureOptionsWidget,
     Mesh3DOptionsWidget,
 )
 from .tools import LogoWidget, MenpoTab, SwitchWidget
@@ -380,7 +380,7 @@ def visualize_shapes_3d(
         else:
             options.update(shape_options_wid.selected_values["lines"])
             options.update(shape_options_wid.selected_values["markers"])
-            options.update(renderer_options_wid.selected_values["numbering_mayavi"])
+            options.update(renderer_options_wid.selected_values["numbering_3d"])
 
             # Correct options based on the type of the shape
             if hasattr(shapes[i], "labels"):
@@ -453,10 +453,10 @@ def visualize_shapes_3d(
         labels=labels, render_function=render_function
     )
     renderer_options_wid = RendererOptionsWidget(
-        options_tabs=["numbering_mayavi"], labels=None, render_function=render_function
+        options_tabs=["numbering_3d"], labels=None, render_function=render_function
     )
     info_wid = TextPrintWidget(text_per_line=[""])
-    save_figure_wid = SaveMayaviFigureOptionsWidget()
+    save_figure_wid = Save3dFigureOptionsWidget()
 
     # Group widgets
     if n_shapes > 1:
@@ -812,7 +812,7 @@ def visualize_landmarks_3d(
             else:
                 options.update(landmark_options_wid.selected_values["lines"])
                 options.update(landmark_options_wid.selected_values["markers"])
-                options.update(renderer_options_wid.selected_values["numbering_mayavi"])
+                options.update(renderer_options_wid.selected_values["numbering_3d"])
 
                 # Correct options based on the type of the shape
                 if hasattr(shape, "labels"):
@@ -891,12 +891,12 @@ def visualize_landmarks_3d(
         render_function=render_function,
     )
     renderer_options_wid = RendererOptionsWidget(
-        options_tabs=["numbering_mayavi"],
+        options_tabs=["numbering_3d"],
         labels=first_label,
         render_function=render_function,
     )
     info_wid = TextPrintWidget(text_per_line=[""])
-    save_figure_wid = SaveMayaviFigureOptionsWidget()
+    save_figure_wid = Save3dFigureOptionsWidget()
 
     # Group widgets
     if n_landmarks > 1:
@@ -1082,7 +1082,7 @@ def visualize_meshes_3d(
         render_function=render_function,
     )
     info_wid = TextPrintWidget(text_per_line=[""])
-    save_figure_wid = SaveMayaviFigureOptionsWidget()
+    save_figure_wid = Save3dFigureOptionsWidget()
 
     # Group widgets
     if n_meshes > 1:
@@ -1702,7 +1702,7 @@ def save_matplotlib_figure(renderer):
     ipydisplay.display(wid)
 
 
-def save_mayavi_figure(renderer):
+def save_3d_figure(renderer):
     r"""
     Widget that allows to save a figure, which was generated with menpo3d's
     3D viewer, to file.
@@ -1717,7 +1717,7 @@ def save_mayavi_figure(renderer):
         # Create sub-widgets
         logo_wid = LogoWidget()
         logo_wid.layout.margin = "0px 10px 0px 0px"
-        save_figure_wid = SaveMayaviFigureOptionsWidget(renderer, style="warning")
+        save_figure_wid = Save3dFigureOptionsWidget(renderer, style="warning")
 
     output.layout.align_self = "center"
     wid = ipywidgets.HBox([logo_wid, save_figure_wid, output])
@@ -2170,7 +2170,7 @@ def visualize_shape_model_3d(
         else:
             options.update(shape_options_wid.selected_values["lines"])
             options.update(shape_options_wid.selected_values["markers"])
-            options.update(renderer_options_wid.selected_values["numbering_mayavi"])
+            options.update(renderer_options_wid.selected_values["numbering_3d"])
             # Correct options based on the type of the shape
             if hasattr(instance, "labels"):
                 # If the shape is a LabelledPointUndirectedGraph ...
@@ -2257,12 +2257,12 @@ def visualize_shape_model_3d(
             labels=labels, render_function=render_function
         )
         renderer_options_wid = RendererOptionsWidget(
-            options_tabs=["numbering_mayavi"],
+            options_tabs=["numbering_3d"],
             labels=None,
             render_function=render_function,
         )
     info_wid = TextPrintWidget(text_per_line=[""])
-    save_figure_wid = SaveMayaviFigureOptionsWidget()
+    save_figure_wid = Save3dFigureOptionsWidget()
 
     # Group widgets
     if n_levels > 1:
@@ -3023,7 +3023,7 @@ def visualize_morphable_model(
         textured=True, render_function=render_function
     )
     info_wid = TextPrintWidget(text_per_line=[""])
-    save_figure_wid = SaveMayaviFigureOptionsWidget()
+    save_figure_wid = Save3dFigureOptionsWidget()
 
     # Group widgets
     model_parameters_wid = ipywidgets.HBox(

@@ -43,11 +43,11 @@ Rendering
     ImageMatplotlibOptionsWidget
     LegendOptionsWidget
     LineMatplotlibOptionsWidget
-    LineMayaviOptionsWidget
+    Line3dOptionsWidget
     MarkerMatplotlibOptionsWidget
-    MarkerMayaviOptionsWidget
+    Marker3dOptionsWidget
     NumberingMatplotlibOptionsWidget
-    NumberingMayaviOptionsWidget
+    Numbering3dOptionsWidget
     TexturedTriMeshOptionsWidget
     TriMeshOptionsWidget
     ZoomOneScaleWidget

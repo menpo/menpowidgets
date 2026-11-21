@@ -15,11 +15,11 @@ from .tools import (
     SlicingCommandWidget,
     LineMatplotlibOptionsWidget,
     MarkerMatplotlibOptionsWidget,
-    LineMayaviOptionsWidget,
-    MarkerMayaviOptionsWidget,
+    Line3dOptionsWidget,
+    Marker3dOptionsWidget,
     LogoWidget,
     NumberingMatplotlibOptionsWidget,
-    NumberingMayaviOptionsWidget,
+    Numbering3dOptionsWidget,
     LegendOptionsWidget,
     ZoomOneScaleWidget,
     ZoomTwoScalesWidget,
@@ -958,13 +958,13 @@ class Shape3DOptionsWidget(MenpoWidget):
         renderer_options = self.get_default_options(labels)
 
         # Create widgets
-        self.line_options_wid = LineMayaviOptionsWidget(
+        self.line_options_wid = Line3dOptionsWidget(
             renderer_options["lines"],
             render_function=None,
             render_checkbox_title="Render lines",
             labels=labels,
         )
-        self.marker_options_wid = MarkerMayaviOptionsWidget(
+        self.marker_options_wid = Marker3dOptionsWidget(
             renderer_options["markers"],
             render_function=None,
             render_checkbox_title="Render markers",
@@ -1587,11 +1587,11 @@ class RendererOptionsWidget(MenpoWidget):
             Value                      Returned object
             ========================== =======================================
             ``'lines_matplotlib'``     :map:`LineMatplotlibOptionsWidget`
-            ``'lines_mayavi'``         :map:`LineMayaviOptionsWidget`
+            ``'lines_3d'``         :map:`Line3dOptionsWidget`
             ``'markers_matplotlib'``   :map:`MarkerMatplotlibOptionsWidget`
-            ``'markers_mayavi'``       :map:`MarkerMayaviOptionsWidget`
+            ``'markers_3d'``       :map:`Marker3dOptionsWidget`
             ``'numbering_matplotlib'`` :map:`NumberingMatplotlibOptionsWidget`
-            ``'numbering_mayavi'``     :map:`NumberingMayaviOptionsWidget`
+            ``'numbering_3d'``     :map:`Numbering3dOptionsWidget`
             ``'zoom_one'``             :map:`ZoomOneScaleWidget`
             ``'zoom_two'``             :map:`ZoomTwoScalesWidget`
             ``'legend'``               :map:`LegendOptionsWidget`
@@ -1720,9 +1720,9 @@ class RendererOptionsWidget(MenpoWidget):
                     )
                 )
                 self.tab_titles.append("Lines")
-            elif o == "lines_mayavi":
+            elif o == "lines_3d":
                 self.options_widgets.append(
-                    LineMayaviOptionsWidget(
+                    Line3dOptionsWidget(
                         renderer_options[o],
                         render_function=None,
                         render_checkbox_title="Render lines",
@@ -1740,9 +1740,9 @@ class RendererOptionsWidget(MenpoWidget):
                     )
                 )
                 self.tab_titles.append("Markers")
-            elif o == "markers_mayavi":
+            elif o == "markers_3d":
                 self.options_widgets.append(
-                    MarkerMayaviOptionsWidget(
+                    Marker3dOptionsWidget(
                         renderer_options[o],
                         render_function=None,
                         render_checkbox_title="Render markers",
@@ -1778,9 +1778,9 @@ class RendererOptionsWidget(MenpoWidget):
                     )
                 )
                 self.tab_titles.append("Numbers")
-            elif o == "numbering_mayavi":
+            elif o == "numbering_3d":
                 self.options_widgets.append(
-                    NumberingMayaviOptionsWidget(
+                    Numbering3dOptionsWidget(
                         self.global_options[o],
                         render_function=None,
                         render_checkbox_title="Render numbering",
@@ -1889,17 +1889,17 @@ class RendererOptionsWidget(MenpoWidget):
             self.default_options[current_key]["lines_matplotlib"] = (
                 self.selected_values["lines_matplotlib"].copy()
             )
-        if "lines_mayavi" in self.options_tabs:
-            self.default_options[current_key]["lines_mayavi"] = self.selected_values[
-                "lines_mayavi"
+        if "lines_3d" in self.options_tabs:
+            self.default_options[current_key]["lines_3d"] = self.selected_values[
+                "lines_3d"
             ].copy()
         if "markers_matplotlib" in self.options_tabs:
             self.default_options[current_key]["markers_matplotlib"] = (
                 self.selected_values["markers_matplotlib"].copy()
             )
-        if "markers_mayavi" in self.options_tabs:
-            self.default_options[current_key]["markers_mayavi"] = self.selected_values[
-                "markers_mayavi"
+        if "markers_3d" in self.options_tabs:
+            self.default_options[current_key]["markers_3d"] = self.selected_values[
+                "markers_3d"
             ].copy()
         # update global values
         if "image_matplotlib" in self.options_tabs:
@@ -1916,10 +1916,8 @@ class RendererOptionsWidget(MenpoWidget):
             self.global_options["numbering_matplotlib"] = self.selected_values[
                 "numbering_matplotlib"
             ]
-        if "numbering_mayavi" in self.options_tabs:
-            self.global_options["numbering_mayavi"] = self.selected_values[
-                "numbering_mayavi"
-            ]
+        if "numbering_3d" in self.options_tabs:
+            self.global_options["numbering_3d"] = self.selected_values["numbering_3d"]
         if "zoom_one" in self.options_tabs:
             self.global_options["zoom_one"] = self.selected_values["zoom_one"]
         if "zoom_two" in self.options_tabs:
@@ -2021,7 +2019,7 @@ class RendererOptionsWidget(MenpoWidget):
                     "numbers_horizontal_align": "center",
                     "numbers_vertical_align": "bottom",
                 }
-            elif o == "numbering_mayavi":
+            elif o == "numbering_3d":
                 self.global_options[o] = {
                     "render_numbering": False,
                     "numbers_size": None,
@@ -2101,11 +2099,11 @@ class RendererOptionsWidget(MenpoWidget):
                     "line_colour": lc,
                     "line_style": "-",
                 }
-            if "lines_mayavi" in self.options_tabs:
+            if "lines_3d" in self.options_tabs:
                 lc = ["red"]
                 if labels is not None:
                     lc = sample_colours_from_colourmap(len(labels), "jet")
-                self.default_options[key]["lines_mayavi"] = {
+                self.default_options[key]["lines_3d"] = {
                     "render_lines": True,
                     "line_width": 4.0,
                     "line_colour": lc,
@@ -2124,11 +2122,11 @@ class RendererOptionsWidget(MenpoWidget):
                     "marker_style": "o",
                     "marker_edge_width": 1,
                 }
-            if "markers_mayavi" in self.options_tabs:
+            if "markers_3d" in self.options_tabs:
                 mc = ["red"]
                 if labels is not None and len(labels) > 1:
                     mc = sample_colours_from_colourmap(len(labels), "jet")
-                self.default_options[key]["markers_mayavi"] = {
+                self.default_options[key]["markers_3d"] = {
                     "marker_colour": mc,
                     "render_markers": True,
                     "marker_size": 0.1,
@@ -2166,7 +2164,7 @@ class RendererOptionsWidget(MenpoWidget):
             if o == "lines_matplotlib":
                 tmp = self.options_widgets[i].line_colour_widget
                 tmp.apply_to_all_button.button_style = style
-            elif o == "lines_mayavi":
+            elif o == "lines_3d":
                 tmp = self.options_widgets[i].line_colour_widget
                 tmp.apply_to_all_button.button_style = style
             elif o == "markers_matplotlib":
@@ -2174,7 +2172,7 @@ class RendererOptionsWidget(MenpoWidget):
                 tmp.apply_to_all_button.button_style = style
                 tmp = self.options_widgets[i].marker_edge_colour_widget
                 tmp.apply_to_all_button.button_style = style
-            elif o == "markers_mayavi":
+            elif o == "markers_3d":
                 tmp = self.options_widgets[i].marker_colour_widget
                 tmp.apply_to_all_button.button_style = style
             elif o == "zoom_two":
@@ -2238,10 +2236,10 @@ class RendererOptionsWidget(MenpoWidget):
                     labels=labels,
                     allow_callback=False,
                 )
-            if "lines_mayavi" in self.options_tabs:
-                i = self.options_tabs.index("lines_mayavi")
+            if "lines_3d" in self.options_tabs:
+                i = self.options_tabs.index("lines_3d")
                 self.options_widgets[i].set_widget_state(
-                    renderer_options["lines_mayavi"],
+                    renderer_options["lines_3d"],
                     labels=labels,
                     allow_callback=False,
                 )
@@ -2252,10 +2250,10 @@ class RendererOptionsWidget(MenpoWidget):
                     labels=labels,
                     allow_callback=False,
                 )
-            if "markers_mayavi" in self.options_tabs:
-                i = self.options_tabs.index("markers_mayavi")
+            if "markers_3d" in self.options_tabs:
+                i = self.options_tabs.index("markers_3d")
                 self.options_widgets[i].set_widget_state(
-                    renderer_options["markers_mayavi"],
+                    renderer_options["markers_3d"],
                     labels=labels,
                     allow_callback=False,
                 )
@@ -3551,7 +3549,7 @@ class SaveMatplotlibFigureOptionsWidget(ipywidgets.Box):
         self.save_button.button_style = "primary"
 
 
-class SaveMayaviFigureOptionsWidget(ipywidgets.Box):
+class Save3dFigureOptionsWidget(ipywidgets.Box):
     r"""
     Creates a widget for saving a figure of menpo3d's 3D viewer to file.
 
@@ -3679,7 +3677,7 @@ class SaveMayaviFigureOptionsWidget(ipywidgets.Box):
         self.container.layout.align_items = "center"
 
         # Create final widget
-        super(SaveMayaviFigureOptionsWidget, self).__init__(children=[self.container])
+        super(Save3dFigureOptionsWidget, self).__init__(children=[self.container])
 
         # Assign renderer
         if renderer is None:
