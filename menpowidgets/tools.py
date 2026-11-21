@@ -2215,9 +2215,9 @@ class LineMatplotlibOptionsWidget(MenpoWidget):
                 self.call_render_function(old_value, self.selected_values)
 
 
-class LineMayaviOptionsWidget(MenpoWidget):
+class Line3dOptionsWidget(MenpoWidget):
     r"""
-    Creates a widget for selecting line rendering options for a `mayavi`
+    Creates a widget for selecting line rendering options for a 3D
     renderer.
 
     Parameters
@@ -2283,7 +2283,7 @@ class LineMayaviOptionsWidget(MenpoWidget):
         self.container = ipywidgets.VBox([self.render_lines_switch, self.box_2])
 
         # Create final widget
-        super(LineMayaviOptionsWidget, self).__init__(
+        super(Line3dOptionsWidget, self).__init__(
             [self.container], Dict, line_options, render_function=render_function
         )
 
@@ -2593,9 +2593,9 @@ class MarkerMatplotlibOptionsWidget(MenpoWidget):
                 self.call_render_function(old_value, self.selected_values)
 
 
-class MarkerMayaviOptionsWidget(MenpoWidget):
+class Marker3dOptionsWidget(MenpoWidget):
     r"""
-    Creates a widget for selecting marker rendering options for a `mayavi`
+    Creates a widget for selecting marker rendering options for a 3D
     renderer.
 
     Parameters
@@ -2729,7 +2729,7 @@ class MarkerMayaviOptionsWidget(MenpoWidget):
         self.container = ipywidgets.VBox([self.render_markers_switch, self.box_5])
 
         # Create final widget
-        super(MarkerMayaviOptionsWidget, self).__init__(
+        super(Marker3dOptionsWidget, self).__init__(
             [self.container], Dict, marker_options, render_function=render_function
         )
 
@@ -3118,9 +3118,9 @@ class NumberingMatplotlibOptionsWidget(MenpoWidget):
                 self.call_render_function(old_value, self.selected_values)
 
 
-class NumberingMayaviOptionsWidget(MenpoWidget):
+class Numbering3dOptionsWidget(MenpoWidget):
     r"""
-    Creates a widget for selecting numbering rendering options for a `mayavi`
+    Creates a widget for selecting numbering rendering options for a 3D
     renderer.
 
     Parameters
@@ -3195,7 +3195,7 @@ class NumberingMayaviOptionsWidget(MenpoWidget):
         self.container = ipywidgets.VBox([self.render_numbering_switch, self.box_2])
 
         # Create final widget
-        super(NumberingMayaviOptionsWidget, self).__init__(
+        super(Numbering3dOptionsWidget, self).__init__(
             [self.container], Dict, numbers_options, render_function=render_function
         )
 

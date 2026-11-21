@@ -1,4 +1,4 @@
-"""The 3D widgets, which draw with menpo3d's moderngl viewer (needs menpo3d 0.10 and an OpenGL context)."""
+"""The 3D widgets, which draw with menpo3d's moderngl viewer (needs menpo3d 1.0 and an OpenGL context)."""
 
 import numpy as np
 import pytest
@@ -200,7 +200,7 @@ def test_the_export_tab_saves_a_png_of_the_figure(shown, tmp_path):
     bunny = m3io.import_builtin_asset.bunny_obj()
     mw.visualize_meshes_3d([bunny])
     root = next(w for w in reversed(shown) if hasattr(w, "layout"))
-    save = _find(root, "SaveMayaviFigureOptionsWidget")
+    save = _find(root, "Save3dFigureOptionsWidget")
     save.filename_text.value = str(tmp_path / "export.png")
     save.overwrite_checkbox.selected_values = True
     save.save_button.click()
