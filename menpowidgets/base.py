@@ -33,6 +33,7 @@ from .options import (
 )
 from .tools import LogoWidget, MenpoTab, SwitchWidget
 from .utils import (
+    n_components_in_use,
     FigureOutput,
     PerItemCamera,
     extract_group_labels_from_landmarks,
@@ -1745,9 +1746,9 @@ def visualize_shape_model_2d(
     n_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the parameters
         sliders. If `int`, then the number of sliders per level is the minimum
-        between `n_parameters` and the number of active components per level.
+        between `n_parameters` and the number of components in use per level.
         If `list` of `int`, then a number of sliders is defined per level.
-        If ``None``, all the active components per level will have a slider.
+        If ``None``, all the components in use per level will have a slider.
     mode : ``{'single', 'multiple'}``, optional
         If ``'single'``, then only a single slider is constructed along with a
         drop down menu. If ``'multiple'``, then a slider is constructed for each
@@ -1770,7 +1771,7 @@ def visualize_shape_model_2d(
     main_style = "warning"
 
     # Get the maximum number of components per level
-    max_n_params = [sp.n_active_components for sp in shape_model]
+    max_n_params = [n_components_in_use(sp) for sp in shape_model]
 
     # Check the given number of parameters (the returned n_parameters is a list
     # of len n_scales)
@@ -1949,7 +1950,7 @@ def visualize_shape_model_2d(
         text_per_line = [
             "> Level {} out of {}".format(level + 1, n_levels),
             "> {} components in total".format(shape_model[level].n_components),
-            "> {} active components".format(shape_model[level].n_active_components),
+            "> {} components in use".format(n_components_in_use(shape_model[level])),
             "> {:.1f}% variance kept".format(shape_model[level].variance_ratio() * 100),
             "> Instance range: {:.1f} x {:.1f}".format(
                 instance_range[0], instance_range[1]
@@ -2115,9 +2116,9 @@ def visualize_shape_model_3d(
     n_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the parameters
         sliders. If `int`, then the number of sliders per level is the minimum
-        between `n_parameters` and the number of active components per level.
+        between `n_parameters` and the number of components in use per level.
         If `list` of `int`, then a number of sliders is defined per level.
-        If ``None``, all the active components per level will have a slider.
+        If ``None``, all the components in use per level will have a slider.
     mode : ``{'single', 'multiple'}``, optional
         If ``'single'``, then only a single slider is constructed along with a
         drop down menu. If ``'multiple'``, then a slider is constructed for each
@@ -2139,7 +2140,7 @@ def visualize_shape_model_3d(
     main_style = "warning"
 
     # Get the maximum number of components per level
-    max_n_params = [sp.n_active_components for sp in shape_model]
+    max_n_params = [n_components_in_use(sp) for sp in shape_model]
 
     # Check the given number of parameters (the returned n_parameters is a list
     # of len n_scales)
@@ -2209,7 +2210,7 @@ def visualize_shape_model_3d(
         text_per_line = [
             "> Level {} out of {}".format(level + 1, n_levels),
             "> {} components in total".format(shape_model[level].n_components),
-            "> {} active components".format(shape_model[level].n_active_components),
+            "> {} components in use".format(n_components_in_use(shape_model[level])),
             "> {:.1f}% variance kept".format(shape_model[level].variance_ratio() * 100),
             "> Instance range: {:.1f} x {:.1f}".format(
                 instance_range[0], instance_range[1]
@@ -2351,9 +2352,9 @@ def visualize_appearance_model(
     n_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the parameters
         sliders. If `int`, then the number of sliders per level is the minimum
-        between `n_parameters` and the number of active components per level.
+        between `n_parameters` and the number of components in use per level.
         If `list` of `int`, then a number of sliders is defined per level.
-        If ``None``, all the active components per level will have a slider.
+        If ``None``, all the components in use per level will have a slider.
     mode : ``{'single', 'multiple'}``, optional
         If ``'single'``, then only a single slider is constructed along with a
         drop down menu. If ``'multiple'``, then a slider is constructed for each
@@ -2374,7 +2375,7 @@ def visualize_appearance_model(
     main_style = "success"
 
     # Get the maximum number of components per level
-    max_n_params = [ap.n_active_components for ap in appearance_model]
+    max_n_params = [n_components_in_use(ap) for ap in appearance_model]
 
     # Check the given number of parameters (the returned n_parameters is a list
     # of len n_scales)
@@ -2453,7 +2454,7 @@ def visualize_appearance_model(
         text_per_line = [
             "> Level: {} out of {}.".format(level + 1, n_levels),
             "> {} components in total.".format(lvl_app_mod.n_components),
-            "> {} active components.".format(lvl_app_mod.n_active_components),
+            "> {} components in use.".format(n_components_in_use(lvl_app_mod)),
             "> {:.1f}% variance kept.".format(lvl_app_mod.variance_ratio() * 100),
             "> Reference shape of size {} with {} channel{}.".format(
                 image._str_shape(), image.n_channels, "s" * (image.n_channels > 1)
@@ -2631,9 +2632,9 @@ def visualize_patch_appearance_model(
     n_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the parameters
         sliders. If `int`, then the number of sliders per level is the minimum
-        between `n_parameters` and the number of active components per level.
+        between `n_parameters` and the number of components in use per level.
         If `list` of `int`, then a number of sliders is defined per level.
-        If ``None``, all the active components per level will have a slider.
+        If ``None``, all the components in use per level will have a slider.
     mode : ``{'single', 'multiple'}``, optional
         If ``'single'``, then only a single slider is constructed along with a
         drop down menu. If ``'multiple'``, then a slider is constructed for each
@@ -2660,7 +2661,7 @@ def visualize_patch_appearance_model(
     main_style = "success"
 
     # Get the maximum number of components per level
-    max_n_params = [ap.n_active_components for ap in appearance_model]
+    max_n_params = [n_components_in_use(ap) for ap in appearance_model]
 
     # Check the given number of parameters (the returned n_parameters is a list
     # of len n_scales)
@@ -2718,7 +2719,7 @@ def visualize_patch_appearance_model(
         text_per_line = [
             "> Level: {} out of {}.".format(level + 1, n_levels),
             "> {} components in total.".format(lvl_app_mod.n_components),
-            "> {} active components.".format(lvl_app_mod.n_active_components),
+            "> {} components in use.".format(n_components_in_use(lvl_app_mod)),
             "> {:.1f}% variance kept.".format(lvl_app_mod.variance_ratio() * 100),
             "> Each patch has size {}H x {}W with {} channel{}.".format(
                 image.pixels.shape[3],
@@ -2894,15 +2895,15 @@ def visualize_morphable_model(
     n_shape_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the shape parameters
         sliders. If `int`, then the number of sliders per level is the minimum
-        between `n_parameters` and the number of active components per level.
+        between `n_parameters` and the number of components in use per level.
         If `list` of `int`, then a number of sliders is defined per level.
-        If ``None``, all the active components per level will have a slider.
+        If ``None``, all the components in use per level will have a slider.
     n_texture_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the tecture
         parameters sliders. If `int`, then the number of sliders per level is
-        the minimum between `n_parameters` and the number of active components
+        the minimum between `n_parameters` and the number of components in use
         per level. If `list` of `int`, then a number of sliders is defined per
-        level. If ``None``, all the active components per level will have a
+        level. If ``None``, all the components in use per level will have a
         slider.
     mode : ``{'single', 'multiple'}``, optional
         If ``'single'``, then only a single slider is constructed along with a
@@ -2916,10 +2917,10 @@ def visualize_morphable_model(
 
     # Check the given number of parameters
     n_shape_parameters = check_n_parameters(
-        n_shape_parameters, 1, [mm.shape_model.n_active_components]
+        n_shape_parameters, 1, [n_components_in_use(mm.shape_model)]
     )
     n_texture_parameters = check_n_parameters(
-        n_texture_parameters, 1, [mm.texture_model.n_active_components]
+        n_texture_parameters, 1, [n_components_in_use(mm.texture_model)]
     )
 
     output = FigureOutput()

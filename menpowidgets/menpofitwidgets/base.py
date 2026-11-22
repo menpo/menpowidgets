@@ -25,6 +25,7 @@ from menpofit.error import (
 )
 
 from ..checks import check_n_parameters
+from ..utils import n_components_in_use
 from ..options import (
     SaveMatplotlibFigureOptionsWidget,
     RendererOptionsWidget,
@@ -69,15 +70,15 @@ def visualize_aam(
     n_shape_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the shape parameters
         sliders. If `int`, then the number of sliders per level is the minimum
-        between `n_parameters` and the number of active components per level.
+        between `n_parameters` and the number of components in use per level.
         If `list` of `int`, then a number of sliders is defined per level.
-        If ``None``, all the active components per level will have a slider.
+        If ``None``, all the components in use per level will have a slider.
     n_appearance_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the appearance
         parameters sliders. If `int`, then the number of sliders per level is
-        the minimum between `n_parameters` and the number of active components
+        the minimum between `n_parameters` and the number of components in use
         per level. If `list` of `int`, then a number of sliders is defined per
-        level. If ``None``, all the active components per level will have a
+        level. If ``None``, all the components in use per level will have a
         slider.
     mode : ``{'single', 'multiple'}``, optional
         If ``'single'``, then only a single slider is constructed along with a
@@ -95,8 +96,8 @@ def visualize_aam(
     main_style = "info"
 
     # Get the maximum number of components per level
-    max_n_shape = [sp.model.n_active_components for sp in aam.shape_models]
-    max_n_appearance = [ap.n_active_components for ap in aam.appearance_models]
+    max_n_shape = [n_components_in_use(sp.model) for sp in aam.shape_models]
+    max_n_appearance = [n_components_in_use(ap) for ap in aam.appearance_models]
 
     # Check the given number of parameters (the returned n_parameters is a list
     # of len n_scales)
@@ -421,15 +422,15 @@ def visualize_patch_aam(
     n_shape_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the shape parameters
         sliders. If `int`, then the number of sliders per level is the minimum
-        between `n_parameters` and the number of active components per level.
+        between `n_parameters` and the number of components in use per level.
         If `list` of `int`, then a number of sliders is defined per level.
-        If ``None``, all the active components per level will have a slider.
+        If ``None``, all the components in use per level will have a slider.
     n_appearance_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the appearance
         parameters sliders. If `int`, then the number of sliders per level is
-        the minimum between `n_parameters` and the number of active components
+        the minimum between `n_parameters` and the number of components in use
         per level. If `list` of `int`, then a number of sliders is defined per
-        level. If ``None``, all the active components per level will have a
+        level. If ``None``, all the components in use per level will have a
         slider.
     mode : ``{'single', 'multiple'}``, optional
         If ``'single'``, then only a single slider is constructed along with a
@@ -447,8 +448,8 @@ def visualize_patch_aam(
     main_style = "info"
 
     # Get the maximum number of components per level
-    max_n_shape = [sp.model.n_active_components for sp in aam.shape_models]
-    max_n_appearance = [ap.n_active_components for ap in aam.appearance_models]
+    max_n_shape = [n_components_in_use(sp.model) for sp in aam.shape_models]
+    max_n_appearance = [n_components_in_use(ap) for ap in aam.appearance_models]
 
     # Check the given number of parameters (the returned n_parameters is a list
     # of len n_scales)
@@ -757,9 +758,9 @@ def visualize_atm(
     n_shape_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the shape parameters
         sliders. If `int`, then the number of sliders per level is the minimum
-        between `n_parameters` and the number of active components per level.
+        between `n_parameters` and the number of components in use per level.
         If `list` of `int`, then a number of sliders is defined per level.
-        If ``None``, all the active components per level will have a slider.
+        If ``None``, all the components in use per level will have a slider.
     mode : ``{'single', 'multiple'}``, optional
         If ``'single'``, then only a single slider is constructed along with a
         drop down menu. If ``'multiple'``, then a slider is constructed for each
@@ -776,7 +777,7 @@ def visualize_atm(
     main_style = "info"
 
     # Get the maximum number of components per level
-    max_n_shape = [sp.model.n_active_components for sp in atm.shape_models]
+    max_n_shape = [n_components_in_use(sp.model) for sp in atm.shape_models]
 
     # Check the given number of parameters (the returned n_parameters is a list
     # of len n_scales)
@@ -1034,9 +1035,9 @@ def visualize_patch_atm(
     n_shape_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the shape parameters
         sliders. If `int`, then the number of sliders per level is the minimum
-        between `n_parameters` and the number of active components per level.
+        between `n_parameters` and the number of components in use per level.
         If `list` of `int`, then a number of sliders is defined per level.
-        If ``None``, all the active components per level will have a slider.
+        If ``None``, all the components in use per level will have a slider.
     mode : ``{'single', 'multiple'}``, optional
         If ``'single'``, then only a single slider is constructed along with a
         drop down menu. If ``'multiple'``, then a slider is constructed for each
@@ -1053,7 +1054,7 @@ def visualize_patch_atm(
     main_style = "info"
 
     # Get the maximum number of components per level
-    max_n_shape = [sp.n_active_components for sp in atm.shape_models]
+    max_n_shape = [n_components_in_use(sp.model) for sp in atm.shape_models]
 
     # Check the given number of parameters (the returned n_parameters is a list
     # of len n_scales)
@@ -1303,9 +1304,9 @@ def visualize_clm(
     n_shape_parameters : `int` or `list` of `int` or ``None``, optional
         The number of principal components to be used for the shape parameters
         sliders. If `int`, then the number of sliders per level is the minimum
-        between `n_parameters` and the number of active components per level.
+        between `n_parameters` and the number of components in use per level.
         If `list` of `int`, then a number of sliders is defined per level.
-        If ``None``, all the active components per level will have a slider.
+        If ``None``, all the components in use per level will have a slider.
     mode : ``{'single', 'multiple'}``, optional
         If ``'single'``, then only a single slider is constructed along with a
         drop down menu. If ``'multiple'``, then a slider is constructed for each
@@ -1322,7 +1323,7 @@ def visualize_clm(
     main_style = "info"
 
     # Get the maximum number of components per level
-    max_n_shape = [sp.n_active_components for sp in clm.shape_models]
+    max_n_shape = [n_components_in_use(sp.model) for sp in clm.shape_models]
 
     # Check the given number of parameters (the returned n_parameters is a list
     # of len n_scales)
