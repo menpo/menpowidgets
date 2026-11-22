@@ -83,6 +83,22 @@ class FigureOutput(ipywidgets.Output):
             self._replace_on_next_output = False
 
 
+def n_components_in_use(model):
+    r"""
+    The number of components that a linear model (e.g. `menpo.model.PCAModel`)
+    uses: the number of weights its ``instance()`` takes.
+
+    With a menpo before 0.13, a model can have fewer components in use than
+    ``n_components`` (set with its ``n_active_components`` setter, or by an older
+    menpofit fitter on the models of the AAM it was given); with 0.13 and newer
+    it is always ``n_components``. Both are the number of eigenvalues the model
+    gives, which is what this returns.
+
+    :type: `int`
+    """
+    return len(model.eigenvalues)
+
+
 def start_animation(widget, animate):
     r"""
     Run the coroutine function `animate` as a task on the kernel's event loop
